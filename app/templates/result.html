@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>法人税額 計算結果</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        .result-item { margin-bottom: 10px; }
+        .label { font-weight: bold; }
+        .amount { font-size: 1.2em; color: #d9534f; }
+        a { color: #007bff; text-decoration: none; }
+        .button { display: inline-block; padding: 10px 15px; background-color: #28a745; color: white; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>法人税額 計算結果</h1>
+    
+    <div class="result-item">
+        <span class="label">会計上の利益（課税所得）:</span>
+        <span>{{ "{:,.0f}".format(profit) }} 円</span>
+    </div>
+
+    <div class="result-item">
+        <span class="label">法人税額 (概算):</span>
+        <span class="amount">{{ "{:,.0f}".format(tax_amount) }} 円</span>
+    </div>
+
+    <hr>
+
+    <!-- ▼▼▼ ここからが変更点 ▼▼▼ -->
+    <a href="/download_pdf?profit={{ profit }}&tax_amount={{ tax_amount }}" class="button">
+        申告書 (別表一) PDFをダウンロード
+    </a>
+    <!-- ▲▲▲ ここまでが変更点 ▲▲▲ -->
+
+    <p style="margin-top: 30px;">
+        <a href="/">← もう一度計算する</a>
+    </p>
+    <p style="font-size: 0.8em; color: #666;">※これは簡略化されたモデルに基づく概算値です。実際の申告には税理士にご相談ください。</p>
+
+</body>
+</html>

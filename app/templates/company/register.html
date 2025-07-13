@@ -1,0 +1,107 @@
+<!-- app/templates/company/register.html (二階層ナビ版) -->
+{% extends "base.html" %}
+
+{% block title %}基本情報登録{% endblock %}
+
+{% block sidebar %}
+<a href="{{ url_for('company.show') }}" class="active">基本情報</a>
+<a href="{{ url_for('company.employees') }}">社員名簿</a>
+<a href="{{ url_for('company.declaration') }}">申告情報</a>
+<a href="#">事業所一覧</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>基本情報</h2>
+    <form action="{{ url_for('company.save') }}" method="post">
+        <!-- フォームの中身は変更なし -->
+        <div class="form-group">
+            <label for="corporate_number">法人番号</label>
+            <input type="text" id="corporate_number" name="corporate_number" required>
+        </div>
+        <!-- ... 他の全てのフォーム項目 ... -->
+        <div class="form-group">
+            <label for="company_name">法人名</label>
+            <input type="text" id="company_name" name="company_name" required>
+        </div>
+        <div class="form-group">
+            <label for="company_name_kana">ふりがな</label>
+            <input type="text" id="company_name_kana" name="company_name_kana" required>
+        </div>
+        <div class="form-group">
+            <label for="zip_code">郵便番号</label>
+            <input type="text" id="zip_code" name="zip_code" required>
+        </div>
+        <div class="form-group">
+            <label for="prefecture">都道府県</label>
+            <input type="text" id="prefecture" name="prefecture" required>
+        </div>
+        <div class="form-group">
+            <label for="city">市区町村</label>
+            <input type="text" id="city" name="city" required>
+        </div>
+        <div class="form-group">
+            <label for="address">住所（ビル名など）</label>
+            <input type="text" id="address" name="address" required>
+        </div>
+        <div class="form-group">
+            <label for="phone_number">電話番号</label>
+            <input type="tel" id="phone_number" name="phone_number" required>
+        </div>
+        <div class="form-group">
+            <label for="homepage">ホームページアドレス</label>
+            <input type="email" id="homepage" name="homepage">
+        </div>
+        <div class="form-group">
+            <label for="establishment_date">設立年月日</label>
+            <input type="date" id="establishment_date" name="establishment_date" required>
+        </div>
+ <div class="form-group">
+    <label>① 定款上の会計期間</label>
+    <div>
+        <input type="checkbox" id="fiscal_period_is_one_year" name="fiscal_period_is_one_year" value="true" {% if not company or company.fiscal_period_is_one_year %}checked{% endif %}>
+        <label for="fiscal_period_is_one_year" class="inline-label">１年間である</label>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>② 資本金の制限</label>
+    <div>
+        <input type="checkbox" id="capital_limit" name="capital_limit" value="true" {% if not company or company.capital_limit %}checked{% endif %}>
+        <label for="capital_limit" class="inline-label">資本金等の額が1億円以下である</label>
+        <p class="form-help-text">（資本金または出資金の額が１億円の製造業を行う分割申告が必要な法人及び資本金または出資金の額が5億円以上の法人等の100％子法人ではない）</p>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>③ 対応業種の確認</label>
+    <div>
+        <input type="checkbox" id="is_supported_industry" name="is_supported_industry" value="true" {% if not company or company.is_supported_industry %}checked{% endif %}>
+        <label for="is_supported_industry" class="inline-label">電気・ガス供給業及び保険業に該当しない</label>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>④ 適用除外事業者の確認</label>
+    <div>
+        <input type="checkbox" id="is_not_excluded_business" name="is_not_excluded_business" value="true" {% if not company or company.is_not_excluded_business %}checked{% endif %}>
+        <label for="is_not_excluded_business" class="inline-label">適用除外事業者に該当しない</label>
+    </div>
+</div>
+        <div class="form-group">
+            <label for="industry_type">業種</label>
+            <input type="text" id="industry_type" name="industry_type">
+        </div>
+        <div class="form-group">
+            <label for="industry_code">業種番号</label>
+            <input type="text" id="industry_code" name="industry_code">
+        </div>
+<div class="form-group">
+    <label for="reference_number">整理番号</label>
+    <input type="text" id="reference_number" name="reference_number" value="{{ company.reference_number if company else '' }}">
+</div>
+
+        <button type="submit">保存する</button>
+    </form>
+</div>
+{% endblock %}

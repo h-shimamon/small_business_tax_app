@@ -1,0 +1,129 @@
+/* app/static/css/style.css (二階層ナビ版) */
+:root {
+    --header-height: 50px;
+    --sidebar-width: 260px;
+    --text-primary: #333;
+    --text-secondary: #555;
+    --bg-main: #f4f8fa; /* 少し青みがかったクールな背景色 */
+    --bg-sidebar: #ffffff;
+    --accent-color: #007aff;
+    --border-color: #e1e4e8;
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    margin: 0;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+/* --- 上部固定ヘッダー --- */
+.global-header {
+    height: var(--header-height);
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center; /* メニューを中央に配置 */
+    align-items: center;
+    z-index: 1000;
+}
+
+.global-nav {
+    display: flex;
+    height: 100%;
+}
+
+.global-nav .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    border-bottom: 2px solid transparent; /* 非アクティブ時の下線 */
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.global-nav .nav-item:hover {
+    color: var(--text-primary);
+}
+
+.global-nav .nav-item.active {
+    color: var(--accent-color);
+    font-weight: 700;
+    border-bottom-color: var(--accent-color); /* アクティブ時の下線 */
+}
+
+
+/* --- 全体レイアウト --- */
+.app-layout {
+    display: flex;
+    padding-top: var(--header-height); /* ヘッダーの高さ分、全体を下にずらす */
+}
+
+/* --- 左サイドバー --- */
+.sidebar {
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height));
+    position: fixed;
+    left: 0;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.local-nav a {
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.local-nav a:hover {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+.local-nav a.active {
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: 500;
+}
+
+
+/* --- メインコンテンツ --- */
+.main-content {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    padding: 30px;
+}
+
+/* フォームの基本スタイル（再利用） */
+.form-container { max-width: 800px; margin: 0 auto; padding: 40px; background-color: white; border-radius: 12px; }
+.form-group { margin-bottom: 25px; }
+label { display: block; margin-bottom: 8px; font-weight: 500; }
+input[type="text"], input[type="tel"], input[type="email"], input[type="date"] {
+    width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 1rem;
+}
+button { padding: 15px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+
+.inline-label {
+    display: inline !important;
+    font-weight: normal !important;
+}
+
+.form-help-text {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 5px;
+    margin-left: 25px;
+}

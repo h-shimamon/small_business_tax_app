@@ -1,0 +1,13 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Instance folder (contains database, etc.)
+instance/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS specific files
+.DS_Store

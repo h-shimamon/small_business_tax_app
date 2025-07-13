@@ -1,0 +1,51 @@
+<!-- app/templates/company/declaration_form.html -->
+{% extends "base.html" %}
+
+{% block title %}申告情報{% endblock %}
+
+{% block sidebar %}
+    <a href="{{ url_for('company.show') }}">基本情報</a>
+    <a href="{{ url_for('company.employees') }}">社員名簿</a>
+    <a href="{{ url_for('company.declaration') }}" class="active">申告情報</a>
+    <a href="#">事業所一覧</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>申告情報</h2>
+    <p>申告の対象となる事業年度の情報を入力し、保存してください。</p>
+
+    <!-- actionとmethodは後で設定します -->
+    <form action="" method="post">
+        
+        <!-- 会計期間 -->
+        <div class="form-group">
+            <label>会計期間</label>
+            <input type="date" name="accounting_period_start" value="{{ company.accounting_period_start if company else '' }}">
+            <span>〜</span>
+            <input type="date" name="accounting_period_end" value="{{ company.accounting_period_end if company else '' }}">
+        </div>
+
+        <!-- 期数 -->
+        <div class="form-group">
+            <label for="term_number">期数</label>
+            <input type="text" id="term_number" name="term_number" value="{{ company.term_number if company else '' }}">
+        </div>
+
+        <!-- ラジオボタンやセレクトボックスの例 -->
+        <div class="form-group">
+            <label>申告区分</label>
+            <input type="radio" name="declaration_type" value="blue" id="blue_dec" {% if company.declaration_type == 'blue' %}checked{% endif %}>
+            <label for="blue_dec" class="inline-label">青色申告</label>
+            <input type="radio" name="declaration_type" value="white" id="white_dec" {% if company.declaration_type == 'white' %}checked{% endif %}>
+            <label for="white_dec" class="inline-label">白色申告</label>
+        </div>
+
+        <!-- 代表者、経理責任者、税理士など、他の全ての入力欄をここに追加していきます -->
+        <!-- ... -->
+
+
+        <button type="submit">保存する</button>
+    </form>
+</div>
+{% endblock %}

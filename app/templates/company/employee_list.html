@@ -1,0 +1,79 @@
+<!-- app/templates/company/employee_list.html -->
+{% extends "base.html" %}
+
+{% block title %}社員名簿{% endblock %}
+
+{% block sidebar %}
+    <a href="{{ url_for('company.show') }}">基本情報</a>
+    <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
+    <a href="{{ url_for('company.declaration') }}">申告情報</a>
+    <a href="#">事業所一覧</a>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* このページ専用のスタイル */
+    .content-header { margin-bottom: 20px; }
+    .content-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;}
+    .card { background-color: #fff; border-radius: 12px; padding: 30px; margin-bottom: 30px; }
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem;}
+    thead th { background-color: #f7f9fc; font-weight: 500; color: var(--text-secondary); }
+    .action-btn { background-color: #eee; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+</style>
+
+<div class="content-header">
+    <h1 class="content-title">社員名簿</h1>
+    <p>登録内容から自動で同族会社の判定を行うため、社員名簿 の作成は必須です。</p>
+</div>
+
+<div class="card">
+    <button>＋ 新規登録</button>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>氏名</th>
+                    <th>グループ</th>
+                    <th>社員となった日</th>
+                    <th>続柄</th>
+                    <th>住所</th>
+                    <th>株式数</th>
+                    <th>議決権</th>
+                    <th>持ち株比率</th>
+                    <th>役職</th>
+                    <th>出資金額</th>
+                    <th>編集</th>
+                    <th>削除</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.group }}</td>
+                    <td>{{ employee.joined_date }}</td>
+                    <td>{{ employee.relationship }}</td>
+                    <td>{{ employee.address }}</td>
+                    <td>{{ "{:,.0f}".format(employee.shares_held) if employee.shares_held else '' }}</td>
+                    <td>{{ "{:,.0f}".format(employee.voting_rights) if employee.voting_rights else '' }}</td>
+                    <td>...</td> <!-- 持ち株比率は後で計算 -->
+                    <td>{{ employee.position }}</td>
+                    <td>{{ "{:,.0f}".format(employee.investment_amount) if employee.investment_amount else '' }}</td>
+                    <td><button class="action-btn">編集</button></td>
+                    <td><button class="action-btn">削除</button></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="12" style="text-align: center; padding: 40px;">まだ社員が登録されていません。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 同族会社の判定セクションは後で追加 -->
+
+{% endblock %}
