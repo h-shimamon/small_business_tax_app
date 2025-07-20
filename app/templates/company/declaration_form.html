@@ -86,10 +86,24 @@
                     {{ render_field(form.representative_kana) }}
                     {{ render_field(form.representative_position) }}
                     {{ render_field(form.representative_status) }}
-                    {{ render_field(form.representative_zip_code) }}
-                    {{ render_field(form.representative_prefecture) }}
-                    {{ render_field(form.representative_city) }}
-                    {{ render_field(form.representative_address) }}
+                    
+                    {# --- マクロを使わず直接HTMLを記述してIDを確実に設定 --- #}
+                    <div class="table-row">
+                        <div class="table-label">{{ form.representative_zip_code.label }}</div>
+                        <div class="table-input">{{ form.representative_zip_code(id='representative_zip_code', class='form-control') }}</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-label">{{ form.representative_prefecture.label }}</div>
+                        <div class="table-input">{{ form.representative_prefecture(id='representative_prefecture', class='form-control') }}</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-label">{{ form.representative_city.label }}</div>
+                        <div class="table-input">{{ form.representative_city(id='representative_city', class='form-control') }}</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-label">{{ form.representative_address.label }}</div>
+                        <div class="table-input">{{ form.representative_address(id='representative_address', class='form-control') }}</div>
+                    </div>
                 </div>
             </div>
 
@@ -116,7 +130,6 @@
                             </div>
                         </div>
                     </div>
-                    {# --- "期末従業者数"の修正 --- #}
                     <div class="table-row">
                         <div class="table-label">{{ form.employee_count_at_eoy.label }}</div>
                         <div class="table-input">
@@ -132,10 +145,24 @@
                 <div class="table-items">
                     {{ render_field(form.tax_accountant_name) }}
                     {{ render_field(form.tax_accountant_phone) }}
-                    {{ render_field(form.tax_accountant_zip) }}
-                    {{ render_field(form.tax_accountant_prefecture) }}
-                    {{ render_field(form.tax_accountant_city) }}
-                    {{ render_field(form.tax_accountant_address) }}
+                    
+                    {# --- マクロを使わず直接HTMLを記述してIDを確実に設定 --- #}
+                    <div class="table-row">
+                        <div class="table-label">{{ form.tax_accountant_zip.label }}</div>
+                        <div class="table-input">{{ form.tax_accountant_zip(id='tax_accountant_zip', class='form-control') }}</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-label">{{ form.tax_accountant_prefecture.label }}</div>
+                        <div class="table-input">{{ form.tax_accountant_prefecture(id='tax_accountant_prefecture', class='form-control') }}</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-label">{{ form.tax_accountant_city.label }}</div>
+                        <div class="table-input">{{ form.tax_accountant_city(id='tax_accountant_city', class='form-control') }}</div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-label">{{ form.tax_accountant_address.label }}</div>
+                        <div class="table-input">{{ form.tax_accountant_address(id='tax_accountant_address', class='form-control') }}</div>
+                    </div>
                 </div>
             </div>
 
@@ -143,7 +170,6 @@
             <div class="table-row-group">
                 <div class="table-category-header">還付金受取口座</div>
                 <div class="table-items">
-                    {# --- "銀行名"の修正 --- #}
                     <div class="table-row">
                         <div class="table-label">{{ form.refund_bank_name.label }}</div>
                         <div class="table-input">
@@ -153,7 +179,6 @@
                             </div>
                         </div>
                     </div>
-                    {# --- "支店名"の修正 --- #}
                     <div class="table-row">
                         <div class="table-label">{{ form.refund_branch_name.label }}</div>
                         <div class="table-input">
@@ -174,4 +199,10 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{# --- 埋め込みJSを削除し、外部ファイル読込に戻します --- #}
+{% block scripts %}
+    {{ super() if super }}
+    <script src="{{ url_for('static', filename='js/address_autofill.js') }}?v=2.0"></script>
 {% endblock %}
