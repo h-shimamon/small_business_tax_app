@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}従業員編集{% endblock %}
+
+{% block sidebar %}
+    <a href="{{ url_for('company.show') }}">基本情報</a>
+    <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
+    <a href="{{ url_for('company.declaration') }}">申告情報</a>
+    <a href="#">事業所一覧</a>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1 class="content-title">従業員編集</h1>
+</div>
+
+<div class="card">
+    <form method="post" class="form-grid">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.group.label(class="form-label") }}
+            {{ form.group(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.joined_date.label(class="form-label") }}
+            {{ form.joined_date(class="form-control", type='date') }}
+        </div>
+        <div class="form-group">
+            {{ form.relationship.label(class="form-label") }}
+            {{ form.relationship(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.address.label(class="form-label") }}
+            {{ form.address(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.position.label(class="form-label") }}
+            {{ form.position(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.shares_held.label(class="form-label") }}
+            {{ form.shares_held(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.voting_rights.label(class="form-label") }}
+            {{ form.voting_rights(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.investment_amount.label(class="form-label") }}
+            {{ form.investment_amount(class="form-control") }}
+        </div>
+
+        <div class="form-actions">
+            {{ form.submit(class="button-primary", value="更新する") }}
+            <a href="{{ url_for('company.employees') }}" class="button-secondary">キャンセル</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
