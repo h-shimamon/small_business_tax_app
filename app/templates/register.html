@@ -13,47 +13,49 @@
 <div class="form-container">
     <h2>基本情報</h2>
     <form action="{{ url_for('company.save') }}" method="post">
+        {# 各入力フィールドに value 属性を追加して、データベースの値を表示します #}
         <div class="form-group">
             <label for="corporate_number">法人番号</label>
-            <input type="text" id="corporate_number" name="corporate_number" required>
+            <input type="text" id="corporate_number" name="corporate_number" required value="{{ company.corporate_number if company else '' }}">
         </div>
         <div class="form-group">
             <label for="company_name">法人名</label>
-            <input type="text" id="company_name" name="company_name" required>
+            <input type="text" id="company_name" name="company_name" required value="{{ company.company_name if company else '' }}">
         </div>
         <div class="form-group">
             <label for="company_name_kana">ふりがな</label>
-            <input type="text" id="company_name_kana" name="company_name_kana" required>
+            <input type="text" id="company_name_kana" name="company_name_kana" required value="{{ company.company_name_kana if company else '' }}">
         </div>
         <div class="form-group">
             <label for="zip_code">郵便番号</label>
-            <input type="text" id="zip_code" name="zip_code" required>
+            <input type="text" id="zip_code" name="zip_code" required value="{{ company.zip_code if company else '' }}">
         </div>
         <div class="form-group">
             <label for="prefecture">都道府県</label>
-            <input type="text" id="prefecture" name="prefecture" required>
+            <input type="text" id="prefecture" name="prefecture" required value="{{ company.prefecture if company else '' }}">
         </div>
         <div class="form-group">
             <label for="city">市区町村</label>
-            <input type="text" id="city" name="city" required>
+            <input type="text" id="city" name="city" required value="{{ company.city if company else '' }}">
         </div>
         <div class="form-group">
             <label for="address">市区町村以下の住所</label>
-            <input type="text" id="address" name="address" required>
+            <input type="text" id="address" name="address" required value="{{ company.address if company else '' }}">
         </div>
         <div class="form-group">
             <label for="phone_number">電話番号</label>
-            <input type="tel" id="phone_number" name="phone_number" required>
+            <input type="tel" id="phone_number" name="phone_number" required value="{{ company.phone_number if company else '' }}">
         </div>
         <div class="form-group">
             <label for="homepage">ホームページアドレス</label>
-            <input type="url" id="homepage" name="homepage">
+            <input type="url" id="homepage" name="homepage" value="{{ company.homepage if company else '' }}">
         </div>
         <div class="form-group">
             <label for="establishment_date">設立年月日</label>
-            <input type="date" id="establishment_date" name="establishment_date" required>
+            <input type="date" id="establishment_date" name="establishment_date" required value="{{ company.establishment_date if company else '' }}">
         </div>
 
+        {# チェックボックスは既存のロジックで問題ありません #}
         <div class="form-group form-group-align-top">
             <label>定款上の会計期間</label>
             <div>
@@ -61,7 +63,6 @@
                 <label for="fiscal_period_is_one_year" class="inline-label">１年間である</label>
             </div>
         </div>
-
         <div class="form-group form-group-align-top">
             <label>資本金の制限</label>
             <div>
@@ -70,7 +71,6 @@
                 <p class="form-help-text">資本金または出資金の額が１億円の製造業を行う分割申告が必要な法人及び資本金または出資金の額が5億円以上の法人等の100％子法人ではない</p>
             </div>
         </div>
-
         <div class="form-group form-group-align-top">
             <label>対応業種の確認</label>
             <div>
@@ -78,7 +78,6 @@
                 <label for="is_supported_industry" class="inline-label">電気・ガス供給業及び保険業に該当しない</label>
             </div>
         </div>
-
         <div class="form-group form-group-align-top">
             <label>適用除外事業者の確認</label>
             <div>
@@ -86,13 +85,15 @@
                 <label for="is_not_excluded_business" class="inline-label">適用除外事業者に該当しない</label>
             </div>
         </div>
+
+        {# 残りのテキスト入力フィールドにも value 属性を追加 #}
         <div class="form-group">
             <label for="industry_type">業種</label>
-            <input type="text" id="industry_type" name="industry_type">
+            <input type="text" id="industry_type" name="industry_type" value="{{ company.industry_type if company else '' }}">
         </div>
         <div class="form-group">
             <label for="industry_code">業種番号</label>
-            <input type="text" id="industry_code" name="industry_code">
+            <input type="text" id="industry_code" name="industry_code" value="{{ company.industry_code if company else '' }}">
         </div>
         <div class="form-group">
             <label for="reference_number">整理番号</label>

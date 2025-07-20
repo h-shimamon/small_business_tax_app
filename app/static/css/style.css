@@ -270,3 +270,10 @@ button { padding: 15px; background-color: var(--accent-color); color: white; bor
     gap: 20px;
     margin-top: 20px;
 }
+/* app/static/css/style.css に追加 */
+
+.form-error {
+    color: #d93025; /* Apple風のエラーカラー */
+    font-size: 0.875em;
+    margin-top: 6px;
+}

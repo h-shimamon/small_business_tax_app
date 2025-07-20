@@ -23,7 +23,6 @@ def show():
     GETリクエスト用。
     """
     company = Company.query.first()
-    # 修正: 正しいテンプレートパスに戻す
     return render_template('register.html', company=company)
 
 
@@ -51,7 +50,6 @@ def save():
     company.capital_limit = 'capital_limit' in request.form
     company.is_supported_industry = 'is_supported_industry' in request.form
     company.is_not_excluded_business = 'is_not_excluded_business' in request.form
-    company.capital_limit = 'capital_limit' in request.form
     company.industry_type = request.form.get('industry_type')
     company.industry_code = request.form.get('industry_code')
     company.reference_number = request.form.get('reference_number')
@@ -73,7 +71,6 @@ def employees():
     if company:
         employee_list = company.employees
 
-    # 修正: 正しいテンプレートパスに戻す
     return render_template(
         'company/employee_list.html',
         employees=employee_list
@@ -93,7 +90,6 @@ def declaration():
     if request.method == 'POST':
         pass
 
-    # 修正: 正しいテンプレートパスに戻す
     return render_template('company/declaration_form.html', company=company)
 
 
@@ -103,7 +99,7 @@ def register_employee():
     GET: 新規従業員登録ページを表示
     POST: 入力された従業員情報を保存
     """
-    form = EmployeeForm()
+    form = EmployeeForm(request.form)
 
     if form.validate_on_submit():
         company = Company.query.first()
@@ -128,7 +124,6 @@ def register_employee():
 
         return redirect(url_for('company.employees'))
 
-    # 修正: 正しいテンプレートパスに戻す
     return render_template('company/register_employee.html', form=form)
 
 
@@ -152,7 +147,6 @@ def edit_employee(employee_id):
         except (ValueError, TypeError):
             form.joined_date.data = None
 
-    # 修正: 正しいテンプレートパスに戻す
     return render_template('company/edit_employee.html', form=form)
 
 
