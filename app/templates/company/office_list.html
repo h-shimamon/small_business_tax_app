@@ -1,0 +1,67 @@
+<!-- app/templates/company/office_list.html -->
+{% extends "base.html" %}
+
+{% block title %}事業所一覧{% endblock %}
+
+{% block sidebar %}
+<a href="{{ url_for('company.show') }}">基本情報</a>
+<a href="{{ url_for('company.employees') }}">社員名簿</a>
+<a href="{{ url_for('company.declaration') }}">申告情報</a>
+<!-- ★修正点1: 'office.list' から 'company.office_list' へ変更 -->
+<a href="{{ url_for('company.office_list') }}" class="active">事業所一覧</a>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1 class="content-title">事業所一覧</h1>
+</div>
+
+<div class="card">
+    <!-- ★修正点2: 'office.register' から 'company.register_office' へ変更 -->
+    <a href="{{ url_for('company.register_office') }}" class="button-primary">＋ 新規登録</a>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>事業所名</th>
+                    <th>郵便番号</th>
+                    <th>都道府県</th>
+                    <th>市区町村</th>
+                    <th>電話番号</th>
+                    <th>開設年月日</th>
+                    <th>従業者数</th>
+                    <th colspan="2" style="width: 120px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for office in offices %}
+                <tr>
+                    <td>{{ office.name or '' }}</td>
+                    <td>{{ office.zip_code or '' }}</td>
+                    <td>{{ office.prefecture or '' }}</td>
+                    <td>{{ office.municipality or '' }}</td>
+                    <td>{{ office.phone_number or '' }}</td>
+                    <td>{{ office.opening_date or '' }}</td>
+                    <td>{{ office.employee_count or '' }}</td>
+                    <td>
+                        <div class="action-buttons-group">
+                            <!-- ★修正点3: 'office.edit' から 'company.edit_office' へ変更 -->
+                            <a href="{{ url_for('company.edit_office', office_id=office.id) }}" class="action-btn">編集</a>
+                            <!-- ★修正点4: 'office.delete' から 'company.delete_office' へ変更 -->
+                            <form action="{{ url_for('company.delete_office', office_id=office.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="action-btn delete" onclick="return confirm('本当にこの事業所を削除しますか？');">削除</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 40px;">まだ事業所が登録されていません。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

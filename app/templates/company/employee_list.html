@@ -7,7 +7,8 @@
 <a href="{{ url_for('company.show') }}">基本情報</a>
 <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
 <a href="{{ url_for('company.declaration') }}">申告情報</a>
-<a href="#">事業所一覧</a>
+<!-- ★修正点: href="#" を正しいリンクに変更 -->
+<a href="{{ url_for('company.office_list') }}">事業所一覧</a>
 {% endblock %}
 
 {% block content %}

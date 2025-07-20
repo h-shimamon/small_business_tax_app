@@ -88,3 +88,22 @@ class Employee(db.Model):
 
     def __repr__(self):
         return f'<Employee {self.name}>'
+
+class Office(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    zip_code = db.Column(db.String(7))
+    prefecture = db.Column(db.String(50))
+    municipality = db.Column(db.String(100))
+    address = db.Column(db.String(200))
+    phone_number = db.Column(db.String(20))
+    opening_date = db.Column(db.String(10))
+    closing_date = db.Column(db.String(10))
+    employee_count = db.Column(db.Integer)
+    
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('offices', lazy=True))
+
+    def __repr__(self):
+        return f'<Office {self.name}>'
+        

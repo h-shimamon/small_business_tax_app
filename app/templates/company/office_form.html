@@ -1,0 +1,64 @@
+<!-- app/templates/company/office_form.html -->
+{% extends "base.html" %}
+
+{% block title %}{% if form.name.data %}事業所編集{% else %}事業所登録{% endif %}{% endblock %}
+
+{% block sidebar %}
+<a href="{{ url_for('company.show') }}">基本情報</a>
+<a href="{{ url_for('company.employees') }}">社員名簿</a>
+<a href="{{ url_for('company.declaration') }}">申告情報</a>
+<!-- ★修正点1: 'office.list' から 'company.office_list' へ変更 -->
+<a href="{{ url_for('company.office_list') }}" class="active">事業所一覧</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{% if form.name.data %}事業所情報の編集{% else %}事業所の新規登録{% endif %}</h2>
+    
+    {# フォームの action は空欄にし、ルート側で現在のURLを自動的に使用させます #}
+    <form method="post" action=""> 
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.zip_code.label }}
+            {{ form.zip_code(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.prefecture.label }}
+            {{ form.prefecture(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.municipality.label }}
+            {{ form.municipality(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.address.label }}
+            {{ form.address(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.phone_number.label }}
+            {{ form.phone_number(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.opening_date.label }}
+            {{ form.opening_date(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.closing_date.label }}
+            {{ form.closing_date(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.employee_count.label }}
+            {{ form.employee_count(class="form-control") }}
+        </div>
+
+        {{ form.submit(class="button-primary") }}
+        <!-- ★修正点2: 'office.list' から 'company.office_list' へ変更 -->
+        <a href="{{ url_for('company.office_list') }}" class="button-secondary">キャンセル</a>
+    </form>
+</div>
+{% endblock %}
