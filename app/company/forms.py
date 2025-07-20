@@ -18,8 +18,6 @@ class EmployeeForm(FlaskForm):
     investment_amount = IntegerField('出資金額', validators=[Optional()], widget=TextInput())
     submit = SubmitField('登録する')
 
-# ▼▼▼▼▼ ここから下を追記します ▼▼▼▼▼
-
 class DeclarationForm(FlaskForm):
     """申告情報を登録・編集するためのフォーム"""
     
@@ -43,9 +41,8 @@ class DeclarationForm(FlaskForm):
     )
 
     # --- 代表者カテゴリ ---
-    # Note: これらの情報はCompanyモデルに追加する必要があります
     representative_name = StringField('氏名', validators=[Optional()])
-    representative_kana = StringField('氏名ふりがな', validators=[Optional()])
+    representative_kana = StringField('ふりがな', validators=[Optional()])
     representative_position = StringField('役職', validators=[Optional()])
     representative_status = SelectField(
         '常勤・非常勤の別',
@@ -59,12 +56,12 @@ class DeclarationForm(FlaskForm):
 
     # --- 経理責任者カテゴリ ---
     accounting_manager_name = StringField('氏名', validators=[Optional()])
-    accounting_manager_kana = StringField('氏名ふりがな', validators=[Optional()])
+    accounting_manager_kana = StringField('ふりがな', validators=[Optional()])
 
     # --- 決算・申告期限 ---
     closing_date = DateField('決算確定年月日', validators=[Optional()])
-    is_corp_tax_extended = BooleanField('法人税の申告期限の延長（延長している）', default=False)
-    is_biz_tax_extended = BooleanField('事業税の申告期限の延長（延長している）', default=False)
+    is_corp_tax_extended = BooleanField('法人税の申告期限を延長している', default=False)
+    is_biz_tax_extended = BooleanField('事業税の申告期限を延長している', default=False)
     
     # --- その他 ---
     employee_count_at_eoy = IntegerField('期末従業者数', validators=[Optional()])
@@ -79,7 +76,31 @@ class DeclarationForm(FlaskForm):
 
     # --- 還付金受取口座 ---
     refund_bank_name = StringField('銀行名', validators=[Optional()])
+    refund_bank_type = SelectField(
+        '金融機関種別',
+        choices=[
+            ('', '選択してください'),
+            ('bank', '銀行'),
+            ('shinkin', '金庫'),
+            ('kumiai', '組合'),
+            ('nokyo', '農協'),
+            ('gyokyo', '漁協')
+        ],
+        validators=[Optional()]
+    )
     refund_branch_name = StringField('支店名', validators=[Optional()])
+    refund_branch_type = SelectField(
+        '支店種別',
+        choices=[
+            ('', '選択してください'),
+            ('honten', '本店'),
+            ('shiten', '支店'),
+            ('shucchojo', '出張所'),
+            ('honjo', '本所'),
+            ('shisho', '支所')
+        ],
+        validators=[Optional()]
+    )
     refund_account_type = SelectField(
         '預金種類',
         choices=[('ordinary', '普通'), ('checking', '当座'), ('savings', '貯蓄')],
