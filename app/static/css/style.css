@@ -1,4 +1,4 @@
-/* app/static/css/style.css (二階層ナビ版) */
+/* app/static/css/style.css (統合版) */
 :root {
     --header-height: 50px;
     --sidebar-width: 260px;
@@ -107,11 +107,27 @@ body {
     padding: 30px;
 }
 
-/* フォームの基本スタイル（再利用） */
+/* --- コンテンツヘッダー（h1など） --- */
+.content-header { margin-bottom: 20px; }
+.content-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;}
+
+/* --- カード型UI --- */
+.card { background-color: #fff; border-radius: 12px; padding: 30px; margin-bottom: 30px; }
+
+
+/* --- テーブル（社員名簿など） --- */
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem;}
+thead th { background-color: #f7f9fc; font-weight: 500; color: var(--text-secondary); }
+.action-btn { background-color: #eee; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+
+
+/* --- フォームの基本スタイル（再利用） --- */
 .form-container { max-width: 800px; margin: 0 auto; padding: 40px; background-color: white; border-radius: 12px; }
 .form-group { margin-bottom: 25px; }
 label { display: block; margin-bottom: 8px; font-weight: 500; }
-input[type="text"], input[type="tel"], input[type="email"], input[type="date"] {
+input[type="text"], input[type="tel"], input[type="email"], input[type="date"], input[type="url"] {
     width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 1rem;
 }
 button { padding: 15px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
@@ -126,4 +142,35 @@ button { padding: 15px; background-color: var(--accent-color); color: white; bor
     color: #666;
     margin-top: 5px;
     margin-left: 25px;
+}
+/* --- フォーム項目を横並びにするためのスタイル --- */
+.form-group {
+    display: flex;         /* ラベルと入力欄を横に並べる */
+    align-items: center;   /* 上下の位置を中央に揃える */
+    gap: 20px;             /* ラベルと入力欄の間に隙間を空ける */
+}
+
+.form-group label {
+    flex-shrink: 0;        /* ラベルが縮まないようにする */
+    width: 180px;          /* ラベルの幅を固定する */
+    text-align: right;     /* ラベルの文字を右揃えにする */
+    margin-bottom: 0;      /* 元々あった下の余白をなくす */
+}
+
+.form-group input[type="text"],
+.form-group input[type="tel"],
+.form-group input[type="email"],
+.form-group input[type="date"],
+.form-group input[type="url"] {
+    flex-grow: 1;          /* 入力欄が残りの幅いっぱいに広がる */
+    width: auto;           /* 元々あった幅100%の設定をリセット */
+}
+/* 縦位置を上端で揃えるためのスタイル */
+.form-group-align-top {
+    align-items: flex-start;
+    padding-top: 10px; /* 見た目のバランスを調整 */
+}
+
+.form-group-align-top label {
+    padding-top: 2px; /* チェックボックスのテキストと高さを合わせる */
 }
