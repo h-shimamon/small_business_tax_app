@@ -14,36 +14,46 @@ class Company(db.Model):
     phone_number = db.Column(db.String(20), nullable=False)
     homepage = db.Column(db.String(200))
     establishment_date = db.Column(db.String(10), nullable=False)
-    capital_limit = db.Column(db.Boolean, default=True)               # ② 資本金の制限 (既存)
-    is_supported_industry = db.Column(db.Boolean, default=True)      # ③ 対応業種の確認
-    is_not_excluded_business = db.Column(db.Boolean, default=True)   # ④ 適用除外事業者の確
     capital_limit = db.Column(db.Boolean, default=True)
+    is_supported_industry = db.Column(db.Boolean, default=True)
+    is_not_excluded_business = db.Column(db.Boolean, default=True)
     industry_type = db.Column(db.String(50))
     industry_code = db.Column(db.String(10))
     reference_number = db.Column(db.String(20))
 
-    # ▼▼▼▼▼ このブロックをここに追加 ▼▼▼▼▼
     # --- 申告情報 ---
-    accounting_period_start = db.Column(db.String(10)) # 会計期間 開始
-    accounting_period_end = db.Column(db.String(10))   # 会計期間 終了
-    term_number = db.Column(db.Integer)                # 期数
-    office_count = db.Column(db.String(10))            # 事業所の数 ('one' or 'multiple')
-    declaration_type = db.Column(db.String(10))        # 申告区分 ('blue' or 'white')
-    tax_system = db.Column(db.String(10))              # 消費税経理方式 ('tax_included' or 'tax_excluded')
+    accounting_period_start = db.Column(db.String(10))
+    accounting_period_end = db.Column(db.String(10))
+    term_number = db.Column(db.Integer)
+    office_count = db.Column(db.String(10))
+    declaration_type = db.Column(db.String(10))
+    tax_system = db.Column(db.String(10))
     
-    # 経理責任者
+    # ▼▼▼▼▼ ここから下を追記します ▼▼▼▼▼
+    # --- 代表者情報 ---
+    representative_name = db.Column(db.String(100))
+    representative_kana = db.Column(db.String(100))
+    representative_position = db.Column(db.String(100))
+    representative_status = db.Column(db.String(20))
+    representative_zip_code = db.Column(db.String(7))
+    representative_prefecture = db.Column(db.String(10))
+    representative_city = db.Column(db.String(50))
+    representative_address = db.Column(db.String(200))
+    # ▲▲▲▲▲ ここまで追記 ▲▲▲▲▲
+    
+    # --- 経理責任者 ---
     accounting_manager_name = db.Column(db.String(100))
     accounting_manager_kana = db.Column(db.String(100))
     
-    # 決算日・延長
+    # --- 決算日・延長 ---
     closing_date = db.Column(db.String(10))
     is_corp_tax_extended = db.Column(db.Boolean, default=False)
     is_biz_tax_extended = db.Column(db.Boolean, default=False)
     
-    # 従業者数
-    employee_count_at_eoy = db.Column(db.Integer) # 期末従業者数
+    # --- 従業者数 ---
+    employee_count_at_eoy = db.Column(db.Integer)
     
-    # 税理士情報
+    # --- 税理士情報 ---
     tax_accountant_name = db.Column(db.String(100))
     tax_accountant_phone = db.Column(db.String(20))
     tax_accountant_zip = db.Column(db.String(7))
@@ -51,34 +61,30 @@ class Company(db.Model):
     tax_accountant_city = db.Column(db.String(50))
     tax_accountant_address = db.Column(db.String(200))
 
-    # 還付口座
+    # --- 還付口座 ---
     refund_bank_name = db.Column(db.String(100))
     refund_branch_name = db.Column(db.String(100))
     refund_account_type = db.Column(db.String(10))
     refund_account_number = db.Column(db.String(20))
-    # ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
 
 
     def __repr__(self):
         return f'<Company {self.company_name}>'
-# app/company/models.py (一番下に追記)
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)        # 氏名
-    group = db.Column(db.String(100))                       # グループ
-    joined_date = db.Column(db.String(10))                  # 社員となった日
-    relationship = db.Column(db.String(50))                 # 続柄
-    address = db.Column(db.String(200))                     # 住所
-    shares_held = db.Column(db.Integer)                     # 株式数
-    voting_rights = db.Column(db.Integer)                   # 議決権
-    position = db.Column(db.String(50))                     # 役職
-    investment_amount = db.Column(db.Integer)               # 出資金額
+    name = db.Column(db.String(100), nullable=False)
+    group = db.Column(db.String(100))
+    joined_date = db.Column(db.String(10))
+    relationship = db.Column(db.String(50))
+    address = db.Column(db.String(200))
+    shares_held = db.Column(db.Integer)
+    voting_rights = db.Column(db.Integer)
+    position = db.Column(db.String(50))
+    investment_amount = db.Column(db.Integer)
     
-    # 外部キー: この社員がどの会社に属しているかを示す
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    # リレーションシップ: Companyモデルからこの社員の情報を逆引きできるようにする
     company = db.relationship('Company', backref=db.backref('employees', lazy=True))
 
     def __repr__(self):
-        return f'<Employee {self.name}>'        
+        return f'<Employee {self.name}>'

@@ -1,7 +1,7 @@
 # app/company/forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, DateField, IntegerField, SubmitField
+from wtforms import StringField, DateField, IntegerField, SubmitField, RadioField, SelectField, BooleanField
 from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import TextInput
 
@@ -17,3 +17,74 @@ class EmployeeForm(FlaskForm):
     position = StringField('役職', validators=[Optional()])
     investment_amount = IntegerField('出資金額', validators=[Optional()], widget=TextInput())
     submit = SubmitField('登録する')
+
+# ▼▼▼▼▼ ここから下を追記します ▼▼▼▼▼
+
+class DeclarationForm(FlaskForm):
+    """申告情報を登録・編集するためのフォーム"""
+    
+    # --- 基本項目 ---
+    accounting_period_start = DateField('会計期間 開始', validators=[Optional()])
+    accounting_period_end = DateField('会計期間 終了', validators=[Optional()])
+    office_count = RadioField(
+        '事業所の数',
+        choices=[('one', '１箇所'), ('multiple', '２箇所以上')],
+        validators=[Optional()]
+    )
+    declaration_type = RadioField(
+        '申告区分',
+        choices=[('blue', '青色申告'), ('white', '白色申告')],
+        validators=[Optional()]
+    )
+    tax_system = RadioField(
+        '消費税経理方式',
+        choices=[('included', '税込経理方式'), ('excluded', '税抜経理方式')],
+        validators=[Optional()]
+    )
+
+    # --- 代表者カテゴリ ---
+    # Note: これらの情報はCompanyモデルに追加する必要があります
+    representative_name = StringField('氏名', validators=[Optional()])
+    representative_kana = StringField('氏名ふりがな', validators=[Optional()])
+    representative_position = StringField('役職', validators=[Optional()])
+    representative_status = SelectField(
+        '常勤・非常勤の別',
+        choices=[('full_time', '常勤'), ('part_time', '非常勤')],
+        validators=[Optional()]
+    )
+    representative_zip_code = StringField('郵便番号', validators=[Optional()])
+    representative_prefecture = StringField('都道府県', validators=[Optional()])
+    representative_city = StringField('市区町村', validators=[Optional()])
+    representative_address = StringField('住所', validators=[Optional()])
+
+    # --- 経理責任者カテゴリ ---
+    accounting_manager_name = StringField('氏名', validators=[Optional()])
+    accounting_manager_kana = StringField('氏名ふりがな', validators=[Optional()])
+
+    # --- 決算・申告期限 ---
+    closing_date = DateField('決算確定年月日', validators=[Optional()])
+    is_corp_tax_extended = BooleanField('法人税の申告期限の延長（延長している）', default=False)
+    is_biz_tax_extended = BooleanField('事業税の申告期限の延長（延長している）', default=False)
+    
+    # --- その他 ---
+    employee_count_at_eoy = IntegerField('期末従業者数', validators=[Optional()])
+
+    # --- 税理士カテゴリ ---
+    tax_accountant_name = StringField('氏名', validators=[Optional()])
+    tax_accountant_phone = StringField('電話番号', validators=[Optional()])
+    tax_accountant_zip = StringField('郵便番号', validators=[Optional()])
+    tax_accountant_prefecture = StringField('都道府県', validators=[Optional()])
+    tax_accountant_city = StringField('市区町村', validators=[Optional()])
+    tax_accountant_address = StringField('住所', validators=[Optional()])
+
+    # --- 還付金受取口座 ---
+    refund_bank_name = StringField('銀行名', validators=[Optional()])
+    refund_branch_name = StringField('支店名', validators=[Optional()])
+    refund_account_type = SelectField(
+        '預金種類',
+        choices=[('ordinary', '普通'), ('checking', '当座'), ('savings', '貯蓄')],
+        validators=[Optional()]
+    )
+    refund_account_number = StringField('口座番号', validators=[Optional()])
+
+    submit = SubmitField('保存する')

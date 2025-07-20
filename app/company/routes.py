@@ -1,9 +1,10 @@
 # app/company/routes.py
 
-from flask import render_template, request, redirect, url_for, Blueprint
+from flask import render_template, request, redirect, url_for, Blueprint, flash
 from datetime import datetime
 from app.company.models import Company, Employee
-from app.company.forms import EmployeeForm
+# ▼▼▼ DeclarationForm をインポートします ▼▼▼
+from app.company.forms import EmployeeForm, DeclarationForm
 from app import db
 
 # Blueprintを定義。このファイル内のルートは全て /company が先頭に付く
@@ -46,7 +47,7 @@ def save():
     company.phone_number = request.form.get('phone_number')
     company.homepage = request.form.get('homepage')
     company.establishment_date = request.form.get('establishment_date')
-    company.fiscal_period_is_one_year = 'fiscal_period_is_one_year' in request.form
+    # チェックボックスの処理を修正
     company.capital_limit = 'capital_limit' in request.form
     company.is_supported_industry = 'is_supported_industry' in request.form
     company.is_not_excluded_business = 'is_not_excluded_business' in request.form
@@ -76,7 +77,7 @@ def employees():
         employees=employee_list
     )
 
-
+# ▼▼▼▼▼ declaration ルートを以下のように全面的に更新します ▼▼▼▼▼
 @company_bp.route('/declaration', methods=['GET', 'POST'])
 def declaration():
     """
@@ -85,12 +86,24 @@ def declaration():
     """
     company = Company.query.first()
     if not company:
+        # 会社情報が未登録の場合は基本情報ページへリダイレクト
+        flash('最初に会社の基本情報を登録してください。', 'info')
         return redirect(url_for('company.show'))
 
-    if request.method == 'POST':
-        pass
+    # DeclarationForm をインスタンス化
+    # POST時はフォームからのデータで、GET時はDBのデータ(obj=company)で初期化
+    form = DeclarationForm(request.form, obj=company)
 
-    return render_template('company/declaration_form.html', company=company)
+    if form.validate_on_submit():
+        # フォームのデータをDBオブジェクトに一括でセット
+        form.populate_obj(company)
+        db.session.commit()
+        flash('申告情報を更新しました。', 'success')
+        return redirect(url_for('company.declaration'))
+
+    # GETリクエスト時、またはPOSTでバリデーションエラーがあった場合
+    return render_template('company/declaration_form.html', form=form)
+# ▲▲▲▲▲ ここまで更新 ▲▲▲▲▲
 
 
 @company_bp.route('/employee/register', methods=['GET', 'POST'])
