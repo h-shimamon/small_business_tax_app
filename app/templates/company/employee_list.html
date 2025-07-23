@@ -1,19 +1,25 @@
 <!-- app/templates/company/employee_list.html -->
 {% extends "base.html" %}
 
+{# ▼▼▼【最重要修正箇所】▼▼▼ #}
+{# このブロックで、親のCSSに加えてテーブル専用CSSを読み込みます #}
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/table_view.css') }}">
+{% endblock %}
+{# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ #}
+
+
 {% block title %}社員名簿{% endblock %}
 
 {% block sidebar %}
 <a href="{{ url_for('company.show') }}">基本情報</a>
 <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
 <a href="{{ url_for('company.declaration') }}">申告情報</a>
-<!-- ★修正点: href="#" を正しいリンクに変更 -->
 <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
 {% endblock %}
 
 {% block content %}
-
-
 <div class="content-header">
     <h1 class="content-title">社員名簿</h1>
     <p>登録内容から自動で同族会社の判定を行うため、社員名簿 の作成は必須です。</p>
@@ -36,50 +42,45 @@
                     <th>持ち株比率</th>
                     <th>役職</th>
                     <th>出資金額</th>
-                    <!-- 編集・削除ボタン用の空のヘッダーを追加 -->
                     <th colspan="2" style="width: 120px;"></th>
                 </tr>
             </thead>
 
-<tbody>
-    {% for employee in employees %}
-    <tr>
-        <td>{{ employee.name or '' }}</td>
-        <td>{{ employee.group or '' }}</td>
-        <td>
-            {% if employee.joined_date and employee.joined_date.strftime %}
-                {{ employee.joined_date.strftime('%Y-%m-%d') }}
-            {% else %}
-                {{ employee.joined_date or '' }}
-            {% endif %}
-        </td>
-        <td>{{ employee.relationship or '' }}</td>
-        <td>{{ employee.address or '' }}</td>
-        <td>{{ "{:,.0f}".format(employee.shares_held) if employee.shares_held else '' }}</td>
-        <td>{{ "{:,.0f}".format(employee.voting_rights) if employee.voting_rights else '' }}</td>
-        <td>...</td>
-        <td>{{ employee.position or '' }}</td>
-        <td>{{ "{:,.0f}".format(employee.investment_amount) if employee.investment_amount else '' }}</td>
-        <td>
-            <!-- 編集と削除のボタンを一つのセルにまとめる -->
-            <div class="action-buttons-group">
-                <a href="{{ url_for('company.edit_employee', employee_id=employee.id) }}" class="action-btn">編集</a>
-                <form action="{{ url_for('company.delete_employee', employee_id=employee.id) }}" method="post" style="display:inline;">
-                    <button type="submit" class="action-btn delete" onclick="return confirm('本当にこの従業員を削除しますか？');">削除</button>
-                </form>
-            </div>
-        </td>
-    </tr>
-    {% else %}
-    <tr>
-        <td colspan="11" style="text-align: center; padding: 40px;">まだ社員が登録されていません。</td>
-    </tr>
-    {% endfor %}
-</tbody>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.name or '' }}</td>
+                    <td>{{ employee.group or '' }}</td>
+                    <td>
+                        {% if employee.joined_date and employee.joined_date.strftime %}
+                            {{ employee.joined_date.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            {{ employee.joined_date or '' }}
+                        {% endif %}
+                    </td>
+                    <td>{{ employee.relationship or '' }}</td>
+                    <td>{{ employee.address or '' }}</td>
+                    <td>{{ "{:,.0f}".format(employee.shares_held) if employee.shares_held else '' }}</td>
+                    <td>{{ "{:,.0f}".format(employee.voting_rights) if employee.voting_rights else '' }}</td>
+                    <td>...</td>
+                    <td>{{ employee.position or '' }}</td>
+                    <td>{{ "{:,.0f}".format(employee.investment_amount) if employee.investment_amount else '' }}</td>
+                    <td>
+                        <div class="action-buttons-group">
+                            <a href="{{ url_for('company.edit_employee', employee_id=employee.id) }}" class="action-btn">編集</a>
+                            <form action="{{ url_for('company.delete_employee', employee_id=employee.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="action-btn delete" onclick="return confirm('本当にこの従業員を削除しますか？');">削除</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" style="text-align: center; padding: 40px;">まだ社員が登録されていません。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 </div>
-
-<!-- 同族会社の判定セクションは後で追加 -->
-
 {% endblock %}

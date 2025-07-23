@@ -1,13 +1,20 @@
 <!-- app/templates/company/office_list.html -->
 {% extends "base.html" %}
 
+{# ▼▼▼【最重要修正箇所】▼▼▼ #}
+{# このブロックで、親のCSSに加えてテーブル専用CSSを読み込みます #}
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/table_view.css') }}">
+{% endblock %}
+{# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ #}
+
 {% block title %}事業所一覧{% endblock %}
 
 {% block sidebar %}
 <a href="{{ url_for('company.show') }}">基本情報</a>
 <a href="{{ url_for('company.employees') }}">社員名簿</a>
 <a href="{{ url_for('company.declaration') }}">申告情報</a>
-<!-- ★修正点1: 'office.list' から 'company.office_list' へ変更 -->
 <a href="{{ url_for('company.office_list') }}" class="active">事業所一覧</a>
 {% endblock %}
 
@@ -17,7 +24,6 @@
 </div>
 
 <div class="card">
-    <!-- ★修正点2: 'office.register' から 'company.register_office' へ変更 -->
     <a href="{{ url_for('company.register_office') }}" class="button-primary">＋ 新規登録</a>
 
     <div class="table-wrapper">
@@ -46,9 +52,7 @@
                     <td>{{ office.employee_count or '' }}</td>
                     <td>
                         <div class="action-buttons-group">
-                            <!-- ★修正点3: 'office.edit' から 'company.edit_office' へ変更 -->
                             <a href="{{ url_for('company.edit_office', office_id=office.id) }}" class="action-btn">編集</a>
-                            <!-- ★修正点4: 'office.delete' から 'company.delete_office' へ変更 -->
                             <form action="{{ url_for('company.delete_office', office_id=office.id) }}" method="post" style="display:inline;">
                                 <button type="submit" class="action-btn delete" onclick="return confirm('本当にこの事業所を削除しますか？');">削除</button>
                             </form>

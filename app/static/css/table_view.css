@@ -1,0 +1,36 @@
+/* --- テーブル（社員名簿など） --- */
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; vertical-align: middle; }
+thead th { background-color: #f7f9fc; font-weight: 500; color: var(--text-secondary); }
+.action-btn { background-color: #eee; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+
+/* テーブル内のアクションボタン（編集・削除）のスタイルを上書き */
+.action-btn {
+    background-color: #e9ecef; /* 少し濃いグレーに */
+    color: var(--text-secondary);
+    border: 1px solid #dee2e6;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s, color 0.2s;
+    text-decoration: none; /* ★この行を追加 */
+}
+
+.action-btn:hover {
+    background-color: #6c757d; /* ホバー時に濃いグレーに */
+    color: white;
+}
+
+.action-btn.delete:hover {
+    background-color: #dc3545; /* 赤色に */
+    border-color: #dc3545;
+}
+
+/* テーブル内のボタンをグループ化して間隔を調整 */
+.action-buttons-group {
+    display: flex;
+    justify-content: center;
+    gap: 8px; /* ボタン間の隙間を8pxに設定 */
+}

@@ -1,6 +1,14 @@
 <!-- app/templates/company/declaration_form.html -->
 {% extends "base.html" %}
 
+{# ▼▼▼ このブロックを {% extends %} の直後に追加 ▼▼▼ #}
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/declaration_form.css') }}">
+{% endblock %}
+{# ▲▲▲ ここまで ▲▲▲ #}
+
+
 {# --- 入力フィールドをレンダリングするためのマクロ --- #}
 {% macro render_field(field, class='form-control') %}
 <div class="table-row">

@@ -1,11 +1,16 @@
-<!-- app/templates/base.html (二階層ナビ版) -->
+<!-- app/templates/base.html (修正版) -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}法人税申告アプリ{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {# ▼▼▼ このブロックで共通CSSを読み込み、子テンプレートからの拡張を許可します ▼▼▼ #}
+    {% block head %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% endblock %}
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,8 +19,8 @@
     <!-- 上部固定ヘッダー (グローバルナビゲーション) -->
     <header class="global-header">
         <nav class="global-nav">
-            <a href="{{ url_for('main.top') }}" class="nav-item {% if request.blueprint == 'main' %}active{% endif %}">ホーム</a>
-            <a href="{{ url_for('company.show') }}" class="nav-item {% if request.blueprint == 'company' %}active{% endif %}">基本情報登録</a>
+            <a href="#" class="nav-item">ホーム</a>
+            <a href="{{ url_for('company.show') }}" class="nav-item active">基本情報登録</a>
             <a href="#" class="nav-item">会計データ選択</a>
             <a href="#" class="nav-item">固定資産台帳</a>
             <a href="#" class="nav-item">勘定科目内訳書</a>
@@ -38,5 +43,8 @@
             {% block content %}{# 各ページでこのブロックを上書きする #}{% endblock %}
         </main>
     </div>
+
+    {# スクリプト用のブロックを追加 #}
+    {% block scripts %}{% endblock %}
 </body>
 </html>
