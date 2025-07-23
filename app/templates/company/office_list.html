@@ -1,13 +1,10 @@
 <!-- app/templates/company/office_list.html -->
 {% extends "base.html" %}
 
-{# ▼▼▼【最重要修正箇所】▼▼▼ #}
-{# このブロックで、親のCSSに加えてテーブル専用CSSを読み込みます #}
 {% block head %}
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/table_view.css') }}">
 {% endblock %}
-{# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ #}
 
 {% block title %}事業所一覧{% endblock %}
 
@@ -24,32 +21,42 @@
 </div>
 
 <div class="card">
-    <a href="{{ url_for('company.register_office') }}" class="button-primary">＋ 新規登録</a>
+    <div class="card-header">
+        <a href="{{ url_for('company.register_office') }}" class="button-primary">＋ 新規登録</a>
+    </div>
 
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
+                    <th>所属都道府県</th>
+                    <th>所属市区町村</th>
                     <th>事業所名</th>
                     <th>郵便番号</th>
-                    <th>都道府県</th>
-                    <th>市区町村</th>
+                    <th>住所</th>
                     <th>電話番号</th>
                     <th>開設年月日</th>
+                    <th>閉鎖年月日</th>
                     <th>従業者数</th>
-                    <th colspan="2" style="width: 120px;"></th>
+                    <th>事業所数</th>
+                    <!-- ▼▼▼ 変更点: 「操作」のテキストを削除 ▼▼▼ -->
+                    <th style="width: 130px;"></th>
+                    <!-- ▲▲▲ 変更点 ▲▲▲ -->
                 </tr>
             </thead>
             <tbody>
                 {% for office in offices %}
                 <tr>
-                    <td>{{ office.name or '' }}</td>
-                    <td>{{ office.zip_code or '' }}</td>
                     <td>{{ office.prefecture or '' }}</td>
                     <td>{{ office.municipality or '' }}</td>
+                    <td>{{ office.name or '' }}</td>
+                    <td>{{ office.zip_code or '' }}</td>
+                    <td>{{ office.address or '' }}</td>
                     <td>{{ office.phone_number or '' }}</td>
                     <td>{{ office.opening_date or '' }}</td>
+                    <td>{{ office.closing_date or '' }}</td>
                     <td>{{ office.employee_count or '' }}</td>
+                    <td>{{ office.office_count or '' }}</td>
                     <td>
                         <div class="action-buttons-group">
                             <a href="{{ url_for('company.edit_office', office_id=office.id) }}" class="action-btn">編集</a>
@@ -61,11 +68,18 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 40px;">まだ事業所が登録されていません。</td>
+                    <td colspan="11" style="text-align: center; padding: 40px;">まだ事業所が登録されていません。</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    <!-- ▼▼▼ 変更点: 「総事業所数」のフッターを削除 ▼▼▼ -->
+    <!--
+    <div class="table-footer">
+        <p>総事業所数: {{ offices | length }}</p>
+    </div>
+    -->
+    <!-- ▲▲▲ 変更点 ▲▲▲ -->
 </div>
 {% endblock %}

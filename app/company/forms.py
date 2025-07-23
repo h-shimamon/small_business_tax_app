@@ -2,7 +2,7 @@
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, DateField, IntegerField, SubmitField, RadioField, SelectField, BooleanField
-from wtforms.validators import DataRequired, Optional
+from wtforms.validators import DataRequired, Optional, Length
 from wtforms.widgets import TextInput
 
 class EmployeeForm(FlaskForm):
@@ -19,17 +19,18 @@ class EmployeeForm(FlaskForm):
     submit = SubmitField('登録する')
 
 class OfficeForm(FlaskForm):
-    """事業所情報を登録・編集するためのフォーム"""
-    name = StringField('事業所名', validators=[DataRequired(message='事業所名は必須です。')])
-    zip_code = StringField('郵便番号', validators=[Optional()])
-    prefecture = StringField('都道府県', validators=[Optional()])
-    municipality = StringField('市区町村', validators=[Optional()])
-    address = StringField('市区町村以下の住所', validators=[Optional()])
-    phone_number = StringField('電話番号', validators=[Optional()])
-    opening_date = DateField('開設年月日', validators=[Optional()])
-    closing_date = DateField('閉鎖年月日', validators=[Optional()])
-    employee_count = IntegerField('従業者数', validators=[Optional()], widget=TextInput())
-    submit = SubmitField('登録する')
+    """事業所の登録・編集フォーム"""
+    prefecture = StringField('所属都道府県', validators=[Optional(), Length(max=50)])
+    municipality = StringField('所属市区町村', validators=[Optional(), Length(max=100)])
+    name = StringField('事業所名', validators=[DataRequired(message="事業所名は必須です。"), Length(max=100)])
+    zip_code = StringField('郵便番号', validators=[Optional(), Length(max=7)])
+    address = StringField('住所', validators=[Optional(), Length(max=200)])
+    phone_number = StringField('電話番号', validators=[Optional(), Length(max=20)])
+    opening_date = DateField('開設年月日', format='%Y-%m-%d', validators=[Optional()])
+    closing_date = DateField('閉鎖年月日', format='%Y-%m-%d', validators=[Optional()])
+    employee_count = IntegerField('従業者数', validators=[Optional()])
+    office_count = IntegerField('事業所数', validators=[Optional()])
+    submit = SubmitField('保存する')
 
 class DeclarationForm(FlaskForm):
     """申告情報を登録・編集するためのフォーム"""
