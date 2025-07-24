@@ -100,6 +100,7 @@ class Office(db.Model):
     opening_date = db.Column(db.String(10))
     closing_date = db.Column(db.String(10))
     employee_count = db.Column(db.Integer)
+    office_count = db.Column(db.Integer)
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('offices', lazy=True))

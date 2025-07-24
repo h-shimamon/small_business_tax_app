@@ -26,7 +26,13 @@
 </div>
 
 <div class="card">
-    <a href="{{ url_for('company.register_employee') }}" class="button-primary">＋ 新規登録</a>
+    <!-- ▼▼▼▼▼ 変更箇所 ▼▼▼▼▼ -->
+    <!-- ボタンをdivで囲み、事業所一覧画面と同様のレイアウト構造に合わせます。 -->
+    <!-- これにより、ボタンとテーブルの間に適切なマージンが確保されます。 -->
+    <div class="card-actions">
+        <a href="{{ url_for('company.register_employee') }}" class="button-primary">＋ 新規登録</a>
+    </div>
+    <!-- ▲▲▲▲▲ 変更箇所 ▲▲▲▲▲ -->
 
     <div class="table-wrapper">
         <table>
