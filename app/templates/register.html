@@ -100,7 +100,11 @@
             <input type="text" id="reference_number" name="reference_number" value="{{ company.reference_number if company else '' }}">
         </div>
 
-        <button type="submit">保存する</button>
+        <!-- ▼▼▼ 修正箇所 ▼▼▼ -->
+        <div class="form-actions">
+            <button type="submit" class="button-primary">保存する</button>
+        </div>
+        <!-- ▲▲▲ 修正箇所 ▲▲▲ -->
     </form>
 </div>
 {% endblock %}
