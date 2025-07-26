@@ -3,7 +3,8 @@
 from flask import render_template, request, redirect, url_for, Blueprint, flash
 from datetime import datetime
 from app.company.models import Company, Employee, Office
-from app.company.forms import EmployeeForm, DeclarationForm, OfficeForm
+# ▼▼▼▼▼ AccountingSelectionForm をインポートリストに追加 ▼▼▼▼▼
+from app.company.forms import EmployeeForm, DeclarationForm, OfficeForm, AccountingSelectionForm
 from app import db
 
 # Blueprintを定義。このファイル内のルートは全て /company が先頭に付く
@@ -94,7 +95,6 @@ def register_employee():
 @company_bp.route('/employee/edit/<int:employee_id>', methods=['GET', 'POST'])
 def edit_employee(employee_id):
     """従業員情報の編集"""
-    # 既存のチェック処理はそのまま
     if not Company.query.first():
         flash('先に会社の基本情報を登録してください。', 'error')
         return redirect(url_for('company.show'))
@@ -102,17 +102,12 @@ def edit_employee(employee_id):
     employee = Employee.query.get_or_404(employee_id)
     form = EmployeeForm(obj=employee)
 
-    # ▼▼▼▼▼ ここからが修正の核心部です ▼▼▼▼▼
-    # 画面表示時(GETリクエスト)に、DBから読み込んだ日付データが
-    # 文字列だった場合、日付オブジェクトに変換します。
-    # これによりテンプレートでの 'strftime' エラーを防ぎます。
     if request.method == 'GET' and employee.joined_date:
         if isinstance(employee.joined_date, str):
             try:
                 form.joined_date.data = datetime.strptime(employee.joined_date, '%Y-%m-%d').date()
             except ValueError:
-                form.joined_date.data = None # 念のため変換失敗時も考慮
-    # ▲▲▲▲▲ ここまでが修正の核心部です ▲▲▲▲▲
+                form.joined_date.data = None
 
     if form.validate_on_submit():
         form.populate_obj(employee)
@@ -121,6 +116,7 @@ def edit_employee(employee_id):
         return redirect(url_for('company.employees'))
         
     return render_template('company/edit_employee.html', form=form, employee_id=employee.id)
+
 @company_bp.route('/employee/delete/<int:employee_id>', methods=['POST'])
 def delete_employee(employee_id):
     """従業員の削除"""
@@ -146,31 +142,25 @@ def declaration():
         flash('会社情報が未登録のため、開発用の仮画面を表示しています。入力内容は保存されません。', 'warning')
         return render_template('company/declaration_form.html', form=form)
 
-    # GETリクエストの場合、DBオブジェクトからフォームを生成
     if request.method == 'GET':
         form = DeclarationForm(obj=company)
-        # DBから読み込んだ日付データが文字列の場合、日付オブジェクトに変換する
         if company.accounting_period_start and isinstance(company.accounting_period_start, str):
             try:
                 form.accounting_period_start.data = datetime.strptime(company.accounting_period_start, '%Y-%m-%d').date()
             except ValueError:
-                form.accounting_period_start.data = None # 変換失敗時はNone
+                form.accounting_period_start.data = None
         
         if company.accounting_period_end and isinstance(company.accounting_period_end, str):
             try:
                 form.accounting_period_end.data = datetime.strptime(company.accounting_period_end, '%Y-%m-%d').date()
             except ValueError:
-                form.accounting_period_end.data = None # 変換失敗時はNone
+                form.accounting_period_end.data = None
         
-        # ▼▼▼▼▼ 新しく追加した修正箇所です ▼▼▼▼▼
         if company.closing_date and isinstance(company.closing_date, str):
             try:
                 form.closing_date.data = datetime.strptime(company.closing_date, '%Y-%m-%d').date()
             except ValueError:
-                form.closing_date.data = None # 変換失敗時はNone
-        # ▲▲▲▲▲ 新しく追加した修正箇所です ▲▲▲▲▲
-
-    # POSTリクエストの場合、フォームデータからフォームを生成
+                form.closing_date.data = None
     else:
         form = DeclarationForm(request.form)
 
@@ -180,11 +170,26 @@ def declaration():
         flash('申告情報を更新しました。', 'success')
         return redirect(url_for('company.declaration'))
 
-    # フォームを表示（GET時、またはPOSTでバリデーションエラー時）
     return render_template('company/declaration_form.html', form=form)
 
-# --- 事業所 (Office) 関連 ---
 
+# ▼▼▼▼▼ この関数をまるごと追加しました ▼▼▼▼▼
+@company_bp.route('/select_accounting', methods=['GET', 'POST'])
+def select_accounting():
+    """会計データ選択画面を表示し、選択されたデータを処理する。"""
+    form = AccountingSelectionForm(request.form)
+    
+    if form.validate_on_submit():
+        year = form.accounting_year.data
+        period = form.accounting_period.data
+        
+        flash(f'選択されたデータ：{year}年 {dict(form.accounting_period.choices).get(period)}', 'success')
+        
+    return render_template('company/select_accounting.html', form=form)
+# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
+
+
+# --- 事業所 (Office) 関連 ---
 @company_bp.route('/offices')
 def office_list():
     """事業所の一覧ページ"""

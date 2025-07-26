@@ -32,6 +32,24 @@ class OfficeForm(FlaskForm):
     office_count = IntegerField('事業所数', validators=[Optional()])
     submit = SubmitField('保存する')
 
+class AccountingSelectionForm(FlaskForm):
+    """会計データ選択用のフォーム"""
+    accounting_year = SelectField(
+        '対象年度',
+        choices=[('2025', '2025年'), ('2024', '2024年'), ('2023', '2023年')],
+        validators=[DataRequired(message="年度を選択してください。")]
+    )
+    accounting_period = RadioField(
+        '対象期間',
+        choices=[
+            ('first_half', '上期'),
+            ('second_half', '下期'),
+            ('full_year', '通期')
+        ],
+        default='first_half',
+        validators=[DataRequired(message="期間を選択してください。")]
+    )
+
 class DeclarationForm(FlaskForm):
     """申告情報を登録・編集するためのフォーム"""
     
