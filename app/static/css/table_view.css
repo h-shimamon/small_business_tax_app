@@ -54,6 +54,31 @@ tbody tr:hover {
     justify-content: flex-end; /* ボタンを右寄せにする */
 }
 
-/* テーブル内のアクションボタン */
+/* テーブル内のアクションボタン（aタグ, buttonタグ共通） */
 .action-btn {
-    padding: 4px 12
+    display: inline-block;
+    padding: 4px 12px;
+    border: 1px solid #d1d5db;  /* 枠線 */
+    border-radius: 6px;         /* 角丸 */
+    background-color: #ffffff;  /* 背景色 */
+    color: #374151;             /* 文字色 */
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;      /* aタグの下線を消す */
+    cursor: pointer;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* ホバー時のスタイル */
+.action-btn:hover {
+    background-color: #f9fafb;
+}
+
+/* 削除ボタンの文字色 */
+.action-btn.delete {
+    color: #ef4444;
+}
+.action-btn.delete:hover {
+    background-color: #fef2f2;
+}

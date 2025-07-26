@@ -94,20 +94,33 @@ def register_employee():
 @company_bp.route('/employee/edit/<int:employee_id>', methods=['GET', 'POST'])
 def edit_employee(employee_id):
     """従業員情報の編集"""
+    # 既存のチェック処理はそのまま
     if not Company.query.first():
         flash('先に会社の基本情報を登録してください。', 'error')
         return redirect(url_for('company.show'))
 
     employee = Employee.query.get_or_404(employee_id)
-    form = EmployeeForm(request.form, obj=employee)
+    form = EmployeeForm(obj=employee)
+
+    # ▼▼▼▼▼ ここからが修正の核心部です ▼▼▼▼▼
+    # 画面表示時(GETリクエスト)に、DBから読み込んだ日付データが
+    # 文字列だった場合、日付オブジェクトに変換します。
+    # これによりテンプレートでの 'strftime' エラーを防ぎます。
+    if request.method == 'GET' and employee.joined_date:
+        if isinstance(employee.joined_date, str):
+            try:
+                form.joined_date.data = datetime.strptime(employee.joined_date, '%Y-%m-%d').date()
+            except ValueError:
+                form.joined_date.data = None # 念のため変換失敗時も考慮
+    # ▲▲▲▲▲ ここまでが修正の核心部です ▲▲▲▲▲
+
     if form.validate_on_submit():
         form.populate_obj(employee)
         db.session.commit()
         flash('従業員情報を更新しました。', 'success')
         return redirect(url_for('company.employees'))
-    return render_template('company/edit_employee.html', form=form)
-
-
+        
+    return render_template('company/edit_employee.html', form=form, employee_id=employee.id)
 @company_bp.route('/employee/delete/<int:employee_id>', methods=['POST'])
 def delete_employee(employee_id):
     """従業員の削除"""
@@ -133,14 +146,42 @@ def declaration():
         flash('会社情報が未登録のため、開発用の仮画面を表示しています。入力内容は保存されません。', 'warning')
         return render_template('company/declaration_form.html', form=form)
 
-    form = DeclarationForm(request.form, obj=company)
+    # GETリクエストの場合、DBオブジェクトからフォームを生成
+    if request.method == 'GET':
+        form = DeclarationForm(obj=company)
+        # DBから読み込んだ日付データが文字列の場合、日付オブジェクトに変換する
+        if company.accounting_period_start and isinstance(company.accounting_period_start, str):
+            try:
+                form.accounting_period_start.data = datetime.strptime(company.accounting_period_start, '%Y-%m-%d').date()
+            except ValueError:
+                form.accounting_period_start.data = None # 変換失敗時はNone
+        
+        if company.accounting_period_end and isinstance(company.accounting_period_end, str):
+            try:
+                form.accounting_period_end.data = datetime.strptime(company.accounting_period_end, '%Y-%m-%d').date()
+            except ValueError:
+                form.accounting_period_end.data = None # 変換失敗時はNone
+        
+        # ▼▼▼▼▼ 新しく追加した修正箇所です ▼▼▼▼▼
+        if company.closing_date and isinstance(company.closing_date, str):
+            try:
+                form.closing_date.data = datetime.strptime(company.closing_date, '%Y-%m-%d').date()
+            except ValueError:
+                form.closing_date.data = None # 変換失敗時はNone
+        # ▲▲▲▲▲ 新しく追加した修正箇所です ▲▲▲▲▲
+
+    # POSTリクエストの場合、フォームデータからフォームを生成
+    else:
+        form = DeclarationForm(request.form)
+
     if form.validate_on_submit():
         form.populate_obj(company)
         db.session.commit()
         flash('申告情報を更新しました。', 'success')
         return redirect(url_for('company.declaration'))
-    return render_template('company/declaration_form.html', form=form)
 
+    # フォームを表示（GET時、またはPOSTでバリデーションエラー時）
+    return render_template('company/declaration_form.html', form=form)
 
 # --- 事業所 (Office) 関連 ---
 
