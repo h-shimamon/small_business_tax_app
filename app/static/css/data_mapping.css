@@ -1,0 +1,38 @@
+/* app/static/css/data_mapping.css */
+
+.mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+.mapping-table th,
+.mapping-table td {
+    border: 1px solid var(--border-color);
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.mapping-table th {
+    background-color: #f9fafb; /* a light gray background */
+    font-weight: 500;
+}
+
+.mismatched-header {
+    font-family: monospace;
+    background-color: #fee2e2; /* a light red background */
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #b91c1c; /* a dark red color */
+}
+
+.mapping-table .form-select {
+     width: 100%;
+     padding: 10px 12px;
+     border: 1px solid var(--border-color);
+     border-radius: 8px;
+     box-sizing: border-box;
+     font-size: 1rem;
+}

@@ -1,21 +1,24 @@
 # app/company/routes.py
 
-from flask import render_template, request, redirect, url_for, Blueprint, flash
+import os
+import pandas as pd
+from werkzeug.utils import secure_filename
+from flask import render_template, request, redirect, url_for, Blueprint, flash, current_app, session
 from datetime import datetime
 from app.company.models import Company, Employee, Office
-# ▼▼▼▼▼ AccountingSelectionForm をインポートリストに追加 ▼▼▼▼▼
-from app.company.forms import EmployeeForm, DeclarationForm, OfficeForm, AccountingSelectionForm
+from app.company.forms import EmployeeForm, DeclarationForm, OfficeForm, AccountingSelectionForm, DataMappingForm
 from app import db
+from wtforms import SelectField
 
-# Blueprintを定義。このファイル内のルートは全て /company が先頭に付く
+
 company_bp = Blueprint(
     'company',
     __name__,
-    template_folder='../templates', # テンプレートフォルダの場所を正しく指定
+    template_folder='../templates',
     url_prefix='/company'
 )
 
-
+# --- (既存のルートは変更なしのため省略) ---
 @company_bp.route('/')
 def show():
     """基本情報ページのトップ。"""
@@ -173,20 +176,118 @@ def declaration():
     return render_template('company/declaration_form.html', form=form)
 
 
-# ▼▼▼▼▼ この関数をまるごと追加しました ▼▼▼▼▼
 @company_bp.route('/select_accounting', methods=['GET', 'POST'])
 def select_accounting():
-    """会計データ選択画面を表示し、選択されたデータを処理する。"""
-    form = AccountingSelectionForm(request.form)
-    
+    """会計データ選択画面。ファイルアップロードとヘッダー検証を行う。"""
+    form = AccountingSelectionForm()
+
     if form.validate_on_submit():
-        year = form.accounting_year.data
-        period = form.accounting_period.data
+        file = form.upload_file.data
+        filename = secure_filename(file.filename)
         
-        flash(f'選択されたデータ：{year}年 {dict(form.accounting_period.choices).get(period)}', 'success')
-        
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'instance/uploads')
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        filepath = os.path.join(upload_folder, filename)
+        file.save(filepath)
+
+        try:
+            expected_headers = ['日付', '勘定科目', '補助科目', '摘要', '借方金額', '貸方金額']
+            
+            try:
+                df_header = pd.read_csv(filepath, nrows=0, encoding='utf-8-sig')
+            except UnicodeDecodeError:
+                df_header = pd.read_csv(filepath, nrows=0, encoding='shift_jis')
+            
+            actual_headers = df_header.columns.tolist()
+
+            matching_headers = set(actual_headers) & set(expected_headers)
+            mismatched_headers = [h for h in actual_headers if h not in matching_headers]
+            missing_expected = [h for h in expected_headers if h not in actual_headers]
+
+            if not mismatched_headers and not missing_expected:
+                flash('ファイルは正常に検証されました。データ取り込み処理に進みます。', 'success')
+                # TODO: 本来のデータ取り込み処理
+                # os.remove(filepath)
+                return redirect(url_for('company.select_accounting'))
+            else:
+                flash('ファイルヘッダーに不整合が見つかりました。項目を紐付けてください。', 'warning')
+                session['mapping_filepath'] = filepath
+                session['mismatched_headers'] = mismatched_headers
+                session['expected_candidates'] = missing_expected
+                return redirect(url_for('company.data_mapping'))
+
+        except Exception as e:
+            flash(f'ファイルの読み込み中にエラーが発生しました: {e}', 'danger')
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return redirect(url_for('company.select_accounting'))
+
     return render_template('company/select_accounting.html', form=form)
-# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
+
+# ▼▼▼▼▼ データマッピング画面のルートを完全に実装 ▼▼▼▼▼
+@company_bp.route('/data_mapping', methods=['GET', 'POST'])
+def data_mapping():
+    """ヘッダーの不整合をユーザーに修正させる画面"""
+    # セッションに必要な情報がなければ、開始ページにリダイレクト
+    if 'mapping_filepath' not in session:
+        flash('マッピング対象のファイルが見つかりません。もう一度アップロードしてください。', 'danger')
+        return redirect(url_for('company.select_accounting'))
+
+    mismatched = session.get('mismatched_headers', [])
+    expected_candidates = session.get('expected_candidates', [])
+    
+    # 動的にフォームを構築
+    class DynamicMappingForm(DataMappingForm):
+        pass
+
+    for header in mismatched:
+        # フィールド名はPythonの変数として使えるようにサニタイズ
+        field_name = f'map_{header.replace(" ", "_").replace("(", "").replace(")", "")}'
+        choices = [('', '-----')] + [(h, h) for h in expected_candidates]
+        field = SelectField(header, choices=choices)
+        setattr(DynamicMappingForm, field_name, field)
+
+    form = DynamicMappingForm(request.form)
+
+    if form.validate_on_submit():
+        filepath = session['mapping_filepath']
+        try:
+            # ユーザーが指定したマッピング情報を取得
+            mapping = {}
+            for field in form:
+                if field.name.startswith('map_'):
+                    original_header = field.label.text
+                    mapped_header = field.data
+                    if mapped_header: # 空欄は無視
+                        mapping[original_header] = mapped_header
+            
+            # 文字コードを判定しながらCSVを読み込み、ヘッダー名を変更
+            try:
+                df = pd.read_csv(filepath, encoding='utf-8-sig')
+            except UnicodeDecodeError:
+                df = pd.read_csv(filepath, encoding='shift_jis')
+
+            df.rename(columns=mapping, inplace=True)
+            
+            # TODO: ここでdfを使ったデータベースへの保存処理などを行う
+            
+            flash('データの紐付けが完了し、正常に処理されました。', 'success')
+
+            # 処理が完了したのでセッションと一時ファイルをクリーンアップ
+            os.remove(filepath)
+            session.pop('mapping_filepath', None)
+            session.pop('mismatched_headers', None)
+            session.pop('expected_candidates', None)
+
+            return redirect(url_for('company.select_accounting'))
+
+        except Exception as e:
+            flash(f'データ処理中にエラーが発生しました: {e}', 'danger')
+            return redirect(url_for('company.select_accounting'))
+
+    return render_template('company/data_mapping.html', form=form)
+# ▲▲▲▲▲ ここまで実装 ▲▲▲▲▲
 
 
 # --- 事業所 (Office) 関連 ---

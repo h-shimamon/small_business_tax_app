@@ -1,67 +1,72 @@
-{# app/templates/company/select_accounting.html #}
 {% extends "base.html" %}
 
 {% block title %}会計データ選択{% endblock %}
 
-{% block head %}
-  {{ super() }}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/select_accounting.css') }}">
-{% endblock %}
-
-{# ▼▼▼▼▼ サイドバーのブロックを指示通りに修正しました ▼▼▼▼▼ #}
 {% block sidebar %}
-  <a href="#" class="local-nav-item">勘定科目取込</a>
-  <a href="#" class="local-nav-item">仕訳取込</a>
-  <a href="#" class="local-nav-item">固定資産取込</a>
-  <a href="#" class="local-nav-item">試算表確認</a>
+    {# このページのサイドバーは、会計データ選択に関連するメニューを想定 #}
+    <a href="#" class="active">会計データ選択</a>
+    {# 他の関連メニューがあればここに追加 #}
 {% endblock %}
 
-{# ▼▼▼▼▼ コンテンツブロックは変更ありません ▼▼▼▼▼ #}
+
 {% block content %}
 <div class="form-container">
-  <h1>会計データ選択</h1>
-  <p class="form-description">データを表示したい会計期間を選択してください。</p>
+    <h2>会計データ選択</h2>
+    <p style="text-align: center; margin-bottom: 30px; color: var(--text-secondary);">データを表示したい会計期間を選択し、会計データファイルをアップロードしてください。</p>
 
-  <form action="{{ url_for('company.select_accounting') }}" method="POST" novalidate>
-    {{ form.csrf_token }}
+    {# ▼▼▼▼▼ enctype="multipart/form-data" を必ず追加 ▼▼▼▼▼ #}
+    <form method="POST" action="{{ url_for('company.select_accounting') }}" novalidate enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
 
-    <div class="form-group">
-      {{ form.accounting_year.label }}
-      {% if form.accounting_year.errors %}
-          {{ form.accounting_year(class="form-control is-invalid") }}
-          <div class="invalid-feedback">
-              {% for error in form.accounting_year.errors %}
-                  <span>{{ error }}</span>
-              {% endfor %}
-          </div>
-      {% else %}
-          {{ form.accounting_year(class="form-control") }}
-      {% endif %}
-    </div>
+        <div class="form-group">
+            {{ form.accounting_year.label }}
+            {{ form.accounting_year }}
+            {% if form.accounting_year.errors %}
+                <ul class="form-error">
+                {% for error in form.accounting_year.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
 
-    <div class="form-group">
-      {{ form.accounting_period.label }}
-      {% if form.accounting_period.errors %}
-          <div class="is-invalid"></div>
-          <div class="invalid-feedback">
-              {% for error in form.accounting_period.errors %}
-                  <span>{{ error }}</span>
-              {% endfor %}
-          </div>
-      {% endif %}
-      <div class="radio-group">
-          {% for subfield in form.accounting_period %}
-          <label class="radio-label">
-              {{ subfield }}
-              <span>{{ subfield.label.text }}</span>
-          </label>
-          {% endfor %}
-      </div>
-    </div>
+        <div class="form-group">
+            {{ form.accounting_period.label }}
+            {# ラジオボタンを適切にスタイリングするためのコンテナ #}
+            <div style="display: flex; gap: 20px;">
+                {% for subfield in form.accounting_period %}
+                <label class="inline-label">
+                    {{ subfield }}
+                    {{ subfield.label.text }}
+                </label>
+                {% endfor %}
+            </div>
+            {% if form.accounting_period.errors %}
+                 <ul class="form-error">
+                 {% for error in form.accounting_period.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <!-- ▼▼▼▼▼ ファイルアップロードフィールドのセクションを追加 ▼▼▼▼▼ -->
+        <div class="form-group">
+            {{ form.upload_file.label }}
+            {{ form.upload_file }}
+            {% if form.upload_file.errors %}
+                <ul class="form-error">
+                {% for error in form.upload_file.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <!-- ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲ -->
 
-    <div class="form-actions">
-      <button type="submit" class="button-primary">表示する</button>
-    </div>
-  </form>
+        <div class="form-actions">
+            <button type="submit" class="button-primary">データ取込開始</button>
+        </div>
+    </form>
 </div>
 {% endblock %}

@@ -1,6 +1,7 @@
 # app/company/forms.py
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, DateField, IntegerField, SubmitField, RadioField, SelectField, BooleanField
 from wtforms.validators import DataRequired, Optional, Length
 from wtforms.widgets import TextInput
@@ -49,6 +50,23 @@ class AccountingSelectionForm(FlaskForm):
         default='first_half',
         validators=[DataRequired(message="期間を選択してください。")]
     )
+    upload_file = FileField(
+        '会計データファイル',
+        validators=[
+            FileRequired(message='ファイルを選択してください。'),
+            FileAllowed(['csv', 'tsv'], 'CSVまたはTSVファイルのみアップロード可能です。')
+        ]
+    )
+
+# ▼▼▼▼▼ データマッピング用のフォームを新規追加 ▼▼▼▼▼
+class DataMappingForm(FlaskForm):
+    """
+    動的にフィールドが追加されるデータマッピング用フォーム。
+    このクラス自体はマーカーとして使い、ルート側で動的にフィールドをセットする。
+    """
+    submit = SubmitField('この内容で紐付けを確定する')
+# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
+
 
 class DeclarationForm(FlaskForm):
     """申告情報を登録・編集するためのフォーム"""

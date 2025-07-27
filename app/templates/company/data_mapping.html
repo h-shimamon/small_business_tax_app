@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}項目マッピング{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {# この画面専用のCSSを読み込みます #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/data_mapping.css') }}">
+{% endblock %}
+
+{% block sidebar %}
+    {# サイドバーのメニュー項目を定義します #}
+    <a href="#" class="active">会計データ選択</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>項目マッピング</h2>
+    <p style="text-align: center; margin-bottom: 30px; color: var(--text-secondary);">
+        アップロードされたファイルの項目名が、アプリの標準項目と一致しませんでした。<br>
+        お手数ですが、各項目がアプリのどの項目に該当するかを選択してください。
+    </p>
+
+    <form method="POST" action="{{ url_for('company.data_mapping') }}" novalidate>
+        {{ form.hidden_tag() }}
+
+        <table class="mapping-table">
+            <thead>
+                <tr>
+                    <th>あなたのファイルの項目名</th>
+                    <th>アプリの項目に紐付け</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# ルートから渡された動的フォームのフィールドをループ処理で表示します #}
+                {% for field in form if field.widget.input_type != 'hidden' and field.widget.input_type != 'submit' %}
+                <tr>
+                    <td>
+                        <span class="mismatched-header">{{ field.label.text }}</span>
+                    </td>
+                    <td>
+                        {{ field(class="form-select") }}
+                        {% if field.errors %}
+                            <ul class="form-error">
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-actions">
+            {{ form.submit(class="button-primary") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
