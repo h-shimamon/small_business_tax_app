@@ -3,18 +3,16 @@
 {# ページのタイトルを設定 #}
 {% block title %}勘定科目内訳書 - {{ page_title }}{% endblock %}
 
-{# このページ専用のCSSを読み込む #}
+{# このページ専用のCSSと、テーブル表示用の共通CSSを読み込む #}
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/statement_of_accounts.css') }}">
+    {# employee_list.htmlを参考にテーブル用のCSSを追加 #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/table_view.css') }}">
 {% endblock %}
 
 {# サイドバーのナビゲーションを定義 #}
 {% block sidebar %}
-    {#
-      サイドバーのメニュー項目をリストで定義します。
-      'id'はURLのクエリパラメータとして使用され、'name'は表示名です。
-    #}
     {% set statement_pages = [
         ('deposits', '預貯金等'),
         ('notes_receivable', '受取手形'),
@@ -37,10 +35,6 @@
     <h3 class="sidebar-title">勘定科目内訳書</h3>
     <ul class="sidebar-menu">
         {% for page_id, page_name in statement_pages %}
-            {#
-              現在のページIDとメニューのIDが一致する場合に 'active' クラスを付与します。
-              この 'page' 変数はroutes.pyから渡されます。
-            #}
             <li>
                 <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" 
                    class="sidebar-link {% if page == page_id %}active{% endif %}">
@@ -53,23 +47,83 @@
 
 {# メインコンテンツ部分を定義 #}
 {% block content %}
-    {#
-      routes.pyから渡されたpage変数をもとに、表示するタイトルを決定します。
-      Jinjaのforループとif文を使って、現在のページIDに対応する表示名を取得します。
-    #}
+    {# 現在のページタイトルを取得 #}
     {% set page_title = '' %}
-    {% for pid, pname in statement_pages %}
-        {% if pid == page %}
-            {% set page_title = pname %}
-        {% endif %}
-    {% endfor %}
+    {% for pid, pname in statement_pages %}{% if pid == page %}{% set page_title = pname %}{% endif %}{% endfor %}
 
     <div class="content-header">
-        <h1>勘定科目内訳書</h1>
+        <h1 class="content-title">勘定科目内訳書</h1>
     </div>
-    <div class="content-body">
-        <h2>{{ page_title }}の内訳</h2>
-        <p>ここに「{{ page_title }}」の詳細な内訳情報を表示するフォームやテーブルを実装します。</p>
-        <!-- TODO: 各内訳書に応じたデータ入力フォームや表示テーブルをここに追加 -->
+
+    {# ▼▼▼▼▼ ここからがメインの修正・追加箇所です ▼▼▼▼▼ #}
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ page_title }}の内訳</h2>
+        </div>
+
+        {# --- 「預貯金等」が選択されている場合の表示 --- #}
+        {% if page == 'deposits' %}
+            <div class="card-actions">
+                <a href="{{ url_for('company.add_deposit') }}" class="button-primary">＋ 新規登録</a>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>金融機関名</th>
+                            <th>支店名</th>
+                            <th>預金種類</th>
+                            <th>口座番号</th>
+                            <th class="text-right">期末現在高</th>
+                            <th>摘要</th>
+                            <th class="actions-column"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set total_balance = namespace(value=0) %}
+                        {% for deposit in deposits %}
+                            <tr>
+                                <td>{{ deposit.financial_institution }}</td>
+                                <td>{{ deposit.branch_name }}</td>
+                                <td>{{ deposit.account_type }}</td>
+                                <td>{{ deposit.account_number }}</td>
+                                <td class="text-right">{{ "{:,.0f}".format(deposit.balance) }}</td>
+                                <td>{{ deposit.remarks or '' }}</td>
+                                <td>
+                                    <div class="action-buttons-group">
+                                        <a href="{{ url_for('company.edit_deposit', deposit_id=deposit.id) }}" class="action-btn">編集</a>
+                                        <form action="{{ url_for('company.delete_deposit', deposit_id=deposit.id) }}" method="post" class="inline-form">
+                                            <button type="submit" class="action-btn delete" onclick="return confirm('この預貯金情報を本当に削除しますか？');">削除</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% set total_balance.value = total_balance.value + deposit.balance %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center empty-data">
+                                    まだ預貯金が登録されていません。
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-right total-label">合計</td>
+                            <td class="text-right total-value">{{ "{:,.0f}".format(total_balance.value) }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+        {# --- 他の内訳書が選択されている場合のプレースホルダー --- #}
+        {% else %}
+            <div class="card-body">
+                <p>ここに「{{ page_title }}」の詳細な内訳情報を表示するフォームやテーブルを実装します。</p>
+            </div>
+        {% endif %}
     </div>
+    {# ▲▲▲▲▲ ここまでがメインの修正・追加箇所です ▲▲▲▲▲ #}
 {% endblock %}

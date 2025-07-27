@@ -1,7 +1,7 @@
 # app/company/forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, SelectField, DateField, RadioField, IntegerField
+from wtforms import StringField, SubmitField, BooleanField, SelectField, DateField, RadioField, IntegerField, TextAreaField
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms.validators import DataRequired, Length, Optional
 from datetime import datetime
@@ -140,7 +140,6 @@ class DataMappingForm(FlaskForm):
     """データマッピング画面の動的ベースフォーム"""
     submit = SubmitField('マッピングを確定して次へ')
 
-# ▼▼▼▼▼ 新規追加 ▼▼▼▼▼
 class FileUploadForm(FlaskForm):
     """共通のファイルアップロードフォーム"""
     upload_file = FileField(
@@ -151,4 +150,40 @@ class FileUploadForm(FlaskForm):
         ]
     )
     submit = SubmitField('データ取込開始')
-# ▲▲▲▲▲ 新規追加 ▲▲▲▲▲
+
+# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+class DepositForm(FlaskForm):
+    """預貯金等の登録・編集フォーム"""
+    financial_institution = StringField(
+        '金融機関名', 
+        validators=[DataRequired(message="金融機関名は必須です。"), Length(max=100)]
+    )
+    branch_name = StringField(
+        '支店名', 
+        validators=[DataRequired(message="支店名は必須です。"), Length(max=100)]
+    )
+    account_type = SelectField(
+        '預金種類',
+        choices=[
+            ('普通預金', '普通預金'),
+            ('当座預金', '当座預金'),
+            ('通知預金', '通知預金'),
+            ('定期預金', '定期預金'),
+            ('定期積金', '定期積金'),
+            ('別段預金', '別段預金'),
+            ('納税準備預金', '納税準備預金'),
+            ('その他', 'その他')
+        ],
+        validators=[DataRequired(message="預金種類は必須です。")]
+    )
+    account_number = StringField(
+        '口座番号', 
+        validators=[DataRequired(message="口座番号は必須です。"), Length(max=50)]
+    )
+    balance = IntegerField(
+        '期末現在高', 
+        validators=[DataRequired(message="期末現在高は必須です。")]
+    )
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲

@@ -5,11 +5,12 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from flask import render_template, request, redirect, url_for, Blueprint, flash, current_app, session
 from datetime import datetime
-from app.company.models import Company, Employee, Office
-# FileUploadForm をインポートに追加
+# ▼▼▼▼▼ Depositモデルをインポート ▼▼▼▼▼
+from app.company.models import Company, Employee, Office, Deposit
+# ▼▼▼▼▼ DepositFormとFileUploadFormをインポート ▼▼▼▼▼
 from app.company.forms import (
     EmployeeForm, DeclarationForm, OfficeForm, 
-    AccountingSelectionForm, DataMappingForm, FileUploadForm
+    AccountingSelectionForm, DataMappingForm, FileUploadForm, DepositForm
 )
 from app import db
 from wtforms import SelectField
@@ -22,7 +23,7 @@ company_bp = Blueprint(
     url_prefix='/company'
 )
 
-# --- (show, save, 社員登録のルートは変更なし) ---
+# --- (既存のルートは変更なし) ---
 @company_bp.route('/')
 def show():
     """基本情報ページのトップ。"""
@@ -80,12 +81,10 @@ def register_employee():
         return redirect(url_for('company.employees'))
     return render_template('company/register_employee.html', form=form)
 
-# ▼▼▼▼▼ 修正 ▼▼▼▼▼
 @company_bp.route('/employee/edit/<int:employee_id>', methods=['GET', 'POST'])
 def edit_employee(employee_id):
     """従業員情報の編集"""
     employee = Employee.query.get_or_404(employee_id)
-    # GET時はDBから、POST時はフォームからデータを読み込むように修正
     form = EmployeeForm(obj=employee)
     if form.validate_on_submit():
         form.populate_obj(employee)
@@ -102,7 +101,6 @@ def delete_employee(employee_id):
     flash('従業員を削除しました。', 'success')
     return redirect(url_for('company.employees'))
 
-# ▼▼▼▼▼ 修正 ▼▼▼▼▼
 @company_bp.route('/declaration', methods=['GET', 'POST'])
 def declaration():
     """申告情報ページ"""
@@ -110,8 +108,6 @@ def declaration():
     if not company:
         flash('先に会社の基本情報を登録してください。', 'error')
         return redirect(url_for('company.show'))
-    
-    # GET時はDBから、POST時はフォームからデータを読み込むように修正
     form = DeclarationForm(obj=company)
     if form.validate_on_submit():
         form.populate_obj(company)
@@ -144,12 +140,10 @@ def register_office():
         return redirect(url_for('company.office_list'))
     return render_template('company/office_form.html', form=form)
 
-# ▼▼▼▼▼ 修正 ▼▼▼▼▼
 @company_bp.route('/office/edit/<int:office_id>', methods=['GET', 'POST'])
 def edit_office(office_id):
     """事業所情報の編集"""
     office = Office.query.get_or_404(office_id)
-    # GET時はDBから、POST時はフォームからデータを読み込むように修正
     form = OfficeForm(obj=office)
     if form.validate_on_submit():
         form.populate_obj(office)
@@ -165,9 +159,6 @@ def delete_office(office_id):
     db.session.commit()
     flash('事業所を削除しました。', 'success')
     return redirect(url_for('company.office_list'))
-
-
-# ▼▼▼▼▼ データ取込関連のルート ▼▼▼▼▼
 
 def _process_file_upload(form, expected_headers, origin_url):
     """ファイルアップロードとヘッダー検証の共通処理"""
@@ -205,7 +196,6 @@ def _process_file_upload(form, expected_headers, origin_url):
             os.remove(filepath)
         return False
 
-# ▼▼▼▼▼ 修正 ▼▼▼▼▼
 @company_bp.route('/import_accounts', methods=['GET', 'POST'])
 def import_accounts():
     """会計データ選択画面"""
@@ -217,6 +207,8 @@ def import_accounts():
                 return redirect(url_for('company.data_mapping'))
             return redirect(url_for('company.import_accounts'))
     return render_template('company/import_accounts.html', form=form)
+
+# --- (他のimportルートは変更なし) ---
 
 @company_bp.route('/import_chart_of_accounts', methods=['GET', 'POST'])
 def import_chart_of_accounts():
@@ -310,11 +302,71 @@ def data_mapping():
 
     return render_template('company/data_mapping.html', form=form)
 
-# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+# ▼▼▼▼▼ ここから修正・追加 ▼▼▼▼▼
 @company_bp.route('/statement_of_accounts')
 def statement_of_accounts():
     """勘定科目内訳書ページ"""
-    # URLクエリから表示する内訳書のタイプを取得（例: ?page=deposits）
-    page = request.args.get('page', 'deposits') # デフォルトは「預貯金等」
-    return render_template('company/statement_of_accounts.html', page=page)
-# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
+    page = request.args.get('page', 'deposits')
+    company = Company.query.first()
+    
+    # テンプレートに渡すためのコンテキスト辞書
+    context = {'page': page}
+
+    if not company:
+        flash('会社情報が未登録のため、機能を利用できません。', 'warning')
+        # 会社情報がない場合でもページは表示するが、データは空
+    else:
+        if page == 'deposits':
+            deposits = Deposit.query.filter_by(company_id=company.id).all()
+            context['deposits'] = deposits
+            # 将来的に他の内訳書もここに追加
+            # elif page == 'accounts_receivable':
+            #     ...
+
+    return render_template('company/statement_of_accounts.html', **context)
+
+
+@company_bp.route('/deposit/add', methods=['GET', 'POST'])
+def add_deposit():
+    """預貯金の新規登録"""
+    form = DepositForm()
+    company = Company.query.first()
+    if not company:
+        flash('先に会社の基本情報を登録してください。', 'error')
+        return redirect(url_for('company.show'))
+    
+    if form.validate_on_submit():
+        new_deposit = Deposit(company_id=company.id)
+        form.populate_obj(new_deposit)
+        db.session.add(new_deposit)
+        db.session.commit()
+        flash('預貯金情報を登録しました。', 'success')
+        return redirect(url_for('company.statement_of_accounts', page='deposits'))
+    
+    # 新規登録用のフォーム画面をレンダリング（今後作成）
+    return render_template('company/deposit_form.html', form=form, form_title="預貯金の新規登録")
+
+@company_bp.route('/deposit/edit/<int:deposit_id>', methods=['GET', 'POST'])
+def edit_deposit(deposit_id):
+    """預貯金の編集"""
+    deposit = Deposit.query.get_or_404(deposit_id)
+    form = DepositForm(obj=deposit)
+    
+    if form.validate_on_submit():
+        form.populate_obj(deposit)
+        db.session.commit()
+        flash('預貯金情報を更新しました。', 'success')
+        return redirect(url_for('company.statement_of_accounts', page='deposits'))
+        
+    # 編集用のフォーム画面をレンダリング（今後作成）
+    return render_template('company/deposit_form.html', form=form, form_title="預貯金の編集")
+
+@company_bp.route('/deposit/delete/<int:deposit_id>', methods=['POST'])
+def delete_deposit(deposit_id):
+    """預貯金の削除"""
+    deposit = Deposit.query.get_or_404(deposit_id)
+    db.session.delete(deposit)
+    db.session.commit()
+    flash('預貯金情報を削除しました。', 'success')
+    return redirect(url_for('company.statement_of_accounts', page='deposits'))
+# ▲▲▲▲▲ ここまで修正・追加 ▲▲▲▲▲

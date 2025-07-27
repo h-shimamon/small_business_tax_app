@@ -29,7 +29,6 @@ class Company(db.Model):
     declaration_type = db.Column(db.String(10))
     tax_system = db.Column(db.String(10))
     
-    # ▼▼▼▼▼ ここから下を追記します ▼▼▼▼▼
     # --- 代表者情報 ---
     representative_name = db.Column(db.String(100))
     representative_kana = db.Column(db.String(100))
@@ -39,7 +38,6 @@ class Company(db.Model):
     representative_prefecture = db.Column(db.String(10))
     representative_city = db.Column(db.String(50))
     representative_address = db.Column(db.String(200))
-    # ▲▲▲▲▲ ここまで追記 ▲▲▲▲▲
     
     # --- 経理責任者 ---
     accounting_manager_name = db.Column(db.String(100))
@@ -107,4 +105,22 @@ class Office(db.Model):
 
     def __repr__(self):
         return f'<Office {self.name}>'
-        
+
+# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+class Deposit(db.Model):
+    """預貯金等の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    financial_institution = db.Column(db.String(100), nullable=False) # 金融機関名
+    branch_name = db.Column(db.String(100), nullable=False)          # 支店名
+    account_type = db.Column(db.String(50), nullable=False)          # 預金種類
+    account_number = db.Column(db.String(50), nullable=False)        # 口座番号
+    balance = db.Column(db.Integer, nullable=False)                  # 期末現在高
+    remarks = db.Column(db.String(200))                              # 摘要
+    
+    # Companyモデルとのリレーションシップ
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('deposits', lazy=True))
+
+    def __repr__(self):
+        return f'<Deposit {self.financial_institution}>'
+# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
