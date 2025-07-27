@@ -1,0 +1,68 @@
+/* static/css/statement_of_accounts.css */
+
+/* サイドバー全体のスタイル */
+.sidebar {
+    background-color: #f8f9fa; /* 背景色を少し明るく */
+}
+
+/* サイドバーのタイトル */
+.sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+    padding: 20px 20px 10px 20px;
+    margin: 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* サイドバーメニューのリストスタイル */
+.sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 10px 0;
+}
+
+/* サイドバーのリンクスタイル */
+.sidebar-link {
+    display: block;
+    color: #333;
+    text-decoration: none;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 3px solid transparent; /* 非アクティブ時のボーダー */
+}
+
+/* リンクにマウスを乗せた時のスタイル */
+.sidebar-link:hover {
+    background-color: #e9ecef;
+}
+
+/* アクティブなリンクのスタイル */
+.sidebar-link.active {
+    background-color: #e6f0ff; /* 既存のスタイルに合わせた青系の背景色 */
+    color: #0056b3; /* 濃い青色のテキスト */
+    font-weight: 500;
+    border-left: 3px solid #0056b3; /* アクティブな項目を強調するボーダー */
+}
+
+/* メインコンテンツのヘッダー */
+.content-header {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.content-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #343a40;
+}
+
+/* メインコンテンツのボディ */
+.content-body h2 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 1rem;
+}

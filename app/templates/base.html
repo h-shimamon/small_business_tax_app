@@ -21,11 +21,11 @@
         <nav class="global-nav">
             <a href="#" class="nav-item">ホーム</a>
             <a href="{{ url_for('company.show') }}" class="nav-item">基本情報登録</a>
-            {# ▼▼▼▼▼ ここを修正しました ▼▼▼▼▼ #}
             <a href="{{ url_for('company.import_accounts') }}" class="nav-item">会計データ選択</a>
-            {# ▲▲▲▲▲ ここを修正しました ▲▲▲▲▲ #}
             <a href="#" class="nav-item">固定資産台帳</a>
-            <a href="#" class="nav-item">勘定科目内訳書</a>
+            {# ▼▼▼▼▼ ここを修正しました ▼▼▼▼▼ #}
+            <a href="{{ url_for('company.statement_of_accounts') }}" class="nav-item">勘定科目内訳書</a>
+            {# ▲▲▲▲▲ ここを修正しました ▲▲▲▲▲ #}
             <a href="#" class="nav-item">申告書データ</a>
             <a href="#" class="nav-item">印刷</a>
             <a href="#" class="nav-item">設定</a>

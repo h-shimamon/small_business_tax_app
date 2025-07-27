@@ -309,3 +309,12 @@ def data_mapping():
             return redirect(origin_url)
 
     return render_template('company/data_mapping.html', form=form)
+
+# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+@company_bp.route('/statement_of_accounts')
+def statement_of_accounts():
+    """勘定科目内訳書ページ"""
+    # URLクエリから表示する内訳書のタイプを取得（例: ?page=deposits）
+    page = request.args.get('page', 'deposits') # デフォルトは「預貯金等」
+    return render_template('company/statement_of_accounts.html', page=page)
+# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{# ページのタイトルを設定 #}
+{% block title %}勘定科目内訳書 - {{ page_title }}{% endblock %}
+
+{# このページ専用のCSSを読み込む #}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/statement_of_accounts.css') }}">
+{% endblock %}
+
+{# サイドバーのナビゲーションを定義 #}
+{% block sidebar %}
+    {#
+      サイドバーのメニュー項目をリストで定義します。
+      'id'はURLのクエリパラメータとして使用され、'name'は表示名です。
+    #}
+    {% set statement_pages = [
+        ('deposits', '預貯金等'),
+        ('notes_receivable', '受取手形'),
+        ('accounts_receivable', '売掛金（未収入金）'),
+        ('temporary_payments', '仮払金（前渡金）'),
+        ('loans_receivable', '貸付金・受取利息'),
+        ('inventories', '棚卸資産'),
+        ('securities', '有価証券'),
+        ('fixed_assets', '固定資産（土地等）'),
+        ('notes_payable', '支払手形'),
+        ('accounts_payable', '買掛金（未払金・未払費用）'),
+        ('temporary_receipts', '仮受金（前受金・預り金）'),
+        ('borrowings', '借入金及び支払利子'),
+        ('sales_by_office', '事業所別売上高等'),
+        ('executive_compensation', '役員給与等'),
+        ('land_rent', '地代家賃等'),
+        ('miscellaneous', '雑益・雑損失等')
+    ] %}
+
+    <h3 class="sidebar-title">勘定科目内訳書</h3>
+    <ul class="sidebar-menu">
+        {% for page_id, page_name in statement_pages %}
+            {#
+              現在のページIDとメニューのIDが一致する場合に 'active' クラスを付与します。
+              この 'page' 変数はroutes.pyから渡されます。
+            #}
+            <li>
+                <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" 
+                   class="sidebar-link {% if page == page_id %}active{% endif %}">
+                    {{ page_name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+
+{# メインコンテンツ部分を定義 #}
+{% block content %}
+    {#
+      routes.pyから渡されたpage変数をもとに、表示するタイトルを決定します。
+      Jinjaのforループとif文を使って、現在のページIDに対応する表示名を取得します。
+    #}
+    {% set page_title = '' %}
+    {% for pid, pname in statement_pages %}
+        {% if pid == page %}
+            {% set page_title = pname %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="content-header">
+        <h1>勘定科目内訳書</h1>
+    </div>
+    <div class="content-body">
+        <h2>{{ page_title }}の内訳</h2>
+        <p>ここに「{{ page_title }}」の詳細な内訳情報を表示するフォームやテーブルを実装します。</p>
+        <!-- TODO: 各内訳書に応じたデータ入力フォームや表示テーブルをここに追加 -->
+    </div>
+{% endblock %}
