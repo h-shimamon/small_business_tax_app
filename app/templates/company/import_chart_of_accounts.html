@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}勘定科目取込 - {{ super() }}{% endblock %}
+
+{% block sidebar %}
+<h3 class="sidebar-title">データ取込</h3>
+<ul class="local-nav-list">
+    <li><a href="{{ url_for('company.import_accounts') }}" class="nav-item">会計データ選択</a></li>
+    <li><a href="{{ url_for('company.import_chart_of_accounts') }}" class="nav-item active">勘定科目取込</a></li>
+    <li><a href="{{ url_for('company.import_journals') }}" class="nav-item">仕訳取込</a></li>
+    <li><a href="{{ url_for('company.import_fixed_assets') }}" class="nav-item">固定資産取込</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>勘定科目取込</h1>
+</div>
+<div class="form-container">
+    <p class="description">
+        勘定科目データ（CSV形式）をアップロードしてください。
+    </p>
+    <form method="POST" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.upload_file.label(class="form-label") }}
+            {{ form.upload_file(class="form-control-file") }}
+            {% if form.upload_file.errors %}
+                <div class="errors">
+                {% for error in form.upload_file.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
