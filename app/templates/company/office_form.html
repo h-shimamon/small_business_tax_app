@@ -1,4 +1,3 @@
-<!-- app/templates/company/office_form.html -->
 {% extends "base.html" %}
 
 {% block title %}
@@ -27,54 +26,58 @@
   </h1>
 </div>
 
-<!-- UIのマスターである register.html に準拠したフォームコンテナを使用 -->
-<div class="form-container">
-  <form method="post">
+<div class="card">
+  <form method="post" class="form-grid" novalidate>
     {{ form.hidden_tag() }}
 
-    <!-- 各フォーム項目を .form-group で囲み、レイアウトを統一 -->
     <div class="form-group">
-      {{ form.prefecture.label }}
-      {{ form.prefecture(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.municipality.label }}
-      {{ form.municipality(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.name.label }}
-      {{ form.name(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.zip_code.label }}
-      {{ form.zip_code(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.address.label }}
-      {{ form.address(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.phone_number.label }}
-      {{ form.phone_number(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.opening_date.label }}
-      {{ form.opening_date(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.closing_date.label }}
-      {{ form.closing_date(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.employee_count.label }}
-      {{ form.employee_count(class="form-control") }}
-    </div>
-    <div class="form-group">
-      {{ form.office_count.label }}
-      {{ form.office_count(class="form-control") }}
+      {{ form.office_name.label(class="form-label") }}
+      {{ form.office_name(class="form-control") }}
+      {% if form.office_name.errors %}
+        <div class="form-error">{% for error in form.office_name.errors %}<span>{{ error }}</span>{% endfor %}</div>
+      {% endif %}
     </div>
 
-    <!-- 保存・キャンセルボタン -->
+    <div class="form-group">
+      {{ form.zip_code.label(class="form-label") }}
+      {{ form.zip_code(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.prefecture.label(class="form-label") }}
+      {{ form.prefecture(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.city.label(class="form-label") }}
+      {{ form.city(class="form-control") }}
+    </div>
+
+    <div class="form-group full-width">
+      {{ form.address.label(class="form-label") }}
+      {{ form.address(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.phone_number.label(class="form-label") }}
+      {{ form.phone_number(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.employee_count.label(class="form-label") }}
+        {{ form.employee_count(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.opening_date.label(class="form-label") }}
+        {{ form.opening_date(class="form-control", type='date') }}
+    </div>
+    
+    <div class="form-group">
+        {{ form.closing_date.label(class="form-label") }}
+        {{ form.closing_date(class="form-control", type='date') }}
+    </div>
+
     <div class="form-actions">
       {{ form.submit(class="button-primary") }}
       <a href="{{ url_for('company.office_list') }}" class="button-secondary">キャンセル</a>

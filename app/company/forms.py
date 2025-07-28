@@ -6,7 +6,6 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms.validators import DataRequired, Length, Optional
 from datetime import datetime
 
-# --- (既存のEmployeeForm, DeclarationForm, OfficeFormは変更なし) ---
 class EmployeeForm(FlaskForm):
     """従業員登録・編集フォーム"""
     employee_number = StringField('社員番号', validators=[Optional(), Length(max=20)])
@@ -15,8 +14,12 @@ class EmployeeForm(FlaskForm):
     last_name_kana = StringField('セイ', validators=[DataRequired(message="セイは必須です。"), Length(max=50)])
     first_name_kana = StringField('メイ', validators=[DataRequired(message="メイは必須です。"), Length(max=50)])
     joined_date = DateField('入社年月日', format='%Y-%m-%d', validators=[Optional()])
+    address = StringField('住所', validators=[Optional(), Length(max=200)])
     is_officer = BooleanField('役員')
     officer_position = StringField('役職名', validators=[Optional(), Length(max=100)])
+    relationship = StringField('法人・代表者との関係', validators=[Optional(), Length(max=100)])
+    shares_held = IntegerField('保有株式数', validators=[Optional()])
+    voting_rights = IntegerField('議決権の数', validators=[Optional()])
     submit = SubmitField('登録する')
 
 class DeclarationForm(FlaskForm):
@@ -109,6 +112,9 @@ class OfficeForm(FlaskForm):
     city = StringField('市区町村', validators=[Optional(), Length(max=50)])
     address = StringField('番地以降', validators=[Optional(), Length(max=200)])
     phone_number = StringField('電話番号', validators=[Optional(), Length(max=20)])
+    opening_date = DateField('開設年月日', format='%Y-%m-%d', validators=[Optional()])
+    closing_date = DateField('廃止年月日', format='%Y-%m-%d', validators=[Optional()])
+    employee_count = IntegerField('従業者数', validators=[Optional()])
     submit = SubmitField('登録する')
 
 class AccountingSelectionForm(FlaskForm):
@@ -259,7 +265,6 @@ class AccountsReceivableForm(FlaskForm):
     remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
-# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
 class TemporaryPaymentForm(FlaskForm):
     """仮払金（前渡金）の登録・編集フォーム"""
     account_name = SelectField(
@@ -296,4 +301,3 @@ class TemporaryPaymentForm(FlaskForm):
         validators=[Optional(), Length(max=200)]
     )
     submit = SubmitField('保存する')
-# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲

@@ -6,7 +6,7 @@
 <a href="{{ url_for('company.show') }}">基本情報</a>
 <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
 <a href="{{ url_for('company.declaration') }}">申告情報</a>
-<a href="#">事業所一覧</a>
+<a href="{{ url_for('company.office_list') }}">事業所一覧</a>
 {% endblock %}
 
 {% block content %}
@@ -19,49 +19,65 @@
         {{ form.hidden_tag() }}
 
         <div class="form-group">
-            {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control") }}
-
-            {# エラーメッセージ表示を追加 #}
-            {% if form.name.errors %}
-            <div class="form-error">
-                {% for error in form.name.errors %}
-                <span>{{ error }}</span>
-                {% endfor %}
-            </div>
-            {% endif %}
+            {{ form.last_name.label(class="form-label") }}
+            {{ form.last_name(class="form-control") }}
+            {% if form.last_name.errors %}<div class="form-error">{% for e in form.last_name.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
         </div>
         <div class="form-group">
-            {{ form.group.label(class="form-label") }}
-            {{ form.group(class="form-control") }}
+            {{ form.first_name.label(class="form-label") }}
+            {{ form.first_name(class="form-control") }}
+            {% if form.first_name.errors %}<div class="form-error">{% for e in form.first_name.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
         </div>
+
+        <div class="form-group">
+            {{ form.last_name_kana.label(class="form-label") }}
+            {{ form.last_name_kana(class="form-control") }}
+            {% if form.last_name_kana.errors %}<div class="form-error">{% for e in form.last_name_kana.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.first_name_kana.label(class="form-label") }}
+            {{ form.first_name_kana(class="form-control") }}
+            {% if form.first_name_kana.errors %}<div class="form-error">{% for e in form.first_name_kana.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.employee_number.label(class="form-label") }}
+            {{ form.employee_number(class="form-control") }}
+        </div>
+        
         <div class="form-group">
             {{ form.joined_date.label(class="form-label") }}
             {{ form.joined_date(class="form-control", type='date') }}
         </div>
-        <div class="form-group">
-            {{ form.relationship.label(class="form-label") }}
-            {{ form.relationship(class="form-control") }}
-        </div>
+
         <div class="form-group">
             {{ form.address.label(class="form-label") }}
             {{ form.address(class="form-control") }}
         </div>
-        <div class="form-group">
-            {{ form.position.label(class="form-label") }}
-            {{ form.position(class="form-control") }}
+
+        <div class="form-group checkbox-group">
+            {{ form.is_officer() }}
+            {{ form.is_officer.label(class="form-label") }}
         </div>
+        
+        <div class="form-group">
+            {{ form.officer_position.label(class="form-label") }}
+            {{ form.officer_position(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            {{ form.relationship.label(class="form-label") }}
+            {{ form.relationship(class="form-control") }}
+        </div>
+
         <div class="form-group">
             {{ form.shares_held.label(class="form-label") }}
             {{ form.shares_held(class="form-control") }}
         </div>
+
         <div class="form-group">
             {{ form.voting_rights.label(class="form-label") }}
             {{ form.voting_rights(class="form-control") }}
-        </div>
-        <div class="form-group">
-            {{ form.investment_amount.label(class="form-label") }}
-            {{ form.investment_amount(class="form-control") }}
         </div>
 
         <div class="form-actions">

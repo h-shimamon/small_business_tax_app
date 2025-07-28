@@ -1,49 +1,40 @@
-# app/__init__.py
-
 import os
-from flask import Flask, Blueprint, redirect, url_for
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-# グローバルスコープで db オブジェクトを初期化
+# データベースオブジェクトをここでインスタンス化します
 db = SQLAlchemy()
 
 def create_app():
+    """
+    アプリケーションファクトリ: Flaskアプリケーションのインスタンスを作成・設定します。
+    """
     app = Flask(__name__, instance_relative_config=True)
 
-    # --- アプリの設定 ---
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-        SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join(app.instance_path, 'database.db')}",
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    )
-    
-    # instanceフォルダがなければ作成
+    # アプリケーション設定
+    # SECRET_KEYはセッション情報を暗号化するために必須です
+    app.config['SECRET_KEY'] = 'a-secret-key-that-you-should-change'
+    # データベースのパスをinstanceフォルダ内に設定します
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'database.db')}"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # インスタンスフォルダがなければ作成
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
-    
-    # dbオブジェクトをアプリに連携
+
+    # データベースをアプリケーションに紐付けます
     db.init_app(app)
 
-    # --- Blueprintの登録 ---
-    from .company.routes import company_bp
-    app.register_blueprint(company_bp)
-
-    # トップページ用の main Blueprint を定義して登録
-    main_bp = Blueprint('main', __name__)
-
-    @main_bp.route('/')
-    def top():
-        # 常に基本情報ページにリダイレクトする
-        return redirect(url_for('company.show'))
-    
-    app.register_blueprint(main_bp)
-
-    # --- データベースの初期化 ---
     with app.app_context():
-        # モデルをインポートしないと、create_all がテーブルを見つけられない
-        from .company.models import Company, Employee
+        # リファクタリングで作成したブループリントをインポートします
+        from .company import company_bp
+        
+        # ブループリントをアプリケーションに登録します
+        app.register_blueprint(company_bp)
+
+        # データベーステーブルを作成します (まだ存在しない場合)
         db.create_all()
 
-    return app
+        return app
