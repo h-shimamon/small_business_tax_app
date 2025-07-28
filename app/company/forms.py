@@ -151,7 +151,6 @@ class FileUploadForm(FlaskForm):
     )
     submit = SubmitField('データ取込開始')
 
-# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
 class DepositForm(FlaskForm):
     """預貯金等の登録・編集フォーム"""
     financial_institution = StringField(
@@ -185,5 +184,116 @@ class DepositForm(FlaskForm):
         validators=[DataRequired(message="期末現在高は必須です。")]
     )
     remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class NotesReceivableForm(FlaskForm):
+    """受取手形の登録・編集フォーム"""
+    drawer = StringField(
+        '振出人',
+        validators=[DataRequired(message="振出人は必須です。"), Length(max=100)]
+    )
+    registration_number = StringField(
+        '登録番号（法人番号）',
+        validators=[Optional(), Length(max=20)]
+    )
+    issue_date = DateField(
+        '振出年月日',
+        format='%Y-%m-%d',
+        validators=[DataRequired(message="振出年月日は必須です。")]
+    )
+    due_date = DateField(
+        '支払期日',
+        format='%Y-%m-%d',
+        validators=[DataRequired(message="支払期日は必須です。")]
+    )
+    payer_bank = StringField(
+        '支払銀行名',
+        validators=[DataRequired(message="支払銀行名は必須です。"), Length(max=100)]
+    )
+    payer_branch = StringField(
+        '支払支店名',
+        validators=[Optional(), Length(max=100)]
+    )
+    amount = IntegerField(
+        '金額',
+        validators=[DataRequired(message="金額は必須です。")]
+    )
+    discount_bank = StringField(
+        '割引銀行名',
+        validators=[Optional(), Length(max=100)]
+    )
+    discount_branch = StringField(
+        '割引支店名',
+        validators=[Optional(), Length(max=100)]
+    )
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class AccountsReceivableForm(FlaskForm):
+    """売掛金（未収入金）の登録・編集フォーム"""
+    account_name = SelectField(
+        '科目',
+        choices=[
+            ('売掛金', '売掛金'),
+            ('未収入金', '未収入金')
+        ],
+        validators=[DataRequired(message="科目は必須です。")]
+    )
+    partner_name = StringField(
+        '取引先名',
+        validators=[DataRequired(message="取引先名は必須です。"), Length(max=100)]
+    )
+    registration_number = StringField(
+        '登録番号（法人番号）',
+        validators=[Optional(), Length(max=20)]
+    )
+    is_subsidiary = BooleanField('関係会社')
+    partner_address = StringField(
+        '取引先住所',
+        validators=[DataRequired(message="取引先住所は必須です。"), Length(max=200)]
+    )
+    balance_at_eoy = IntegerField(
+        '期末現在高',
+        validators=[DataRequired(message="期末現在高は必須です。")]
+    )
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+class TemporaryPaymentForm(FlaskForm):
+    """仮払金（前渡金）の登録・編集フォーム"""
+    account_name = SelectField(
+        '科目',
+        choices=[
+            ('仮払金', '仮払金'),
+            ('前渡金', '前渡金')
+        ],
+        validators=[DataRequired(message="科目は必須です。")]
+    )
+    partner_name = StringField(
+        '取引先名',
+        validators=[DataRequired(message="取引先名は必須です。"), Length(max=100)]
+    )
+    registration_number = StringField(
+        '登録番号（法人番号）',
+        validators=[Optional(), Length(max=20)]
+    )
+    is_subsidiary = BooleanField('関係会社')
+    partner_address = StringField(
+        '取引先住所',
+        validators=[Optional(), Length(max=200)]
+    )
+    relationship = StringField(
+        '法人・代表者との関係',
+        validators=[Optional(), Length(max=100)]
+    )
+    balance_at_eoy = IntegerField(
+        '期末現在高',
+        validators=[DataRequired(message="期末現在高は必須です。")]
+    )
+    transaction_details = TextAreaField(
+        '取引の内容', 
+        validators=[Optional(), Length(max=200)]
+    )
     submit = SubmitField('保存する')
 # ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲

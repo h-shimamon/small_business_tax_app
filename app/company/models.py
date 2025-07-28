@@ -106,7 +106,6 @@ class Office(db.Model):
     def __repr__(self):
         return f'<Office {self.name}>'
 
-# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
 class Deposit(db.Model):
     """預貯金等の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
@@ -117,10 +116,65 @@ class Deposit(db.Model):
     balance = db.Column(db.Integer, nullable=False)                  # 期末現在高
     remarks = db.Column(db.String(200))                              # 摘要
     
-    # Companyモデルとのリレーションシップ
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('deposits', lazy=True))
 
     def __repr__(self):
         return f'<Deposit {self.financial_institution}>'
+
+class NotesReceivable(db.Model):
+    """受取手形の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    drawer = db.Column(db.String(100), nullable=False)              # 振出人
+    registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
+    issue_date = db.Column(db.String(10), nullable=False)           # 振出年月日
+    due_date = db.Column(db.String(10), nullable=False)             # 支払期日
+    payer_bank = db.Column(db.String(100), nullable=False)          # 支払銀行名
+    payer_branch = db.Column(db.String(100))                        # 支払支店名
+    amount = db.Column(db.Integer, nullable=False)                  # 金額
+    discount_bank = db.Column(db.String(100))                       # 割引銀行名
+    discount_branch = db.Column(db.String(100))                     # 割引支店名
+    remarks = db.Column(db.String(200))                             # 摘要
+
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('notes_receivable', lazy=True))
+
+    def __repr__(self):
+        return f'<NotesReceivable {self.drawer}>'
+
+class AccountsReceivable(db.Model):
+    """売掛金（未収入金）の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_name = db.Column(db.String(50), nullable=False)         # 科目
+    partner_name = db.Column(db.String(100), nullable=False)        # 取引先名
+    registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
+    is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
+    partner_address = db.Column(db.String(200), nullable=False)     # 取引先住所
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    remarks = db.Column(db.String(200))                             # 摘要
+
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('accounts_receivable', lazy=True))
+
+    def __repr__(self):
+        return f'<AccountsReceivable {self.partner_name}>'
+
+# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+class TemporaryPayment(db.Model):
+    """仮払金（前渡金）の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_name = db.Column(db.String(50), nullable=False)         # 科目
+    partner_name = db.Column(db.String(100), nullable=False)        # 取引先名
+    registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
+    is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
+    partner_address = db.Column(db.String(200))                     # 取引先住所
+    relationship = db.Column(db.String(100))                        # 法人・代表者との関係
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    transaction_details = db.Column(db.String(200))                 # 取引の内容
+
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('temporary_payments', lazy=True))
+
+    def __repr__(self):
+        return f'<TemporaryPayment {self.partner_name}>'
 # ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
