@@ -1,42 +1,29 @@
 {% extends "base.html" %}
-
-{# このページ専用のCSSと、フォーム表示用の共通CSSを読み込む #}
-{% block head %}
-    {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/statement_of_accounts.css') }}">
-    {# フォーム用のCSSを追加 #}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/form_view.css') }}">
-{% endblock %}
+{% from 'company/_form_helpers.html' import render_field %}
 
 {# ページのタイトルを設定 #}
 {% block title %}{{ form_title }} - 勘定科目内訳書{% endblock %}
 
+{# このページ専用のCSSを読み込む（古いform_view.cssは不要に） #}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/statement_of_accounts.css') }}">
+{% endblock %}
+
 {# サイドバーは勘定科目内訳書画面のものをそのまま利用 #}
 {% block sidebar %}
     {% set statement_pages = [
-        ('deposits', '預貯金等'),
-        ('notes_receivable', '受取手形'),
-        ('accounts_receivable', '売掛金（未収入金）'),
-        ('temporary_payments', '仮払金（前渡金）'),
-        ('loans_receivable', '貸付金・受取利息'),
-        ('inventories', '棚卸資産'),
-        ('securities', '有価証券'),
-        ('fixed_assets', '固定資産（土地等）'),
-        ('notes_payable', '支払手形'),
-        ('accounts_payable', '買掛金（未払金・未払費用）'),
-        ('temporary_receipts', '仮受金（前受金・預り金）'),
-        ('borrowings', '借入金及び支払利子'),
-        ('sales_by_office', '事業所別売上高等'),
-        ('executive_compensation', '役員給与等'),
-        ('land_rent', '地代家賃等'),
+        ('deposits', '預貯金等'), ('notes_receivable', '受取手形'), ('accounts_receivable', '売掛金（未収入金）'),
+        ('temporary_payments', '仮払金（前渡金）'), ('loans_receivable', '貸付金・受取利息'), ('inventories', '棚卸資産'),
+        ('securities', '有価証券'), ('fixed_assets', '固定資産（土地等）'), ('notes_payable', '支払手形'),
+        ('accounts_payable', '買掛金（未払金・未払費用）'), ('temporary_receipts', '仮受金（前受金・預り金）'), ('borrowings', '借入金及び支払利子'),
+        ('sales_by_office', '事業所別売上高等'), ('executive_compensation', '役員給与等'), ('land_rent', '地代家賃等'),
         ('miscellaneous', '雑益・雑損失等')
     ] %}
-
     <h3 class="sidebar-title">勘定科目内訳書</h3>
     <ul class="sidebar-menu">
         {% for page_id, page_name in statement_pages %}
             <li>
-                {# フォーム画面では常に「預貯金等」をアクティブにする #}
                 <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" 
                    class="sidebar-link {% if page_id == 'deposits' %}active{% endif %}">
                     {{ page_name }}
@@ -50,74 +37,26 @@
 {# メインコンテンツ部分を定義 #}
 {% block content %}
 <div class="content-header">
-    {# routes.pyから渡されるform_title（「預貯金の新規登録」または「預貯金の編集」）を表示 #}
     <h1 class="content-title">{{ form_title }}</h1>
 </div>
 
 <div class="card">
-    {#
-      フォームをPOSTメソッドで送信します。
-      actionは現在のURLに設定され、新規登録・編集の両方に対応します。
-    #}
-    <form method="POST" action="">
-        {{ form.hidden_tag() }} {# CSRF対策のための必須項目 #}
+    <div class="card-body">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
 
-        <div class="form-grid">
-            
-            <div class="form-group">
-                {{ form.financial_institution.label(class="form-label") }}
-                {{ form.financial_institution(class="form-control") }}
-                {% for error in form.financial_institution.errors %}
-                    <span class="form-error">{{ error }}</span>
-                {% endfor %}
+            {{ render_field(form.financial_institution, placeholder="例：〇〇銀行") }}
+            {{ render_field(form.branch_name, placeholder="例：本店") }}
+            {{ render_field(form.account_type) }}
+            {{ render_field(form.account_number, placeholder="例：1234567") }}
+            {{ render_field(form.balance, type="number", placeholder="例：1000000") }}
+            {{ render_field(form.remarks, rows="3", placeholder="摘要を入力（任意）") }}
+
+            <div class="form-actions">
+                <a href="{{ url_for('company.statement_of_accounts', page='deposits') }}" class="button-secondary">戻る</a>
+                {{ form.submit(class="button-primary") }}
             </div>
-
-            <div class="form-group">
-                {{ form.branch_name.label(class="form-label") }}
-                {{ form.branch_name(class="form-control") }}
-                {% for error in form.branch_name.errors %}
-                    <span class="form-error">{{ error }}</span>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                {{ form.account_type.label(class="form-label") }}
-                {{ form.account_type(class="form-control") }}
-                 {% for error in form.account_type.errors %}
-                    <span class="form-error">{{ error }}</span>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                {{ form.account_number.label(class="form-label") }}
-                {{ form.account_number(class="form-control") }}
-                 {% for error in form.account_number.errors %}
-                    <span class="form-error">{{ error }}</span>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                {{ form.balance.label(class="form-label") }}
-                {{ form.balance(class="form-control") }}
-                 {% for error in form.balance.errors %}
-                    <span class="form-error">{{ error }}</span>
-                {% endfor %}
-            </div>
-            
-            <div class="form-group full-width">
-                {{ form.remarks.label(class="form-label") }}
-                {{ form.remarks(class="form-control", rows=3) }}
-                 {% for error in form.remarks.errors %}
-                    <span class="form-error">{{ error }}</span>
-                {% endfor %}
-            </div>
-
-        </div>
-
-        <div class="form-actions">
-            <a href="{{ url_for('company.statement_of_accounts', page='deposits') }}" class="button-secondary">戻る</a>
-            {{ form.submit(class="button-primary") }}
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 {% endblock %}

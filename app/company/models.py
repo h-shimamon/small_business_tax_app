@@ -71,21 +71,22 @@ class Company(db.Model):
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    group = db.Column(db.String(100))
+    last_name = db.Column(db.String(50), nullable=False)
+    first_name = db.Column(db.String(50), nullable=False)
+    is_officer = db.Column(db.Boolean, default=False) # Boolean型（真偽値）に修正
     joined_date = db.Column(db.String(10))
     relationship = db.Column(db.String(50))
     address = db.Column(db.String(200))
     shares_held = db.Column(db.Integer)
     voting_rights = db.Column(db.Integer)
-    position = db.Column(db.String(50))
-    investment_amount = db.Column(db.Integer)
+    officer_position = db.Column(db.String(100), nullable=True) # 役職名に修正
+    # investment_amount = db.Column(db.Integer) の行を完全に削除
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('employees', lazy=True))
 
     def __repr__(self):
-        return f'<Employee {self.name}>'
+        return f'<Employee {self.last_name} {self.first_name}>'
 
 class Office(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,4 +1,3 @@
-<!-- app/templates/base.html (修正版) -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -9,6 +8,9 @@
     {# ▼▼▼ このブロックで共通CSSを読み込み、子テンプレートからの拡張を許可します ▼▼▼ #}
     {% block head %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        {# ▼▼▼▼▼ ここを追加しました ▼▼▼▼▼ #}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/form_helpers.css') }}">
+        {# ▲▲▲▲▲ ここを追加しました ▲▲▲▲▲ #}
     {% endblock %}
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +18,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 上部固定ヘッダー (グローバルナビゲーション) -->
     <header class="global-header">
         <nav class="global-nav">
             <a href="#" class="nav-item">ホーム</a>
@@ -33,14 +34,12 @@
     </header>
 
     <div class="app-layout">
-        <!-- 左サイドバー (ローカルナビゲーション) -->
         <aside class="sidebar">
             <nav class="local-nav">
                 {% block sidebar %}{# 各ページでこのブロックを上書きする #}{% endblock %}
             </nav>
         </aside>
 
-        <!-- メインコンテンツエリア -->
         <main class="main-content">
              {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -56,6 +55,11 @@
     </div>
 
     {# スクリプト用のブロックを追加 #}
-    {% block scripts %}{% endblock %}
+    {% block scripts %}
+        {# ▼▼▼▼▼ ここを追加 ▼▼▼▼▼ #}
+        <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+        <script src="https://unpkg.com/alpinejs@3.14.1" defer></script>
+        {# ▲▲▲▲▲ ここを追加 ▲▲▲▲▲ #}
+    {% endblock %}
 </body>
 </html>

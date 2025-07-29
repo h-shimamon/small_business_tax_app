@@ -1,0 +1,48 @@
+{#
+  フォームフィールドをレンダリングするためのヘルパーマクロ (修正版)
+  - field: フォームのフィールドオブジェクト (例: form.name)
+  - placeholder, type, rows: <input>タグなどに追加する個別のHTML属性
+#}
+{% macro render_field(field, placeholder=None, type=None, rows=None) %}
+  
+  {# チェックボックスの場合、特別なレイアウトを適用 #}
+  {% if field.type == 'BooleanField' %}
+    <div class="form-group-checkbox">
+      {{ field(class="form-checkbox") }}
+      {{ field.label(class="form-label-checkbox") }}
+      {% if field.errors %}
+        <div class="form-errors">
+          {% for error in field.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+  {# その他のフィールド（テキスト、数値、セレクトボックス等）の場合 #}
+  {% else %}
+    <div class="form-group">
+      {{ field.label(class="form-label") }}
+      
+      {# 
+        呼び出し側でplaceholderが指定されておらず、
+        かつSelectFieldでもない場合に、ラベル名から自動生成します。
+      #}
+      {% if placeholder is none and field.type != 'SelectField' %}
+        {% set placeholder = '例：' ~ field.label.text %}
+      {% endif %}
+
+      {# WTFormsオブジェクトにCSSクラスと個別の属性を渡してレンダリング #}
+      {{ field(class="form-control", placeholder=placeholder, type=type, rows=rows) }}
+
+      {% if field.errors %}
+        <div class="form-errors">
+          {% for error in field.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+{% endmacro %}
