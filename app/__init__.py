@@ -1,9 +1,11 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 
 # データベースオブジェクトをここでインスタンス化します
 db = SQLAlchemy()
+login_manager = LoginManager()
 
 def create_app():
     """
@@ -26,6 +28,14 @@ def create_app():
 
     # データベースをアプリケーションに紐付けます
     db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'company.login'
+
+    from .company.models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
     with app.app_context():
         # リファクタリングで作成したブループリントをインポートします
@@ -36,5 +46,12 @@ def create_app():
 
         # データベーステーブルを作成します (まだ存在しない場合)
         db.create_all()
+
+        # テストユーザーがなければ作成
+        if not User.query.filter_by(username='admin').first():
+            admin_user = User(username='admin')
+            admin_user.set_password('password')
+            db.session.add(admin_user)
+            db.session.commit()
 
         return app

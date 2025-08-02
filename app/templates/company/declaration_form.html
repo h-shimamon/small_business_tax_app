@@ -1,50 +1,6 @@
 <!-- app/templates/company/declaration_form.html -->
 {% extends "base.html" %}
-
-{# ▼▼▼ このブロックを {% extends %} の直後に追加 ▼▼▼ #}
-{% block head %}
-  {{ super() }}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/declaration_form.css') }}">
-{% endblock %}
-{# ▲▲▲ ここまで ▲▲▲ #}
-
-
-{# --- 入力フィールドをレンダリングするためのマクロ --- #}
-{% macro render_field(field, class='form-control') %}
-<div class="table-row">
-    <div class="table-label">{{ field.label }}</div>
-    <div class="table-input">{{ field(class=class) }}</div>
-</div>
-{% endmacro %}
-
-{% macro render_radio_field(field) %}
-<div class="table-row">
-    <div class="table-label">{{ field.label }}</div>
-    <div class="table-input">
-        <div class="radio-group">
-            {% for subfield in field %}
-            <label class="radio-label">{{ subfield }} {{ subfield.label.text }}</label>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endmacro %}
-
-{% macro render_checkbox_field(field) %}
-<div class="table-row">
-    <div class="table-label-top">{{ field.label }}</div>
-    <div class="table-input">
-        <div class="checkbox-group">
-            <label class="checkbox-label">
-                {{ field() }}
-                <span>{{ field.label.text }}</span>
-            </label>
-        </div>
-    </div>
-</div>
-{% endmacro %}
-{# --- マクロ定義ここまで --- #}
-
+{% from 'company/_form_helpers.html' import render_field, render_radio_field, render_checkbox_field %}
 
 {% block title %}申告情報{% endblock %}
 
@@ -53,7 +9,6 @@
         <a href="{{ url_for('company.show') }}">基本情報</a>
         <a href="{{ url_for('company.employees') }}">社員名簿</a>
         <a href="{{ url_for('company.declaration') }}" class="active">申告情報</a>
-        <!-- ★修正点: href="#" を正しいリンクに変更 -->
         <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
     </div>
 {% endblock %}
@@ -66,141 +21,65 @@
     <form action="{{ url_for('company.declaration') }}" method="post" novalidate>
         {{ form.hidden_tag() }}
 
-        <div class="declaration-table">
+        <div class="form-grid">
             <!-- 基本情報 -->
-            <div class="table-row-group">
-                <div class="table-category-header">基本情報</div>
-                <div class="table-items">
-                    <div class="table-row">
-                        <div class="table-label">{{ form.accounting_period_start.label }}</div>
-                        <div class="table-input">
-                            <div class="date-range">
-                                {{ form.accounting_period_start(class="form-control") }}
-                                <span>〜</span>
-                                {{ form.accounting_period_end(class="form-control") }}
-                            </div>
-                        </div>
-                    </div>
-                    {{ render_radio_field(form.office_count) }}
-                    {{ render_radio_field(form.declaration_type) }}
-                    {{ render_radio_field(form.tax_system) }}
-                </div>
-            </div>
+            <fieldset>
+                <legend>基本情報</legend>
+                {{ render_field(form.accounting_period_start, placeholder='2023-04-01') }}
+                {{ render_field(form.accounting_period_end, placeholder='2024-03-31') }}
+                {{ render_radio_field(form.office_count) }}
+                {{ render_radio_field(form.declaration_type) }}
+                {{ render_radio_field(form.tax_system) }}
+            </fieldset>
 
             <!-- 代表者 -->
-            <div class="table-row-group">
-                <div class="table-category-header">代表者</div>
-                <div class="table-items">
-                    {{ render_field(form.representative_name) }}
-                    {{ render_field(form.representative_kana) }}
-                    {{ render_field(form.representative_position) }}
-                    {{ render_field(form.representative_status) }}
-                    
-                    {# --- マクロを使わず直接HTMLを記述してIDを確実に設定 --- #}
-                    <div class="table-row">
-                        <div class="table-label">{{ form.representative_zip_code.label }}</div>
-                        <div class="table-input">{{ form.representative_zip_code(id='representative_zip_code', class='form-control') }}</div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.representative_prefecture.label }}</div>
-                        <div class="table-input">{{ form.representative_prefecture(id='representative_prefecture', class='form-control') }}</div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.representative_city.label }}</div>
-                        <div class="table-input">{{ form.representative_city(id='representative_city', class='form-control') }}</div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.representative_address.label }}</div>
-                        <div class="table-input">{{ form.representative_address(id='representative_address', class='form-control') }}</div>
-                    </div>
-                </div>
-            </div>
+            <fieldset>
+                <legend>代表者</legend>
+                {{ render_field(form.representative_name, placeholder='代表 太郎') }}
+                {{ render_field(form.representative_kana, placeholder='ダイヒョウ タロウ') }}
+                {{ render_field(form.representative_position, placeholder='代表取締役') }}
+                {{ render_field(form.representative_status, placeholder='現任') }}
+                {{ render_field(form.representative_zip_code, id='representative_zip_code', placeholder='1000001') }}
+                {{ render_field(form.representative_prefecture, id='representative_prefecture', placeholder='東京都') }}
+                {{ render_field(form.representative_city, id='representative_city', placeholder='千代田区') }}
+                {{ render_field(form.representative_address, id='representative_address', placeholder='丸の内1-1-1') }}
+            </fieldset>
 
             <!-- 経理責任者 -->
-            <div class="table-row-group">
-                <div class="table-category-header">経理責任者</div>
-                <div class="table-items">
-                    {{ render_field(form.accounting_manager_name) }}
-                    {{ render_field(form.accounting_manager_kana) }}
-                </div>
-            </div>
+            <fieldset>
+                <legend>経理責任者</legend>
+                {{ render_field(form.accounting_manager_name, placeholder='経理 花子') }}
+                {{ render_field(form.accounting_manager_kana, placeholder='ケイリ ハナコ') }}
+            </fieldset>
 
             <!-- 決算・申告期限 -->
-            <div class="table-row-group">
-                <div class="table-category-header">決算・申告</div>
-                <div class="table-items">
-                    {{ render_field(form.closing_date) }}
-                    <div class="table-row">
-                        <div class="table-label">申告期限の延長</div>
-                        <div class="table-input">
-                             <div class="checkbox-group-vertical">
-                                <label class="checkbox-label">{{ form.is_corp_tax_extended() }} <span>{{ form.is_corp_tax_extended.label.text }}</span></label>
-                                <label class="checkbox-label">{{ form.is_biz_tax_extended() }} <span>{{ form.is_biz_tax_extended.label.text }}</span></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.employee_count_at_eoy.label }}</div>
-                        <div class="table-input">
-                            {{ form.employee_count_at_eoy(class="form-control form-control-short") }}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <fieldset>
+                <legend>決算・申告</legend>
+                {{ render_field(form.closing_date, placeholder='2024-03-31') }}
+                {{ render_checkbox_field(form.is_corp_tax_extended) }}
+                {{ render_checkbox_field(form.is_biz_tax_extended) }}
+                {{ render_field(form.employee_count_at_eoy, placeholder='10') }}
+            </fieldset>
 
             <!-- 税理士 -->
-            <div class="table-row-group">
-                <div class="table-category-header">税理士</div>
-                <div class="table-items">
-                    {{ render_field(form.tax_accountant_name) }}
-                    {{ render_field(form.tax_accountant_phone) }}
-                    
-                    {# --- マクロを使わず直接HTMLを記述してIDを確実に設定 --- #}
-                    <div class="table-row">
-                        <div class="table-label">{{ form.tax_accountant_zip.label }}</div>
-                        <div class="table-input">{{ form.tax_accountant_zip(id='tax_accountant_zip', class='form-control') }}</div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.tax_accountant_prefecture.label }}</div>
-                        <div class="table-input">{{ form.tax_accountant_prefecture(id='tax_accountant_prefecture', class='form-control') }}</div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.tax_accountant_city.label }}</div>
-                        <div class="table-input">{{ form.tax_accountant_city(id='tax_accountant_city', class='form-control') }}</div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.tax_accountant_address.label }}</div>
-                        <div class="table-input">{{ form.tax_accountant_address(id='tax_accountant_address', class='form-control') }}</div>
-                    </div>
-                </div>
-            </div>
+            <fieldset>
+                <legend>税理士</legend>
+                {{ render_field(form.tax_accountant_name, placeholder='税理 士郎') }}
+                {{ render_field(form.tax_accountant_phone, placeholder='03-1234-5678') }}
+                {{ render_field(form.tax_accountant_zip, id='tax_accountant_zip', placeholder='1000002') }}
+                {{ render_field(form.tax_accountant_prefecture, id='tax_accountant_prefecture', placeholder='東京都') }}
+                {{ render_field(form.tax_accountant_city, id='tax_accountant_city', placeholder='中央区') }}
+                {{ render_field(form.tax_accountant_address, id='tax_accountant_address', placeholder='銀座1-2-3') }}
+            </fieldset>
 
             <!-- 還付金受取口座 -->
-            <div class="table-row-group">
-                <div class="table-category-header">還付金受取口座</div>
-                <div class="table-items">
-                    <div class="table-row">
-                        <div class="table-label">{{ form.refund_bank_name.label }}</div>
-                        <div class="table-input">
-                            <div class="input-group-split">
-                                {{ form.refund_bank_name(class="form-control") }}
-                                {{ form.refund_bank_type(class="form-control") }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-row">
-                        <div class="table-label">{{ form.refund_branch_name.label }}</div>
-                        <div class="table-input">
-                            <div class="input-group-split">
-                                {{ form.refund_branch_name(class="form-control") }}
-                                {{ form.refund_branch_type(class="form-control") }}
-                            </div>
-                        </div>
-                    </div>
-                    {{ render_field(form.refund_account_type) }}
-                    {{ render_field(form.refund_account_number) }}
-                </div>
-            </div>
+            <fieldset>
+                <legend>還付金受取口座</legend>
+                {{ render_field(form.refund_bank_name, placeholder='みずほ銀行') }}
+                {{ render_field(form.refund_branch_name, placeholder='本店') }}
+                {{ render_field(form.refund_account_type, placeholder='普通') }}
+                {{ render_field(form.refund_account_number, placeholder='1234567') }}
+            </fieldset>
         </div>
 
         <div class="form-actions">
@@ -210,7 +89,6 @@
 </div>
 {% endblock %}
 
-{# --- 埋め込みJSを削除し、外部ファイル読込に戻します --- #}
 {% block scripts %}
     {{ super() if super }}
     <script src="{{ url_for('static', filename='js/address_autofill.js') }}?v=2.0"></script>

@@ -12,4 +12,4 @@ company_bp = Blueprint(
 )
 
 # 分割したルートファイルをインポートして、定義したBlueprintにルートを登録する
-from app.company import core, employees, offices, import_data, statement_of_accounts
+from app.company import core, employees, offices, import_data, statement_of_accounts, auth

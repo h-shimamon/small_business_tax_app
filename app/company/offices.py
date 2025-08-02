@@ -1,12 +1,14 @@
 # app/company/offices.py
 
 from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from app.company import company_bp
 from app.company.models import Company, Office
 from app.company.forms import OfficeForm
 from app import db
 
 @company_bp.route('/offices')
+@login_required
 def office_list():
     company = Company.query.first()
     offices = company.offices if company else []
@@ -15,6 +17,7 @@ def office_list():
     return render_template('office_list.html', offices=offices)
 
 @company_bp.route('/office/register', methods=['GET', 'POST'])
+@login_required
 def register_office():
     company = Company.query.first()
     if not company:
@@ -33,6 +36,7 @@ def register_office():
     return render_template('office_form.html', form=form)
 
 @company_bp.route('/office/edit/<int:office_id>', methods=['GET', 'POST'])
+@login_required
 def edit_office(office_id):
     """事業所情報の編集"""
     office = Office.query.get_or_404(office_id)
@@ -46,6 +50,7 @@ def edit_office(office_id):
     return render_template('office_form.html', form=form, office=office)
 
 @company_bp.route('/office/delete/<int:office_id>', methods=['POST'])
+@login_required
 def delete_office(office_id):
     office = Office.query.get_or_404(office_id)
     db.session.delete(office)

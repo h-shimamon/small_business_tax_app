@@ -1,10 +1,38 @@
 # app/company/forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, SelectField, DateField, RadioField, IntegerField, TextAreaField
+from wtforms import StringField, SubmitField, BooleanField, SelectField, DateField, RadioField, IntegerField, TextAreaField, PasswordField
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, Length, Optional, Email
 from datetime import datetime
+
+class CompanyForm(FlaskForm):
+    """会社の基本情報を登録・編集するためのフォーム"""
+    corporate_number = StringField('法人番号', validators=[DataRequired(), Length(min=13, max=13)])
+    company_name = StringField('法人名', validators=[DataRequired(), Length(max=100)])
+    company_name_kana = StringField('フリガナ', validators=[DataRequired(), Length(max=100)])
+    zip_code = StringField('郵便番号', validators=[DataRequired(), Length(min=7, max=7)])
+    prefecture = StringField('都道府県', validators=[DataRequired(), Length(max=10)])
+    city = StringField('市区町村', validators=[DataRequired(), Length(max=50)])
+    address = StringField('番地以降の住所', validators=[DataRequired(), Length(max=200)])
+    phone_number = StringField('電話番号', validators=[DataRequired(), Length(max=20)])
+    homepage = StringField('ホームページアドレス', validators=[Optional(), Length(max=200)])
+    establishment_date = DateField('設立年月日', format='%Y-%m-%d', validators=[DataRequired()])
+    capital_limit = BooleanField('１年間である')
+    is_supported_industry = BooleanField('資本金等の額が1億円以下である')
+    is_not_excluded_business = BooleanField('電気・ガス供給業及び保険業に該当しない')
+    is_excluded_business = BooleanField('適用除外事業者に該当しない')
+    industry_type = StringField('業種', validators=[Optional(), Length(max=50)])
+    industry_code = StringField('業種番号', validators=[Optional(), Length(max=10)])
+    reference_number = StringField('整理番号', validators=[Optional(), Length(max=20)])
+    submit = SubmitField('保存する')
+
+class LoginForm(FlaskForm):
+    """ログインフォーム"""
+    username = StringField('ユーザー名', validators=[DataRequired()])
+    password = PasswordField('パスワード', validators=[DataRequired()])
+    remember_me = BooleanField('ログイン状態を保持する')
+    submit = SubmitField('ログイン')
 
 class EmployeeForm(FlaskForm):
     """従業員登録・編集フォーム"""

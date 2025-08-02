@@ -1,12 +1,14 @@
 # app/company/employees.py
 
 from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from app.company import company_bp
 from app.company.models import Company, Employee
 from app.company.forms import EmployeeForm
 from app import db
 
 @company_bp.route('/employees')
+@login_required
 def employees():
     company = Company.query.first()
     employee_list = company.employees if company else []
@@ -15,6 +17,7 @@ def employees():
     return render_template('employee_list.html', employees=employee_list)
 
 @company_bp.route('/employee/register', methods=['GET', 'POST'])
+@login_required
 def register_employee():
     company = Company.query.first()
     if not company:
@@ -33,6 +36,7 @@ def register_employee():
     return render_template('register_employee.html', form=form)
 
 @company_bp.route('/employee/edit/<int:employee_id>', methods=['GET', 'POST'])
+@login_required
 def edit_employee(employee_id):
     """従業員情報の編集"""
     employee = Employee.query.get_or_404(employee_id)
@@ -46,6 +50,7 @@ def edit_employee(employee_id):
     return render_template('edit_employee.html', form=form, employee_id=employee.id)
 
 @company_bp.route('/employee/delete/<int:employee_id>', methods=['POST'])
+@login_required
 def delete_employee(employee_id):
     employee = Employee.query.get_or_404(employee_id)
     db.session.delete(employee)

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
 
 {% block title %}従業員登録{% endblock %}
 
@@ -18,67 +19,18 @@
     <form method="post" class="form-grid" novalidate>
         {{ form.hidden_tag() }}
 
-        <div class="form-group">
-            {{ form.last_name.label(class="form-label") }}
-            {{ form.last_name(class="form-control") }}
-            {% if form.last_name.errors %}<div class="form-error">{% for e in form.last_name.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
-        </div>
-        <div class="form-group">
-            {{ form.first_name.label(class="form-label") }}
-            {{ form.first_name(class="form-control") }}
-            {% if form.first_name.errors %}<div class="form-error">{% for e in form.first_name.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.last_name_kana.label(class="form-label") }}
-            {{ form.last_name_kana(class="form-control") }}
-            {% if form.last_name_kana.errors %}<div class="form-error">{% for e in form.last_name_kana.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
-        </div>
-        <div class="form-group">
-            {{ form.first_name_kana.label(class="form-label") }}
-            {{ form.first_name_kana(class="form-control") }}
-            {% if form.first_name_kana.errors %}<div class="form-error">{% for e in form.first_name_kana.errors %}<span>{{ e }}</span>{% endfor %}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.employee_number.label(class="form-label") }}
-            {{ form.employee_number(class="form-control") }}
-        </div>
-        
-        <div class="form-group">
-            {{ form.joined_date.label(class="form-label") }}
-            {{ form.joined_date(class="form-control", type='date') }}
-        </div>
-
-        <div class="form-group">
-            {{ form.address.label(class="form-label") }}
-            {{ form.address(class="form-control") }}
-        </div>
-
-        <div class="form-group checkbox-group">
-            {{ form.is_officer() }}
-            {{ form.is_officer.label(class="form-label") }}
-        </div>
-        
-        <div class="form-group">
-            {{ form.officer_position.label(class="form-label") }}
-            {{ form.officer_position(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.relationship.label(class="form-label") }}
-            {{ form.relationship(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.shares_held.label(class="form-label") }}
-            {{ form.shares_held(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.voting_rights.label(class="form-label") }}
-            {{ form.voting_rights(class="form-control") }}
-        </div>
+        {{ render_field(form.last_name, placeholder='山田') }}
+        {{ render_field(form.first_name, placeholder='太郎') }}
+        {{ render_field(form.last_name_kana, placeholder='ヤマダ') }}
+        {{ render_field(form.first_name_kana, placeholder='タロウ') }}
+        {{ render_field(form.employee_number, placeholder='1001') }}
+        {{ render_field(form.joined_date, type='date') }}
+        {{ render_field(form.address, placeholder='東京都千代田区丸の内1-1-1') }}
+        {{ render_checkbox_field(form.is_officer) }}
+        {{ render_field(form.officer_position, placeholder='代表取締役') }}
+        {{ render_field(form.relationship, placeholder='本人') }}
+        {{ render_field(form.shares_held, placeholder='100') }}
+        {{ render_field(form.voting_rights, placeholder='100') }}
 
         <div class="form-actions">
             {{ form.submit(class="button-primary") }}
