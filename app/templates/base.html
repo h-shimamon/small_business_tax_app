@@ -7,10 +7,8 @@
     
     {# ▼▼▼ このブロックで共通CSSを読み込み、子テンプレートからの拡張を許可します ▼▼▼ #}
     {% block head %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-        {# ▼▼▼▼▼ ここを追加しました ▼▼▼▼▼ #}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/form_helpers.css') }}">
-        {# ▲▲▲▲▲ ここを追加しました ▲▲▲▲▲ #}
     {% endblock %}
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,16 +22,14 @@
             <a href="{{ url_for('company.show') }}" class="nav-item">基本情報登録</a>
             <a href="{{ url_for('company.import_accounts') }}" class="nav-item">会計データ選択</a>
             <a href="#" class="nav-item">固定資産台帳</a>
-            {# ▼▼▼▼▼ ここを修正しました ▼▼▼▼▼ #}
             <a href="{{ url_for('company.statement_of_accounts') }}" class="nav-item">勘定科目内訳書</a>
-            {# ▲▲▲▲▲ ここを修正しました ▲▲▲▲▲ #}
             <a href="#" class="nav-item">申告書データ</a>
             <a href="#" class="nav-item">印刷</a>
             <a href="#" class="nav-item">設定</a>
         </nav>
     </header>
 
-    <div class="app-layout">
+    <div class="app-container">
         <aside class="sidebar">
             <nav class="local-nav">
                 {% block sidebar %}{# 各ページでこのブロックを上書きする #}{% endblock %}
@@ -56,10 +52,8 @@
 
     {# スクリプト用のブロックを追加 #}
     {% block scripts %}
-        {# ▼▼▼▼▼ ここを追加 ▼▼▼▼▼ #}
         <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
         <script src="https://unpkg.com/alpinejs@3.14.1" defer></script>
-        {# ▲▲▲▲▲ ここを追加 ▲▲▲▲▲ #}
     {% endblock %}
 </body>
 </html>
