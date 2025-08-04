@@ -17,12 +17,10 @@
 {% macro render_radio_field(field) %}
 <div class="form-group">
     {{ field.label(class="form-label") }}
-    <div class="radio-group">
+    <div class="segmented-control">
         {% for subfield in field %}
-        <label class="radio-label">
-            {{ subfield }}
-            {{ subfield.label.text }}
-        </label>
+            {{ subfield(style="display:none;") }}
+            {{ subfield.label }}
         {% endfor %}
     </div>
     {% if field.errors %}
