@@ -14,10 +14,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <h2>申告情報</h2>
-    <p>申告の対象となる事業年度の情報を入力し、保存してください。</p>
+<h1 class="content-title">申告情報</h1>
+<p class="content-subtitle">申告の対象となる事業年度の情報を入力し、保存してください。</p>
 
+<div class="card">
     <form action="{{ url_for('company.declaration') }}" method="post" novalidate>
         {{ form.hidden_tag() }}
 
