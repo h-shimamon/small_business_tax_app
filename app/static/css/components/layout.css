@@ -43,3 +43,25 @@
     padding: 40px;
     overflow-y: auto;
 }
+
+/* --- コンテンツヘッダー --- */
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* --- 汎用カードコンテナ --- */
+.card {
+    background-color: var(--bg-content);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 32px;
+}
+
+.card-header {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}

@@ -109,8 +109,8 @@ class Office(db.Model):
     municipality = db.Column(db.String(100))
     address = db.Column(db.String(200))
     phone_number = db.Column(db.String(20))
-    opening_date = db.Column(db.String(10))
-    closing_date = db.Column(db.String(10))
+    opening_date = db.Column(db.Date)
+    closing_date = db.Column(db.Date)
     employee_count = db.Column(db.Integer)
     office_count = db.Column(db.Integer)
     

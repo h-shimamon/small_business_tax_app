@@ -1,29 +1,89 @@
 /* /app/static/css/components/card.css */
 
-.card {
-    background-color: var(--bg-content);
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.office-card {
+    background-color: #ffffff;
     border-radius: 12px;
-    border: 1px solid var(--border-color);
-    padding: 40px;
+    border: 1px solid #e5e7eb;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+    position: relative;
 }
 
-.card-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e9ecef;
+.office-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
-.card-header h2 {
-    font-size: 1.3rem;
-    font-weight: 500;
-    color: #495057;
+.office-card-header {
+    margin-bottom: 20px;
+}
+
+.office-card-name {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+    color: var(--text-primary);
     margin: 0;
+    padding-right: 40px; /* Make space for action menu */
 }
 
-.card-body {
-    padding: 2rem;
-    color: var(--text-secondary);
+.office-card-body {
+    flex-grow: 1;
 }
 
-.card-actions {
-    padding: 1.5rem 2rem;
+.office-card-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+    color: #4b5563;
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.5;
+}
+
+.office-card-info svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: #9ca3af;
+}
+
+.office-card-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+/* Empty state card */
+.empty-state-card {
+    grid-column: 1 / -1; /* Span full width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    background-color: #f9fafb;
+}
+
+.empty-state-card p {
+    margin: 0;
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.empty-state-card p + p {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: #9ca3af;
 }
