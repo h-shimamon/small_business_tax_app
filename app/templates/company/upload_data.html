@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ super() }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/upload_data.css') }}">
+{% endblock %}
+
+{% block sidebar %}
+    <a href="{{ url_for('company.data_upload_wizard') }}" class="local-nav-item active">データアップロード</a>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container" x-data="uploadComponent()">
+    <h1 class="content-title">{{ title }}</h1>
+    <p class="content-description">{{ description }}</p>
+
+    <!-- ステップインジケーター -->
+    <div class="stepper">
+        {% for step_info in wizard_progress %}
+        <div class="step" :class="{ 'active': {{ 'true' if step_info.is_current or step_info.is_completed else 'false' }}, 'completed': {{ 'true' if step_info.is_completed else 'false' }} }">
+            <div class="step-number">{{ loop.index }}</div>
+            <div class="step-title">{{ step_info.name }}</div>
+        </div>
+        {% if not loop.last %}
+        <div class="step-connector"></div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="export-guide">
+        <h3 x-text="guide.title"></h3>
+        <ol>
+            <template x-for="instruction in guide.steps" :key="instruction">
+                <li x-text="instruction"></li>
+            </template>
+        </ol>
+    </div>
+
+    <div class="upload-area-wrapper">
+        <form method="POST" enctype="multipart/form-data" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="upload-area" 
+                 @dragover.prevent="dragover = true" 
+                 @dragleave.prevent="dragover = false" 
+                 @drop.prevent="handleDrop($event)" 
+                 @click="$refs.fileInput.click()"
+                 :class="{'dragover': dragover}">
+                
+                <input type="file" name="upload_file" @change="handleFileSelect($event)" x-ref="fileInput" class="file-input">
+                
+                <div x-show="!fileName">
+                    <div class="upload-icon">☁️</div>
+                    <p>ここにファイルをドラッグ＆ドロップ</p>
+                    <p>または<a href="#" class="browse-link">ファイルを選択</a></p>
+                </div>
+                <div x-show="fileName">
+                    <p>選択されたファイル: <strong x-text="fileName"></strong></p>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="button-primary" :disabled="!fileName">アップロードして次へ</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+    function uploadComponent(selectedSoftware) {
+        return {
+            dragover: false,
+            fileName: null,
+            guide: {},
+            guides: {
+                yayoi: {
+                    title: '弥生会計からのデータエクスポート手順',
+                    steps: [
+                        '「ファイル」メニューから「エクスポート」を選択します。',
+                        '「{{ guide_text_data_type }}」を選択し、CSV形式で出力します。',
+                        '文字コードは「UTF-8」を選択してください。'
+                    ]
+                },
+                freee: {
+                    title: 'freeeからのデータエクスポート手順',
+                    steps: [
+                        '「決算」または「レポート」メニューから「仕訳帳」などを選択します。',
+                        '「エクスポート」機能で「汎用形式」のCSVをダウンロードします。',
+                        '対象期間などを正しく設定してください。'
+                    ]
+                },
+                moneyforward: {
+                    title: 'マネーフォワード クラウドからのデータエクスポート手順',
+                    steps: [
+                        '「会計帳簿」から「{{ guide_text_data_type }}」を選択します。',
+                        '画面右上の「エクスポート」からCSVファイルをダウンロードします。',
+                        '必要な期間と形式を選択してください。'
+                    ]
+                },
+                other: {
+                    title: '一般的なCSVファイルのエクスポート手順',
+                    steps: [
+                        'お使いの会計ソフトからCSV形式でデータを出力してください。',
+                        '必須項目が含まれていることを確認してください: {{ guide_text_required_columns }}',
+                        '文字コードは「UTF-8」または「Shift-JIS」を推奨します。'
+                    ]
+                }
+            },
+            init() {
+                this.guide = this.guides[selectedSoftware] || this.guides['other'];
+            },
+            handleDrop(event) {
+                this.dragover = false;
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    this.$refs.fileInput.files = files;
+                    this.fileName = files[0].name;
+                }
+            },
+            handleFileSelect(event) {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    this.fileName = files[0].name;
+                }
+            }
+        }
+    }
+    </script>
+{% endblock %}

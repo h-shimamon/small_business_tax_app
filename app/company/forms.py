@@ -1,9 +1,24 @@
 # app/company/forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, SelectField, DateField, RadioField, IntegerField, TextAreaField, PasswordField
-from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms.validators import DataRequired, Length, Optional, Email
+from flask_wtf.file import FileAllowed, FileRequired
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField
+from wtforms.fields import DateField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
+
+class SoftwareSelectionForm(FlaskForm):
+    """会計ソフト選択用フォーム"""
+    accounting_software = RadioField(
+        '会計ソフト',
+        choices=[
+            ('yayoi', '弥生会計'),
+            ('freee', 'freee'),
+            ('moneyforward', 'マネーフォワード'),
+            ('other', 'その他')
+        ],
+        validators=[DataRequired(message='会計ソフトを選択してください。')]
+    )
+    submit = SubmitField('次へ進む')
 from datetime import datetime
 
 class CompanyForm(FlaskForm):

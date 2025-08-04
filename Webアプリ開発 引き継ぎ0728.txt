@@ -100,6 +100,7 @@ app/
 ├── company/
 │   ├── __init__.py
 │   ├── __pycache__/
+│   ├── auth.py
 │   ├── core.py
 │   ├── employees.py
 │   ├── forms.py
@@ -113,10 +114,12 @@ app/
 │   │   ├── declaration_form.css
 │   │   ├── form_helpers.css
 │   │   ├── form_view.css
-│   │   ├── select_accounting.css
+│   │   ├── layout.css
+│   │   ├── select_software.css
 │   │   ├── statement_of_accounts.css
 │   │   ├── style.css
-│   │   └── table_view.css
+│   │   ├── table_view.css
+│   │   └── upload_data.css
 │   └── js/
 │       └── address_autofill.js
 ├── templates/
@@ -129,58 +132,32 @@ app/
 │       ├── deposit_form.html
 │       ├── edit_employee.html
 │       ├── employee_list.html
-│       ├── import_accounts.html
-│       ├── import_chart_of_accounts.html
-│       ├── import_fixed_assets.html
-│       ├── import_journals.html
+│       ├── login.html
 │       ├── notes_receivable_form.html
 │       ├── office_form.html
 │       ├── office_list.html
 │       ├── register_employee.html
+│       ├── select_software.html
 │       ├── statement_of_accounts.html
-│       └── temporary_payment_form.html
+│       ├── temporary_payment_form.html
+│       └── upload_data.html
 │   ├── index.html
 │   ├── register.html
 │   └── result.html
-instance/
-migrations/
-requirements.txt
-run.py
-template_beppyo1.pdf
-venv/
+├── instance/
+├── migrations/
+├── requirements.txt
+├── run.py
+├── template_beppyo1.pdf
+└── Webアプリ開発 引き継ぎ0728
+
 ...
 
 【次期タスク提案】
 
 タスク1: 既存主要フォームのUIリファクタリング
 
-目的:
-現在、主要な情報入力フォームである「基本情報」「社員名簿」「申告情報」「事業所一覧」は、_form_helpers.htmlのマクロを使用せずに実装されている。これによりUIの微細な不統一やコードの重複が発生しており、保守性を低下させる要因となっている。
-この問題を解決するため、v10セッションで確立したJinja2マクロによるUI構築パターンをこれらの既存フォームにも適用し、アプリケーション全体の品質とメンテナンス性を向上させる。
-指示:
-影響ファイルの特定: 以下の4つの機能に対応するフォームテンプレートと、それらを呼び出すPythonのルート関数を特定する。
-基本情報 (declaration_form.html / core.py 内の show 関数)
-社員名簿 (register_employee.html, edit_employee.html / employees.py 内の register_employee, edit_employee 関数)
-申告情報 (declaration_form.html / core.py 内の show 関数)
-事業所一覧 (office_form.html / offices.py 内の add_office, edit_office 関数)
-フォームテンプレートの置換:
-特定した各HTMLファイルの内容を、v10で導入した render_field マクロを呼び出す形式に全面的に書き換える。
-各テンプレートの先頭で {% from 'company/_form_helpers.html' import render_field %} を記述する。
-フォームの各項目を {{ render_field(form.field_name, placeholder="適切な例") }} の形式で呼び出すように修正する。
-既存の form_view.css へのリンクは不要になるため、各HTMLファイルの <head> ブロックから削除する。
-動作確認:
-リファクタリング後、各フォームの新規登録画面と編集画面が正しく表示され、データの保存が問題なく行えることを確認する。
-
 タスク2: ユーザー認証機能の実装
-目的:
-v10で導入した Flask-Login を活用し、アプリケーションのセキュリティを確保するための基本的な認証基盤（ログイン・ログアウト機能）を構築する。これは、複数ユーザーによる利用やデータの保護に不可欠なステップである。
-指示:
-Userモデルの追加: app/company/models.pyに、UserMixinを継承したUserモデルを追加する。最低限、id (主キー), username (ユニーク), password_hash のフィールドを定義する。パスワードはハッシュ化して保存すること。
-認証フォームの作成: app/company/forms.pyに、StringFieldとPasswordField、BooleanField(remember_me)を持つLoginFormを追加する。
-認証ルートの作成: 認証ロジック（ログイン、ログアウト処理）を記述するため、app/company/auth.pyを新規作成し、/login, /logout のルートを定義する。このファイルは新しいブループリントとしてapp/company/__init__.pyで登録する。
-LoginManagerの初期化: app/__init__.pyでFlask-LoginのLoginManagerをインスタンス化し、login_view（例: 'company_auth.login'）を設定する。また、user_loaderコールバック関数を定義する。
-ログイン画面の作成: app/templates/company/内に、作成したLoginFormを描画するためのlogin.htmlを作成する。base.htmlを継承すること。
-アクセス制御: 既存の各ルート（例: company.showなど）に@login_requiredデコレータを追加し、未認証ユーザーをログインページにリダイレクトさせる。
 
 【留意事項】
 削除機能は現在、ブラウザ標準のconfirm()ダイアログに依存している。UI/UXをさらに向上させる場合、将来的により洗練されたカスタムモーダルへの置換が考えられるが、現時点では指令書原則4に基づき、既存のパターンを変更しないこと。 

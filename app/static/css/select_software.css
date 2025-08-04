@@ -1,0 +1,70 @@
+/* app/static/css/select_software.css */
+
+.selection-container {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.selection-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.selection-header p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+.software-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 25px;
+    text-align: left;
+}
+
+.software-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--bg-content);
+}
+
+.software-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.software-card input[type="radio"] {
+    display: none; /* ラジオボタン自体は隠す */
+}
+
+.software-card.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-color);
+    background-color: #e6f2ff;
+}
+
+.software-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 15px;
+}
+
+.software-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-actions {
+    margin-top: 40px;
+}

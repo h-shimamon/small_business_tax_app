@@ -36,9 +36,9 @@ def show():
 def declaration():
     """申告情報ページ"""
     company = Company.query.first()
-    if not company:
-        flash('先に会社の基本情報を登録してください。', 'error')
-        return redirect(url_for('company.show'))
+    # if not company:
+    #     flash('先に会社の基本情報を登録してください。', 'error')
+    #     return redirect(url_for('company.show'))
     
     form = DeclarationForm(obj=company)
     if form.validate_on_submit():

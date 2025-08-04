@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}会計ソフトの選択 - {{ super() }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select_software.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="selection-container" x-data="{ selectedSoftware: '' }">
+    <div class="selection-header">
+        <h1>会計ソフトを選択</h1>
+        <p>データのインポートを開始する前に、ご利用の会計ソフトを1つ選択してください。</p>
+    </div>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="software-grid">
+            {% for subfield in form.accounting_software %}
+            <label class="software-card" :class="{ 'selected': selectedSoftware === '{{ subfield.data }}' }" @click="selectedSoftware = '{{ subfield.data }}'">
+                {{ subfield(id=subfield.id) }} {# ラジオボタン本体 #}
+                <img src="/static/images/{{ subfield.data }}_logo.png" alt="{{ subfield.label.text }}" class="software-logo">
+                <span class="software-name">{{ subfield.label.text }}</span>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="button-primary" :disabled="!selectedSoftware">次へ進む</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

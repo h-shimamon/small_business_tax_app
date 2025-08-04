@@ -20,9 +20,9 @@ def office_list():
 @login_required
 def register_office():
     company = Company.query.first()
-    if not company:
-        flash('先に会社の基本情報を登録してください。', 'error')
-        return redirect(url_for('company.show'))
+    # if not company:
+    #     flash('先に会社の基本情報を登録してください。', 'error')
+    #     return redirect(url_for('company.show'))
         
     form = OfficeForm(request.form)
     if form.validate_on_submit():

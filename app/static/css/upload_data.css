@@ -1,0 +1,162 @@
+/* app/static/css/upload_data.css */
+
+:root {
+    --accent-color: #007aff;
+    --border-color: #d2d2d7;
+    --bg-main: #f5f5f7;
+    --bg-content: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+}
+
+.upload-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.stepper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.step .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 12px;
+    font-weight: 700;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.step.active .step-number {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.step.active .step-title {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.software-selection-panel {
+    background-color: var(--bg-content);
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.software-selection-panel h3 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.software-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.software-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.software-card:hover {
+    background-color: var(--bg-main);
+}
+
+.software-card.selected {
+    border-color: var(--accent-color);
+    background-color: #e6f2ff;
+}
+
+.software-logo {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 10px;
+    /* background-color: #ccc; 仮のロゴ背景 */
+    /* border-radius: 8px; */
+}
+
+.software-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.export-guide {
+    background-color: #e9f5e9;
+    border: 1px solid #a3d9a5;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.export-guide h3 {
+    margin-top: 0;
+    color: #2d6a4f;
+}
+
+.export-guide ol {
+    padding-left: 20px;
+    line-height: 1.6;
+}
+
+.upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 60px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.upload-area.dragover {
+    border-color: var(--accent-color);
+    background-color: #e6f2ff;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--accent-color);
+    margin-bottom: 15px;
+}
+
+.upload-area p {
+    margin: 0;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.upload-area .browse-link {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#file-input {
+    display: none;
+}
