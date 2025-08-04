@@ -87,7 +87,7 @@ class Employee(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     is_officer = db.Column(db.Boolean, default=False) # Boolean型（真偽値）に修正
-    joined_date = db.Column(db.String(10))
+    joined_date = db.Column(db.Date)
     relationship = db.Column(db.String(50))
     address = db.Column(db.String(200))
     shares_held = db.Column(db.Integer)

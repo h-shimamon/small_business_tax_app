@@ -1,18 +1,21 @@
 /* /app/static/css/components/buttons.css */
 
-.button-primary {
+.button-primary, .button-secondary {
     padding: 12px 24px;
     font-size: 1rem;
     font-weight: 500;
-    color: #fff;
-    background-color: var(--accent-color);
-    border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     text-decoration: none;
     display: inline-block;
     text-align: center;
+    border: 1px solid transparent;
+}
+
+.button-primary {
+    color: #fff;
+    background-color: var(--accent-color);
 }
 
 .button-primary:hover {
@@ -22,6 +25,17 @@
 .button-primary:disabled {
     background-color: #b0b0b0;
     cursor: not-allowed;
+}
+
+.button-secondary {
+    color: var(--text-primary);
+    background-color: #f0f0f0;
+    border-color: #e0e0e0;
+}
+
+.button-secondary:hover {
+    background-color: #e0e0e0;
+    border-color: #d0d0d0;
 }
 
 /* テーブル内のアクションボタンなど、より小さいボタン */

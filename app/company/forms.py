@@ -58,7 +58,7 @@ class EmployeeForm(FlaskForm):
     first_name_kana = StringField('メイ', validators=[DataRequired(message="メイは必須です。"), Length(max=50)])
     joined_date = DateField('入社年月日', format='%Y-%m-%d', validators=[Optional()])
     address = StringField('住所', validators=[Optional(), Length(max=200)])
-    is_officer = BooleanField('役員')
+    is_officer = RadioField('役員区分', choices=[(True, '役員である'), (False, '役員ではない')], default=False, coerce=lambda x: x is True or x == 'True')
     officer_position = StringField('役職名', validators=[Optional(), Length(max=100)])
     relationship = StringField('法人・代表者との関係', validators=[Optional(), Length(max=100)])
     shares_held = IntegerField('保有株式数', validators=[Optional()])

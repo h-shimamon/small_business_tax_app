@@ -1,92 +1,85 @@
-<!-- app/templates/company/employee_list.html -->
 {% extends "base.html" %}
 
-{# ▼▼▼【最重要修正箇所】▼▼▼ #}
-{# このブロックで、親のCSSに加えてテーブル専用CSSを読み込みます #}
 {% block head %}
   {{ super() }}
-  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/employee_list.css') }}">
 {% endblock %}
-{# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ #}
-
 
 {% block title %}社員名簿{% endblock %}
 
 {% block sidebar %}
-<a href="{{ url_for('company.show') }}">基本情報</a>
-<a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
-<a href="{{ url_for('company.declaration') }}">申告情報</a>
-<a href="{{ url_for('company.office_list') }}">事業所一覧</a>
+    <div class="local-nav">
+        <a href="{{ url_for('company.show') }}">基本情報</a>
+        <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
+        <a href="{{ url_for('company.declaration') }}">申告情報</a>
+        <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
+    </div>
 {% endblock %}
 
 {% block content %}
-<div class="content-header">
-    <h1 class="content-title">社員名簿</h1>
-    <p>登録内容から自動で同族会社の判定を行うため、社員名簿 の作成は必須です。</p>
+<div class="page-header">
+    <div>
+        <h1 class="content-title">社員名簿</h1>
+        <p class="content-subtitle">登録内容から自動で同族会社の判定を行うため、社員名簿 の作成は必須です。</p>
+    </div>
+    <a href="{{ url_for('company.register_employee') }}" class="button-primary">＋ 新規登録</a>
 </div>
 
-<div class="card">
-    <!-- ▼▼▼▼▼ 変更箇所 ▼▼▼▼▼ -->
-    <!-- ボタンをdivで囲み、事業所一覧画面と同様のレイアウト構造に合わせます。 -->
-    <!-- これにより、ボタンとテーブルの間に適切なマージンが確保されます。 -->
-    <div class="card-actions">
+{% if employees %}
+    <div class="employee-list">
+        {% for employee in employees %}
+        <div class="employee-card">
+            <div class="employee-info">
+                <p class="name">{{ employee.name or '' }}</p>
+                <p class="position">{{ employee.position or '役職未設定' }}</p>
+            </div>
+            <div class="employee-actions">
+                <a href="{{ url_for('company.edit_employee', employee_id=employee.id) }}" class="action-icon edit-icon" title="編集">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </a>
+                <form action="{{ url_for('company.delete_employee', employee_id=employee.id) }}" method="post" onsubmit="return confirm('本当にこの従業員を削除しますか？');" style="margin: 0;">
+                    <button type="submit" class="action-icon delete-icon" title="削除">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <h2>まだ社員が登録されていません</h2>
+        <p>最初の社員情報を登録しましょう。</p>
         <a href="{{ url_for('company.register_employee') }}" class="button-primary">＋ 新規登録</a>
     </div>
-    <!-- ▲▲▲▲▲ 変更箇所 ▲▲▲▲▲ -->
+{% endif %}
+{% endblock %}
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>氏名</th>
-                    <th>グループ</th>
-                    <th>社員となった日</th>
-                    <th>続柄</th>
-                    <th>住所</th>
-                    <th>株式数</th>
-                    <th>議決権</th>
-                    <th>持ち株比率</th>
-                    <th>役職</th>
-                    <th>出資金額</th>
-                    <th colspan="2" style="width: 120px;"></th>
-                </tr>
-            </thead>
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.context-menu-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            // 他のメニューをすべて閉じる
+            document.querySelectorAll('.context-menu-content').forEach(menu => {
+                if (menu !== button.nextElementSibling) {
+                    menu.style.display = 'none';
+                }
+            });
+            // クリックされたメニューの表示を切り替える
+            const menu = button.nextElementSibling;
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+    });
 
-            <tbody>
-                {% for employee in employees %}
-                <tr>
-                    <td>{{ employee.name or '' }}</td>
-                    <td>{{ employee.group or '' }}</td>
-                    <td>
-                        {% if employee.joined_date and employee.joined_date.strftime %}
-                            {{ employee.joined_date.strftime('%Y-%m-%d') }}
-                        {% else %}
-                            {{ employee.joined_date or '' }}
-                        {% endif %}
-                    </td>
-                    <td>{{ employee.relationship or '' }}</td>
-                    <td>{{ employee.address or '' }}</td>
-                    <td>{{ "{:,.0f}".format(employee.shares_held) if employee.shares_held else '' }}</td>
-                    <td>{{ "{:,.0f}".format(employee.voting_rights) if employee.voting_rights else '' }}</td>
-                    <td>...</td>
-                    <td>{{ employee.position or '' }}</td>
-                    <td>{{ "{:,.0f}".format(employee.investment_amount) if employee.investment_amount else '' }}</td>
-                    <td>
-                        <div class="action-buttons-group">
-                            <a href="{{ url_for('company.edit_employee', employee_id=employee.id) }}" class="action-btn">編集</a>
-                            <form action="{{ url_for('company.delete_employee', employee_id=employee.id) }}" method="post" style="display:inline;">
-                                <button type="submit" class="action-btn delete" onclick="return confirm('本当にこの従業員を削除しますか？');">削除</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="11" style="text-align: center; padding: 40px;">まだ社員が登録されていません。</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    // ドキュメントのどこかをクリックしたらメニューを閉じる
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.context-menu-content').forEach(menu => {
+            menu.style.display = 'none';
+        });
+    });
+});
+</script>
 {% endblock %}

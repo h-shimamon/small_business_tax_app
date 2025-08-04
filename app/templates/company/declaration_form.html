@@ -25,8 +25,8 @@
             <!-- 基本情報 -->
             <fieldset>
                 <legend>基本情報</legend>
-                {{ render_field(form.accounting_period_start, placeholder='2023-04-01') }}
-                {{ render_field(form.accounting_period_end, placeholder='2024-03-31') }}
+                {{ render_field(form.accounting_period_start, type='date') }}
+                {{ render_field(form.accounting_period_end, type='date') }}
                 {{ render_radio_field(form.office_count) }}
                 {{ render_radio_field(form.declaration_type) }}
                 {{ render_radio_field(form.tax_system) }}
@@ -55,7 +55,7 @@
             <!-- 決算・申告期限 -->
             <fieldset>
                 <legend>決算・申告</legend>
-                {{ render_field(form.closing_date, placeholder='2024-03-31') }}
+                {{ render_field(form.closing_date, type='date') }}
                 {{ render_checkbox_field(form.is_corp_tax_extended) }}
                 {{ render_checkbox_field(form.is_biz_tax_extended) }}
                 {{ render_field(form.employee_count_at_eoy, placeholder='10') }}

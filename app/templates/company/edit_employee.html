@@ -1,36 +1,52 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
+{% from 'company/_form_helpers.html' import render_field, render_radio_field %}
 
 {% block title %}従業員編集{% endblock %}
 
 {% block sidebar %}
-    <a href="{{ url_for('company.show') }}">基本情報</a>
-    <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
-    <a href="{{ url_for('company.declaration') }}">申告情報</a>
-    <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
+    <div class="local-nav">
+        <a href="{{ url_for('company.show') }}">基本情報</a>
+        <a href="{{ url_for('company.employees') }}" class="active">社員名簿</a>
+        <a href="{{ url_for('company.declaration') }}">申告情報</a>
+        <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
+    </div>
 {% endblock %}
 
 {% block content %}
-<div class="content-header">
-    <h1 class="content-title">従業員編集</h1>
-</div>
+<h1 class="content-title">従業員編集</h1>
+<p class="content-subtitle">会社の従業員情報を編集します。</p>
 
 <div class="card">
-    <form method="post" class="form-grid">
+    <form method="post" novalidate>
         {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <fieldset>
+                <legend>基本情報</legend>
+                {{ render_field(form.last_name, placeholder='例：山田') }}
+                {{ render_field(form.first_name, placeholder='例：太郎') }}
+                {{ render_field(form.last_name_kana, placeholder='例：ヤマダ') }}
+                {{ render_field(form.first_name_kana, placeholder='例：タロウ') }}
+                {{ render_field(form.joined_date, type='date') }}
+                {{ render_field(form.relationship, placeholder='例：本人、配偶者') }}
+            </fieldset>
 
-        {{ render_field(form.last_name, placeholder='山田') }}
-        {{ render_field(form.first_name, placeholder='太郎') }}
-        {{ render_field(form.last_name_kana, placeholder='ヤマダ') }}
-        {{ render_field(form.first_name_kana, placeholder='タロウ') }}
-        {{ render_field(form.employee_number, placeholder='1001') }}
-        {{ render_field(form.joined_date, type='date') }}
-        {{ render_field(form.address, placeholder='東京都千代田区丸の内1-1-1') }}
-        {{ render_checkbox_field(form.is_officer) }}
-        {{ render_field(form.officer_position, placeholder='代表取締役') }}
-        {{ render_field(form.relationship, placeholder='本人') }}
-        {{ render_field(form.shares_held, placeholder='100') }}
-        {{ render_field(form.voting_rights, placeholder='100') }}
+            <fieldset>
+                <legend>役員区分</legend>
+                {{ render_radio_field(form.is_officer) }}
+                {{ render_field(form.officer_position, placeholder='例：代表取締役') }}
+            </fieldset>
+
+            <fieldset>
+                <legend>住所情報</legend>
+                {{ render_field(form.address, placeholder='例：東京都千代田区丸の内1-1-1') }}
+            </fieldset>
+
+            <fieldset>
+                <legend>持株情報</legend>
+                {{ render_field(form.shares_held, placeholder='例：100') }}
+                {{ render_field(form.voting_rights, placeholder='例：100') }}
+            </fieldset>
+        </div>
 
         <div class="form-actions">
             {{ form.submit(class="button-primary", value="更新する") }}
