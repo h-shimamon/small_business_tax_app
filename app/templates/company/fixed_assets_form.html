@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from 'company/_form_helpers.html' import render_field %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block sidebar %}
+    {# ... sidebar content from statement_of_accounts.html ... #}
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1 class="content-title">{{ form_title }}</h1>
+</div>
+<div class="card">
+    <form method="POST" action="" novalidate>
+        {{ form.hidden_tag() }}
+        {{ render_field(form.asset_type) }}
+        {{ render_field(form.location) }}
+        {{ render_field(form.area) }}
+        {{ render_field(form.balance_at_eoy) }}
+        {{ render_field(form.remarks, rows=3) }}
+        <div class="form-actions">
+            <a href="{{ url_for('company.statement_of_accounts', page='fixed_assets') }}" class="button-secondary">キャンセル</a>
+            {{ form.submit(class="button-primary") }}
+        </div>
+    </form>
+</div>
+{% endblock %}

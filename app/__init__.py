@@ -41,6 +41,8 @@ def create_app():
         return User.query.get(int(user_id))
 
     with app.app_context():
+        # Alembicがモデルを確実に検知できるように、ここでインポートします
+        from .company import models
         # リファクタリングで作成したブループリントをインポートします
         from .company import company_bp
         

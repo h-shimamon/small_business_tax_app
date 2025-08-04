@@ -2,7 +2,7 @@
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
-from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField, FloatField
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
 
@@ -23,7 +23,7 @@ from datetime import datetime
 
 class CompanyForm(FlaskForm):
     """会社の基本情報を登録・編集するためのフォーム"""
-    corporate_number = StringField('法人番号', validators=[DataRequired(), Length(min=13, max=13)])
+    corporate_number = StringField('法��番号', validators=[DataRequired(), Length(min=13, max=13)])
     company_name = StringField('法人名', validators=[DataRequired(), Length(max=100)])
     company_name_kana = StringField('フリガナ', validators=[DataRequired(), Length(max=100)])
     zip_code = StringField('郵便番号', validators=[DataRequired(), Length(min=7, max=7)])
@@ -286,7 +286,7 @@ class AccountsReceivableForm(FlaskForm):
             ('売掛金', '売掛金'),
             ('未収入金', '未収入金')
         ],
-        validators=[DataRequired(message="科目は必須です。")]
+        validators=[DataRequired(message="科目は��須です。")]
     )
     partner_name = StringField(
         '取引先名',
@@ -344,3 +344,111 @@ class TemporaryPaymentForm(FlaskForm):
         validators=[Optional(), Length(max=200)]
     )
     submit = SubmitField('保存する')
+
+# ▼▼▼▼▼ ここから新規追加 ▼▼▼▼▼
+
+class LoansReceivableForm(FlaskForm):
+    """貸付金及び受取利息の登録・編集フォーム"""
+    borrower_name = StringField('貸付先', validators=[DataRequired(), Length(max=100)])
+    is_subsidiary = BooleanField('関係会社')
+    borrower_address = StringField('貸付先住所', validators=[Optional(), Length(max=200)])
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    interest_rate = FloatField('利率（%）', validators=[DataRequired()])
+    received_interest = IntegerField('期間中の受取利息', validators=[Optional()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class InventoryForm(FlaskForm):
+    """棚卸資産の登録・編集フォーム"""
+    item_name = StringField('商品・製品等の名称', validators=[DataRequired(), Length(max=100)])
+    location = StringField('保管場所', validators=[Optional(), Length(max=200)])
+    quantity = FloatField('数量', validators=[DataRequired()])
+    unit = StringField('単位', validators=[Optional(), Length(max=20)])
+    unit_price = IntegerField('単価', validators=[DataRequired()])
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class SecurityForm(FlaskForm):
+    """有価証券の登録・編集フォーム"""
+    security_type = StringField('種類', validators=[DataRequired(), Length(max=50)])
+    issuer = StringField('銘柄・発行者', validators=[DataRequired(), Length(max=100)])
+    quantity = IntegerField('数量（株・口）', validators=[Optional()])
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class FixedAssetForm(FlaskForm):
+    """固定資産（土地、建物等）の登録・編集フォーム"""
+    asset_type = StringField('種類', validators=[DataRequired(), Length(max=50)])
+    location = StringField('所在地', validators=[DataRequired(), Length(max=200)])
+    area = FloatField('面積（㎡）', validators=[Optional()])
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class NotesPayableForm(FlaskForm):
+    """支払手形の登録・編集フォーム"""
+    payee = StringField('支払先', validators=[DataRequired(), Length(max=100)])
+    issue_date = DateField('振出年月日', format='%Y-%m-%d', validators=[DataRequired()])
+    due_date = DateField('支払期日', format='%Y-%m-%d', validators=[DataRequired()])
+    amount = IntegerField('金額', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class AccountsPayableForm(FlaskForm):
+    """買掛金（未払金・未払費用）の登録・編集フォーム"""
+    account_name = SelectField('科目', choices=[('買掛金', '買掛金'), ('未払金', '未払金'), ('未払費用', '未払費用')], validators=[DataRequired()])
+    partner_name = StringField('取引先名', validators=[DataRequired(), Length(max=100)])
+    is_subsidiary = BooleanField('関係会社')
+    partner_address = StringField('取引先住所', validators=[Optional(), Length(max=200)])
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class TemporaryReceiptForm(FlaskForm):
+    """仮受金（前受金・預り金）の登録・編集フォーム"""
+    account_name = SelectField('科目', choices=[('仮受金', '仮受金'), ('前受金', '前受金'), ('預り金', '預り金')], validators=[DataRequired()])
+    partner_name = StringField('相手先名', validators=[DataRequired(), Length(max=100)])
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    transaction_details = TextAreaField('取引の内容', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class BorrowingForm(FlaskForm):
+    """借入金及び支払利子の登録・編集フォーム"""
+    lender_name = StringField('借入先', validators=[DataRequired(), Length(max=100)])
+    is_subsidiary = BooleanField('関係会社')
+    balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
+    interest_rate = FloatField('利率（%）', validators=[DataRequired()])
+    paid_interest = IntegerField('期間中の支払利子', validators=[Optional()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class ExecutiveCompensationForm(FlaskForm):
+    """役員報酬手当等及び人件費の内訳モデル"""
+    employee_name = StringField('氏名', validators=[DataRequired(), Length(max=100)])
+    relationship = StringField('関係', validators=[Optional(), Length(max=100)])
+    position = StringField('役職', validators=[Optional(), Length(max=100)])
+    base_salary = IntegerField('基本給', validators=[Optional()])
+    other_allowances = IntegerField('その他手当', validators=[Optional()])
+    total_compensation = IntegerField('総額', validators=[DataRequired()])
+    submit = SubmitField('保存する')
+
+class LandRentForm(FlaskForm):
+    """地代家賃等の内訳モデル"""
+    account_name = SelectField('科目', choices=[('地代', '地代'), ('家賃', '家賃')], validators=[DataRequired()])
+    lessor_name = StringField('支払先', validators=[DataRequired(), Length(max=100)])
+    property_details = StringField('物件の詳細', validators=[Optional(), Length(max=200)])
+    rent_paid = IntegerField('支払賃借料', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+class MiscellaneousForm(FlaskForm):
+    """雑益、雑損失等の内訳モデル"""
+    account_name = SelectField('科目', choices=[('雑益', '雑益'), ('雑損失', '雑損失')], validators=[DataRequired()])
+    details = StringField('内容', validators=[DataRequired(), Length(max=200)])
+    amount = IntegerField('金額', validators=[DataRequired()])
+    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('保存する')
+
+# ▲▲▲▲▲ ここまで新規追加 ▲▲▲▲▲

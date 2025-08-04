@@ -16,46 +16,65 @@ DATA_TYPE_CONFIG = {
         'description': 'まず初めに、勘定科目の一覧をCSV形式でアップロードしてください。これは全ての会計処理の基礎となります。',
         'expected_headers': ['科目コード', '科目名', '税区分'],
         'guide_text_data_type': '勘定科目一覧',
-        'step_name': '勘定科目'
+        'step_name': '勘定科目データ選択'
     },
     'journals': {
         'title': '仕訳帳のインポート',
         'description': '次に、会計期間中のすべての取引が記録された仕訳帳のCSVファイルをアップロードしてください。',
         'expected_headers': ['日付', '借方勘定科目', '貸方勘定科目', '金額', '摘要'],
         'guide_text_data_type': '仕訳帳',
-        'step_name': '仕訳帳'
+        'step_name': '仕訳帳データ選択'
     },
     'fixed_assets': {
         'title': '固定資産台帳のインポート',
         'description': '最後に、固定資産台帳をCSV形式でアップロードしてください。',
         'expected_headers': ['資産名', '取得日', '取得価額', '耐用年数'],
         'guide_text_data_type': '固定資産台帳',
-        'step_name': '固定資産'
+        'step_name': '固定資産データ選択'
     }
 }
 
 # ウィザードのステップを定義
+WIZARD_STEPS = ['select_software', 'chart_of_accounts', 'journals', 'fixed_assets']
 FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals', 'fixed_assets']
+
+def _get_wizard_progress(current_step_key):
+    """ウィザードの進捗状況を計算してリストで返す"""
+    progress = []
+    completed_steps = session.get('wizard_completed_steps', [])
+    
+    # 最初のステップ「会計ソフト選択」
+    progress.append({
+        'key': 'select_software',
+        'name': '会計ソフト選択',
+        'is_completed': 'select_software' in completed_steps,
+        'is_current': current_step_key == 'select_software'
+    })
+
+    # ファイルアップロードのステップ
+    for step in FILE_UPLOAD_STEPS:
+        progress.append({
+            'key': step,
+            'name': DATA_TYPE_CONFIG[step]['step_name'],
+            'is_completed': step in completed_steps,
+            'is_current': current_step_key == step
+        })
+    return progress
 
 @company_bp.route('/select_software', methods=['GET', 'POST'])
 def select_software():
     """会計ソフトを選択し、ウィザードを開始するページ"""
     form = SoftwareSelectionForm()
-
-    # ウィザードのステップ情報をテンプレートに渡す
-    wizard_steps_info = [
-        {'key': 'select_software', 'name': '会計ソフト選択', 'is_current': True, 'is_completed': False},
-        {'key': 'chart_of_accounts', 'name': DATA_TYPE_CONFIG['chart_of_accounts']['step_name'], 'is_current': False, 'is_completed': False},
-        {'key': 'journals', 'name': DATA_TYPE_CONFIG['journals']['step_name'], 'is_current': False, 'is_completed': False},
-        {'key': 'fixed_assets', 'name': DATA_TYPE_CONFIG['fixed_assets']['step_name'], 'is_current': False, 'is_completed': False},
-    ]
+    wizard_progress = _get_wizard_progress('select_software')
 
     if form.validate_on_submit():
         session['selected_software'] = form.accounting_software.data
-        session['wizard_completed_steps'] = [] # 新しいウィザードを開始
+        # 「会計ソフト選択」ステップを完了済みにする
+        session['wizard_completed_steps'] = ['select_software']
         flash(f'{form.accounting_software.label.text}が選択されました。', 'info')
         return redirect(url_for('company.data_upload_wizard'))
-    return render_template('company/select_software.html', form=form, wizard_progress=wizard_steps_info)
+        
+    return render_template('company/select_software.html', form=form, wizard_progress=wizard_progress)
 
 @company_bp.route('/data_upload_wizard', methods=['GET'])
 def data_upload_wizard():
@@ -152,6 +171,11 @@ def upload_data(datatype):
     current_step_index = FILE_UPLOAD_STEPS.index(datatype)
     
     # 現在のステップより前のステップが完了しているかチェック
+    # 'select_software'が完了していることを確認
+    if 'select_software' not in completed_steps:
+        flash('最初のステップから開始してください。', 'warning')
+        return redirect(url_for('company.select_software'))
+    # これまでのファイルアップロードステップが完了しているかチェック
     for i in range(current_step_index):
         if FILE_UPLOAD_STEPS[i] not in completed_steps:
             flash('前のステップを先に完了してください。', 'warning')
@@ -169,18 +193,7 @@ def upload_data(datatype):
     config['guide_text_required_columns'] = ', '.join(config['expected_headers'])
     
     # ウィザードの進捗情報をテンプレートに渡す
-    wizard_progress = [
-        {'key': 'select_software', 'name': '会計ソフト選択', 'is_current': False, 'is_completed': True}
-    ]
-    completed_steps = session.get('wizard_completed_steps', [])
-    for step in FILE_UPLOAD_STEPS:
-        wizard_progress.append({
-            'key': step,
-            'name': DATA_TYPE_CONFIG[step]['step_name'],
-            'is_completed': step in completed_steps,
-            'is_current': step == datatype
-        })
-
+    wizard_progress = _get_wizard_progress(datatype)
     selected_software = session.get('selected_software', 'other')
 
     return render_template(

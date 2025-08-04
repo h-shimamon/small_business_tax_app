@@ -8,26 +8,24 @@
 {% endblock %}
 
 {% block sidebar %}
-    <a href="{{ url_for('company.data_upload_wizard') }}" class="local-nav-item active">データアップロード</a>
+<nav>
+    <ul class="progress-nav">
+        {% for step in wizard_progress %}
+            {% set status = 'is-current' if step.is_current else 'is-completed' if step.is_completed else 'is-pending' %}
+            <li class="progress-step {{ status }}">
+                {{ step.name }}
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
 {% endblock %}
 
 {% block content %}
-<div class="upload-container" x-data="uploadComponent()">
+<div class="upload-container" x-data="uploadComponent('{{ selected_software }}')">
     <h1 class="content-title">{{ title }}</h1>
     <p class="content-description">{{ description }}</p>
 
-    <!-- ステップインジケーター -->
-    <div class="stepper">
-        {% for step_info in wizard_progress %}
-        <div class="step" :class="{ 'active': {{ 'true' if step_info.is_current or step_info.is_completed else 'false' }}, 'completed': {{ 'true' if step_info.is_completed else 'false' }} }">
-            <div class="step-number">{{ loop.index }}</div>
-            <div class="step-title">{{ step_info.name }}</div>
-        </div>
-        {% if not loop.last %}
-        <div class="step-connector"></div>
-        {% endif %}
-        {% endfor %}
-    </div>
+    <!-- ステップインジケーターは削除（サイドバーに統合したため） -->
 
     <div class="export-guide">
         <h3 x-text="guide.title"></h3>
@@ -48,7 +46,7 @@
                  @click="$refs.fileInput.click()"
                  :class="{'dragover': dragover}">
                 
-                <input type="file" name="upload_file" @change="handleFileSelect($event)" x-ref="fileInput" class="file-input">
+                <input type="file" name="upload_file" @change="handleFileSelect($event)" x-ref="fileInput" class="file-input" accept=".csv">
                 
                 <div x-show="!fileName">
                     <div class="upload-icon">☁️</div>
@@ -87,7 +85,7 @@
                 freee: {
                     title: 'freeeからのデータエクスポート手順',
                     steps: [
-                        '「決算」または「レポート」メニューから「仕訳帳」などを選択します。',
+                        '「決算」または「レポート���メニューから「仕訳帳」などを選択します。',
                         '「エクスポート」機能で「汎用形式」のCSVをダウンロードします。',
                         '対象期間などを正しく設定してください。'
                     ]

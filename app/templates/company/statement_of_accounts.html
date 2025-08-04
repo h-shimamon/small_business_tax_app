@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 
-{# ページのタイトルを設定 #}
-{% block title %}勘定科目内訳書 - {{ page_title }}{% endblock %}
+{% block title %}{{ page_title }} - 勘定科目内訳書{% endblock %}
 
-{# このページ専用のCSSと、テーブル表示用の共通CSSを読み込む #}
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/statement_of_accounts.css') }}">
 {% endblock %}
 
-{# サイドバーのナビゲーションを定義 #}
 {% block sidebar %}
     {% set statement_pages = [
         ('deposits', '預貯金等'),
@@ -24,283 +21,45 @@
         ('accounts_payable', '買掛金（未払金・未払費用）'),
         ('temporary_receipts', '仮受金（前受金・預り金）'),
         ('borrowings', '借入金及び支払利子'),
-        ('sales_by_office', '事業所別売上高等'),
-        ('executive_compensation', '役員給与等'),
-        ('land_rent', '地代家賃等'),
+        ('executive_compensations', '役員給与等'),
+        ('land_rents', '地代家賃等'),
         ('miscellaneous', '雑益・雑損失等')
     ] %}
-
     <h3 class="sidebar-title">勘定科目内訳書</h3>
-    <ul class="sidebar-menu">
+    <nav class="local-nav">
         {% for page_id, page_name in statement_pages %}
-            <li>
-                <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" 
-                   class="sidebar-link {% if page == page_id %}active{% endif %}">
-                    {{ page_name }}
-                </a>
-            </li>
+            <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" 
+               class="{% if page == page_id %}active{% endif %}">
+                {{ page_name }}
+            </a>
         {% endfor %}
-    </ul>
+    </nav>
 {% endblock %}
 
-{# メインコンテンツ部分を定義 #}
 {% block content %}
-    {# 現在のページタイトルを取得 #}
-    {% set page_title = '' %}
-    {% for pid, pname in statement_pages %}{% if pid == page %}{% set page_title = pname %}{% endif %}{% endfor %}
-
-    <div class="content-header">
-        <h1 class="content-title">勘定科目内訳書</h1>
+<div class="content-header">
+    <div class="header-main">
+        <h1 class="content-title">{{ page_title }}の内訳</h1>
+        <p class="content-subtitle">登録された{{ page_title }}の情報を確認・編集します。</p>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h2>{{ page_title }}の内訳</h2>
+    <div class="header-actions">
+        <div class="summary-block">
+            <div class="summary-label">合計金額</div>
+            <div class="summary-value">{{ "{:,.0f}".format(total) }} 円</div>
         </div>
-
-        {# --- 「預貯金等」が選択されている場合の表示 --- #}
-        {% if page == 'deposits' %}
-            <div class="card-actions">
-                <a href="{{ url_for('company.add_deposit') }}" class="button-primary">＋ 新規登録</a>
-            </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>金融機関名</th>
-                            <th>支店名</th>
-                            <th>預金種類</th>
-                            <th>口座番号</th>
-                            <th class="text-right">期末現在高</th>
-                            <th>摘要</th>
-                            <th class="actions-column"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set total_balance = namespace(value=0) %}
-                        {% for deposit in deposits %}
-                            <tr>
-                                <td>{{ deposit.financial_institution }}</td>
-                                <td>{{ deposit.branch_name }}</td>
-                                <td>{{ deposit.account_type }}</td>
-                                <td>{{ deposit.account_number }}</td>
-                                <td class="text-right">{{ "{:,.0f}".format(deposit.balance) }}</td>
-                                <td>{{ deposit.remarks or '' }}</td>
-                                <td>
-                                    <div class="action-buttons-group">
-                                        <a href="{{ url_for('company.edit_deposit', deposit_id=deposit.id) }}" class="action-btn">編集</a>
-                                        <form action="{{ url_for('company.delete_deposit', deposit_id=deposit.id) }}" method="post" class="inline-form">
-                                            <button type="submit" class="action-btn delete" onclick="return confirm('この預貯金情報を本当に削除しますか？');">削除</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% set total_balance.value = total_balance.value + deposit.balance %}
-                        {% else %}
-                            <tr>
-                                <td colspan="7" class="text-center empty-data">
-                                    まだ預貯金が登録されていません。
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="4" class="text-right total-label">合計</td>
-                            <td class="text-right total-value">{{ "{:,.0f}".format(total_balance.value) }}</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-        {# --- 「受取手形」が選択されている場合の表示 --- #}
-        {% elif page == 'notes_receivable' %}
-            <div class="card-actions">
-                <a href="{{ url_for('company.add_notes_receivable') }}" class="button-primary">＋ 新規登録</a>
-            </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>振出人</th>
-                            <th>振出年月日</th>
-                            <th>支払期日</th>
-                            <th>支払銀行名／支店名</th>
-                            <th class="text-right">金額</th>
-                            <th>割引銀行名／支店名</th>
-                            <th>摘要</th>
-                            <th class="actions-column"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set total_amount = namespace(value=0) %}
-                        {% for note in notes %}
-                            <tr>
-                                <td>{{ note.drawer }}</td>
-                                <td>{{ note.issue_date }}</td>
-                                <td>{{ note.due_date }}</td>
-                                <td>{{ note.payer_bank }}{% if note.payer_branch %}／{{ note.payer_branch }}{% endif %}</td>
-                                <td class="text-right">{{ "{:,.0f}".format(note.amount) }}</td>
-                                <td>{% if note.discount_bank %}{{ note.discount_bank }}{% if note.discount_branch %}／{{ note.discount_branch }}{% endif %}{% else %}{% endif %}</td>
-                                <td>{{ note.remarks or '' }}</td>
-                                <td>
-                                    <div class="action-buttons-group">
-                                        <a href="{{ url_for('company.edit_notes_receivable', note_id=note.id) }}" class="action-btn">編集</a>
-                                        <form action="{{ url_for('company.delete_notes_receivable', note_id=note.id) }}" method="post" class="inline-form">
-                                            <button type="submit" class="action-btn delete" onclick="return confirm('この受取手形情報を本当に削除しますか？');">削除</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% set total_amount.value = total_amount.value + note.amount %}
-                        {% else %}
-                            <tr>
-                                <td colspan="8" class="text-center empty-data">
-                                    まだ受取手形が登録されていません。
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="4" class="text-right total-label">合計</td>
-                            <td class="text-right total-value">{{ "{:,.0f}".format(total_amount.value) }}</td>
-                            <td colspan="3"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-        {# --- 「売掛金（未収入金）」が選択されている場合の表示 --- #}
-        {% elif page == 'accounts_receivable' %}
-            <div class="card-actions">
-                <a href="{{ url_for('company.add_accounts_receivable') }}" class="button-primary">＋ 新規登録</a>
-            </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>科目</th>
-                            <th>取引先名</th>
-                            <th>取引先住所</th>
-                            <th class="text-right">期末現在高</th>
-                            <th>摘要</th>
-                            <th class="actions-column"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set total_balance = namespace(value=0) %}
-                        {% for receivable in receivables %}
-                            <tr>
-                                <td>{{ receivable.account_name }}</td>
-                                <td>
-                                    {{ receivable.partner_name }}
-                                    {% if receivable.is_subsidiary %}
-                                        <span class="badge">関係会社</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ receivable.partner_address }}</td>
-                                <td class="text-right">{{ "{:,.0f}".format(receivable.balance_at_eoy) }}</td>
-                                <td>{{ receivable.remarks or '' }}</td>
-                                <td>
-                                    <div class="action-buttons-group">
-                                        <a href="{{ url_for('company.edit_accounts_receivable', receivable_id=receivable.id) }}" class="action-btn">編集</a>
-                                        <form action="{{ url_for('company.delete_accounts_receivable', receivable_id=receivable.id) }}" method="post" class="inline-form">
-                                            <button type="submit" class="action-btn delete" onclick="return confirm('この売掛金情報を本当に削除しますか？');">削除</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% set total_balance.value = total_balance.value + receivable.balance_at_eoy %}
-                        {% else %}
-                            <tr>
-                                <td colspan="6" class="text-center empty-data">
-                                    まだ売掛金（未収入金）が登録されていません。
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3" class="text-right total-label">合計</td>
-                            <td class="text-right total-value">{{ "{:,.0f}".format(total_balance.value) }}</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-        {# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼ #}
-        {# --- 「仮払金（前渡金）」が選択されている場合の表示 --- #}
-        {% elif page == 'temporary_payments' %}
-            <div class="card-actions">
-                <a href="{{ url_for('company.add_temporary_payment') }}" class="button-primary">＋ 新規登録</a>
-            </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>科目</th>
-                            <th>取引先名</th>
-                            <th>法人・代表者との関係</th>
-                            <th class="text-right">期末現在高</th>
-                            <th>取引の内容</th>
-                            <th class="actions-column"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set total_balance = namespace(value=0) %}
-                        {% for payment in payments %}
-                            <tr>
-                                <td>{{ payment.account_name }}</td>
-                                <td>
-                                    {{ payment.partner_name }}
-                                    {% if payment.is_subsidiary %}
-                                        <span class="badge">関係会社</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ payment.relationship or '' }}</td>
-                                <td class="text-right">{{ "{:,.0f}".format(payment.balance_at_eoy) }}</td>
-                                <td>{{ payment.transaction_details or '' }}</td>
-                                <td>
-                                    <div class="action-buttons-group">
-                                        <a href="{{ url_for('company.edit_temporary_payment', payment_id=payment.id) }}" class="action-btn">編集</a>
-                                        <form action="{{ url_for('company.delete_temporary_payment', payment_id=payment.id) }}" method="post" class="inline-form">
-                                            <button type="submit" class="action-btn delete" onclick="return confirm('この仮払金情報を本当に削除しますか？');">削除</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% set total_balance.value = total_balance.value + payment.balance_at_eoy %}
-                        {% else %}
-                            <tr>
-                                <td colspan="6" class="text-center empty-data">
-                                    まだ仮払金（前渡金）が登録されていません。
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3" class="text-right total-label">合計</td>
-                            <td class="text-right total-value">{{ "{:,.0f}".format(total_balance.value) }}</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        {# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲ #}
-
-        {# --- 他の内訳書が選択されている場合のプレースホルダー --- #}
-        {% else %}
-            <div class="card-body">
-                <p>ここに「{{ page_title }}」の詳細な内訳情報を表示するフォームやテーブルを実装します。</p>
-            </div>
-        {% endif %}
+        <a href="{{ url_for(add_endpoint_name) }}" class="button-primary">＋ 新規登録</a>
     </div>
+</div>
+
+<div class="card-grid">
+    {% if items %}
+        {% include 'company/_cards/' + page + '_card.html' %}
+    {% else %}
+        <div class="empty-state-card">
+            <h2>まだ{{ page_title }}が登録されていません</h2>
+            <p>右上の「＋ 新規登録」ボタンから最初の情報を登録してください。</p>
+            <a href="{{ url_for(add_endpoint_name) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

@@ -52,3 +52,70 @@
     color: white;
     font-weight: 500;
 }
+
+/* --- Progress Navigation (Wizard Sidebar) --- */
+.progress-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.progress-nav::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background-color: var(--border-color);
+    z-index: 0;
+}
+
+.progress-step {
+    position: relative;
+    padding: 8px 0 8px 36px;
+    font-size: 0.95rem;
+}
+
+.progress-step::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 12px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-main);
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.progress-step.is-completed {
+    color: var(--text-secondary);
+}
+.progress-step.is-completed::before {
+    content: '✓';
+    font-weight: bold;
+    font-size: 12px;
+    color: white;
+    text-align: center;
+    line-height: 18px;
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.progress-step.is-current {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.progress-step.is-current::before {
+    background-color: white;
+    border-color: var(--accent-color);
+    transform: scale(1.2);
+}
+
+.progress-step.is-pending {
+    color: var(--text-secondary);
+}

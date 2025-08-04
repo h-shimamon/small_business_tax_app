@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/select_software.css') }}">
 {% endblock %}
 
+{% block sidebar %}
+<nav>
+    <ul class="progress-nav">
+        {% for step in wizard_progress %}
+            {% set status = 'is-current' if step.is_current else 'is-completed' if step.is_completed else 'is-pending' %}
+            <li class="progress-step {{ status }}">
+                {{ step.name }}
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endblock %}
+
 {% block content %}
 <div class="selection-container" x-data="{ selectedSoftware: '' }">
     <div class="selection-header">

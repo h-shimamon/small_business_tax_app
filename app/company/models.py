@@ -160,7 +160,7 @@ class AccountsReceivable(db.Model):
     """売掛金（未収入金）の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
     account_name = db.Column(db.String(50), nullable=False)         # 科目
-    partner_name = db.Column(db.String(100), nullable=False)        # 取引先名
+    partner_name = db.Column(db.String(100), nullable=False)        # 取引���名
     registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
     is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
     partner_address = db.Column(db.String(200), nullable=False)     # 取引先住所
@@ -173,7 +173,6 @@ class AccountsReceivable(db.Model):
     def __repr__(self):
         return f'<AccountsReceivable {self.partner_name}>'
 
-# ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
 class TemporaryPayment(db.Model):
     """仮払金（前渡金）の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
@@ -191,4 +190,133 @@ class TemporaryPayment(db.Model):
 
     def __repr__(self):
         return f'<TemporaryPayment {self.partner_name}>'
-# ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
+
+# ▼▼▼▼▼ ここから新規追加 ▼▼▼▼▼
+
+class LoansReceivable(db.Model):
+    """貸付金及び受取利息の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    borrower_name = db.Column(db.String(100), nullable=False)       # 貸付先
+    is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
+    borrower_address = db.Column(db.String(200))                    # 貸付先住所
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    interest_rate = db.Column(db.Float, nullable=False)             # 利率
+    received_interest = db.Column(db.Integer)                       # 受取利息
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('loans_receivable', lazy=True))
+
+class Inventory(db.Model):
+    """棚卸資産の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    item_name = db.Column(db.String(100), nullable=False)           # 商品・製品等の名称
+    location = db.Column(db.String(200))                            # 保管場所
+    quantity = db.Column(db.Float, nullable=False)                  # 数量
+    unit = db.Column(db.String(20))                                 # 単位
+    unit_price = db.Column(db.Integer, nullable=False)              # 単価
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('inventories', lazy=True))
+
+class Security(db.Model):
+    """有価証券の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    security_type = db.Column(db.String(50), nullable=False)        # 種類（株式、債券など）
+    issuer = db.Column(db.String(100), nullable=False)              # 銘柄・発行者
+    quantity = db.Column(db.Integer)                                # 数量
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('securities', lazy=True))
+
+class FixedAsset(db.Model):
+    """固定資産（土地、建物等）の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    asset_type = db.Column(db.String(50), nullable=False)           # 種類
+    location = db.Column(db.String(200), nullable=False)            # 所在地
+    area = db.Column(db.Float)                                      # 面積（㎡）
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('fixed_assets', lazy=True))
+
+class NotesPayable(db.Model):
+    """支払手形の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    payee = db.Column(db.String(100), nullable=False)               # 支払先
+    issue_date = db.Column(db.Date, nullable=False)                 # 振出年月日
+    due_date = db.Column(db.Date, nullable=False)                   # 支払期日
+    amount = db.Column(db.Integer, nullable=False)                  # 金額
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('notes_payable', lazy=True))
+
+class AccountsPayable(db.Model):
+    """買掛金（未払金・未払費用）の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_name = db.Column(db.String(50), nullable=False)         # 科目
+    partner_name = db.Column(db.String(100), nullable=False)        # 取引先名
+    is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
+    partner_address = db.Column(db.String(200))                     # 取引先住所
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('accounts_payable', lazy=True))
+
+class TemporaryReceipt(db.Model):
+    """仮受金（前受金・預り金）の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_name = db.Column(db.String(50), nullable=False)         # 科目
+    partner_name = db.Column(db.String(100), nullable=False)        # 相手先
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    transaction_details = db.Column(db.String(200))                 # 取引の内容
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('temporary_receipts', lazy=True))
+
+class Borrowing(db.Model):
+    """借入金及び支払利子の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    lender_name = db.Column(db.String(100), nullable=False)         # 借入先
+    is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
+    balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    interest_rate = db.Column(db.Float, nullable=False)             # 利率
+    paid_interest = db.Column(db.Integer)                           # 支払利子
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('borrowings', lazy=True))
+
+class ExecutiveCompensation(db.Model):
+    """役員報酬手当等及び人件���の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    employee_name = db.Column(db.String(100), nullable=False)       # 氏名
+    relationship = db.Column(db.String(100))                        # 関係
+    position = db.Column(db.String(100))                            # 役職
+    base_salary = db.Column(db.Integer)                             # 基本給
+    other_allowances = db.Column(db.Integer)                        # その他手当
+    total_compensation = db.Column(db.Integer, nullable=False)      # 総額
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('executive_compensations', lazy=True))
+
+class LandRent(db.Model):
+    """地代家賃等の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_name = db.Column(db.String(50), nullable=False)         # 科目
+    lessor_name = db.Column(db.String(100), nullable=False)         # 支払先
+    property_details = db.Column(db.String(200))                    # 物件の詳細
+    rent_paid = db.Column(db.Integer, nullable=False)               # 支払賃借料
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('land_rents', lazy=True))
+
+class Miscellaneous(db.Model):
+    """雑益、雑損失等の内訳モデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    account_name = db.Column(db.String(50), nullable=False)         # 科目
+    details = db.Column(db.String(200), nullable=False)             # 内容
+    amount = db.Column(db.Integer, nullable=False)                  # 金額
+    remarks = db.Column(db.String(200))                             # 摘要
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('miscellaneous_items', lazy=True))
+
+# ▲▲▲▲▲ ここまで新規追加 ▲▲▲▲▲

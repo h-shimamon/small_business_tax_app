@@ -1,0 +1,37 @@
+{# /app/templates/company/_cards/notes_receivable_card.html #}
+{% for item in items %}
+<div class="statement-card">
+    <div class="card-header">
+        <div class="card-main-info">
+            <p class="primary">{{ item.drawer }}</p>
+            <p class="secondary">支払期日: {{ item.due_date.strftime('%Y-%m-%d') }}</p>
+        </div>
+        <div class="card-amount">{{ "{:,.0f}".format(item.amount) }}円</div>
+    </div>
+    <div class="card-body">
+        <div class="card-details-grid">
+            <div class="detail-item">
+                <span class="detail-label">振出年月日</span>
+                <span class="detail-value">{{ item.issue_date.strftime('%Y-%m-%d') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">支払銀行</span>
+                <span class="detail-value">{{ item.payer_bank }}</span>
+            </div>
+            <div class="detail-item full-width">
+                <span class="detail-label">摘要</span>
+                <span class="detail-value">{{ item.remarks or '-' }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="action-menu">
+        <button class="action-menu-button" aria-label="アクション">…</button>
+        <div class="action-menu-content">
+            <a href="{{ url_for('company.edit_notes_receivable', item_id=item.id) }}" class="action-menu-item">編集</a>
+            <form action="{{ url_for('company.delete_notes_receivable', item_id=item.id) }}" method="post" onsubmit="return confirm('本当に削除しますか？');">
+                <button type="submit" class="action-menu-item delete">削除</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
