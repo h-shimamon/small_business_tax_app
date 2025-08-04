@@ -1,0 +1,116 @@
+/* /app/static/css/pages/declaration_form.css */
+
+.declaration-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.table-row-group {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.declaration-table .table-row-group:last-child {
+  border-bottom: none;
+}
+
+.table-category-header {
+  background-color: #f9fafb;
+  padding: 16px;
+  font-weight: 600;
+  color: #374151;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.table-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  border-bottom: 1px solid #e5e7eb;
+  align-items: center;
+}
+
+.table-items .table-row:last-child {
+  border-bottom: none;
+}
+
+.table-label {
+  padding: 12px 16px;
+  background-color: #f9fafb;
+  font-weight: 500;
+  border-right: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.table-input {
+  padding: 8px 16px;
+  background-color: #ffffff;
+}
+
+/* Specific input styles for this form */
+.table-input .form-control {
+  background-color: #fff; /* Override component default */
+  border-color: #d1d5db;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.table-input .form-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
+.table-input .radio-group,
+.table-input .checkbox-group-vertical {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.table-input .checkbox-group-vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.table-input .radio-label,
+.table-input .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.table-input .date-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.table-input .date-range .form-control {
+  width: auto;
+}
+
+.form-control-short {
+    max-width: 250px;
+}
+
+.input-group-split {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.input-group-split .form-control {
+    width: 50%;
+}

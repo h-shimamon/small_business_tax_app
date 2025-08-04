@@ -7,7 +7,7 @@
 {# このページ専用のCSSを読み込む（古いform_view.cssは不要に） #}
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/statement_of_accounts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/statement_of_accounts.css') }}">
 {% endblock %}
 
 {# サイドバーは勘定科目内訳書画面のものをそのまま利用 #}

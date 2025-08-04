@@ -1,4 +1,4 @@
-/* app/static/css/select_software.css */
+/* /app/static/css/pages/select_software.css */
 
 .selection-container {
     max-width: 900px;
@@ -44,7 +44,7 @@
 }
 
 .software-card input[type="radio"] {
-    display: none; /* ラジオボタン自体は隠す */
+    display: none;
 }
 
 .software-card.selected {

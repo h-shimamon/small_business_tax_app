@@ -1,0 +1,29 @@
+/* /app/static/css/components/card.css */
+
+.card {
+    background-color: var(--bg-content);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 40px;
+}
+
+.card-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.card-header h2 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #495057;
+    margin: 0;
+}
+
+.card-body {
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.card-actions {
+    padding: 1.5rem 2rem;
+}

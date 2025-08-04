@@ -1,0 +1,54 @@
+/* /app/static/css/components/navigation.css */
+
+/* --- Global Navigation (Header) --- */
+.global-nav {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+}
+
+.global-nav .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.global-nav .nav-item:hover {
+    color: var(--text-primary);
+}
+
+.global-nav .nav-item.active {
+    color: var(--accent-color);
+    font-weight: 700;
+    border-bottom-color: var(--accent-color);
+}
+
+/* --- Local Navigation (Sidebar) --- */
+.local-nav a {
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.local-nav a:hover {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+.local-nav a.active {
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: 500;
+}

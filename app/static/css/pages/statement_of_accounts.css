@@ -1,0 +1,36 @@
+/* /app/static/css/pages/statement_of_accounts.css */
+
+.content-header {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+.content-header .content-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #343a40;
+}
+
+table tfoot {
+    border-top: 2px solid #dee2e6;
+}
+.total-label {
+    font-weight: 700;
+    color: #343a40;
+}
+.total-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.actions-column {
+    width: 120px;
+}
+.inline-form {
+    display: inline;
+}
+
+.empty-data {
+    padding: 40px;
+    color: #6c757d;
+}

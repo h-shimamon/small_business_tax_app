@@ -6,9 +6,7 @@
 {# このページ専用のCSSと、テーブル表示用の共通CSSを読み込む #}
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/statement_of_accounts.css') }}">
-    {# employee_list.htmlを参考にテーブル用のCSSを追加 #}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/table_view.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/statement_of_accounts.css') }}">
 {% endblock %}
 
 {# サイドバーのナビゲーションを定義 #}

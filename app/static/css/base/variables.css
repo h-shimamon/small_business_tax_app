@@ -1,0 +1,18 @@
+/* /app/static/css/base/variables.css */
+:root {
+    /* Font */
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* Colors */
+    --accent-color: #007aff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --border-color: #d2d2d7;
+    --bg-main: #f5f5f7;
+    --bg-content: #ffffff;
+    --error-color: #dc3545;
+
+    /* Layout */
+    --header-height: 50px;
+    --sidebar-width: 240px;
+}

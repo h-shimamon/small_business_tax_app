@@ -1,0 +1,45 @@
+/* /app/static/css/components/layout.css */
+
+/* --- アプリケーション全体のコンテナ --- */
+.app-container {
+    display: flex;
+    flex-grow: 1;
+    padding-top: var(--header-height);
+}
+
+/* --- 上部固定ヘッダー --- */
+.global-header {
+    height: var(--header-height);
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: var(--bg-content);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    z-index: 1000;
+    padding: 0 20px;
+}
+
+/* --- 左サイドバー --- */
+.sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    height: calc(100vh - var(--header-height));
+    position: fixed;
+    left: 0;
+    top: var(--header-height);
+    background-color: var(--bg-content);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* --- メインコンテンツ --- */
+.main-content {
+    flex-grow: 1;
+    margin-left: var(--sidebar-width);
+    padding: 40px;
+    overflow-y: auto;
+}

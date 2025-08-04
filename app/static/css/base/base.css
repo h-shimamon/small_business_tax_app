@@ -1,0 +1,13 @@
+/* /app/static/css/base/base.css */
+body {
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    background-color: var(--bg-main);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+    box-sizing: border-box;
+}

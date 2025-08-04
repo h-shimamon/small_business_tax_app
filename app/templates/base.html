@@ -7,8 +7,20 @@
     
     {# ▼▼▼ このブロックで共通CSSを読み込み、子テンプレートからの拡張を許可します ▼▼▼ #}
     {% block head %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <!-- Base CSS -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/base/base.css') }}">
+
+        <!-- Components -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/components/layout.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/components/navigation.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/components/forms.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/components/card.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/components/tables.css') }}">
+
+        <!-- Page-specific overrides and misc styles -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/misc.css') }}">
     {% endblock %}
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
