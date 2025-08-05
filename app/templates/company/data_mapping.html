@@ -1,24 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}項目マッピング{% endblock %}
+{% block title %}{{ title }} - {{ super() }}{% endblock %}
 
 {% block head %}
     {{ super() }}
-    {# この画面専用のCSSを読み込みます #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/data_mapping.css') }}">
 {% endblock %}
 
 {% block sidebar %}
-    {# サイドバーのメニュー項目を定義します #}
-    <a href="#" class="active">会計データ選択</a>
+    {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h2>項目マッピング</h2>
+    <h2>{{ title }}</h2>
     <p style="text-align: center; margin-bottom: 30px; color: var(--text-secondary);">
-        アップロードされたファイルの項目名が、アプリの標準項目と一致しませんでした。<br>
-        お手数ですが、各項目がアプリのどの項目に該当するかを選択してください。
+        アップロードされた一部の勘定科目がマスターデータに存在しませんでした。<br>
+        AIが最も可能性の高い候補を自動選択しています。内容を確認し、必要であれば修正してください。
     </p>
 
     <form method="POST" action="{{ url_for('company.data_mapping') }}" novalidate>
@@ -27,29 +25,46 @@
         <table class="mapping-table">
             <thead>
                 <tr>
-                    <th>あなたのファイルの項目名</th>
-                    <th>アプリの項目に紐付け</th>
+                    <th>あなたのファイルの勘定科目</th>
+                    <th>アプリの項目に紐付け（検索できます）</th>
                 </tr>
             </thead>
             <tbody>
-                {% for account in unmatched_accounts %}
-                <tr>
-                    <td>{{ account }}</td>
+                {% for item in mapping_items %}
+                <tr x-data="{ searchTerm: '' }">
+                    <td>{{ item.original_name }}</td>
                     <td>
-                        <select name="map_{{ account }}" class="form-control" required>
-                            <option value="">選択してください...</option>
-                            {% for master in master_accounts %}
-                            <option value="{{ master.id }}">
-                                {{ master.name }}
-                                {% if master.minor_category %}
-                                    ＜ {{ master.minor_category }}
-                                {% endif %}
-                                {% if master.middle_category %}
-                                    ＜ {{ master.middle_category }}
-                                {% endif %}
-                            </option>
-                            {% endfor %}
-                        </select>
+                        <div class="searchable-select">
+                            <input 
+                                type="text" 
+                                x-model="searchTerm" 
+                                @input="$refs.select.size = 5"
+                                @blur="setTimeout(() => { $refs.select.size = 1 }, 150)"
+                                @keydown.enter.prevent
+                                placeholder="勘定科目を検索..." 
+                                class="form-input search-input">
+
+                            <select 
+                                name="map_{{ item.original_name }}" 
+                                x-ref="select"
+                                class="form-control" 
+                                required>
+                                <option value="">選択してください...</option>
+                                {% for group_name, masters in grouped_masters.items() %}
+                                <optgroup label="{{ group_name }}">
+                                    {% for master in masters %}
+                                    <option
+                                        :hidden="searchTerm && !'{{ master.name.lower() }}'.includes(searchTerm.toLowerCase())"
+                                        value="{{ master.id }}" {% if master.id == item.suggested_master_id %}selected{% endif %}>
+                                        {{ master.name }}
+                                        {% if master.minor_category %} ＜ {{ master.minor_category }}{% endif %}
+                                        {% if master.middle_category %} ＜ {{ master.middle_category }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
