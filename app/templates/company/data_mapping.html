@@ -32,21 +32,24 @@
                 </tr>
             </thead>
             <tbody>
-                {# ルートから渡された動的フォームのフィールドをループ処理で表示します #}
-                {% for field in form if field.widget.input_type != 'hidden' and field.widget.input_type != 'submit' %}
+                {% for account in unmatched_accounts %}
                 <tr>
+                    <td>{{ account }}</td>
                     <td>
-                        <span class="mismatched-header">{{ field.label.text }}</span>
-                    </td>
-                    <td>
-                        {{ field(class="form-select") }}
-                        {% if field.errors %}
-                            <ul class="form-error">
-                            {% for error in field.errors %}
-                                <li>{{ error }}</li>
+                        <select name="map_{{ account }}" class="form-control" required>
+                            <option value="">選択してください...</option>
+                            {% for master in master_accounts %}
+                            <option value="{{ master.id }}">
+                                {{ master.name }}
+                                {% if master.minor_category %}
+                                    ＜ {{ master.minor_category }}
+                                {% endif %}
+                                {% if master.middle_category %}
+                                    ＜ {{ master.middle_category }}
+                                {% endif %}
+                            </option>
                             {% endfor %}
-                            </ul>
-                        {% endif %}
+                        </select>
                     </td>
                 </tr>
                 {% endfor %}

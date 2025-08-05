@@ -1,7 +1,7 @@
 # app/company/models.py
 
 from app import db
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
@@ -335,3 +335,25 @@ class AccountTitleMaster(db.Model):
 
     def __repr__(self):
         return f'<AccountTitleMaster {self.name}>'
+
+class UserAccountMapping(db.Model):
+    """ユーザー定義の勘定科目マッピングモデル"""
+    __tablename__ = 'user_account_mapping'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    software_name = db.Column(db.String(50), nullable=False, comment="会計ソフト名 (例: moneyforward)")
+    original_account_name = db.Column(db.String(255), nullable=False, comment="ユーザーファイル上の勘定科目名")
+    master_account_id = db.Column(db.Integer, db.ForeignKey('account_title_master.id'), nullable=False, comment="紐付け先のマスター勘定科目ID")
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    # userとmaster_accountへのリレーションシップを定義
+    user = db.relationship('User', backref=db.backref('account_mappings', lazy=True))
+    master_account = db.relationship('AccountTitleMaster', backref=db.backref('user_mappings', lazy=True))
+
+    # user_id と original_account_name の組み合わせでユニーク制約を設ける
+    __table_args__ = (db.UniqueConstraint('user_id', 'original_account_name', name='_user_original_account_uc'),)
+
+    def __repr__(self):
+        return f'<UserAccountMapping {self.original_account_name} -> {self.master_account.name}>'
