@@ -19,8 +19,8 @@
     <div class="action-menu">
         <button class="action-menu-button" aria-label="アクション">…</button>
         <div class="action-menu-content">
-            <a href="{{ url_for('company.edit_miscellaneous', item_id=item.id) }}" class="action-menu-item">編集</a>
-            <form action="{{ url_for('company.delete_miscellaneous', item_id=item.id) }}" method="post" onsubmit="return confirm('本当に削除しますか？');">
+            <a href="{{ url_for('company.edit_item', page_key=page, item_id=item.id) }}" class="action-menu-item">編集</a>
+            <form action="{{ url_for('company.delete_item', page_key=page, item_id=item.id) }}" method="post" onsubmit="return confirm('本当に削除しますか？');">
                 <button type="submit" class="action-menu-item delete">削除</button>
             </form>
         </div>

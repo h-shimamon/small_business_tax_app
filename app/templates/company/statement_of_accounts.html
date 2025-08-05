@@ -47,7 +47,7 @@
             <div class="summary-label">合計金額</div>
             <div class="summary-value">{{ "{:,.0f}".format(total) }} 円</div>
         </div>
-        <a href="{{ url_for(add_endpoint_name) }}" class="button-primary">＋ 新規登録</a>
+        <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
     </div>
 </div>
 
@@ -58,7 +58,7 @@
         <div class="empty-state-card">
             <h2>まだ{{ page_title }}が登録されていません</h2>
             <p>右上の「＋ 新規登録」ボタンから最初の情報を登録してください。</p>
-            <a href="{{ url_for(add_endpoint_name) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
+            <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
         </div>
     {% endif %}
 </div>
