@@ -22,7 +22,7 @@ DATA_TYPE_CONFIG = {
     },
     'journals': {
         'title': '仕訳帳のインポート',
-        'description': '次に、会計期間中のすべての取引が記���された仕訳帳のCSVファイルをアップロードしてください。',
+        'description': '次に、会計期間中のすべての取引が記�����された仕訳帳のCSVファイルをアップロードしてください。',
         'step_name': '仕訳帳データ選択'
     },
     'fixed_assets': {
@@ -72,8 +72,16 @@ def select_software():
         flash(f'{form.accounting_software.data} が選択されました。', 'info')
         return redirect(url_for('company.data_upload_wizard'))
     
+    # 既存のマッピングデータがあるか確認
+    has_mappings = UserAccountMapping.query.filter_by(user_id=current_user.id).first() is not None
     wizard_progress = _get_wizard_progress('select_software')
-    return render_template('company/select_software.html', form=form, title="会計ソフト選択", wizard_progress=wizard_progress)
+    return render_template(
+        'company/select_software.html', 
+        form=form, 
+        title="会計ソフト選択", 
+        wizard_progress=wizard_progress,
+        has_mappings=has_mappings
+    )
 
 @import_bp.route('/data_upload_wizard', methods=['GET'])
 @login_required
@@ -152,7 +160,16 @@ def upload_data(datatype):
             return redirect(url_for('company.data_upload_wizard'))
 
     wizard_progress = _get_wizard_progress(datatype)
-    return render_template('company/upload_data.html', form=form, wizard_progress=wizard_progress, **config)
+    # datatypeが'journals'の場合のみ、リセットリンク表示用のフラグを立てる
+    show_reset_link = (datatype == 'journals')
+    
+    return render_template(
+        'company/upload_data.html', 
+        form=form, 
+        wizard_progress=wizard_progress, 
+        show_reset_link=show_reset_link,
+        **config
+    )
 
 @import_bp.route('/data_mapping', methods=['GET', 'POST'])
 @login_required
@@ -212,3 +229,60 @@ def data_mapping():
     form = DataMappingForm()
     wizard_progress = _get_wizard_progress('chart_of_accounts')
     return render_template('company/data_mapping.html', mapping_items=mapping_items, grouped_masters=grouped_masters, form=form, title="項目マッピング", wizard_progress=wizard_progress)
+
+@import_bp.route('/reset_mappings/confirm', methods=['GET'])
+@login_required
+def reset_account_mappings_confirmation():
+    """マッピング情報のリセット確認画面を表示する"""
+    return render_template('company/reset_confirmation.html')
+
+
+@import_bp.route('/reset_mappings/execute', methods=['POST'])
+@login_required
+def reset_account_mappings_execution():
+    """マッピング情報を削除し、ウィザードをリセットする"""
+    try:
+        # ログインユーザーのマッピングデータのみを削除
+        num_deleted = db.session.query(UserAccountMapping).filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        flash(f'{num_deleted}件の勘定科目マッピング情報をリセットしました。', 'success')
+
+        # ウィザードの進捗をリセット（会計ソフト選択は完了済みのまま）
+        session['wizard_completed_steps'] = ['select_software']
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'リセット処理中にエラーが発生しました: {e}', 'danger')
+
+    # 勘定科目アップロード画面へリダイレクト
+    return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
+
+
+@import_bp.route('/manage_mappings', methods=['GET'])
+@login_required
+def manage_mappings():
+    """登録済みのマッピングを一覧表示・管理する画面"""
+    mappings = UserAccountMapping.query.filter_by(user_id=current_user.id).order_by(UserAccountMapping.original_account_name).all()
+    return render_template('company/manage_mappings.html', mappings=mappings)
+
+
+@import_bp.route('/delete_mapping/<int:mapping_id>', methods=['POST'])
+@login_required
+def delete_mapping(mapping_id):
+    """特定のマッピングを削除する"""
+    mapping_to_delete = UserAccountMapping.query.get_or_404(mapping_id)
+    
+    # 他のユーザーのデータを削除できないように、所有者を確認
+    if mapping_to_delete.user_id != current_user.id:
+        flash('権限がありません。', 'danger')
+        return redirect(url_for('company.manage_mappings'))
+        
+    try:
+        db.session.delete(mapping_to_delete)
+        db.session.commit()
+        flash('マッピングを削除しました。', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'削除中にエラーが発生しました: {e}', 'danger')
+        
+    return redirect(url_for('company.manage_mappings'))

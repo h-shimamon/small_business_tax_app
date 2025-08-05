@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}マッピング情報のリセット確認{% endblock %}
+
+{% block sidebar %}
+    {# この画面ではサイドバーは非表示にするか、最小限にする #}
+{% endblock %}
+
+{% block content %}
+<div class="confirmation-container">
+    <h2>本当にリセットしますか？</h2>
+    <p>
+        すべての勘定科目マッピング情報が削除され、勘定科目データのアップロードからやり直すことになります。<br>
+        <strong>この操作は元に戻すことができません。</strong>
+    </p>
+    <div class="confirmation-actions">
+        <form method="POST" action="{{ url_for('company.reset_account_mappings_execution') }}" style="display: inline;">
+            <button type="submit" class="button-danger">はい、���セットします</button>
+        </form>
+        <a href="{{ url_for('company.data_upload_wizard') }}" class="button-secondary">いいえ、キャンセルします</a>
+    </div>
+</div>
+{% endblock %}

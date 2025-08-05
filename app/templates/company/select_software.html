@@ -40,8 +40,14 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="button-primary" :disabled="!selectedSoftware">次へ進む</button>
-        </div>
-    </form>
+        {{ form.submit(class="button-primary") }}
+    </div>
+</form>
+
+{% if has_mappings %}
+<div class="manage-link-container">
+    <a href="{{ url_for('company.manage_mappings') }}">登録済みの勘定科目マッピングを管理する</a>
+</div>
+{% endif %}
 </div>
 {% endblock %}

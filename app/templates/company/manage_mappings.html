@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}勘定科目マッピングの管理{% endblock %}
+
+{% block sidebar %}
+    {# この画面ではサイドバーは非表示にするか、最小限にする #}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="content-title">勘定科目マッピングの管理</h1>
+    <p class="content-description">
+        これまでに登録した勘定科目のマッピング情報の一覧です。<br>
+        不要になったマッピングを個別に削除できます。
+    </p>
+
+    {% if mappings %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>会計ソフト</th>
+                <th>あなたのファイルの勘定科目</th>
+                <th>アプリの勘定科目</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mapping in mappings %}
+            <tr>
+                <td>{{ mapping.software_name }}</td>
+                <td>{{ mapping.original_account_name }}</td>
+                <td>
+                    {{ mapping.master_account.name }}
+                    <span class="text-muted">
+                        {% if mapping.master_account.minor_category %} ＜ {{ mapping.master_account.minor_category }}{% endif %}
+                        {% if mapping.master_account.middle_category %} ＜ {{ mapping.master_account.middle_category }}{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('company.delete_mapping', mapping_id=mapping.id) }}" onsubmit="return confirm('このマッピングを削除しますか？');" style="display: inline;">
+                        <button type="submit" class="button-danger-small">削除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>登録されているマッピング情報はありません。</p>
+    {% endif %}
+
+    <div class="form-actions">
+        <a href="{{ url_for('company.select_software') }}" class="button-secondary">戻る</a>
+    </div>
+</div>
+{% endblock %}

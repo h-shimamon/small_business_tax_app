@@ -58,10 +58,16 @@
                 </div>
             </div>
             <div class="form-actions">
-                <button type="submit" class="button-primary" :disabled="!fileName">アップロードして次へ</button>
-            </div>
-        </form>
+            {{ form.submit(class="button-primary") }}
+        </div>
+    </form>
+
+    {% if show_reset_link %}
+    <div class="reset-link-container">
+        <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
     </div>
+    {% endif %}
+</div>
 </div>
 {% endblock %}
 
