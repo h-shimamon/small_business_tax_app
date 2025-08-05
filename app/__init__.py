@@ -59,4 +59,8 @@ def create_app():
             db.session.add(admin_user)
             db.session.commit()
 
+        # CLIコマンドを登録
+        from . import commands
+        app.cli.add_command(commands.seed_masters)
+
         return app

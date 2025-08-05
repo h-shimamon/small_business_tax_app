@@ -320,3 +320,18 @@ class Miscellaneous(db.Model):
     company = db.relationship('Company', backref=db.backref('miscellaneous_items', lazy=True))
 
 # ▲▲▲▲▲ ここまで新規追加 ▲▲▲▲▲
+
+class AccountTitleMaster(db.Model):
+    """勘定科目マスターモデル"""
+    id = db.Column(db.Integer, primary_key=True)
+    number = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String, nullable=False)
+    statement_name = db.Column(db.String)
+    major_category = db.Column(db.String)
+    middle_category = db.Column(db.String)
+    minor_category = db.Column(db.String)
+    breakdown_document = db.Column(db.String)
+    master_type = db.Column(db.String, nullable=False) # BS or PL
+
+    def __repr__(self):
+        return f'<AccountTitleMaster {self.name}>'
