@@ -10,6 +10,7 @@ from app import db
 from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import AccountTitleMaster, UserAccountMapping
+from app.utils import get_navigation_state, mark_step_as_completed
 
 # --- ウィザードと設定の定義 ---
 
@@ -41,23 +42,7 @@ SOFTWARE_CONFIG = {
 # ウィザードのステップ順序
 FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals', 'fixed_assets']
 
-def _get_wizard_progress(current_step_key):
-    """ウィザードの進捗状況を計算してリストで返す"""
-    progress = []
-    completed_steps = session.get('wizard_completed_steps', [])
-    
-    progress.append({
-        'key': 'select_software', 'name': '会計ソフト選択',
-        'is_completed': 'select_software' in completed_steps,
-        'is_current': current_step_key == 'select_software'
-    })
-    for step in FILE_UPLOAD_STEPS:
-        progress.append({
-            'key': step, 'name': DATA_TYPE_CONFIG[step]['step_name'],
-            'is_completed': step in completed_steps,
-            'is_current': current_step_key == step
-        })
-    return progress
+
 
 # --- ルート関数の定義 ---
 
@@ -68,18 +53,18 @@ def select_software():
     form = SoftwareSelectionForm()
     if form.validate_on_submit():
         session['selected_software'] = form.accounting_software.data
-        session['wizard_completed_steps'] = ['select_software']
+        mark_step_as_completed('select_software')
         flash(f'{form.accounting_software.data} が選択されました。', 'info')
         return redirect(url_for('company.data_upload_wizard'))
     
     # 既存のマッピングデータがあるか確認
     has_mappings = UserAccountMapping.query.filter_by(user_id=current_user.id).first() is not None
-    wizard_progress = _get_wizard_progress('select_software')
+    navigation_state = get_navigation_state('select_software')
     return render_template(
         'company/select_software.html', 
         form=form, 
         title="会計ソフト選択", 
-        wizard_progress=wizard_progress,
+        navigation_state=navigation_state,
         has_mappings=has_mappings
     )
 
@@ -145,8 +130,7 @@ def upload_data(datatype):
 
             if not unmatched_accounts:
                 flash('すべての勘定科目の取り込みが完了しました。', 'success')
-                completed_steps.append(datatype)
-                session['wizard_completed_steps'] = completed_steps
+                mark_step_as_completed(datatype)
                 return redirect(url_for('company.data_upload_wizard'))
             else:
                 session['unmatched_accounts'] = unmatched_accounts
@@ -155,18 +139,17 @@ def upload_data(datatype):
         # --- 他のデータタイプの仮処理 ---
         else:
             flash(f'{config["title"]} の取り込み機能は現在開発中です。', 'info')
-            completed_steps.append(datatype)
-            session['wizard_completed_steps'] = completed_steps
+            mark_step_as_completed(datatype)
             return redirect(url_for('company.data_upload_wizard'))
 
-    wizard_progress = _get_wizard_progress(datatype)
+    navigation_state = get_navigation_state(datatype)
     # datatypeが'journals'の場合のみ、リセットリンク表示用のフラグを立てる
     show_reset_link = (datatype == 'journals')
     
     return render_template(
         'company/upload_data.html', 
         form=form, 
-        wizard_progress=wizard_progress, 
+        navigation_state=navigation_state, 
         show_reset_link=show_reset_link,
         **config
     )
@@ -193,10 +176,7 @@ def data_mapping():
             db.session.commit()
             flash('マッピング情報を保存しました。', 'success')
             
-            completed_steps = session.get('wizard_completed_steps', [])
-            if 'chart_of_accounts' not in completed_steps:
-                completed_steps.append('chart_of_accounts')
-            session['wizard_completed_steps'] = completed_steps
+            mark_step_as_completed('chart_of_accounts')
         except Exception as e:
             db.session.rollback()
             flash(f'データベースへの保存中にエラーが発生しました: {e}', 'danger')
@@ -227,8 +207,8 @@ def data_mapping():
         grouped_masters[major].append(master)
 
     form = DataMappingForm()
-    wizard_progress = _get_wizard_progress('chart_of_accounts')
-    return render_template('company/data_mapping.html', mapping_items=mapping_items, grouped_masters=grouped_masters, form=form, title="項目マッピング", wizard_progress=wizard_progress)
+    navigation_state = get_navigation_state('data_mapping')
+    return render_template('company/data_mapping.html', mapping_items=mapping_items, grouped_masters=grouped_masters, form=form, title="項目マッピング", navigation_state=navigation_state)
 
 @import_bp.route('/reset_mappings/confirm', methods=['GET'])
 @login_required

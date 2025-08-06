@@ -5,6 +5,7 @@ from app.company import company_bp
 from app.company.models import Company, Employee
 from app.company.forms import EmployeeForm
 from app import db
+from app.utils import get_navigation_state
 from datetime import date
 
 def _get_or_create_dev_company():
@@ -47,8 +48,9 @@ def employees():
         # 本番環境で会社情報がない場合
         flash('先に会社の基本情報を登録してください。', 'warning')
         return redirect(url_for('company.show'))
-        
-    return render_template('company/employee_list.html', employees=employee_list)
+    
+    navigation_state = get_navigation_state('employees')
+    return render_template('company/employee_list.html', employees=employee_list, navigation_state=navigation_state)
 
 @company_bp.route('/employee/register', methods=['GET', 'POST'])
 @login_required
@@ -77,7 +79,8 @@ def register_employee():
         flash('従業員を登録しました。', 'success')
         return redirect(url_for('company.employees'))
         
-    return render_template('company/register_employee.html', form=form)
+    navigation_state = get_navigation_state('employees')
+    return render_template('company/register_employee.html', form=form, navigation_state=navigation_state)
 
 @company_bp.route('/employee/edit/<int:employee_id>', methods=['GET', 'POST'])
 @login_required
@@ -112,9 +115,9 @@ def edit_employee(employee_id):
         db.session.commit()
         flash('従業員情報を更新しました。', 'success')
         return redirect(url_for('company.employees'))
-        return redirect(url_for('company.employees'))
         
-    return render_template('company/edit_employee.html', form=form, employee_id=employee.id)
+    navigation_state = get_navigation_state('employees')
+    return render_template('company/edit_employee.html', form=form, employee_id=employee.id, navigation_state=navigation_state)
 
 @company_bp.route('/employee/delete/<int:employee_id>', methods=['POST'])
 @login_required

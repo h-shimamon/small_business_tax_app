@@ -4,12 +4,7 @@
 {% block title %}基本情報{% endblock %}
 
 {% block sidebar %}
-    <div class="local-nav">
-        <a href="{{ url_for('company.show') }}" class="active">基本情報</a>
-        <a href="{{ url_for('company.employees') }}">社員名簿</a>
-        <a href="{{ url_for('company.declaration') }}">申告情報</a>
-        <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
-    </div>
+    {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}

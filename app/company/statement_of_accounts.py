@@ -16,6 +16,7 @@ from app.company.forms import (
     LandRentForm, MiscellaneousForm
 )
 from app import db
+from app.utils import get_navigation_state
 
 # 各内訳ページの情報を一元管理 (変更なし)
 STATEMENT_PAGES_CONFIG = {
@@ -95,6 +96,7 @@ def statement_of_accounts():
         'page_title': config['title'],
         'items': items,
         'total': total,
+        'navigation_state': get_navigation_state(page)
     }
 
     return render_template('company/statement_of_accounts.html', **context)
@@ -115,7 +117,7 @@ def _add_item(page_key):
         return redirect(url_for('company.statement_of_accounts', page=page_key))
     
     form_template = f"company/{config['template']}"
-    return render_template(form_template, form=form, form_title=f'{config["title"]}の新規登録')
+    return render_template(form_template, form=form, form_title=f'{config["title"]}の新規登録', navigation_state=get_navigation_state(page_key))
 
 def _edit_item(page_key, item_id):
     config = STATEMENT_PAGES_CONFIG[page_key]
@@ -129,7 +131,7 @@ def _edit_item(page_key, item_id):
         return redirect(url_for('company.statement_of_accounts', page=page_key))
         
     form_template = f"company/{config['template']}"
-    return render_template(form_template, form=form, form_title=f'{config["title"]}の編集')
+    return render_template(form_template, form=form, form_title=f'{config["title"]}の編集', navigation_state=get_navigation_state(page_key))
 
 def _delete_item(page_key, item_id):
     config = STATEMENT_PAGES_CONFIG[page_key]

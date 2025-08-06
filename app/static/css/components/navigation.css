@@ -30,55 +30,68 @@
     border-bottom-color: var(--accent-color);
 }
 
-/* --- Local Navigation (Sidebar) --- */
-.local-nav a {
-    display: block;
-    padding: 10px 15px;
-    margin-bottom: 5px;
-    text-decoration: none;
-    color: var(--text-secondary);
-    border-radius: 6px;
-    font-size: 0.95rem;
-    transition: background-color 0.2s, color 0.2s;
-}
-
-.local-nav a:hover {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-}
-
-.local-nav a.active {
-    background-color: var(--accent-color);
-    color: white;
-    font-weight: 500;
-}
-
-/* --- Progress Navigation (Wizard Sidebar) --- */
-.progress-nav {
+/* --- Hierarchical Navigation (Sidebar) --- */
+.hierarchical-nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    position: relative;
 }
 
-.progress-nav::before {
-    content: '';
-    position: absolute;
-    left: 12px;
-    top: 12px;
-    bottom: 12px;
-    width: 2px;
-    background-color: var(--border-color);
-    z-index: 0;
+.nav-parent {
+    margin-bottom: 12px;
 }
 
+.nav-parent .parent-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 8px 15px;
+    display: block;
+    transition: color 0.2s;
+}
+
+.nav-parent.is-active .parent-name {
+    color: var(--text-primary);
+}
+
+.nav-children {
+    margin-top: 8px;
+    padding-left: 15px; /* Indent child items */
+}
+
+/* --- Child Type: Menu (Unified Progress Step Style) --- */
+.progress-step.is-menu-default .progress-marker {
+    background-color: var(--bg-main);
+    border-color: var(--accent-color);
+}
+
+.progress-step.is-menu-active .progress-marker {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.progress-step.is-menu-active .progress-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* --- Child Type: Wizard (Progress) --- */
 .progress-step {
     position: relative;
-    padding: 8px 0 8px 36px;
-    font-size: 0.95rem;
+    list-style: none;
 }
 
-.progress-step::before {
+.progress-step a {
+    display: flex;
+    align-items: center;
+    padding: 8px 0 8px 36px;
+    font-size: 0.95rem;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.progress-step .progress-marker {
     content: '';
     position: absolute;
     left: 4px;
@@ -92,30 +105,54 @@
     transition: all 0.3s ease;
 }
 
-.progress-step.is-completed {
+.progress-step a:hover .progress-label {
+    color: var(--text-primary);
+}
+
+/* Vertical line for the wizard */
+.nav-children {
+    position: relative;
+}
+.nav-children::before {
+    content: '';
+    position: absolute;
+    left: 12px; /* Aligns with the center of the marker */
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background-color: var(--border-color);
+    z-index: 0;
+}
+
+.progress-step.is-completed .progress-label {
     color: var(--text-secondary);
 }
-.progress-step.is-completed::before {
+.progress-step.is-completed .progress-marker {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+/* Optional: Add a checkmark */
+.progress-step.is-completed .progress-marker::after {
     content: '✓';
     font-weight: bold;
     font-size: 12px;
     color: white;
-    text-align: center;
-    line-height: 18px;
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-.progress-step.is-current {
+.progress-step.is-current .progress-label {
     font-weight: 600;
     color: var(--text-primary);
 }
-.progress-step.is-current::before {
-    background-color: white;
-    border-color: var(--accent-color);
+.progress-step.is-current .progress-marker {
+    background-color: var(--accent-color-dark);
+    border-color: var(--accent-color-dark);
     transform: scale(1.2);
 }
 
-.progress-step.is-pending {
+.progress-step.is-pending .progress-label {
     color: var(--text-secondary);
 }

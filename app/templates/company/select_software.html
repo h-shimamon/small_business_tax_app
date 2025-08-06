@@ -8,16 +8,7 @@
 {% endblock %}
 
 {% block sidebar %}
-<nav>
-    <ul class="progress-nav">
-        {% for step in wizard_progress %}
-            {% set status = 'is-current' if step.is_current else 'is-completed' if step.is_completed else 'is-pending' %}
-            <li class="progress-step {{ status }}">
-                {{ step.name }}
-            </li>
-        {% endfor %}
-    </ul>
-</nav>
+    {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}

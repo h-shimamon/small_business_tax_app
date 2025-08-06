@@ -5,6 +5,7 @@ from flask_login import login_required
 from app.company import company_bp
 from app.company.models import Company, Office
 from app.company.forms import OfficeForm
+from app.utils import get_navigation_state
 from app import db
 
 @company_bp.route('/offices')
@@ -14,7 +15,9 @@ def office_list():
     offices = company.offices if company else []
     if not company:
         flash('会社情報が未登録のため、開発用の仮画面を表示しています。', 'warning')
-    return render_template('office_list.html', offices=offices)
+    
+    navigation_state = get_navigation_state('office_list')
+    return render_template('company/office_list.html', offices=offices, navigation_state=navigation_state)
 
 @company_bp.route('/office/register', methods=['GET', 'POST'])
 @login_required
@@ -33,7 +36,8 @@ def register_office():
         flash('事業所を登録しました。', 'success')
         return redirect(url_for('company.office_list'))
         
-    return render_template('office_form.html', form=form)
+    navigation_state = get_navigation_state('office_list')
+    return render_template('company/office_form.html', form=form, navigation_state=navigation_state)
 
 @company_bp.route('/office/edit/<int:office_id>', methods=['GET', 'POST'])
 @login_required
@@ -47,7 +51,8 @@ def edit_office(office_id):
         flash('事業所情報を更新しました。', 'success')
         return redirect(url_for('company.office_list'))
         
-    return render_template('office_form.html', form=form, office=office)
+    navigation_state = get_navigation_state('office_list')
+    return render_template('company/office_form.html', form=form, office=office, navigation_state=navigation_state)
 
 @company_bp.route('/office/delete/<int:office_id>', methods=['POST'])
 @login_required

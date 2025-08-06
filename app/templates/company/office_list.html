@@ -4,10 +4,7 @@
 {% block title %}事業所一覧{% endblock %}
 
 {% block sidebar %}
-<a href="{{ url_for('company.show') }}">基本情報</a>
-<a href="{{ url_for('company.employees') }}">社員名簿</a>
-<a href="{{ url_for('company.declaration') }}">申告情報</a>
-<a href="{{ url_for('company.office_list') }}" class="active">事業所一覧</a>
+    {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}

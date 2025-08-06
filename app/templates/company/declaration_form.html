@@ -5,12 +5,7 @@
 {% block title %}申告情報{% endblock %}
 
 {% block sidebar %}
-    <div class="local-nav">
-        <a href="{{ url_for('company.show') }}">基本情報</a>
-        <a href="{{ url_for('company.employees') }}">社員名簿</a>
-        <a href="{{ url_for('company.declaration') }}" class="active">申告情報</a>
-        <a href="{{ url_for('company.office_list') }}">事業所一覧</a>
-    </div>
+    {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}

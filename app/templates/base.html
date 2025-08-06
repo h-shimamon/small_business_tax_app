@@ -43,9 +43,7 @@
 
     <div class="app-container">
         <aside class="sidebar">
-            <nav class="local-nav">
-                {% block sidebar %}{# 各ページでこのブロックを上書きする #}{% endblock %}
-            </nav>
+            {% include 'company/_wizard_sidebar.html' %}
         </aside>
 
         <main class="main-content">
