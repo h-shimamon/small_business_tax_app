@@ -148,8 +148,8 @@
     color: var(--text-primary);
 }
 .progress-step.is-current .progress-marker {
-    background-color: var(--accent-color-dark);
-    border-color: var(--accent-color-dark);
+    background-color: var(--error-color);
+    border-color: var(--error-color);
     transform: scale(1.2);
 }
 
