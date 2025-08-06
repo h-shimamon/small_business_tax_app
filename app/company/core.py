@@ -6,7 +6,8 @@ from app.company import company_bp
 from app.company.models import Company
 from app.company.forms import CompanyForm, DeclarationForm
 from app import db
-from app.utils import get_navigation_state, mark_step_as_completed
+from app.navigation import get_navigation_state, mark_step_as_completed
+from .services import DeclarationService
 
 @company_bp.route('/', methods=['GET', 'POST'])
 @login_required
@@ -42,14 +43,18 @@ def declaration():
     if not company:
         flash('先に会社の基本情報を登録してください。', 'error')
         return redirect(url_for('company.show'))
-    
-    form = DeclarationForm(obj=company)
+
+    service = DeclarationService(company.id)
+    form = DeclarationForm(request.form)
+
     if form.validate_on_submit():
-        form.populate_obj(company)
-        db.session.commit()
+        service.update_declaration_data(form)
         mark_step_as_completed('declaration')
         flash('申告情報を更新しました。', 'success')
         return redirect(url_for('company.declaration'))
-    
+
+    if request.method == 'GET':
+        form, _ = service.populate_declaration_form()
+
     wizard_progress = get_navigation_state('declaration')
     return render_template('declaration_form.html', form=form, navigation_state=wizard_progress)

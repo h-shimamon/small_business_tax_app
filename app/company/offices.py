@@ -5,7 +5,7 @@ from flask_login import login_required
 from app.company import company_bp
 from app.company.models import Company, Office
 from app.company.forms import OfficeForm
-from app.utils import get_navigation_state
+from app.navigation import get_navigation_state
 from app import db
 
 @company_bp.route('/offices')

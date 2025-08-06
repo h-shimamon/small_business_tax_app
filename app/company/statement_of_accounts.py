@@ -16,7 +16,7 @@ from app.company.forms import (
     LandRentForm, MiscellaneousForm
 )
 from app import db
-from app.utils import get_navigation_state
+from app.navigation import get_navigation_state
 
 # 各内訳ページの情報を一元管理 (変更なし)
 STATEMENT_PAGES_CONFIG = {

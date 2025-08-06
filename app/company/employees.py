@@ -5,7 +5,7 @@ from app.company import company_bp
 from app.company.models import Company, Employee
 from app.company.forms import EmployeeForm
 from app import db
-from app.utils import get_navigation_state
+from app.navigation import get_navigation_state
 from datetime import date
 
 def _get_or_create_dev_company():
