@@ -23,7 +23,7 @@ from datetime import datetime
 
 class CompanyForm(FlaskForm):
     """会社の基本情報を登録・編集するためのフォーム"""
-    corporate_number = StringField('法��番号', validators=[DataRequired(), Length(min=13, max=13)])
+    corporate_number = StringField('法人番号', validators=[DataRequired(), Length(min=13, max=13)])
     company_name = StringField('法人名', validators=[DataRequired(), Length(max=100)])
     company_name_kana = StringField('フリガナ', validators=[DataRequired(), Length(max=100)])
     zip_code = StringField('郵便番号', validators=[DataRequired(), Length(min=7, max=7)])
@@ -33,10 +33,10 @@ class CompanyForm(FlaskForm):
     phone_number = StringField('電話番号', validators=[DataRequired(), Length(max=20)])
     homepage = StringField('ホームページアドレス', validators=[Optional(), Length(max=200)])
     establishment_date = DateField('設立年月日', format='%Y-%m-%d', validators=[DataRequired()])
-    capital_limit = BooleanField('１年間である')
-    is_supported_industry = BooleanField('資本金等の額が1億円以下である')
-    is_not_excluded_business = BooleanField('電気・ガス供給業及び保険業に該当しない')
-    is_excluded_business = BooleanField('適用除外事業者に該当しない')
+    capital_limit = BooleanField('定款上の会計期間が１年間ですか？', default=False)
+    is_supported_industry = BooleanField('電気・ガス供給業及び保険業に該当していませんか？', default=False)
+    is_not_excluded_business = BooleanField('資本金または出資金の額が1億円以下の中小法人ですか？', default=False)
+    is_excluded_business = BooleanField('適用除外事業者に該当していませんか？', default=False)
     industry_type = StringField('業種', validators=[Optional(), Length(max=50)])
     industry_code = StringField('業種番号', validators=[Optional(), Length(max=10)])
     reference_number = StringField('整理番号', validators=[Optional(), Length(max=20)])

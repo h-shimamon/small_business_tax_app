@@ -87,3 +87,51 @@
     font-size: 0.875rem;
     color: #9ca3af;
 }
+
+/* --- New Tax Confirmation Card Styles --- */
+.tax-confirmation-section .section-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.confirmation-card {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 20px;
+}
+
+.confirmation-card .card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.confirmation-card .card-content + .card-content {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.confirmation-card .card-label {
+    flex-grow: 1;
+}
+
+.confirmation-card .label-text {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.confirmation-card .label-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 4px 0 0 0;
+}
+
+.confirmation-card .card-control {
+    flex-shrink: 0;
+}

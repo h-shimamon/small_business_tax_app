@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
+{% from 'company/_form_helpers.html' import render_field, render_checkbox_field, render_toggle_switch %}
 
 {% block title %}基本情報{% endblock %}
 
@@ -44,46 +44,51 @@
                 {{ render_field(form.reference_number, placeholder='整理番号') }}
             </fieldset>
 
-            <fieldset class="full-width">
+            <fieldset class="full-width tax-confirmation-section">
                 <legend>税制上の確認事項</legend>
-                <div class="setting-item">
-                    <div class="setting-item-row">
-                        <div class="setting-label">
-                            <label for="{{ form.capital_limit.id }}">定款上の会計期間</label>
+                <p class="section-description">申告に必要な税制上の要件を満たしているかご確認ください。</p>
+
+                <div class="confirmation-card">
+                    <div class="card-content">
+                        <div class="card-label">
+                            <span class="label-text">定款上の会計期間が１年間ですか？</span>
+                            <p class="label-description">定款上の会計期間が1年間でない場合は正しく計算できないため、ご利用いただけません。</p>
                         </div>
-                        <div class="setting-control">
-                            {{ render_checkbox_field(form.capital_limit) }}
-                        </div>
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-item-row">
-                        <div class="setting-label">
-                            <label for="{{ form.is_supported_industry.id }}">資本金の制限</label>
-                        </div>
-                        <div class="setting-control">
-                            {{ render_checkbox_field(form.is_supported_industry) }}
-                        </div>
-                    </div>
-                    <p class="setting-description">資本金または出資金の額が１億円の製造業を行う分割申告が必要な法人及び資本金または出資金の額が5億円以上の法人等の100％子法人ではない</p>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-item-row">
-                        <div class="setting-label">
-                            <label for="{{ form.is_not_excluded_business.id }}">対応業種の確認</label>
-                        </div>
-                        <div class="setting-control">
-                            {{ render_checkbox_field(form.is_not_excluded_business) }}
+                        <div class="card-control">
+                            {{ render_toggle_switch(form.capital_limit) }}
                         </div>
                     </div>
                 </div>
-                <div class="setting-item">
-                    <div class="setting-item-row">
-                        <div class="setting-label">
-                            <label for="{{ form.is_excluded_business.id }}">適用除外事業者の確認必須</label>
+                <div class="confirmation-card">
+                    <div class="card-content">
+                        <div class="card-label">
+                            <span class="label-text">資本金または出資金の額が1億円以下の中小法人ですか？</span>
+                            <p class="label-description">資本金等の金額が１億円超の場合正しく計算が行われないため、ご利用いただけません。</p>
                         </div>
-                        <div class="setting-control">
-                            {{ render_checkbox_field(form.is_excluded_business) }}
+                        <div class="card-control">
+                            {{ render_toggle_switch(form.is_not_excluded_business) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="confirmation-card">
+                    <div class="card-content">
+                        <div class="card-label">
+                            <span class="label-text">電気・ガス供給業及び保険業に該当していませんか？</span>
+                            <p class="label-description">電気・ガス供給業、保険業は対象外となります。</p>
+                        </div>
+                        <div class="card-control">
+                            {{ render_toggle_switch(form.is_supported_industry) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="confirmation-card">
+                    <div class="card-content">
+                        <div class="card-label">
+                            <span class="label-text">適用除外事業者に該当していませんか？</span>
+                            <p class="label-description">適用除外事業者とは、過去３年間平均の所得金額が１５億円超の法人をいいます。</p>
+                        </div>
+                        <div class="card-control">
+                            {{ render_toggle_switch(form.is_excluded_business) }}
                         </div>
                     </div>
                 </div>

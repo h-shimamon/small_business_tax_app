@@ -46,3 +46,10 @@
     {% endif %}
 </div>
 {% endmacro %}
+
+{% macro render_toggle_switch(field) %}
+  <label class="toggle-switch-container">
+    {{ field(class="toggle-switch-input") }}
+    <span class="toggle-switch"></span>
+  </label>
+{% endmacro %}
