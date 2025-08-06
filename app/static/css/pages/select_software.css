@@ -19,10 +19,10 @@
 }
 
 .software-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    display: flex; /* GridからFlexboxに変更 */
+    flex-wrap: wrap; /* はみ出した要素を折り返す */
+    justify-content: center; /* 水平方向の中央寄せ */
     gap: 25px;
-    text-align: left;
 }
 
 .software-card {
@@ -36,6 +36,8 @@
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     background-color: var(--bg-content);
+    width: 180px; /* カードの幅を調整 */
+    min-height: 120px; /* カードの高さを担保 */
 }
 
 .software-card:hover {
@@ -53,12 +55,6 @@
     background-color: #e6f2ff;
 }
 
-.software-logo {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 15px;
-}
-
 .software-name {
     font-size: 1rem;
     font-weight: 500;
@@ -67,4 +63,28 @@
 
 .form-actions {
     margin-top: 40px;
+}
+
+.manage-link-container {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.button-subtle {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.button-subtle:hover {
+    background-color: #e9ecef; /* ホバー時の背景色を少し濃くする */
+    color: var(--text-primary);
+    border-color: #ced4da; /* 枠線の色も少し濃くする */
 }

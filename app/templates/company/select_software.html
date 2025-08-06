@@ -24,7 +24,6 @@
             {% for subfield in form.accounting_software %}
             <label class="software-card" :class="{ 'selected': selectedSoftware === '{{ subfield.data }}' }" @click="selectedSoftware = '{{ subfield.data }}'">
                 {{ subfield(id=subfield.id) }} {# ラジオボタン本体 #}
-                <img src="/static/images/{{ subfield.data }}_logo.png" alt="{{ subfield.label.text }}" class="software-logo">
                 <span class="software-name">{{ subfield.label.text }}</span>
             </label>
             {% endfor %}
@@ -37,7 +36,7 @@
 
 {% if has_mappings %}
 <div class="manage-link-container">
-    <a href="{{ url_for('company.manage_mappings') }}">登録済みの勘定科目マッピングを管理する</a>
+    <a href="{{ url_for('company.manage_mappings') }}" class="button-subtle">登録済みの勘定科目マッピングを管理する</a>
 </div>
 {% endif %}
 </div>
