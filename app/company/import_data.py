@@ -7,7 +7,8 @@ from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import UserAccountMapping
 from app.navigation import get_navigation_state, mark_step_as_completed
-from .services import FileUploadService, DataMappingService
+from .services import DataMappingService
+from .parser_factory import ParserFactory
 
 # --- ウィザードと設定の定義 ---
 
@@ -15,23 +16,16 @@ DATA_TYPE_CONFIG = {
     'chart_of_accounts': {
         'title': '勘定科目データのインポート',
         'description': 'まず初めに、勘定科目の一覧をCSVまたはTXT形式でアップロードしてください。これは全ての会計処理の基礎となります。',
-        'step_name': '勘定科目データ選択'
+        'step_name': '勘定科目データ選択',
+        'parser_method': 'get_chart_of_accounts'
     },
     'journals': {
         'title': '仕訳帳のインポート',
         'description': '次に、会計期間中のすべての取引が記録された仕訳帳のCSVまたはTXTファイルをアップロードしてください。',
-        'step_name': '仕訳帳データ選択'
+        'step_name': '仕訳帳データ選択',
+        'parser_method': 'get_journals'
     },
-    'fixed_assets': {
-        'title': '固定資産台帳のインポート',
-        'description': '最後に、固定資産台帳をCSVまたはTXT形式でアップロードしてください。',
-        'step_name': '固定資産データ選択'
-    }
-}
-
-SOFTWARE_CONFIG = {
-    'moneyforward': {'column_name': '勘定科目', 'header_row': 0},
-    'yayoi': {'column_name': '科目名', 'header_row': 1}
+    # 'fixed_assets' など、他のデータタイプも同様に追加可能
 }
 
 FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals', 'fixed_assets']
@@ -106,48 +100,56 @@ def upload_data(datatype):
             flash('ファイルが選択されていません。', 'danger')
             return redirect(request.url)
 
-        # ファイル拡張子の検証
         allowed_extensions = {'csv', 'txt'}
         if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
             flash('無効なファイル形式です。.csvまたは.txtファイルをアップロードしてください。', 'danger')
             return redirect(request.url)
 
-        if datatype == 'chart_of_accounts':
-            software = session.get('selected_software')
-            software_config = SOFTWARE_CONFIG.get(software)
+        software = session.get('selected_software')
+        try:
+            # ParserFactoryを使用して適切なパーサーを取得
+            parser = ParserFactory.create_parser(software, file)
             
-            try:
-                file_service = FileUploadService()
-                user_accounts = file_service.load_chart_of_accounts(file, software_config)
-                
-                mapping_service = DataMappingService(current_user.id)
-                unmatched_accounts = mapping_service.get_unmatched_accounts(user_accounts)
+            # datatypeに応じてパーサーのメソッドを動的に呼び出す
+            parser_method_name = config.get('parser_method')
+            if not parser_method_name:
+                raise ValueError(f"'{datatype}' に対応するパーサーメソッドが設定されていません。")
+            
+            parser_method = getattr(parser, parser_method_name)
+            user_accounts = parser_method() # 例: parser.get_chart_of_accounts()
 
-                if not unmatched_accounts:
-                    flash('すべての勘定科目の取り込みが完了しました。', 'success')
-                    mark_step_as_completed(datatype)
-                    return redirect(url_for('company.data_upload_wizard'))
-                else:
-                    session['unmatched_accounts'] = unmatched_accounts
-                    return redirect(url_for('company.data_mapping'))
-            except Exception as e:
-                flash(str(e), 'danger')
-                return redirect(request.url)
-        else:
-            # TODO: 仕訳帳や固定資産台帳のインポート処理も同様に実装する
-            flash(f'{config["title"]} の取り込み機能は現在開発中です。', 'info')
-            mark_step_as_completed(datatype)
-            return redirect(url_for('company.data_upload_wizard'))
+            # マッピング処理
+            mapping_service = DataMappingService(current_user.id)
+            unmatched_accounts = mapping_service.get_unmatched_accounts(user_accounts)
+
+            if not unmatched_accounts:
+                flash('すべての勘定科目の取り込みが完了しました。', 'success')
+                mark_step_as_completed(datatype)
+                return redirect(url_for('company.data_upload_wizard'))
+            else:
+                session['unmatched_accounts'] = unmatched_accounts
+                return redirect(url_for('company.data_mapping'))
+
+        except (NotImplementedError, Exception) as e:
+            flash(str(e), 'danger')
+            return redirect(request.url)
 
     navigation_state = get_navigation_state(datatype)
     show_reset_link = (datatype == 'journals')
     
+    # 'description' を config から取り出して渡す
+    template_config = {
+        'title': config['title'],
+        'description': config['description'],
+        'step_name': config['step_name']
+    }
+
     return render_template(
         'company/upload_data.html', 
         form=form, 
         navigation_state=navigation_state, 
         show_reset_link=show_reset_link,
-        **config
+        **template_config
     )
 
 @import_bp.route('/data_mapping', methods=['GET', 'POST'])
@@ -168,7 +170,6 @@ def data_mapping():
             session.pop('unmatched_accounts', None)
         return redirect(url_for('company.data_upload_wizard'))
 
-    # GETリクエスト
     unmatched_accounts = session.get('unmatched_accounts', [])
     if not unmatched_accounts:
         return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
