@@ -14,24 +14,24 @@ from .services import FileUploadService, DataMappingService
 DATA_TYPE_CONFIG = {
     'chart_of_accounts': {
         'title': '勘定科目データのインポート',
-        'description': 'まず初めに、勘定科目の一覧をCSV形式でアップロードしてください。これは全ての会計処理の基礎となります。',
+        'description': 'まず初めに、勘定科目の一覧をCSVまたはTXT形式でアップロードしてください。これは全ての会計処理の基礎となります。',
         'step_name': '勘定科目データ選択'
     },
     'journals': {
         'title': '仕訳帳のインポート',
-        'description': '次に、会計期間中のすべての取引が記録された仕訳帳のCSVファイルをアップロードしてください。',
+        'description': '次に、会計期間中のすべての取引が記録された仕訳帳のCSVまたはTXTファイルをアップロードしてください。',
         'step_name': '仕訳帳データ選択'
     },
     'fixed_assets': {
         'title': '固定資産台帳のインポート',
-        'description': '最後に、固定資産台帳をCSV形式でアップロードしてください。',
+        'description': '最後に、固定資産台帳をCSVまたはTXT形式でアップロードしてください。',
         'step_name': '固定資産データ選択'
     }
 }
 
 SOFTWARE_CONFIG = {
-    'moneyforward': {'column_name': '勘定科目', 'encoding': 'utf-8-sig', 'header_row': 0},
-    'yayoi': {'column_name': '科目名', 'encoding': 'shift_jis', 'header_row': 1}
+    'moneyforward': {'column_name': '勘定科目', 'header_row': 0},
+    'yayoi': {'column_name': '科目名', 'header_row': 1}
 }
 
 FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals', 'fixed_assets']
@@ -102,8 +102,14 @@ def upload_data(datatype):
     form = FileUploadForm()
     if form.validate_on_submit():
         file = form.upload_file.data
-        if not file:
+        if not file or not file.filename:
             flash('ファイルが選択されていません。', 'danger')
+            return redirect(request.url)
+
+        # ファイル拡張子の検証
+        allowed_extensions = {'csv', 'txt'}
+        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            flash('無効なファイル形式です。.csvまたは.txtファイルをアップロードしてください。', 'danger')
             return redirect(request.url)
 
         if datatype == 'chart_of_accounts':
@@ -128,6 +134,7 @@ def upload_data(datatype):
                 flash(str(e), 'danger')
                 return redirect(request.url)
         else:
+            # TODO: 仕訳帳や固定資産台帳のインポート処理も同様に実装する
             flash(f'{config["title"]} の取り込み機能は現在開発中です。', 'info')
             mark_step_as_completed(datatype)
             return redirect(url_for('company.data_upload_wizard'))

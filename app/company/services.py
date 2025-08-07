@@ -9,6 +9,8 @@ from .models import (
     LandRent, Miscellaneous, AccountTitleMaster, UserAccountMapping
 )
 from app import db
+import csv
+import io
 
 
 class DeclarationService:
@@ -81,13 +83,64 @@ class DeclarationService:
 class FileUploadService:
     """ファイルアップロードと解析に関連するサービスクラス。"""
 
+    def _analyze_file(self, file_storage):
+        """
+        アップロードされたファイルを解析し、文字コードと区切り文字を特定する。
+
+        Args:
+            file_storage: アップロードされたファイルオブジェクト (FileStorage)。
+
+        Returns:
+            tuple: (デコードされたテキストIO, 区切り文字)
+
+        Raises:
+            Exception: 解析不可能な場合。
+        """
+        # ファイルの先頭に戻す
+        file_storage.seek(0)
+        content_bytes = file_storage.read()
+        file_storage.seek(0)
+
+        # 1. 文字コードの判別
+        decoded_text = None
+        # BOM付きUTF-8も考慮して 'utf-8-sig' を最初に追加
+        encodings_to_try = ['utf-8-sig', 'utf-8', 'shift_jis']
+        for encoding in encodings_to_try:
+            try:
+                decoded_text = content_bytes.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        
+        if decoded_text is None:
+            raise Exception("ファイルの文字コードを判別できませんでした。UTF-8またはShift-JISで保存してください。")
+
+        # 2. 区切り文字の判別
+        try:
+            # 空行をスキップして最初のデータ行を見つける
+            first_line = ""
+            for line in decoded_text.splitlines():
+                if line.strip():
+                    first_line = line
+                    break
+            if not first_line:
+                raise csv.Error("ファイルにデータ行が見つかりません。")
+
+            dialect = csv.Sniffer().sniff(first_line, delimiters=',\t')
+            delimiter = dialect.delimiter
+        except (csv.Error, IndexError):
+            raise Exception("ファイルの区切り文字を判別できませんでした。カンマ(,)またはタブ区切りで保存してください。")
+
+        return io.StringIO(decoded_text), delimiter
+
     def load_chart_of_accounts(self, file, software_config):
         """
-        勘定科目一覧のCSVファイルを読み込み、勘定科目名のリストを返す。
+        勘定科目一覧のファイルを読み込み、勘定科目名のリストを返す。
+        ファイル形式、文字コード、区切り文字は自動判別される。
         
         Args:
             file: アップロードされたファイルオブジェクト。
-            software_config (dict): 会計ソフトごとの設定。
+            software_config (dict): 会計ソフトごとの設定（列名、ヘッダー行）。
         
         Returns:
             list: 勘定科目名のリスト。
@@ -96,15 +149,28 @@ class FileUploadService:
             Exception: ファイル読み込みや処理中にエラーが発生した場合。
         """
         try:
+            decoded_file, delimiter = self._analyze_file(file)
+            
             df = pd.read_csv(
-                file,
-                encoding=software_config['encoding'],
-                header=software_config['header_row']
+                decoded_file,
+                delimiter=delimiter,
+                header=software_config['header_row'],
+                skip_blank_lines=True,
+                engine='python' # C engine doesn't support StringIO as well
             )
-            return df[software_config['column_name']].dropna().astype(str).str.strip().unique().tolist()
+            
+            target_column = software_config['column_name']
+            
+            # BOMやエンコーディングの影響で列名の先頭に予期せぬ文字が含まれる場合を考慮
+            df.columns = [col.strip() for col in df.columns]
+
+            if target_column not in df.columns:
+                raise Exception(f"指定された列名 '{target_column}' がファイルに見つかりません。ヘッダー行が正しく設定されているか確認してください。")
+
+            return df[target_column].dropna().astype(str).str.strip().unique().tolist()
         except Exception as e:
             # エラーを呼び出し元に伝播させる
-            raise Exception(f'ファイル読み込みエラー: {e}')
+            raise Exception(f'ファイル処理エラー: {e}')
 
 
 class DataMappingService:
