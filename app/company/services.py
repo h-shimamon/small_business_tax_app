@@ -171,7 +171,11 @@ class FinancialStatementService:
         
         # 期首の繰越利益剰余金に当期純利益（損失）を加算して期末の繰越利益剰余金を計算
         opening_retained_earnings = self.opening_balances.get('繰越利益剰余金', 0)
-        final_bs_balances['繰越利益剰余金'] = opening_retained_earnings + net_income
+        
+        # P/Lサービスで計算されるnet_incomeは、会計上の利益がマイナス、損失がプラスの値を持つ。
+        # そのため、期首の繰越利益剰余金からnet_incomeを「減算」することで、
+        # 利益（マイナス値）を足し合わせ、損失（プラス値）を差し引く正しい計算となる。
+        final_bs_balances['繰越利益剰余金'] = opening_retained_earnings - net_income
 
         for acc, amount in final_bs_balances.items():
             if acc in self.bs_master.index:
