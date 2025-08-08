@@ -1,5 +1,5 @@
 # app/company/import_data.py
-from flask import render_template, redirect, url_for, flash, session, request
+from flask import render_template, redirect, url_for, flash, session, request, current_app
 from flask_login import login_required, current_user
 
 from app import db
@@ -127,7 +127,9 @@ def upload_data(datatype):
                     'mid_year_balances': mapped_mid_year_balances
                 }
 
-                fs_service = FinancialStatementService(mapped_journal_data)
+                # app.configからマスターデータを取得
+                master_data = current_app.config['MASTER_DATA']
+                fs_service = FinancialStatementService(mapped_journal_data, master_data)
                 bs_data, pl_data = fs_service.create_financial_statements()
                 
                 session['financial_statements'] = {
