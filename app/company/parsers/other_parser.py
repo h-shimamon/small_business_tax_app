@@ -20,3 +20,9 @@ class OtherParser(BaseParser):
         """
         # TODO: 「その他」の場合の仕様に合わせて実装する
         raise NotImplementedError("「その他」を選択した場合のインポート機能は現在開発中です。")
+
+    def get_fixed_assets(self):
+        """
+        固定資産データを取得する。（未実装）
+        """
+        raise NotImplementedError("このパーサーでは固定資産データの取得はまだ実装されていません。")

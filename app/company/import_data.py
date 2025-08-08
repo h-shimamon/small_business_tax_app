@@ -25,7 +25,12 @@ DATA_TYPE_CONFIG = {
         'step_name': '仕訳帳データ選択',
         'parser_method': 'get_journals'
     },
-    # 'fixed_assets' など、他のデータタイプも同様に追加可能
+    'fixed_assets': {
+        'title': '固定資産データのインポート',
+        'description': '最後に、固定資産台帳のデータをCSVまたはTXT形式でアップロードしてください。（この機能は現在開発中です）',
+        'step_name': '固定資産データ選択',
+        'parser_method': 'get_fixed_assets'
+    }
 }
 
 FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals', 'fixed_assets']

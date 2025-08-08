@@ -133,3 +133,9 @@ class MoneyForwardParser(BaseParser):
         balances = all_transactions.groupby('account')['amount'].sum()
         
         return {k: int(v) for k, v in balances.items() if v != 0}
+
+    def get_fixed_assets(self):
+        """
+        固定資産データを取得する。（未実装）
+        """
+        raise NotImplementedError("このパーサーでは固定資産データの取得はまだ実装されていません。")
