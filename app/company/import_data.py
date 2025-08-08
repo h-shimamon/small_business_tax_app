@@ -44,9 +44,10 @@ def select_software():
     """ウィザードの開始: 会計ソフトを選択"""
     form = SoftwareSelectionForm()
     if form.validate_on_submit():
+        # ウィザードの進行状況をリセットし、新しいフローを開始する
         session['selected_software'] = form.accounting_software.data
-        mark_step_as_completed('select_software')
-        flash(f'{form.accounting_software.data} が選択されました。', 'info')
+        session['wizard_completed_steps'] = ['select_software']
+        flash(f'{form.accounting_software.data} が選択されました。新しいデータ取込を開始します。', 'info')
         return redirect(url_for('company.data_upload_wizard'))
     
     has_mappings = UserAccountMapping.query.filter_by(user_id=current_user.id).first() is not None
