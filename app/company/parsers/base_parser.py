@@ -8,63 +8,47 @@ class BaseParser(ABC):
     """
     ファイル解析のための共通インターフェースと基本機能を提供する抽象基底クラス。
     """
-
     def __init__(self, file_storage):
         """
         Args:
             file_storage: アップロードされたファイルオブジェクト (FileStorage)。
         """
         self.file_storage = file_storage
-        self.decoded_file, self.delimiter = self._analyze_file()
-
-    def _analyze_file(self):
-        """
-        アップロードされたファイルを解析し、文字コードと区切り文字を特定する。
-        これはすべてのパーサーで共通の処理。
-
-        Returns:
-            tuple: (デコードされたテキストIO, 区切り文字)
-
-        Raises:
-            Exception: 解析不可能な場合。
-        """
+        self.file_content_bytes = self.file_storage.read()
         self.file_storage.seek(0)
-        content_bytes = self.file_storage.read()
-        self.file_storage.seek(0)
+        self.encoding = self._detect_encoding()
+        self.delimiter = self._detect_delimiter()
 
-        decoded_text = None
-        encodings_to_try = ['utf-8-sig', 'utf-8', 'shift_jis']
+    def _detect_encoding(self):
+        """
+        ファイル全体のバイト内容から文字コードを判定する。
+        日本語のCSV/TXTで一般的なShift_JIS系統を先に試すことで、誤判定を減らす。
+        """
+        encodings_to_try = ['shift_jis', 'cp932', 'utf-8-sig', 'utf-8']
         for encoding in encodings_to_try:
             try:
-                decoded_text = content_bytes.decode(encoding)
-                break
+                self.file_content_bytes.decode(encoding)
+                return encoding
             except UnicodeDecodeError:
                 continue
-        
-        if decoded_text is None:
-            raise Exception("ファイルの文字コードを判別できませんでした。UTF-8またはShift-JISで保存してください。")
+        raise Exception("ファイルの文字コードを判別できませんでした。UTF-8またはShift-JIS系統で保存してください。")
 
+    def _detect_delimiter(self):
+        """
+        ファイル内容から区切り文字を判定する。
+        """
         try:
-            first_line = ""
-            for line in decoded_text.splitlines():
-                if line.strip():
-                    first_line = line
-                    break
-            if not first_line:
-                raise csv.Error("ファイルにデータ行が見つかりません。")
-
-            dialect = csv.Sniffer().sniff(first_line, delimiters=',\t')
-            delimiter = dialect.delimiter
+            decoded_text = self.file_content_bytes.decode(self.encoding)
+            sniffer = csv.Sniffer()
+            dialect = sniffer.sniff(decoded_text[:2048], delimiters=',\t')
+            return dialect.delimiter
         except (csv.Error, IndexError):
-            raise Exception("ファイルの区切り文字を判別できませんでした。カンマ(,)またはタブ区切りで保存してください。")
-
-        return io.StringIO(decoded_text), delimiter
+            return ','
 
     @abstractmethod
     def get_chart_of_accounts(self):
         """
         勘定科目一覧を取得する。
-        このメソッドはサブクラスで必ず実装されなければならない。
         """
         pass
 
@@ -72,29 +56,27 @@ class BaseParser(ABC):
     def get_journals(self):
         """
         仕訳帳データを取得する。
-        このメソッドはサブクラスで必ず実装されなければならない。
         """
         pass
 
-    def _read_data(self, header_row):
+    def _read_data(self, header_row, **kwargs):
         """
         共通のデータ読み込み処理。
-
-        Args:
-            header_row (int): ヘッダーとして使用する行の番号。
-
-        Returns:
-            pandas.DataFrame: 読み込まれたデータ。
         """
         try:
+            file_buffer = io.BytesIO(self.file_content_bytes)
+            
             df = pd.read_csv(
-                self.decoded_file,
+                file_buffer,
                 delimiter=self.delimiter,
                 header=header_row,
+                encoding=self.encoding,
                 skip_blank_lines=True,
-                engine='python'
+                engine='python',
+                **kwargs
             )
-            df.columns = [col.strip() for col in df.columns]
+            if header_row is not None and df.columns.size > 0:
+                df.columns = [str(col).strip() for col in df.columns]
             return df
         except Exception as e:
             raise Exception(f'データ読み込みエラー: {e}')

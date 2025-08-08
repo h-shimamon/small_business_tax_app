@@ -195,7 +195,7 @@ class FileUploadForm(FlaskForm):
         'データファイル',
         validators=[
             FileRequired(message="ファイルを選択してください。"),
-            FileAllowed(['csv'], message='CSVファイルのみアップロードできます。')
+            FileAllowed(['csv', 'txt'], message='CSVまたはTXTファイルのみアップロードできます。')
         ]
     )
     submit = SubmitField('データ取込開始')
