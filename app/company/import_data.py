@@ -7,7 +7,7 @@ from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import UserAccountMapping
 from app.navigation import get_navigation_state, mark_step_as_completed
-from .services import DataMappingService
+from .services import DataMappingService, FinancialStatementService
 from .parser_factory import ParserFactory
 
 # --- ウィザードと設定の定義 ---
@@ -82,7 +82,6 @@ def upload_data(datatype):
         flash('無効なデータタイプです。', 'danger')
         return redirect(url_for('company.data_upload_wizard'))
 
-    # ウィザードのステップ検証
     completed_steps = session.get('wizard_completed_steps', [])
     if 'select_software' not in completed_steps:
         return redirect(url_for('company.select_software'))
@@ -100,44 +99,51 @@ def upload_data(datatype):
             flash('ファイルが選択されていません。', 'danger')
             return redirect(request.url)
 
-        allowed_extensions = {'csv', 'txt'}
-        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
-            flash('無効なファイル形式です。.csvまたは.txtファイルをアップロードしてください。', 'danger')
-            return redirect(request.url)
-
         software = session.get('selected_software')
         try:
-            # ParserFactoryを使用して適切なパーサーを取得
             parser = ParserFactory.create_parser(software, file)
-            
-            # datatypeに応じてパーサーのメソッドを動的に呼び出す
-            parser_method_name = config.get('parser_method')
-            if not parser_method_name:
-                raise ValueError(f"'{datatype}' に対応するパーサーメソッドが設定されていません。")
-            
-            parser_method = getattr(parser, parser_method_name)
-            user_accounts = parser_method() # 例: parser.get_chart_of_accounts()
+            parser_method = getattr(parser, config['parser_method'])
+            parsed_data = parser_method()
 
-            # マッピング処理
-            mapping_service = DataMappingService(current_user.id)
-            unmatched_accounts = mapping_service.get_unmatched_accounts(user_accounts)
+            if datatype == 'chart_of_accounts':
+                mapping_service = DataMappingService(current_user.id)
+                unmatched_accounts = mapping_service.get_unmatched_accounts(parsed_data)
+                if not unmatched_accounts:
+                    flash('すべての勘定科目の取り込みが完了しました。', 'success')
+                    mark_step_as_completed(datatype)
+                    return redirect(url_for('company.data_upload_wizard'))
+                else:
+                    session['unmatched_accounts'] = unmatched_accounts
+                    return redirect(url_for('company.data_mapping'))
+            
+            elif datatype == 'journals':
+                # 【重要】保存されたマッピング情報を適用
+                mapping_service = DataMappingService(current_user.id)
+                mapped_opening_balances = mapping_service.apply_mappings_to_balances(parsed_data['opening_balances'])
+                mapped_mid_year_balances = mapping_service.apply_mappings_to_balances(parsed_data['mid_year_balances'])
+                
+                mapped_journal_data = {
+                    'opening_balances': mapped_opening_balances,
+                    'mid_year_balances': mapped_mid_year_balances
+                }
 
-            if not unmatched_accounts:
-                flash('すべての勘定科目の取り込みが完了しました。', 'success')
+                fs_service = FinancialStatementService(mapped_journal_data)
+                bs_data, pl_data = fs_service.create_financial_statements()
+                
+                session['financial_statements'] = {
+                    'balance_sheet': bs_data,
+                    'profit_and_loss': pl_data
+                }
                 mark_step_as_completed(datatype)
-                return redirect(url_for('company.data_upload_wizard'))
-            else:
-                session['unmatched_accounts'] = unmatched_accounts
-                return redirect(url_for('company.data_mapping'))
+                return redirect(url_for('company.show_financial_statements'))
 
-        except (NotImplementedError, Exception) as e:
-            flash(str(e), 'danger')
+        except Exception as e:
+            flash(f"エラーが発生しました: {e}", 'danger')
             return redirect(request.url)
 
     navigation_state = get_navigation_state(datatype)
     show_reset_link = (datatype == 'journals')
     
-    # 'description' を config から取り出して渡す
     template_config = {
         'title': config['title'],
         'description': config['description'],
@@ -150,6 +156,25 @@ def upload_data(datatype):
         navigation_state=navigation_state, 
         show_reset_link=show_reset_link,
         **template_config
+    )
+
+@import_bp.route('/financial_statements', methods=['GET'])
+@login_required
+def show_financial_statements():
+    """生成された財務諸表を表示する"""
+    statements = session.get('financial_statements')
+    if not statements:
+        flash('表示する財務諸表データがありません。再度アップロードしてください。', 'warning')
+        return redirect(url_for('company.upload_data', datatype='journals'))
+
+    navigation_state = get_navigation_state('journals')
+
+    return render_template(
+        'company/financial_statements.html',
+        title="財務諸表",
+        bs_data=statements['balance_sheet'],
+        pl_data=statements['profit_and_loss'],
+        navigation_state=navigation_state
     )
 
 @import_bp.route('/data_mapping', methods=['GET', 'POST'])

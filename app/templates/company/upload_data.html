@@ -1,73 +1,73 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }} - {{ super() }}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/upload_data.css') }}">
 {% endblock %}
 
-{% block sidebar %}
-<nav>
-    <ul class="progress-nav">
-        {% for step in wizard_progress %}
-            {% set status = 'is-current' if step.is_current else 'is-completed' if step.is_completed else 'is-pending' %}
-            <li class="progress-step {{ status }}">
-                {{ step.name }}
-            </li>
-        {% endfor %}
-    </ul>
-</nav>
-{% endblock %}
-
 {% block content %}
-<div class="upload-container" x-data="uploadComponent('{{ selected_software }}')">
-    <h1 class="content-title">{{ title }}</h1>
-    <p class="content-description">{{ description }}</p>
-
-    <!-- ステップインジケーターは削除（サイドバーに統合したため） -->
-
-    <div class="export-guide">
-        <h3 x-text="guide.title"></h3>
-        <ol>
-            <template x-for="instruction in guide.steps" :key="instruction">
-                <li x-text="instruction"></li>
-            </template>
-        </ol>
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title-text">{{ title }}</h1>
+        <p class="card-subtitle-text">{{ description }}</p>
     </div>
-
-    <div class="upload-area-wrapper">
-        <form method="POST" enctype="multipart/form-data" novalidate>
-            {{ form.hidden_tag() }}
-            <div class="upload-area" 
-                 @dragover.prevent="dragover = true" 
-                 @dragleave.prevent="dragover = false" 
-                 @drop.prevent="handleDrop($event)" 
-                 @click="$refs.fileInput.click()"
-                 :class="{'dragover': dragover}">
-                
-                <input type="file" name="upload_file" @change="handleFileSelect($event)" x-ref="fileInput" class="file-input" accept=".csv">
-                
-                <div x-show="!fileName">
-                    <div class="upload-icon">☁️</div>
-                    <p>ここにファイルをドラッグ＆ドロップ</p>
-                    <p>または<a href="#" class="browse-link">ファイルを選択</a></p>
-                </div>
-                <div x-show="fileName">
-                    <p>選択されたファイル: <strong x-text="fileName"></strong></p>
-                </div>
+    <div class="card-body">
+        <div class="upload-container" x-data="uploadComponent('{{ session.get('selected_software', 'other') }}')">
+            
+            <div class="export-guide">
+                <h3 x-text="guide.title"></h3>
+                <ol>
+                    <template x-for="instruction in guide.steps" :key="instruction">
+                        <li x-text="instruction"></li>
+                    </template>
+                </ol>
             </div>
-            <div class="form-actions">
-            {{ form.submit(class="button-primary") }}
-        </div>
-    </form>
 
-    {% if show_reset_link %}
-    <div class="reset-link-container">
-        <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
+            <div class="upload-area-wrapper">
+                <form method="POST" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="upload-area" 
+                         @dragover.prevent="dragover = true" 
+                         @dragleave.prevent="dragover = false" 
+                         @drop.prevent="handleDrop($event)" 
+                         @click="$refs.fileInput.click()"
+                         :class="{'dragover': dragover, 'is-invalid': {{ 'true' if form.upload_file.errors else 'false' }} }">
+                        
+                        {{ form.upload_file(class="file-input", **{"x-ref": "fileInput", "@change": "handleFileSelect($event)", "accept": ".csv,.txt"}) }}
+                        
+                        <div x-show="!fileName">
+                            <div class="upload-icon">☁️</div>
+                            <p>ここにファイルをドラッグ＆ドロップ</p>
+                            <p>または<a href="#" @click.prevent class="browse-link">ファイルを選択</a></p>
+                        </div>
+                        <div x-show="fileName">
+                            <p>選択されたファイル: <strong x-text="fileName"></strong></p>
+                        </div>
+                    </div>
+                    
+                    {% if form.upload_file.errors %}
+                        <div class="invalid-feedback d-block mt-2">
+                            {% for error in form.upload_file.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-actions">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+
+            {% if show_reset_link %}
+            <div class="reset-link-container">
+                <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
+            </div>
+            {% endif %}
+        </div>
     </div>
-    {% endif %}
-</div>
 </div>
 {% endblock %}
 
@@ -84,14 +84,14 @@
                     title: '弥生会計からのデータエクスポート手順',
                     steps: [
                         '「ファイル」メニューから「エクスポート」を選択します。',
-                        '「{{ guide_text_data_type }}」を選択し、CSV形式で出力します。',
-                        '文字コードは「UTF-8」を選択してください。'
+                        '「仕訳日記帳」などを選択し、CSV形式で出力します。',
+                        '文字コードは「Windows-31J (Shift_JIS)」を選択してください。'
                     ]
                 },
                 freee: {
                     title: 'freeeからのデータエクスポート手順',
                     steps: [
-                        '「決算」または「レポート���メニューから「仕訳帳」などを選択します。',
+                        '「決算」または「レポート」メニューから「仕訳帳」などを選択します。',
                         '「エクスポート」機能で「汎用形式」のCSVをダウンロードします。',
                         '対象期間などを正しく設定してください。'
                     ]
@@ -99,7 +99,7 @@
                 moneyforward: {
                     title: 'マネーフォワード クラウドからのデータエクスポート手順',
                     steps: [
-                        '「会計帳簿」から「{{ guide_text_data_type }}」を選択します。',
+                        '「会計帳簿」から「仕訳帳」を選択します。',
                         '画面右上の「エクスポート」からCSVファイルをダウンロードします。',
                         '必要な期間と形式を選択してください。'
                     ]
@@ -108,13 +108,16 @@
                     title: '一般的なCSVファイルのエクスポート手順',
                     steps: [
                         'お使いの会計ソフトからCSV形式でデータを出力してください。',
-                        '必須項目が含まれていることを確認してください: {{ guide_text_required_columns }}',
                         '文字コードは「UTF-8」または「Shift-JIS」を推奨します。'
                     ]
                 }
             },
             init() {
                 this.guide = this.guides[selectedSoftware] || this.guides['other'];
+                const initialFile = this.$refs.fileInput.files[0];
+                if (initialFile) {
+                    this.fileName = initialFile.name;
+                }
             },
             handleDrop(event) {
                 this.dragover = false;
@@ -128,6 +131,8 @@
                 const files = event.target.files;
                 if (files.length > 0) {
                     this.fileName = files[0].name;
+                } else {
+                    this.fileName = null;
                 }
             }
         }

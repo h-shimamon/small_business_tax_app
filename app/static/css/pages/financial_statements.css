@@ -1,0 +1,70 @@
+/* app/static/css/pages/financial_statements.css */
+
+.statement-section {
+    margin-bottom: 40px;
+}
+
+.statement-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--primary-color);
+}
+
+.statement-table {
+    background-color: var(--background-color-light);
+}
+
+.statement-table th {
+    background-color: var(--primary-color-light);
+    color: var(--primary-color-dark);
+    text-align: center;
+    font-weight: 600;
+}
+
+.statement-table td {
+    vertical-align: middle;
+}
+
+.statement-table .account-name {
+    padding-left: 1.5rem;
+}
+
+.statement-table .amount {
+    text-align: right;
+    font-family: var(--font-family-monospace);
+    font-weight: 500;
+    padding-right: 1rem;
+}
+
+.statement-table .indent-1 {
+    padding-left: 3rem;
+}
+
+.statement-table .major-header td,
+.statement-table .middle-header td {
+    font-weight: 600;
+    background-color: var(--background-color-medium);
+}
+
+.statement-table .total-row {
+    font-weight: bold;
+    background-color: var(--background-color-dark);
+    color: var(--text-color-dark);
+}
+
+.statement-table .major-total {
+    border-top: 2px solid var(--border-color-dark);
+}
+
+.statement-table .profit-row {
+    background-color: var(--primary-color-lighter);
+    color: var(--primary-color-dark);
+}
+
+.statement-table .final-profit-row {
+    background-color: var(--success-color-light);
+    color: var(--success-color-dark);
+    font-size: 1.1rem;
+}
