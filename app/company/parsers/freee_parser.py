@@ -20,3 +20,9 @@ class FreeeParser(BaseParser):
         """
         # TODO: freeeの具体的なファイル仕様に合わせて実装する
         raise NotImplementedError("freee用の仕訳帳インポート機能は現在開発中です。")
+
+    def get_fixed_assets(self):
+        """
+        固定資産データを取得する。（未実装）
+        """
+        raise NotImplementedError("このパーサーでは固定資産データの取得はまだ実装されていません。")

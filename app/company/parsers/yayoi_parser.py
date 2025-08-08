@@ -27,3 +27,9 @@ class YayoiParser(BaseParser):
         """
         # TODO: 将来的に仕訳帳のインポート機能をここに実装
         raise NotImplementedError("この機能は現在開発中です。")
+
+    def get_fixed_assets(self):
+        """
+        固定資産データを取得する。（未実装）
+        """
+        raise NotImplementedError("このパーサーでは固定資産データの取得はまだ実装されていません。")

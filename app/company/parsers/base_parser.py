@@ -59,6 +59,13 @@ class BaseParser(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_fixed_assets(self):
+        """
+        固定資産データを取得する。
+        """
+        pass
+
     def _read_data(self, header_row, **kwargs):
         """
         共通のデータ読み込み処理。
