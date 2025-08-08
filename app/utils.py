@@ -1,3 +1,27 @@
 # app/utils.py
-# This file is reserved for truly generic, application-wide utility functions.
-# Navigation-specific logic has been moved to app/navigation.py.
+import pandas as pd
+
+def load_master_data():
+    """
+    マスターCSVファイルを読み込み、データフレームの辞書として返す。
+    アプリケーション起動時に一度だけ呼び出されることを想定。
+    """
+    try:
+        bs_master_df = pd.read_csv('resources/masters/balance_sheet.csv', encoding='utf-8-sig')
+        bs_master_df.dropna(subset=['勘定科目名'], inplace=True)
+        bs_master_df['勘定科目名'] = bs_master_df['勘定科目名'].str.strip()
+        bs_master_df = bs_master_df.set_index('勘定科目名')
+
+        pl_master_df = pd.read_csv('resources/masters/profit_and_loss.csv', encoding='utf-8-sig')
+        pl_master_df.dropna(subset=['勘定科目名'], inplace=True)
+        pl_master_df['勘定科目名'] = pl_master_df['勘定科目名'].str.strip()
+        pl_master_df = pl_master_df.set_index('勘定科目名')
+        
+        return {
+            'bs_master': bs_master_df,
+            'pl_master': pl_master_df
+        }
+    except FileNotFoundError as e:
+        raise RuntimeError(f"マスターファイルが見つかりません: {e}. アプリケーションを起動できません。")
+    except Exception as e:
+        raise RuntimeError(f"マスターファイルの読み込み中にエラーが発生しました: {e}")
