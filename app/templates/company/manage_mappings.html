@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}勘定科目マッピングの管理{% endblock %}
+{% block title %}勘定科目マッピングの管理 - {{ super() }}{% endblock %}
 
 {% block sidebar %}
-    {# この画面ではサイドバーは非表示にするか、最小限にする #}
+    {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="content-title">勘定科目マッピングの管理</h1>
-    <p class="content-description">
+<div class="page-header">
+    <h1>勘定科目マッピングの管理</h1>
+    <p>
         これまでに登録した勘定科目のマッピング情報の一覧です。<br>
         不要になったマッピングを個別に削除できます。
     </p>
+</div>
 
+<div class="card">
     {% if mappings %}
     <table class="table">
         <thead>
@@ -31,7 +33,7 @@
                 <td>{{ mapping.original_account_name }}</td>
                 <td>
                     {{ mapping.master_account.name }}
-                    <span class="text-muted">
+                    <span class="text-light">
                         {% if mapping.master_account.minor_category %} ＜ {{ mapping.master_account.minor_category }}{% endif %}
                         {% if mapping.master_account.middle_category %} ＜ {{ mapping.master_account.middle_category }}{% endif %}
                     </span>
@@ -46,7 +48,9 @@
         </tbody>
     </table>
     {% else %}
-    <p>登録されているマッピング情報はありません。</p>
+    <div class="empty-state-compact">
+        <p>登録されているマッピング情報はありません。</p>
+    </div>
     {% endif %}
 
     <div class="form-actions">
