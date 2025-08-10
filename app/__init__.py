@@ -64,4 +64,10 @@ def create_app():
         from . import commands
         app.cli.add_command(commands.seed_masters)
 
+        # --- マスターデータの自動同期 ---
+        from .company.services.master_data_service import MasterDataService
+        # アプリケーションコンテキスト内でサービスを初期化
+        master_data_service = MasterDataService()
+        master_data_service.check_and_sync()
+
         return app
