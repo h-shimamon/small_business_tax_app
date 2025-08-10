@@ -1,20 +1,21 @@
 # app/company/services/financial_statement_service.py
 from collections import defaultdict
 import pandas as pd
+from .master_data_service import MasterDataService
 
 class FinancialStatementService:
     """財務諸表の生成に関連するロジックを処理するサービスクラス。"""
 
-    def __init__(self, journal_data, master_data):
+    def __init__(self, journal_data, master_data_service: MasterDataService):
         """
         Args:
             journal_data (dict): 'opening_balances'と'mid_year_balances'を含む辞書。
-            master_data (dict): 'bs_master'と'pl_master'のDataFrameを含む辞書。
+            master_data_service (MasterDataService): マスターデータを取得するためのサービスインスタンス。
         """
         self.opening_balances = journal_data.get('opening_balances', {})
         self.mid_year_balances = journal_data.get('mid_year_balances', {})
-        self.bs_master = master_data['bs_master']
-        self.pl_master = master_data['pl_master']
+        self.bs_master = master_data_service.get_bs_master_df()
+        self.pl_master = master_data_service.get_pl_master_df()
 
     def create_financial_statements(self):
         """貸借対照表と損益計算書を生成する。"""
@@ -79,8 +80,8 @@ class FinancialStatementService:
 
         for acc, amount in balances.items():
             if acc in master_df.index:
-                major = master_df.loc[acc, '大分類']
-                middle = master_df.loc[acc, '中分類']
+                major = master_df.loc[acc, 'major_category']
+                middle = master_df.loc[acc, 'middle_category']
                 display_amount = -amount if major in sign_inversion_majors else amount
                 structure[major][middle]['items'].append({'name': acc, 'amount': display_amount})
 
@@ -88,20 +89,20 @@ class FinancialStatementService:
         final_structure = {}
         # 大分類をソート (例: 資産 -> 負債 -> 純資産)
         # Note: このソート順は現状のロジックでは暗黙的。必要ならマスターに順序カラムを追加すべき。
-        sorted_majors = sorted(structure.keys(), key=lambda m: master_df[master_df['大分類'] == m]['No.'].min())
+        sorted_majors = sorted(structure.keys(), key=lambda m: master_df[master_df['major_category'] == m]['number'].min())
 
         for major in sorted_majors:
             middles = structure[major]
             major_total = 0
             
             # 中分類をマスターの 'No.' に基づいてソート
-            sorted_middles = sorted(middles.items(), key=lambda item: master_df[master_df['中分類'] == item[0]]['No.'].min())
+            sorted_middles = sorted(middles.items(), key=lambda item: master_df[master_df['middle_category'] == item[0]]['number'].min())
             
             # 順序付きのdictにソート済みの中分類を格納
             sorted_major_content = {}
             for middle, data in sorted_middles:
                 # 勘定科目をマスターの'No.'列に基づいてソート
-                data['items'].sort(key=lambda x: master_df.loc[x['name'], 'No.'])
+                data['items'].sort(key=lambda x: master_df.loc[x['name'], 'number'])
                 middle_total = sum(item['amount'] for item in data['items'])
                 data['total'] = middle_total
                 major_total += middle_total

@@ -30,9 +30,13 @@ class Company(db.Model):
     capital_limit = db.Column(db.Boolean, default=True)
     is_supported_industry = db.Column(db.Boolean, default=True)
     is_not_excluded_business = db.Column(db.Boolean, default=True)
+    is_excluded_business = db.Column(db.Boolean, default=False)
     industry_type = db.Column(db.String(50))
     industry_code = db.Column(db.String(10))
     reference_number = db.Column(db.String(20))
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('companies', lazy=True))
 
     # --- 申告情報 ---
     accounting_period_start = db.Column(db.String(10))
