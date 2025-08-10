@@ -7,66 +7,68 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/upload_data.css') }}">
 {% endblock %}
 
+{% block sidebar %}
+    {% include 'company/_wizard_sidebar.html' %}
+{% endblock %}
+
 {% block content %}
-<div class.card="card-upload">
-    <div class="card-header">
-        <h1 class="card-title-text">{{ title }}</h1>
-        <p class="card-subtitle-text">{{ description }}</p>
-    </div>
+<div class="page-header">
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+</div>
 
-    <div class="card-body">
-        <form method="POST" enctype="multipart/form-data" novalidate
-              x-data="fileUploadComponent()"
-              @submit.prevent="isProcessing ? false : $el.submit()">
+<div class="card">
+    <form method="POST" enctype="multipart/form-data" novalidate
+            x-data="fileUploadComponent()"
+            @submit.prevent="isProcessing ? false : $el.submit()">
 
-            {{ form.hidden_tag() }}
+        {{ form.hidden_tag() }}
 
-            <div class="file-drop-zone"
-                 :class="{ 'dragover': isDragover, 'has-file': fileName }"
-                 @dragover.prevent="isDragover = true"
-                 @dragleave.prevent="isDragover = false"
-                 @drop.prevent="handleDrop($event)"
-                 @click="$refs.fileInput.click()">
+        <div class="file-drop-zone"
+                :class="{ 'dragover': isDragover, 'has-file': fileName }"
+                @dragover.prevent="isDragover = true"
+                @dragleave.prevent="isDragover = false"
+                @drop.prevent="handleDrop($event)"
+                @click="$refs.fileInput.click()">
 
-                {{ form.upload_file(
-                    class="file-input-hidden",
-                    **{"x-ref": "fileInput", "@change": "handleFileSelect($event)", "accept": ".csv,.txt"}
-                )}}
+            {{ form.upload_file(
+                class="file-input-hidden",
+                **{"x-ref": "fileInput", "@change": "handleFileSelect($event)", "accept": ".csv,.txt"}
+            )}}
 
-                <div class="file-drop-zone-ui" x-show="!fileName">
-                    <svg class="icon-upload" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-                    <p class="main-text">ここにファイルをドラッグ＆ドロップ</p>
-                    <p class="sub-text">または<span class="link-text">ファイルを選択</span></p>
-                </div>
-
-                <div class="file-info" x-show="fileName" x-cloak>
-                    <svg class="icon-file" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                    <p class="file-name" x-text="fileName"></p>
-                    <button type="button" @click.stop="clearFile()" class="btn-clear-file" aria-label="ファイルをクリア">×</button>
-                </div>
+            <div class="file-drop-zone-ui" x-show="!fileName">
+                <svg class="icon-upload" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                <p class="main-text">ここにファイルをドラッグ＆ドロップ</p>
+                <p class="sub-text">または<span class="link-text">ファイルを選択</span></p>
             </div>
 
-            {% if form.upload_file.errors %}
-                <div class="error-message">
-                    {% for error in form.upload_file.errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <div class="form-actions">
-                <button type="submit" class="button-primary" :disabled="!fileName || isProcessing"
-                        x-text="isProcessing ? '処理中...' : 'このファイルをインポートする'">
-                </button>
+            <div class="file-info" x-show="fileName" x-cloak>
+                <svg class="icon-file" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                <p class="file-name" x-text="fileName"></p>
+                <button type="button" @click.stop="clearFile()" class="btn-clear-file" aria-label="ファイルをクリア">×</button>
             </div>
-        </form>
-
-        {% if show_reset_link %}
-        <div class="reset-link-container">
-            <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
         </div>
+
+        {% if form.upload_file.errors %}
+            <div class="error-message">
+                {% for error in form.upload_file.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
         {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="button-primary" :disabled="!fileName || isProcessing"
+                    x-text="isProcessing ? '処理中...' : 'このファイルをインポートする'">
+            </button>
+        </div>
+    </form>
+
+    {% if show_reset_link %}
+    <div class="reset-link-container">
+        <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -95,7 +97,6 @@ function fileUploadComponent() {
             this.fileName = null;
         },
         init() {
-            // ページ読み込み時にファイルが既に選択されている場合（例：バリデーションエラー後の再表示）
             if (this.$refs.fileInput.files.length > 0) {
                 this.fileName = this.$refs.fileInput.files[0].name;
             }

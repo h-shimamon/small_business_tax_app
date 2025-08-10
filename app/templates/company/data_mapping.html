@@ -12,13 +12,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <h2>{{ title }}</h2>
-    <p style="text-align: center; margin-bottom: 30px; color: var(--text-secondary);">
+<div class="page-header">
+    <h1>{{ title }}</h1>
+    <p>
         アップロードされた一部の勘定科目がマスターデータに存在しませんでした。<br>
         AIが最も可能性の高い候補を自動選択しています。内容を確認し、必要であれば修正してください。
     </p>
+</div>
 
+<div class="card">
     <form method="POST" action="{{ url_for('company.data_mapping') }}" novalidate>
         {{ form.hidden_tag() }}
 

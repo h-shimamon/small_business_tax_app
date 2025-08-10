@@ -43,6 +43,7 @@
 .software-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    background-color: #f0f7ff; /* 薄い青色を直接指定 */
 }
 
 .software-card input[type="radio"] {
@@ -51,8 +52,13 @@
 
 .software-card.selected {
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px var(--accent-color);
-    background-color: #e6f2ff;
+    background-color: var(--accent-color); /* 背景を青に */
+    color: #FFFFFF; /* 基本の文字色を白に */
+}
+
+/* カード内のテキスト要素の色も白に設定 */
+.software-card.selected .software-name {
+    color: #FFFFFF;
 }
 
 .software-name {

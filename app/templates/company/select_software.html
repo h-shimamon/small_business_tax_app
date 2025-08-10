@@ -12,32 +12,32 @@
 {% endblock %}
 
 {% block content %}
-<div class="selection-container" x-data="{ selectedSoftware: '' }">
-    <div class="selection-header">
-        <h1>会計ソフトを選択</h1>
-        <p>データのインポートを開始する前に、ご利用の会計ソフトを1つ選択してください。</p>
-    </div>
+<div class="page-header">
+    <h1>会計ソフトを選択</h1>
+    <p>データのインポートを開始する前に、ご利用の会計ソフトを1つ選択してください。</p>
+</div>
 
-    <form method="POST">
+<div class="card">
+    <form method="POST" novalidate x-data="{ selectedSoftware: '{{ form.accounting_software.data if form.accounting_software.data else '' }}' }">
         {{ form.hidden_tag() }}
+
         <div class="software-grid">
             {% for subfield in form.accounting_software %}
-            <label class="software-card" :class="{ 'selected': selectedSoftware === '{{ subfield.data }}' }" @click="selectedSoftware = '{{ subfield.data }}'">
-                {{ subfield(id=subfield.id) }} {# ラジオボタン本体 #}
-                <span class="software-name">{{ subfield.label.text }}</span>
+            <label class="software-card" :class="{ 'selected': selectedSoftware === '{{ subfield.data }}' }">
+                {{ subfield(id=subfield.id, **{'x-model': 'selectedSoftware'}) }}
+                <div class="software-card-content">
+                    <span class="software-name">{{ subfield.label.text }}</span>
+                </div>
             </label>
             {% endfor %}
         </div>
 
         <div class="form-actions">
-        {{ form.submit(class="button-primary") }}
-    </div>
-</form>
-
-{% if has_mappings %}
-<div class="manage-link-container">
-    <a href="{{ url_for('company.manage_mappings') }}" class="button-subtle">登録済みの勘定科目マッピングを管理する</a>
-</div>
-{% endif %}
+            {% if has_mappings %}
+                <a href="{{ url_for('company.manage_mappings') }}" class="button-secondary">登録済みの勘定科目マッピングを管理する</a>
+            {% endif %}
+            <button type="submit" class="button-primary" :disabled="!selectedSoftware">次へ進む</button>
+        </div>
+    </form>
 </div>
 {% endblock %}
