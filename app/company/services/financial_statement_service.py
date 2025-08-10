@@ -1,5 +1,6 @@
 # app/company/services/financial_statement_service.py
 from collections import defaultdict
+import pandas as pd
 
 class FinancialStatementService:
     """財務諸表の生成に関連するロジックを処理するサービスクラス。"""
@@ -28,33 +29,21 @@ class FinancialStatementService:
 
     def _create_balance_sheet(self, all_balances, net_income):
         """貸借対照表のデータ構造を生成する。"""
-        # B/S関連の勘定科目のみをフィルタリング
         final_bs_balances = {acc: amount for acc, amount in all_balances.items() if acc in self.bs_master.index}
         
-        # 期首の繰越利益剰余金に当期純利益（損失）を加算して期末の繰越利益剰余金を計算
         opening_retained_earnings = self.opening_balances.get('繰越利益剰余金', 0)
-        
-        # P/Lサービスで計算されるnet_incomeは、会計上の利益がプラス、損失がマイナスの値を持つ。
-        # 期首の繰越利益剰余金（貸方残高のためマイナス）からnet_incomeを「減算」することで、
-        # 利益（プラス値）を足し合わせ（よりマイナスに）、損失（マイナス値）を差し引く（よりプラスに）正しい計算となる。
         final_bs_balances['繰越利益剰余金'] = opening_retained_earnings - net_income
 
-        # 汎用ヘルパーメソッドを呼び出して、ソートとグルーピング済みの構造を取得
-        # is_bs=True を渡して、負債・純資産の符号を反転させる
         bs_structure = self._build_statement_structure(final_bs_balances, self.bs_master, is_bs=True)
                 
         return bs_structure
 
     def _create_profit_and_loss_statement(self, all_balances):
         """損益計算書のデータ構造を生成し、当期純利益を返す。"""
-        # P/L関連の勘定科目のみをフィルタリング
         pl_balances = {acc: amount for acc, amount in all_balances.items() if acc in self.pl_master.index}
         
-        # 汎用ヘルパーメソッドを呼び出して、ソートとグルーピング済みの基本構造を取得
         pl_structure = self._build_statement_structure(pl_balances, self.pl_master, is_bs=False)
 
-        # 利益計算
-        # 収益（貸方残高）はマイナス、費用（借方残高）はプラスで計上されているため、計算時に符号を調整する
         sales = -pl_structure.get('損益', {}).get('売上高', {}).get('total', 0)
         cost_of_sales = pl_structure.get('損益', {}).get('売上原価', {}).get('total', 0)
         sga = pl_structure.get('損益', {}).get('販売費及び一般管理費', {}).get('total', 0)
@@ -78,52 +67,47 @@ class FinancialStatementService:
             '当期純利益': {'items': [], 'total': net_income},
         }
         
-        # B/Sの計算で使用するため、会計上の利益（プラスの値）を返す
         return pl_structure, net_income
 
     def _build_statement_structure(self, balances, master_df, is_bs=False):
         """
         勘定科目の残高とマスターデータから、ソートとグルーピング済みの財務諸表データ構造を構築する汎用メソッド。
-
-        Args:
-            balances (dict): 勘定科目名をキー、残高を値とする辞書。
-            master_df (pd.DataFrame): '大分類', '中分類', 'No.' 列を含むマスターデータ。
-            is_bs (bool): 貸借対照表の場合True。負債と純資産の金額の符号を反転させる。
-
-        Returns:
-            dict: 整形された財務諸表データ。
+        中分類と勘定科目をマスターの'No.'列に基づいてソートする。
         """
         structure = defaultdict(lambda: defaultdict(lambda: {'items': [], 'total': 0}))
-
-        # is_bsがTrueの場合、表示用に符号を反転させる必要がある科目を特定
         sign_inversion_majors = {'負債', '純資産'} if is_bs else set()
 
         for acc, amount in balances.items():
             if acc in master_df.index:
                 major = master_df.loc[acc, '大分類']
                 middle = master_df.loc[acc, '中分類']
-                
                 display_amount = -amount if major in sign_inversion_majors else amount
-                
                 structure[major][middle]['items'].append({'name': acc, 'amount': display_amount})
 
-        for major, middles in structure.items():
+        # 最終的なデータ構造を順序付きのdictで構築
+        final_structure = {}
+        # 大分類をソート (例: 資産 -> 負債 -> 純資産)
+        # Note: このソート順は現状のロジックでは暗黙的。必要ならマスターに順序カラムを追加すべき。
+        sorted_majors = sorted(structure.keys(), key=lambda m: master_df[master_df['大分類'] == m]['No.'].min())
+
+        for major in sorted_majors:
+            middles = structure[major]
             major_total = 0
-            # 中分類をマスターの 'No.' に基づいてソートするために、一度リストに変換
+            
+            # 中分類をマスターの 'No.' に基づいてソート
             sorted_middles = sorted(middles.items(), key=lambda item: master_df[master_df['中分類'] == item[0]]['No.'].min())
             
-            # 新しいdefaultdictにソート済みの順序で再挿入
-            sorted_structure_major = defaultdict(lambda: {'items': [], 'total': 0})
-
+            # 順序付きのdictにソート済みの中分類を格納
+            sorted_major_content = {}
             for middle, data in sorted_middles:
                 # 勘定科目をマスターの'No.'列に基づいてソート
                 data['items'].sort(key=lambda x: master_df.loc[x['name'], 'No.'])
                 middle_total = sum(item['amount'] for item in data['items'])
                 data['total'] = middle_total
                 major_total += middle_total
-                sorted_structure_major[middle] = data
-
-            structure[major] = sorted_structure_major
-            structure[major]['total'] = major_total
+                sorted_major_content[middle] = data
             
-        return dict(structure)
+            final_structure[major] = sorted_major_content
+            final_structure[major]['total'] = major_total
+            
+        return final_structure
