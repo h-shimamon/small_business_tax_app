@@ -31,6 +31,16 @@
                     {% set assets = bs_data.get('資産', {}) %}
                     {% set asset_order = ['流動資産', '固定資産', '繰延資産'] %}
                     {{ render_statement_table('資産の部', assets, order=asset_order) }}
+                    <div class="table-responsive total-table-wrapper">
+                        <table class="table table-bordered statement-table">
+                            <tbody>
+                                <tr class="total-row major-total">
+                                    <td>資産合計</td>
+                                    <td class="amount">{{ "{:,.0f}".format(assets.get('total', 0)) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <!-- 右カラム: 負債・純資産の部 -->
                 <div class="bs-column">
