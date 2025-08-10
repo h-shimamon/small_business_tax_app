@@ -12,18 +12,25 @@ migrate = Migrate()
 # Alembicがモデルを確実に検知できるように、ここでインポートします
 from .company import models
 
-def create_app():
+def create_app(test_config=None):
     """
     アプリケーションファクトリ: Flaskアプリケーションのインスタンスを作成・設定します。
     """
     app = Flask(__name__, instance_relative_config=True)
 
     # アプリケーション設定
-    # SECRET_KEYはセッション情報を暗号化するために必須です
-    app.config['SECRET_KEY'] = 'a-secret-key-that-you-should-change'
-    # データベースのパスをinstanceフォルダ内に設定します
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'database.db')}"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config.from_mapping(
+        SECRET_KEY='dev', # 本番環境ではランダムな値に置き換えること
+        SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join(app.instance_path, 'database.db')}",
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    )
+
+    if test_config is None:
+        # インスタンス設定があれば読み込む
+        app.config.from_pyfile('config.py', silent=True)
+    else:
+        # テスト設定を読み込む
+        app.config.from_mapping(test_config)
 
     # インスタンスフォルダがなければ作成
     try:
@@ -31,43 +38,24 @@ def create_app():
     except OSError:
         pass
 
-    # データベースをアプリケーションに紐付けます
+    # 拡張機能の初期化
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'company.login'
 
+    # ユーザーローダーの定義
     from .company.models import User
-
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    with app.app_context():
-        # リファクタリングで作成したブループリントをインポートします
-        from .company import company_bp
-        
-        # ブループリントをアプリケーションに登録します
-        app.register_blueprint(company_bp)
+    # ブループリントの登録
+    from .company import company_bp
+    app.register_blueprint(company_bp)
 
-        # データベーステーブルを作成します (まだ存在しない場合)
-        db.create_all()
+    # CLIコマンドの登録
+    from . import commands
+    commands.register_commands(app)
 
-        # テストユーザーがなければ作成
-        if not User.query.filter_by(username='admin').first():
-            admin_user = User(username='admin')
-            admin_user.set_password('password')
-            db.session.add(admin_user)
-            db.session.commit()
-
-        # CLIコマンドを登録
-        from . import commands
-        app.cli.add_command(commands.seed_masters)
-
-        # --- マスターデータの自動同期 ---
-        from .company.services.master_data_service import MasterDataService
-        # アプリケーションコンテキスト内でサービスを初期化
-        master_data_service = MasterDataService()
-        master_data_service.check_and_sync()
-
-        return app
+    return app

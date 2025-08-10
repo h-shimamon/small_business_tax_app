@@ -133,9 +133,10 @@ def upload_data(datatype):
                     'mid_year_balances': mapped_mid_year_balances
                 }
 
-                # app.configからマスターデータを取得
-                master_data = current_app.config['MASTER_DATA']
-                fs_service = FinancialStatementService(mapped_journal_data, master_data)
+                # app.configからマスターデータを取得する代わりにMasterDataServiceを使用
+                from .services.master_data_service import MasterDataService
+                master_data_service = MasterDataService()
+                fs_service = FinancialStatementService(mapped_journal_data, master_data_service)
                 bs_data, pl_data = fs_service.create_financial_statements()
                 
                 session['financial_statements'] = {

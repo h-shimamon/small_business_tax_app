@@ -1,4 +1,17 @@
 {# app/templates/company/_layout_helpers.html #}
+
+{% macro render_page_header(title, subtitle, button_url, button_text) %}
+<div class="page-header">
+    <div class="header-content">
+        <h1 class="content-title">{{ title }}</h1>
+        <p class="content-subtitle">{{ subtitle }}</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for(button_url) }}" class="button-primary">＋ {{ button_text }}</a>
+    </div>
+</div>
+{% endmacro %}
+
 {% macro render_statement_table(title, data, order=None) %}
 <div class="table-responsive">
     <table class="table table-bordered statement-table">

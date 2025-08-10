@@ -93,6 +93,22 @@ class MasterDataService:
         last_version = MasterVersion.query.order_by(MasterVersion.id.desc()).first()
         return last_version.version_hash if last_version else None
 
+    def get_bs_master_df(self):
+        """貸借対照表マスターをDataFrameとして取得する。"""
+        query = AccountTitleMaster.query.filter_by(master_type='BS').all()
+        df = pd.DataFrame([m.__dict__ for m in query])
+        df.drop(columns=['_sa_instance_state'], inplace=True)
+        df.set_index('name', inplace=True)
+        return df
+
+    def get_pl_master_df(self):
+        """損益計算書マスターをDataFrameとして取得する。"""
+        query = AccountTitleMaster.query.filter_by(master_type='PL').all()
+        df = pd.DataFrame([m.__dict__ for m in query])
+        df.drop(columns=['_sa_instance_state'], inplace=True)
+        df.set_index('name', inplace=True)
+        return df
+
 def calculate_and_save_hash(base_dir):
     """
     現在のマスターファイルのハッシュを計算し、_version.txtに保存する。

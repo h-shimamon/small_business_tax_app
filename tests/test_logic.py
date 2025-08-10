@@ -26,7 +26,6 @@ def test_user_can_only_see_their_own_company(app, init_database):
             capital_limit=True,
             is_supported_industry=True,
             is_not_excluded_business=True,
-            is_excluded_business=False,
             user_id=user2.id
         )
         db.session.add(company2)
