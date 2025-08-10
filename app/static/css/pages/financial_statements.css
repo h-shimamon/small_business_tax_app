@@ -32,88 +32,6 @@
     margin-bottom: 2.5rem;
 }
 
-.statement-section h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.statement-table {
-    width: 100%;
-}
-
-.statement-table th,
-.statement-table td {
-    padding: 0.75rem 1rem;
-    vertical-align: middle;
-}
-
-.statement-table .account-name {
-    text-align: left;
-}
-
-.statement-table .amount {
-    text-align: right;
-    font-family: monospace;
-}
-
-.statement-table .indent-1 {
-    padding-left: 2.5rem;
-}
-
-.statement-table .middle-header td {
-    font-weight: 600;
-    background-color: #f8f9fa;
-}
-
-.statement-table .total-row td {
-    font-weight: 600;
-    border-top: 1px solid #dee2e6;
-}
-
-.statement-table .major-total {
-    background-color: #f1f3f5;
-}
-
-.statement-table .profit-row {
-    background-color: #e6f2ff;
-}
-
-/* /app/static/css/pages/financial_statements.css */
-
-.tabs {
-    display: flex;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 2rem;
-}
-
-.tab-button {
-    padding: 1rem 1.5rem;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px; /* 下線を親のborderに重ねる */
-    transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.tab-button:hover {
-    color: var(--text-primary);
-}
-
-.tab-button.active {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-}
-
-.statement-section {
-    margin-bottom: 2.5rem;
-}
-
 /* 2カラムレイアウト用のコンテナ */
 .bs-container {
     display: flex;
@@ -178,11 +96,6 @@
     background-color: var(--background-secondary);
 }
 
-
-.statement-table .account-name {
-    text-align: left;
-}
-
 .statement-table .amount {
     text-align: right;
     font-family: monospace;
@@ -195,6 +108,16 @@
 .statement-table .middle-header td {
     font-weight: 600;
     background-color: #f8f9fa;
+    font-size: 14px; /* 中分類の基準サイズを明示 */
+}
+
+/* 勘定科目行の金額（小分類の数字）のフォントサイズを調整 */
+.statement-table tbody tr:not(.middle-header):not(.total-row) td.amount {
+    font-size: 11.5pt;
+}
+
+.statement-table .account-name {
+    text-align: left;
 }
 
 .statement-table .total-row td {
@@ -214,11 +137,6 @@
     background-color: #d4edda;
     font-size: 1.1rem;
 }
-
-[x-cloak] {
-    display: none !important;
-}
-
 
 [x-cloak] {
     display: none !important;

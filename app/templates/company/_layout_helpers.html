@@ -1,5 +1,5 @@
 {# app/templates/company/_layout_helpers.html #}
-{% macro render_statement_table(title, data, order=None, show_total=True) %}
+{% macro render_statement_table(title, data, order=None) %}
 <div class="table-responsive">
     <table class="table table-bordered statement-table">
         <thead>
@@ -25,14 +25,6 @@
                 {% endif %}
             {% endfor %}
         </tbody>
-        {% if show_total %}
-        <tfoot>
-            <tr class="total-row major-total">
-                <td>{{ title | replace('の部', '') }}合計</td>
-                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
-            </tr>
-        </tfoot>
-        {% endif %}
     </table>
 </div>
 {% endmacro %}
