@@ -1,15 +1,38 @@
 {# app/templates/company/_layout_helpers.html #}
 
-{% macro render_page_header(title, subtitle, button_url=None, button_text=None) %}
-<div class="page-header">
-    <div>
-        <h1 class="content-title">{{ title }}</h1>
-        {% if subtitle %}
-        <p class="content-subtitle">{{ subtitle }}</p>
+{% macro render_statement_table(title, data, is_bs=False) %}
+<div class="table-responsive">
+    <table class="table table-bordered statement-table">
+        {% if title %}
+        <thead>
+            <tr>
+                <th colspan="2">{{ title }}</th>
+            </tr>
+        </thead>
         {% endif %}
-    </div>
-    {% if button_url and button_text %}
-    <a href="{{ url_for(button_url) }}" class="button-primary">＋ {{ button_text }}</a>
-    {% endif %}
+        <tbody>
+            {% for middle, middle_data in data.items() if middle != 'total' %}
+                <tr class="middle-header">
+                    <td colspan="2">{{ middle }}</td>
+                </tr>
+                {% for item in middle_data.get('items', []) %}
+                <tr>
+                    <td class="account-name indent-1">{{ item.name }}</td>
+                    <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row middle-total">
+                    <td class="indent-1">{{ middle }}合計</td>
+                    <td class="amount">{{ "{:,.0f}".format(middle_data.get('total', 0)) }}</td>
+                </tr>
+            {% endfor %}
+            {% if data.get('total') is not none %}
+            <tr class="total-row major-total">
+                <td>{{ title }}合計</td>
+                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
 {% endmacro %}
