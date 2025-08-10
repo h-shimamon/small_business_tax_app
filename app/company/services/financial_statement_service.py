@@ -53,6 +53,8 @@ class FinancialStatementService:
         for major, middles in bs_structure.items():
             major_total = 0
             for middle, data in middles.items():
+                # マスターの'No.'列に基づいてitemsをソート
+                data['items'].sort(key=lambda x: self.bs_master.loc[x['name'], 'No.'])
                 middle_total = sum(item['amount'] for item in data['items'])
                 data['total'] = middle_total
                 major_total += middle_total
