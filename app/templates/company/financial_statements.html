@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "company/_layout_helpers.html" import render_statement_table %}
 
 {% block title %}{{ title }} - {{ super() }}{% endblock %}
 
@@ -15,10 +16,77 @@
 <h1 class="content-title">{{ title }}</h1>
 <p class="content-subtitle">仕訳帳データから自動生成された財務諸表です。</p>
 
-<div class="card" x-data="{ activeTab: 'pl' }">
+<div class="card" x-data="{ activeTab: 'bs' }">
     <div class="tabs">
-        <button class="tab-button" :class="{ 'active': activeTab === 'pl' }" @click="activeTab = 'pl'">損益計算書 (P/L)</button>
         <button class="tab-button" :class="{ 'active': activeTab === 'bs' }" @click="activeTab = 'bs'">貸借対照表 (B/S)</button>
+        <button class="tab-button" :class="{ 'active': activeTab === 'pl' }" @click="activeTab = 'pl'">損益計算書 (P/L)</button>
+    </div>
+
+    <!-- 貸借対照表パネル -->
+    <div x-show="activeTab === 'bs'" x-cloak>
+        <section class="statement-section">
+            {{ render_statement_table('資産の部', bs_data.get('資産', {}), is_bs=True) }}
+            
+            <div class="table-responsive" style="margin-top: 2rem;">
+                <table class="table table-bordered statement-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">負債・純資産の部</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set liabilities = bs_data.get('負債', {}) %}
+                        <tr class="major-header"><td colspan="2">負債の部</td></tr>
+                        {% for middle, data in liabilities.items() if middle != 'total' %}
+                            <tr class="middle-header">
+                                <td colspan="2">{{ middle }}</td>
+                            </tr>
+                            {% for item in data.get('items', []) %}
+                            <tr>
+                                <td class="account-name indent-1">{{ item.name }}</td>
+                                <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="total-row middle-total">
+                                <td class="indent-1">{{ middle }}合計</td>
+                                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="total-row major-total">
+                            <td>負債合計</td>
+                            <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0)) }}</td>
+                        </tr>
+
+                        {% set equity = bs_data.get('純資産', {}) %}
+                        <tr class="major-header"><td colspan="2">純資産の部</td></tr>
+                        {% for middle, data in equity.items() if middle != 'total' %}
+                            <tr class="middle-header">
+                                <td colspan="2">{{ middle }}</td>
+                            </tr>
+                            {% for item in data.get('items', []) %}
+                            <tr>
+                                <td class="account-name indent-1">{{ item.name }}</td>
+                                <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="total-row middle-total">
+                                <td class="indent-1">{{ middle }}合計</td>
+                                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="total-row major-total">
+                            <td>純資産合計</td>
+                            <td class="amount">{{ "{:,.0f}".format(equity.get('total', 0)) }}</td>
+                        </tr>
+                        
+                        <tr class="total-row major-total">
+                            <td>負債・純資産合計</td>
+                            <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0) + equity.get('total', 0)) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
     <!-- 損益計算書パネル -->
@@ -32,14 +100,8 @@
 
                         <!-- 売上高 -->
                         {% with category = pl_items.get('売上高', {'items': [], 'total': 0}) %}
-                            {% for item in category['items'] %}
-                                <tr>
-                                    <td class="account-name">{{ item.name }}</td>
-                                    <td class="amount">{{ "{:,.0f}".format(-item.amount) }}</td>
-                                </tr>
-                            {% endfor %}
-                            <tr class="total-row major-total">
-                                <td>売上高合計</td>
+                            <tr class="total-row major-total profit-row">
+                                <td>売上高</td>
                                 <td class="amount">{{ "{:,.0f}".format(-category.total) }}</td>
                             </tr>
                         {% endwith %}
@@ -155,6 +217,7 @@
                             {% for item in category['items'] %}
                             <tr>
                                 <td class="account-name indent-1">{{ item.name }}</td>
+                                <td class.name }}</td>
                                 <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
                             </tr>
                             {% endfor %}
@@ -191,93 +254,6 @@
                         <tr class="total-row major-total final-profit-row">
                             <td>当期純利益</td>
                             <td class="amount">{{ "{:,.0f}".format(profit_calc.get('当期純利益', {}).get('total', 0)) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-
-    <!-- 貸借対照表パネル -->
-    <div x-show="activeTab === 'bs'" x-cloak>
-        <section class="statement-section">
-            <div class="table-responsive">
-                <table class="table table-bordered statement-table">
-                    <thead>
-                        <tr>
-                            <th colspan="2">資産の部</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set assets = bs_data.get('資産', {}) %}
-                        {% for middle, data in assets.items() if middle != 'total' %}
-                            <tr class="middle-header">
-                                <td>{{ middle }}</td>
-                                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
-                            </tr>
-                            {% for item in data['items'] %}
-                            <tr>
-                                <td class="account-name indent-1">{{ item.name }}</td>
-                                <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                        <tr class="total-row major-total">
-                            <td>資産合計</td>
-                            <td class="amount">{{ "{:,.0f}".format(assets.get('total', 0)) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="table-responsive" style="margin-top: 2rem;">
-                <table class="table table-bordered statement-table">
-                    <thead>
-                        <tr>
-                            <th colspan="2">負債・純資産の部</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set liabilities = bs_data.get('負債', {}) %}
-                        <tr class="major-header"><td colspan="2">負債の部</td></tr>
-                        {% for middle, data in liabilities.items() if middle != 'total' %}
-                            <tr class="middle-header">
-                                <td>{{ middle }}</td>
-                                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
-                            </tr>
-                            {% for item in data['items'] %}
-                            <tr>
-                                <td class="account-name indent-1">{{ item.name }}</td>
-                                <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                        <tr class="total-row major-total">
-                            <td>負債合計</td>
-                            <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0)) }}</td>
-                        </tr>
-
-                        {% set equity = bs_data.get('純資産', {}) %}
-                        <tr class="major-header"><td colspan="2">純資産の部</td></tr>
-                        {% for middle, data in equity.items() if middle != 'total' %}
-                            <tr class="middle-header">
-                                <td>{{ middle }}</td>
-                                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
-                            </tr>
-                            {% for item in data['items'] %}
-                            <tr>
-                                <td class="account-name indent-1">{{ item.name }}</td>
-                                <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                        <tr class="total-row major-total">
-                            <td>純資産合計</td>
-                            <td class="amount">{{ "{:,.0f}".format(equity.get('total', 0)) }}</td>
-                        </tr>
-                        
-                        <tr class="total-row major-total">
-                            <td>負債・純資産合計</td>
-                            <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0) + equity.get('total', 0)) }}</td>
                         </tr>
                     </tbody>
                 </table>
