@@ -12,11 +12,41 @@ class DataMappingService:
         self.user_id = user_id
 
     def get_unmatched_accounts(self, user_accounts):
-        master_account_names = {master.name.strip() for master in AccountTitleMaster.query.all()}
+        """
+        ユーザーアカウントリストとマスターデータを比較し、未マッピングの勘定科目を返す。
+        比較はcase-insensitiveに行う。
+        """
+        # マスター勘定科目名を小文字のセットとして準備
+        master_account_names = {master.name.strip().lower() for master in AccountTitleMaster.query.all()}
+        
+        # 既存のマッピング（ユーザーが過去に設定したもの）を小文字のセットとして準備
+        existing_mappings = {
+            mapping.original_account_name.strip().lower()
+            for mapping in UserAccountMapping.query.filter_by(user_id=self.user_id).all()
+        }
+        
         unmatched = []
+        # 処理済みの勘定科目を小文字で保持し、重複チェック
+        processed_accounts = set()
+
         for acc in user_accounts:
-            if acc and acc not in master_account_names and not UserAccountMapping.query.filter_by(user_id=self.user_id, original_account_name=acc).first():
-                unmatched.append(acc)
+            if not acc:
+                continue
+            
+            clean_acc = acc.strip()
+            clean_acc_lower = clean_acc.lower()
+
+            # 空白のみの文字列や、既に処理済みの勘定科目はスキップ
+            if not clean_acc or clean_acc_lower in processed_accounts:
+                continue
+            
+            processed_accounts.add(clean_acc_lower)
+            
+            # マスターと既存マッピングの両方に存在しないものを抽出（小文字で比較）
+            if clean_acc_lower not in master_account_names and clean_acc_lower not in existing_mappings:
+                # 画面表示用に、元の表記のままの勘定科目を追加
+                unmatched.append(clean_acc)
+                
         return unmatched
 
     def get_mapping_suggestions(self, unmatched_accounts):

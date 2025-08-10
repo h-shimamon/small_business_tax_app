@@ -50,18 +50,14 @@
                                 class="form-control" 
                                 required>
                                 <option value="">選択してください...</option>
-                                {% for group_name, masters in grouped_masters.items() %}
-                                <optgroup label="{{ group_name }}">
-                                    {% for master in masters %}
-                                    <option
-                                        :hidden="searchTerm && !'{{ master.name.lower() }}'.includes(searchTerm.toLowerCase())"
-                                        value="{{ master.id }}" {% if master.id == item.suggested_master_id %}selected{% endif %}>
-                                        {{ master.name }}
-                                        {% if master.minor_category %} ＜ {{ master.minor_category }}{% endif %}
-                                        {% if master.middle_category %} ＜ {{ master.middle_category }}{% endif %}
-                                    </option>
-                                    {% endfor %}
-                                </optgroup>
+                                {% for master in master_accounts %}
+                                <option
+                                    :hidden="searchTerm && !'{{ master.name.lower() }}'.includes(searchTerm.toLowerCase())"
+                                    value="{{ master.id }}" {% if master.id == item.suggested_master_id %}selected{% endif %}>
+                                    {{ master.name }}
+                                    {% if master.minor_category %} ＜ {{ master.minor_category }}{% endif %}
+                                    {% if master.middle_category %} ＜ {{ master.middle_category }}{% endif %}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
