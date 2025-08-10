@@ -1,0 +1,21 @@
+/* /app/static/css/components/common_components.css */
+
+/* --- Empty State --- */
+/* データが存在しない場合に表示する、汎用的なコンポーネント */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background-color: var(--bg-content);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.empty-state h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
