@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ title }} - {{ super() }}{% endblock %}
 
 {% block head %}
     {{ super() }}
@@ -8,134 +8,99 @@
 {% endblock %}
 
 {% block content %}
-<div class="card">
+<div class.card="card-upload">
     <div class="card-header">
         <h1 class="card-title-text">{{ title }}</h1>
         <p class="card-subtitle-text">{{ description }}</p>
     </div>
+
     <div class="card-body">
-        <div class="upload-container" x-data="uploadComponent('{{ session.get('selected_software', 'other') }}')">
-            
-            <div class="export-guide">
-                <h3 x-text="guide.title"></h3>
-                <ol>
-                    <template x-for="instruction in guide.steps" :key="instruction">
-                        <li x-text="instruction"></li>
-                    </template>
-                </ol>
+        <form method="POST" enctype="multipart/form-data" novalidate
+              x-data="fileUploadComponent()"
+              @submit.prevent="isProcessing ? false : $el.submit()">
+
+            {{ form.hidden_tag() }}
+
+            <div class="file-drop-zone"
+                 :class="{ 'dragover': isDragover, 'has-file': fileName }"
+                 @dragover.prevent="isDragover = true"
+                 @dragleave.prevent="isDragover = false"
+                 @drop.prevent="handleDrop($event)"
+                 @click="$refs.fileInput.click()">
+
+                {{ form.upload_file(
+                    class="file-input-hidden",
+                    **{"x-ref": "fileInput", "@change": "handleFileSelect($event)", "accept": ".csv,.txt"}
+                )}}
+
+                <div class="file-drop-zone-ui" x-show="!fileName">
+                    <svg class="icon-upload" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                    <p class="main-text">ここにファイルをドラッグ＆ドロップ</p>
+                    <p class="sub-text">または<span class="link-text">ファイルを選択</span></p>
+                </div>
+
+                <div class="file-info" x-show="fileName" x-cloak>
+                    <svg class="icon-file" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                    <p class="file-name" x-text="fileName"></p>
+                    <button type="button" @click.stop="clearFile()" class="btn-clear-file" aria-label="ファイルをクリア">×</button>
+                </div>
             </div>
 
-            <div class="upload-area-wrapper">
-                <form method="POST" enctype="multipart/form-data" novalidate>
-                    {{ form.hidden_tag() }}
-                    <div class="upload-area" 
-                         @dragover.prevent="dragover = true" 
-                         @dragleave.prevent="dragover = false" 
-                         @drop.prevent="handleDrop($event)" 
-                         @click="$refs.fileInput.click()"
-                         :class="{'dragover': dragover, 'is-invalid': {{ 'true' if form.upload_file.errors else 'false' }} }">
-                        
-                        {{ form.upload_file(class="file-input", **{"x-ref": "fileInput", "@change": "handleFileSelect($event)", "accept": ".csv,.txt"}) }}
-                        
-                        <div x-show="!fileName">
-                            <div class="upload-icon">☁️</div>
-                            <p>ここにファイルをドラッグ＆ドロップ</p>
-                            <p>または<a href="#" @click.prevent class="browse-link">ファイルを選択</a></p>
-                        </div>
-                        <div x-show="fileName">
-                            <p>選択されたファイル: <strong x-text="fileName"></strong></p>
-                        </div>
-                    </div>
-                    
-                    {% if form.upload_file.errors %}
-                        <div class="invalid-feedback d-block mt-2">
-                            {% for error in form.upload_file.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <div class="form-actions">
-                        {{ form.submit(class="btn btn-primary btn-lg") }}
-                    </div>
-                </form>
-            </div>
-
-            {% if show_reset_link %}
-            <div class="reset-link-container">
-                <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
-            </div>
+            {% if form.upload_file.errors %}
+                <div class="error-message">
+                    {% for error in form.upload_file.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
             {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="button-primary" :disabled="!fileName || isProcessing"
+                        x-text="isProcessing ? '処理中...' : 'このファイルをインポートする'">
+                </button>
+            </div>
+        </form>
+
+        {% if show_reset_link %}
+        <div class="reset-link-container">
+            <a href="{{ url_for('company.reset_account_mappings_confirmation') }}">勘定科目データの再アップロード（マッピング情報がリセットされます）</a>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-    {{ super() }}
-    <script>
-    function uploadComponent(selectedSoftware) {
-        return {
-            dragover: false,
-            fileName: null,
-            guide: {},
-            guides: {
-                yayoi: {
-                    title: '弥生会計からのデータエクスポート手順',
-                    steps: [
-                        '「ファイル」メニューから「エクスポート」を選択します。',
-                        '「仕訳日記帳」などを選択し、CSV形式で出力します。',
-                        '文字コードは「Windows-31J (Shift_JIS)」を選択してください。'
-                    ]
-                },
-                freee: {
-                    title: 'freeeからのデータエクスポート手順',
-                    steps: [
-                        '「決算」または「レポート」メニューから「仕訳帳」などを選択します。',
-                        '「エクスポート」機能で「汎用形式」のCSVをダウンロードします。',
-                        '対象期間などを正しく設定してください。'
-                    ]
-                },
-                moneyforward: {
-                    title: 'マネーフォワード クラウドからのデータエクスポート手順',
-                    steps: [
-                        '「会計帳簿」から「仕訳帳」を選択します。',
-                        '画面右上の「エクスポート」からCSVファイルをダウンロードします。',
-                        '必要な期間と形式を選択してください。'
-                    ]
-                },
-                other: {
-                    title: '一般的なCSVファイルのエクスポート手順',
-                    steps: [
-                        'お使いの会計ソフトからCSV形式でデータを出力してください。',
-                        '文字コードは「UTF-8」または「Shift-JIS」を推奨します。'
-                    ]
-                }
-            },
-            init() {
-                this.guide = this.guides[selectedSoftware] || this.guides['other'];
-                const initialFile = this.$refs.fileInput.files[0];
-                if (initialFile) {
-                    this.fileName = initialFile.name;
-                }
-            },
-            handleDrop(event) {
-                this.dragover = false;
-                const files = event.dataTransfer.files;
-                if (files.length > 0) {
-                    this.$refs.fileInput.files = files;
-                    this.fileName = files[0].name;
-                }
-            },
-            handleFileSelect(event) {
-                const files = event.target.files;
-                if (files.length > 0) {
-                    this.fileName = files[0].name;
-                } else {
-                    this.fileName = null;
-                }
+{{ super() }}
+<script>
+function fileUploadComponent() {
+    return {
+        isDragover: false,
+        fileName: null,
+        isProcessing: false,
+        handleDrop(event) {
+            this.isDragover = false;
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                this.$refs.fileInput.files = files;
+                this.fileName = files[0].name;
+            }
+        },
+        handleFileSelect(event) {
+            const files = event.target.files;
+            this.fileName = files.length > 0 ? files[0].name : null;
+        },
+        clearFile() {
+            this.$refs.fileInput.value = '';
+            this.fileName = null;
+        },
+        init() {
+            // ページ読み込み時にファイルが既に選択されている場合（例：バリデーションエラー後の再表示）
+            if (this.$refs.fileInput.files.length > 0) {
+                this.fileName = this.$refs.fileInput.files[0].name;
             }
         }
     }
-    </script>
+}
+</script>
 {% endblock %}
