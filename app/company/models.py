@@ -160,7 +160,7 @@ class AccountsReceivable(db.Model):
     """売掛金（未収入金）の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
     account_name = db.Column(db.String(50), nullable=False)         # 科目
-    partner_name = db.Column(db.String(100), nullable=False)        # 取引���名
+    partner_name = db.Column(db.String(100), nullable=False)        # 取引先名
     registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
     is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
     partner_address = db.Column(db.String(200), nullable=False)     # 取引先住所
@@ -287,7 +287,7 @@ class Borrowing(db.Model):
     company = db.relationship('Company', backref=db.backref('borrowings', lazy=True))
 
 class ExecutiveCompensation(db.Model):
-    """役員報酬手当等及び人件���の内訳モデル"""
+    """役員報酬手当等及び人件費の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
     employee_name = db.Column(db.String(100), nullable=False)       # 氏名
     relationship = db.Column(db.String(100))                        # 関係
@@ -357,3 +357,12 @@ class UserAccountMapping(db.Model):
 
     def __repr__(self):
         return f'<UserAccountMapping {self.original_account_name} -> {self.master_account.name}>'
+
+class MasterVersion(db.Model):
+    """マスターデータのバージョン管理モデル"""
+    __tablename__ = 'master_version'
+    id = db.Column(db.Integer, primary_key=True)
+    version_hash = db.Column(db.String(64), nullable=False, unique=True)
+
+    def __repr__(self):
+        return f'<MasterVersion {self.version_hash}>'
