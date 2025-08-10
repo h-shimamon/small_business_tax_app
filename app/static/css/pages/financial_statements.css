@@ -80,10 +80,145 @@
     background-color: #e6f2ff;
 }
 
+/* /app/static/css/pages/financial_statements.css */
+
+.tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.tab-button {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; /* 下線を親のborderに重ねる */
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.tab-button:hover {
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.statement-section {
+    margin-bottom: 2.5rem;
+}
+
+/* 2カラムレイアウト用のコンテナ */
+.bs-container {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: stretch; /* カラムの高さを揃える */
+}
+
+.bs-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* flexアイテムの縮小を許可 */
+}
+
+.bs-column .table-responsive {
+    /* この要素は伸ばさない */
+    flex-grow: 0;
+}
+
+.bs-column .table-responsive.total-table-wrapper {
+    /* 合計テーブルのラッパーは、残りのスペースを埋めるように伸びる */
+    margin-top: auto;
+    padding-top: 2rem; /* 上のテーブルとの間に余白を設ける */
+}
+
+
+/* レスポンシブ対応 */
+@media (max-width: 860px) { /* ブレークポイントを調整 */
+    .bs-container {
+        flex-direction: column;
+    }
+    .bs-column .table-responsive.total-table-wrapper {
+        padding-top: 0;
+        margin-top: 2rem;
+    }
+}
+
+
+.statement-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.statement-table {
+    width: 100%;
+}
+
+.statement-table th,
+.statement-table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+/* 部門タイトル用のスタイル */
+.statement-table thead th {
+    font-size: 1.15rem; /* 約2pt増 */
+    font-weight: 700; /* 太字 */
+    text-align: center;
+    background-color: var(--background-secondary);
+}
+
+
+.statement-table .account-name {
+    text-align: left;
+}
+
+.statement-table .amount {
+    text-align: right;
+    font-family: monospace;
+}
+
+.statement-table .indent-1 {
+    padding-left: 2.5rem;
+}
+
+.statement-table .middle-header td {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.statement-table .total-row td {
+    font-weight: 600;
+    border-top: 1px solid #dee2e6;
+}
+
+.statement-table .major-total {
+    background-color: #f1f3f5;
+}
+
+.statement-table .profit-row {
+    background-color: #e6f2ff;
+}
+
 .statement-table .final-profit-row {
     background-color: #d4edda;
     font-size: 1.1rem;
 }
+
+[x-cloak] {
+    display: none !important;
+}
+
 
 [x-cloak] {
     display: none !important;
