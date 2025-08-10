@@ -1,12 +1,11 @@
 <!-- app/templates/company/office_list.html -->
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_page_header %}
+{% from 'company/_layout_helpers.html' import render_page_header %}
 
 {% block title %}事業所一覧{% endblock %}
 
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/employee_list.css') }}">
 {% endblock %}
 
 {% block sidebar %}

@@ -42,6 +42,7 @@
     margin-left: var(--sidebar-width);
     padding: 40px;
     overflow-y: auto;
+    background-color: var(--bg-main); /* アプリケーションの標準背景色を定義 */
 }
 
 /* --- コンテンツヘッダー --- */

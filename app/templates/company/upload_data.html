@@ -12,10 +12,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>{{ title }}</h1>
-    <p>{{ description }}</p>
-</div>
+<h1 class="content-title">{{ title }}</h1>
+<p class="content-subtitle">{{ description }}</p>
 
 <div class="card">
     <form method="POST" enctype="multipart/form-data" novalidate
