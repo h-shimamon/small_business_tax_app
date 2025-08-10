@@ -1,6 +1,5 @@
 # app/company/parsers/moneyforward_parser.py
 import pandas as pd
-import io
 from .base_parser import BaseParser
 
 class MoneyForwardParser(BaseParser):

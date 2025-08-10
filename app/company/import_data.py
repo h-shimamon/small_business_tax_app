@@ -221,6 +221,7 @@ def data_mapping():
         'company/data_mapping.html', 
         mapping_items=mapping_items, 
         grouped_masters=grouped_masters, 
+        master_accounts=master_accounts,
         form=form, 
         title="項目マッピング", 
         navigation_state=navigation_state

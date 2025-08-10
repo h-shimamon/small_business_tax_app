@@ -1,11 +1,10 @@
 # app/company/auth.py
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
 from app.company import company_bp
 from app.company.models import User
 from app.company.forms import LoginForm
-from app import db
 
 @company_bp.route('/login', methods=['GET', 'POST'])
 def login():

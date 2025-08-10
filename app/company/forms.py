@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField, FloatField
 from wtforms.fields import DateField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
+from wtforms.validators import DataRequired, Length, Optional
 
 class SoftwareSelectionForm(FlaskForm):
     """会計ソフト選択用フォーム"""
