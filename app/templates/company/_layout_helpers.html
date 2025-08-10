@@ -1,29 +1,38 @@
 {# app/templates/company/_layout_helpers.html #}
-
-{% macro render_statement_table(title, data, is_bs=False) %}
+{% macro render_statement_table(title, data, order=None, show_total=True) %}
 <div class="table-responsive">
     <table class="table table-bordered statement-table">
-        {% if title %}
         <thead>
             <tr>
                 <th colspan="2">{{ title }}</th>
             </tr>
         </thead>
-        {% endif %}
         <tbody>
-            {% for middle, middle_data in data.items() if middle != 'total' %}
-                <tr class="middle-header">
-                    <td>{{ middle }}</td>
-                    <td class="amount">{{ "{:,.0f}".format(middle_data.get('total', 0)) }}</td>
-                </tr>
-                {% for item in middle_data.get('items', []) %}
-                <tr>
-                    <td class="account-name indent-1">{{ item.name }}</td>
-                    <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
-                </tr>
-                {% endfor %}
+            {% set items_to_render = order if order else data.keys() %}
+            {% for middle in items_to_render %}
+                {% if middle in data and middle != 'total' %}
+                    {% set middle_data = data[middle] %}
+                    <tr class="middle-header">
+                        <td>{{ middle }}</td>
+                        <td class="amount">{{ "{:,.0f}".format(middle_data.get('total', 0)) }}</td>
+                    </tr>
+                    {% for item in middle_data.get('items', []) %}
+                    <tr>
+                        <td class="account-name indent-1">{{ item.name }}</td>
+                        <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
             {% endfor %}
         </tbody>
+        {% if show_total %}
+        <tfoot>
+            <tr class="total-row major-total">
+                <td>{{ title | replace('の部', '') }}合計</td>
+                <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
+            </tr>
+        </tfoot>
+        {% endif %}
     </table>
 </div>
 {% endmacro %}

@@ -28,82 +28,28 @@
             <div class="bs-container">
                 <!-- 左カラム: 資産の部 -->
                 <div class="bs-column">
-                    {{ render_statement_table('資産の部', bs_data.get('資産', {})) }}
-                    <div class="table-responsive total-table-wrapper">
-                        <table class="table table-bordered statement-table">
-                            <tbody>
-                                <tr class="total-row major-total">
-                                    <td>資産合計</td>
-                                    <td class="amount">{{ "{:,.0f}".format(bs_data.get('資産', {}).get('total', 0)) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    {% set assets = bs_data.get('資産', {}) %}
+                    {% set asset_order = ['流動資産', '固定資産', '繰延資産'] %}
+                    {{ render_statement_table('資産の部', assets, order=asset_order) }}
                 </div>
                 <!-- 右カラム: 負債・純資産の部 -->
                 <div class="bs-column">
-                    <div class="table-responsive">
-                        <table class="table table-bordered statement-table">
-                            <thead>
-                                <tr>
-                                    <th colspan="2">負債の部</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% set liabilities = bs_data.get('負債', {}) %}
-                                {% for middle, data in liabilities.items() if middle != 'total' %}
-                                    <tr class="middle-header">
-                                        <td>{{ middle }}</td>
-                                        <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
-                                    </tr>
-                                    {% for item in data.get('items', []) %}
-                                    <tr>
-                                        <td class="account-name indent-1">{{ item.name }}</td>
-                                        <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                {% endfor %}
-                                <tr class="total-row major-total">
-                                    <td>負債合計</td>
-                                    <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0)) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    {% set liabilities = bs_data.get('負債', {}) %}
+                    {% set liability_order = ['流動負債', '固定負債'] %}
+                    {{ render_statement_table('負債の部', liabilities, order=liability_order) }}
+
+                    <div style="margin-top: 2rem;">
+                        {% set equity = bs_data.get('純資産', {}) %}
+                        {% set equity_order = ['株主資本', '評価・換算差額等', '新株予約権'] %}
+                        {{ render_statement_table('純資産の部', equity, order=equity_order) }}
                     </div>
-                    <div class="table-responsive" style="margin-top: 2rem;">
-                        <table class="table table-bordered statement-table">
-                            <thead>
-                                <tr>
-                                    <th colspan="2">純資産の部</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% set equity = bs_data.get('純資産', {}) %}
-                                {% for middle, data in equity.items() if middle != 'total' %}
-                                    <tr class="middle-header">
-                                        <td>{{ middle }}</td>
-                                        <td class="amount">{{ "{:,.0f}".format(data.get('total', 0)) }}</td>
-                                    </tr>
-                                    {% for item in data.get('items', []) %}
-                                    <tr>
-                                        <td class="account-name indent-1">{{ item.name }}</td>
-                                        <td class="amount">{{ "{:,.0f}".format(item.amount) }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                {% endfor %}
-                                <tr class="total-row major-total">
-                                    <td>純資産合計</td>
-                                    <td class="amount">{{ "{:,.0f}".format(equity.get('total', 0)) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
                     <div class="table-responsive total-table-wrapper">
                         <table class="table table-bordered statement-table">
                             <tbody>
                                 <tr class="total-row major-total">
                                     <td>負債・純資産合計</td>
-                                    <td class="amount">{{ "{:,.0f}".format(bs_data.get('負債', {}).get('total', 0) + bs_data.get('純資産', {}).get('total', 0)) }}</td>
+                                    <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0) + equity.get('total', 0)) }}</td>
                                 </tr>
                             </tbody>
                         </table>
