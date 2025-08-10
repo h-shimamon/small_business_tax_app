@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'company/_form_helpers.html' import render_page_header %}
 
 {% block head %}
   {{ super() }}
@@ -12,13 +13,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="content-title">社員名簿</h1>
-        <p class="content-subtitle">登録内容から自動で同族会社の判定を行うため、社員名簿 の作成は必須です。</p>
-    </div>
-    <a href="{{ url_for('company.register_employee') }}" class="button-primary">＋ 新規登録</a>
-</div>
+{{ render_page_header(
+    title='社員名簿',
+    subtitle='登録内容から自動で同族会社の判定を行うため、社員名簿 の作成は必須です。',
+    button_url='company.register_employee',
+    button_text='新規登録'
+) }}
 
 {% if employees %}
     <div class="employee-list">

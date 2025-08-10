@@ -1,18 +1,27 @@
 <!-- app/templates/company/office_list.html -->
 {% extends "base.html" %}
+{% from 'company/_form_helpers.html' import render_page_header %}
 
 {% block title %}事業所一覧{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/employee_list.css') }}">
+{% endblock %}
 
 {% block sidebar %}
     {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="content-header">
-    <h1 class="content-title">事業所一覧</h1>
-    <a href="{{ url_for('company.register_office') }}" class="button-primary">＋ 新規登録</a>
-</div>
+{{ render_page_header(
+    title='事業所一覧',
+    subtitle='複数の事業所がある場合は、すべて登録してください。',
+    button_url='company.register_office',
+    button_text='新規登録'
+) }}
 
+{% if offices %}
 <div class="card-grid">
     {% for office in offices %}
     <div class="office-card">
@@ -59,11 +68,14 @@
             </div>
         </div>
     </div>
-    {% else %}
-    <div class="empty-state-card">
-        <p>まだ事業所が登録されていません。</p>
-        <p>「＋ 新規登録」ボタンから最初の事業所を追加してください。</p>
-    </div>
     {% endfor %}
 </div>
+{% else %}
+<div class="empty-state">
+    <h2>まだ事業所が登録されていません</h2>
+    <p>「＋ 新規登録」ボタンから最初の事業所を追加してください。</p>
+    <a href="{{ url_for('company.register_office') }}" class="button-primary">＋ 新規登録</a>
+</div>
+{% endif %}
+
 {% endblock %}

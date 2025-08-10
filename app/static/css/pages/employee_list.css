@@ -1,12 +1,5 @@
 /* /app/static/css/pages/employee_list.css */
 
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
 .employee-card {
     background-color: var(--bg-content);
     border: 1px solid var(--border-color);
