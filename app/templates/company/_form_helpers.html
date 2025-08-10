@@ -53,3 +53,17 @@
     <span class="toggle-switch"></span>
   </label>
 {% endmacro %}
+
+{% macro render_page_header(title, subtitle, button_url=None, button_text=None) %}
+<div class="page-header">
+    <div>
+        <h1 class="content-title">{{ title }}</h1>
+        {% if subtitle %}
+        <p class="content-subtitle">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    {% if button_url and button_text %}
+    <a href="{{ url_for(button_url) }}" class="button-primary">＋ {{ button_text }}</a>
+    {% endif %}
+</div>
+{% endmacro %}
