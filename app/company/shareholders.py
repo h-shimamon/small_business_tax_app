@@ -43,6 +43,19 @@ def register_shareholder(company):
         return response
 
     form = ShareholderForm(request.form)
+    
+    # page_titleに応じて役職の選択肢を動的に設定
+    if page_title == '株主情報':
+        form.officer_position.choices = [
+            ('代表取締役', '代表取締役'), ('取締役', '取締役'), 
+            ('会計参与', '会計参与'), ('監査役', '監査役'), ('その他', 'その他')
+        ]
+    elif page_title == '社員情報':
+        form.officer_position.choices = [
+            ('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), 
+            ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')
+        ]
+
     if form.validate_on_submit():
         new_shareholder = Shareholder(company_id=company.id)
         form.populate_obj(new_shareholder)
@@ -70,6 +83,19 @@ def edit_shareholder(company, shareholder_id):
     shareholder = Shareholder.query.filter_by(id=shareholder_id, company_id=company.id).first_or_404()
     
     form = ShareholderForm(request.form, obj=shareholder)
+
+    # page_titleに応じて役職の選択肢を動的に設定
+    if page_title == '株主情報':
+        form.officer_position.choices = [
+            ('代表取締役', '代表取締役'), ('取締役', '取締役'), 
+            ('会計参与', '会計参与'), ('監査役', '監査役'), ('その他', 'その他')
+        ]
+    elif page_title == '社員情報':
+        form.officer_position.choices = [
+            ('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), 
+            ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')
+        ]
+
     if form.validate_on_submit():
         form.populate_obj(shareholder)
         db.session.commit()
@@ -78,6 +104,18 @@ def edit_shareholder(company, shareholder_id):
         
     if request.method == 'GET':
         form = ShareholderForm(obj=shareholder)
+        # GETリクエスト時にも選択肢を再設定
+        if page_title == '株主情報':
+            form.officer_position.choices = [
+                ('代表取締役', '代表取締役'), ('取締役', '取締役'), 
+                ('会計参与', '会計参与'), ('監査役', '監査役'), ('その他', 'その他')
+            ]
+        elif page_title == '社員情報':
+            form.officer_position.choices = [
+                ('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), 
+                ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')
+            ]
+
 
     navigation_state = get_navigation_state('shareholders')
     return render_template(

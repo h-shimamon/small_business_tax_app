@@ -17,18 +17,18 @@
         <div class="form-grid">
             <fieldset>
                 <legend>基本情報</legend>
-                {{ render_field(form.last_name, placeholder='例：山田') }}
-                {{ render_field(form.first_name, placeholder='例：太郎') }}
-                {{ render_field(form.last_name_kana, placeholder='例：ヤマダ') }}
-                {{ render_field(form.first_name_kana, placeholder='例：タロウ') }}
-                {{ render_field(form.joined_date, type='date') }}
+                {{ render_field(form.last_name, placeholder='例：山田 太郎') }}
+                {{ render_radio_field(form.entity_type) }}
+                
+                <div id="controlled_company_group" style="display: none;">
+                    {{ render_radio_field(form.is_controlled_company) }}
+                </div>
+                
+                <div id="officer_position_group">
+                    {{ render_field(form.officer_position) }}
+                </div>
+                
                 {{ render_field(form.relationship, placeholder='例：本人、配偶者') }}
-            </fieldset>
-
-            <fieldset>
-                <legend>役員区分</legend>
-                {{ render_radio_field(form.is_officer) }}
-                {{ render_field(form.officer_position, placeholder='例：代表取締役') }}
             </fieldset>
 
             <fieldset>
@@ -38,6 +38,7 @@
 
             <fieldset>
                 <legend>持株情報</legend>
+                {{ render_field(form.joined_date, type='date') }}
                 {{ render_field(form.shares_held, placeholder='例：100') }}
                 {{ render_field(form.voting_rights, placeholder='例：100') }}
             </fieldset>
@@ -49,4 +50,37 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const entityTypeRadios = document.querySelectorAll('input[name="entity_type"]');
+    const controlledCompanyGroup = document.getElementById('controlled_company_group');
+    const officerPositionGroup = document.getElementById('officer_position_group');
+
+    function toggleFields() {
+        const selectedValue = document.querySelector('input[name="entity_type"]:checked').value;
+
+        if (selectedValue === 'corporation') {
+            controlledCompanyGroup.style.display = 'block';
+            officerPositionGroup.style.display = 'none';
+        } else if (selectedValue === 'individual') {
+            controlledCompanyGroup.style.display = 'none';
+            officerPositionGroup.style.display = 'block';
+        } else { // self_company
+            controlledCompanyGroup.style.display = 'none';
+            officerPositionGroup.style.display = 'none';
+        }
+    }
+
+    entityTypeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleFields);
+    });
+
+    // 初期表示のために一度実行
+    toggleFields();
+});
+</script>
 {% endblock %}

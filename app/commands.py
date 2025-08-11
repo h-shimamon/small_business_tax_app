@@ -19,36 +19,39 @@ def init_db_command():
     """
     click.echo("データベースの初期データ投入を開始します...")
     try:
-        # 管理者ユーザーがなければ作成
-        if not User.query.filter_by(username='admin').first():
-            from datetime import date
-            from app.company.models import Company
-
-            # 管理者ユーザー作成
-            admin_user = User(username='admin')
-            admin_user.set_password('password')
-            db.session.add(admin_user)
+        # 既存のadminユーザーを検索し、存在すれば削除
+        admin_user = User.query.filter_by(username='admin').first()
+        if admin_user:
+            db.session.delete(admin_user)
             db.session.commit()
-            click.echo("管理者ユーザーを作成しました。")
+            click.echo("既存の管理者ユーザーを削除しました。")
 
-            # ダミーの会社情報を作成し、管理者ユーザーに紐付ける
-            dummy_company = Company(
-                corporate_number="1111111111111",
-                company_name="（ダミー）株式会社 Gemini",
-                company_name_kana="ダミー カブシキガイシャジェミニ",
-                zip_code="1066126",
-                prefecture="東京都",
-                city="港区",
-                address="六本木6-10-1 六本木ヒルズ森タワー",
-                phone_number="03-6384-9000",
-                establishment_date=date(2023, 1, 1),
-                user_id=admin_user.id
-            )
-            db.session.add(dummy_company)
-            db.session.commit()
-            click.echo("管理者ユーザー用のダミー会社情報を作成しました。")
-        else:
-            click.echo("管理者ユーザーは既に存在します。")
+        from datetime import date
+        from app.company.models import Company
+
+        # 管理者ユーザー作成
+        admin_user = User(username='admin')
+        admin_user.set_password('password')
+        db.session.add(admin_user)
+        db.session.commit()
+        click.echo("管理者ユーザーを作成しました。")
+
+        # ダミーの会社情報を作成し、管理者ユーザーに紐付ける
+        dummy_company = Company(
+            corporate_number="1111111111111",
+            company_name="（ダミー）株式会社 Gemini",
+            company_name_kana="ダミー カブシキガイシャジェミニ",
+            zip_code="1066126",
+            prefecture="東京都",
+            city="港区",
+            address="六本木6-10-1 六本木ヒルズ森タワー",
+            phone_number="03-6384-9000",
+            establishment_date=date(2023, 1, 1),
+            user_id=admin_user.id
+        )
+        db.session.add(dummy_company)
+        db.session.commit()
+        click.echo("管理者ユーザー用のダミー会社情報を作成しました。")
 
         # マスターデータの同期
         service = MasterDataService()

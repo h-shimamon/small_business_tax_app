@@ -52,14 +52,23 @@ class LoginForm(FlaskForm):
 class ShareholderForm(FlaskForm):
     """株主登録・編集フォーム"""
     shareholder_number = StringField('株主番号', validators=[Optional(), Length(max=20)])
-    last_name = StringField('姓', validators=[DataRequired(message="姓は必須です。"), Length(max=50)])
-    first_name = StringField('名', validators=[DataRequired(message="名は必須です。"), Length(max=50)])
-    last_name_kana = StringField('セイ', validators=[DataRequired(message="セイは必須です。"), Length(max=50)])
+    last_name = StringField('氏名', validators=[DataRequired(message="氏名は必須です。"), Length(max=50)])
+    entity_type = RadioField(
+        '株主の区分', 
+        choices=[('individual', '個人'), ('corporation', '法人'), ('self_company', '自社')],
+        default='individual',
+        validators=[DataRequired()]
+    )
     first_name_kana = StringField('メイ', validators=[DataRequired(message="メイは必須です。"), Length(max=50)])
     joined_date = DateField('加入年月日', format='%Y-%m-%d', validators=[Optional()])
     address = StringField('住所', validators=[Optional(), Length(max=200)])
-    is_officer = RadioField('役員区分', choices=[(True, '役員である'), (False, '役員ではない')], default=False, coerce=lambda x: x is True or x == 'True')
-    officer_position = StringField('役職名', validators=[Optional(), Length(max=100)])
+    is_controlled_company = RadioField(
+        '被支配会社の該当', 
+        choices=[('yes', '該当する'), ('no', '該当しない')], 
+        default='no', 
+        coerce=lambda x: x == 'yes'
+    )
+    officer_position = SelectField('役職名', choices=[], validators=[Optional()])
     relationship = StringField('法人・代表者との関係', validators=[Optional(), Length(max=100)])
     shares_held = IntegerField('保有株式数', validators=[Optional()])
     voting_rights = IntegerField('議決権の数', validators=[Optional()])
