@@ -90,21 +90,20 @@ class Shareholder(db.Model):
     __tablename__ = 'shareholder'
     id = db.Column(db.Integer, primary_key=True)
     last_name = db.Column(db.String(50), nullable=False)
-    first_name = db.Column(db.String(50), nullable=False)
-    is_officer = db.Column(db.Boolean, default=False) # Boolean型（真偽値）に修正
+    entity_type = db.Column(db.String(20), nullable=False, default='individual')
+    is_controlled_company = db.Column(db.Boolean, default=False)
     joined_date = db.Column(db.Date)
     relationship = db.Column(db.String(50))
     address = db.Column(db.String(200))
     shares_held = db.Column(db.Integer)
     voting_rights = db.Column(db.Integer)
-    officer_position = db.Column(db.String(100), nullable=True) # 役職名に修正
-    # investment_amount = db.Column(db.Integer) の行を完全に削除
+    officer_position = db.Column(db.String(100), nullable=True)
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('shareholders', lazy=True))
 
     def __repr__(self):
-        return f'<Shareholder {self.last_name} {self.first_name}>'
+        return f'<Shareholder {self.last_name}>'
 
 class Office(db.Model):
     id = db.Column(db.Integer, primary_key=True)

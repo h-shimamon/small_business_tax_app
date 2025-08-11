@@ -1,8 +1,8 @@
-"""Initial migration including unmatched store
+"""Initial migration from current models
 
-Revision ID: 97f95146b0e3
+Revision ID: 91859660db66
 Revises: 
-Create Date: 2025-08-09 22:20:44.100870
+Create Date: 2025-08-11 23:20:57.172287
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '97f95146b0e3'
+revision = '91859660db66'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,19 @@ def upgrade():
     sa.Column('master_type', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('master_version',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('version_hash', sa.String(length=64), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('version_hash')
+    )
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.String(length=64), nullable=False),
+    sa.Column('password_hash', sa.String(length=256), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('username')
+    )
     op.create_table('company',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('corporate_number', sa.String(length=13), nullable=False),
@@ -45,9 +58,11 @@ def upgrade():
     sa.Column('capital_limit', sa.Boolean(), nullable=True),
     sa.Column('is_supported_industry', sa.Boolean(), nullable=True),
     sa.Column('is_not_excluded_business', sa.Boolean(), nullable=True),
+    sa.Column('is_excluded_business', sa.Boolean(), nullable=True),
     sa.Column('industry_type', sa.String(length=50), nullable=True),
     sa.Column('industry_code', sa.String(length=10), nullable=True),
     sa.Column('reference_number', sa.String(length=20), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('accounting_period_start', sa.String(length=10), nullable=True),
     sa.Column('accounting_period_end', sa.String(length=10), nullable=True),
     sa.Column('term_number', sa.Integer(), nullable=True),
@@ -78,15 +93,22 @@ def upgrade():
     sa.Column('refund_branch_name', sa.String(length=100), nullable=True),
     sa.Column('refund_account_type', sa.String(length=10), nullable=True),
     sa.Column('refund_account_number', sa.String(length=20), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('corporate_number')
     )
-    op.create_table('user',
+    op.create_table('user_account_mapping',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(length=64), nullable=False),
-    sa.Column('password_hash', sa.String(length=256), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('software_name', sa.String(length=50), nullable=False, comment='会計ソフト名 (例: moneyforward)'),
+    sa.Column('original_account_name', sa.String(length=255), nullable=False, comment='ユーザーファイル上の勘定科目名'),
+    sa.Column('master_account_id', sa.Integer(), nullable=False, comment='紐付け先のマスター勘定科目ID'),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['master_account_id'], ['account_title_master.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('user_id', 'original_account_name', name='_user_original_account_uc')
     )
     op.create_table('accounts_payable',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -137,26 +159,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('employee',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('last_name', sa.String(length=50), nullable=False),
-    sa.Column('first_name', sa.String(length=50), nullable=False),
-    sa.Column('last_name_kana', sa.String(length=50), nullable=True),
-    sa.Column('first_name_kana', sa.String(length=50), nullable=True),
-    sa.Column('is_officer', sa.Boolean(), nullable=True),
-    sa.Column('joined_date', sa.Date(), nullable=True),
-    sa.Column('relationship', sa.String(length=50), nullable=True),
-    sa.Column('address', sa.String(length=200), nullable=True),
-    sa.Column('shares_held', sa.Integer(), nullable=True),
-    sa.Column('voting_rights', sa.Integer(), nullable=True),
-    sa.Column('officer_position', sa.String(length=100), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('executive_compensation',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('employee_name', sa.String(length=100), nullable=False),
+    sa.Column('shareholder_name', sa.String(length=100), nullable=False),
     sa.Column('relationship', sa.String(length=100), nullable=True),
     sa.Column('position', sa.String(length=100), nullable=True),
     sa.Column('base_salary', sa.Integer(), nullable=True),
@@ -164,14 +169,6 @@ def upgrade():
     sa.Column('total_compensation', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('financial_statements_store',
-    sa.Column('id', sa.String(length=36), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('payload', sa.Text(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('fixed_asset',
@@ -286,6 +283,21 @@ def upgrade():
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('shareholder',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('last_name', sa.String(length=50), nullable=False),
+    sa.Column('entity_type', sa.String(length=20), nullable=False),
+    sa.Column('is_officer', sa.Boolean(), nullable=True),
+    sa.Column('joined_date', sa.Date(), nullable=True),
+    sa.Column('relationship', sa.String(length=50), nullable=True),
+    sa.Column('address', sa.String(length=200), nullable=True),
+    sa.Column('shares_held', sa.Integer(), nullable=True),
+    sa.Column('voting_rights', sa.Integer(), nullable=True),
+    sa.Column('officer_position', sa.String(length=100), nullable=True),
+    sa.Column('company_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('temporary_payment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('account_name', sa.String(length=50), nullable=False),
@@ -310,42 +322,14 @@ def upgrade():
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('unmatched_accounts_store',
-    sa.Column('id', sa.String(length=36), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('payload', sa.Text(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user_account_mapping',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('software_name', sa.String(length=50), nullable=False, comment='会計ソフト名 (例: moneyforward)'),
-    sa.Column('original_account_name', sa.String(length=255), nullable=False, comment='ユーザーファイル上の勘定科目名'),
-    sa.Column('master_account_id', sa.Integer(), nullable=False, comment='紐付け先のマスター勘定科目ID'),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['master_account_id'], ['account_title_master.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('user_id', 'software_name', 'original_account_name', name='_user_software_original_account_uc')
-    )
-    with op.batch_alter_table('user_account_mapping', schema=None) as batch_op:
-        batch_op.create_index('ix_user_account_mapping_software_name', ['software_name'], unique=False)
-
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    with op.batch_alter_table('user_account_mapping', schema=None) as batch_op:
-        batch_op.drop_index('ix_user_account_mapping_software_name')
-
-    op.drop_table('user_account_mapping')
-    op.drop_table('unmatched_accounts_store')
     op.drop_table('temporary_receipt')
     op.drop_table('temporary_payment')
+    op.drop_table('shareholder')
     op.drop_table('security')
     op.drop_table('office')
     op.drop_table('notes_receivable')
@@ -355,14 +339,14 @@ def downgrade():
     op.drop_table('land_rent')
     op.drop_table('inventory')
     op.drop_table('fixed_asset')
-    op.drop_table('financial_statements_store')
     op.drop_table('executive_compensation')
-    op.drop_table('employee')
     op.drop_table('deposit')
     op.drop_table('borrowing')
     op.drop_table('accounts_receivable')
     op.drop_table('accounts_payable')
-    op.drop_table('user')
+    op.drop_table('user_account_mapping')
     op.drop_table('company')
+    op.drop_table('user')
+    op.drop_table('master_version')
     op.drop_table('account_title_master')
     # ### end Alembic commands ###

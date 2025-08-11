@@ -25,7 +25,7 @@
         {% for shareholder in shareholders %}
         <div class="shareholder-card">
             <div class="shareholder-info">
-                <p class="name">{{ shareholder.last_name or '' }} {{ shareholder.first_name or '' }}</p>
+                <p class="name">{{ shareholder.last_name or '' }}</p>
                 <p class="position">{{ shareholder.officer_position or '役職未設定' }}</p>
             </div>
             <div class="shareholder-actions">
