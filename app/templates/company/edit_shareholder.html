@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% from 'company/_form_helpers.html' import render_field, render_radio_field %}
 
-{% block title %}従業員編集{% endblock %}
+{% block title %}{{ page_title }} 編集{% endblock %}
 
 {% block sidebar %}
     {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}
-<h1 class="content-title">従業員編集</h1>
-<p class="content-subtitle">会社の従業員情報を編集します。</p>
+<h1 class="content-title">{{ page_title }} 編集</h1>
+<p class="content-subtitle">会社の{{ page_title }}を編集します。</p>
 
 <div class="card">
     <form method="post" novalidate>
@@ -45,7 +45,7 @@
 
         <div class="form-actions">
             {{ form.submit(class="button-primary", value="更新する") }}
-            <a href="{{ url_for('company.employees') }}" class="button-secondary">キャンセル</a>
+            <a href="{{ url_for('company.shareholders') }}" class="button-secondary">キャンセル</a>
         </div>
     </form>
 </div>

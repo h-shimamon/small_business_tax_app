@@ -1,6 +1,6 @@
-/* /app/static/css/pages/employee_list.css */
+/* /app/static/css/pages/shareholder_list.css */
 
-.employee-card {
+.shareholder-card {
     background-color: var(--bg-content);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -12,25 +12,25 @@
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.employee-card:hover {
+.shareholder-card:hover {
     background-color: #f8f8fa;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.employee-info .name {
+.shareholder-info .name {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
 }
 
-.employee-info .position {
+.shareholder-info .position {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin: 0.25rem 0 0 0;
 }
 
-.employee-actions {
+.shareholder-actions {
     display: flex;
     gap: 0.5rem;
 }

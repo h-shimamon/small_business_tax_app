@@ -11,7 +11,7 @@ NAVIGATION_STRUCTURE = [
         'type': 'menu',
         'children': [
             {'key': 'company_info', 'name': '基本情報', 'endpoint': 'company.show'},
-            {'key': 'employees', 'name': '社員名簿', 'endpoint': 'company.employees'},
+            {'key': 'shareholders', 'name': '株主/社員情報', 'endpoint': 'company.shareholders'},
             {'key': 'declaration', 'name': '申告情報', 'endpoint': 'company.declaration'},
             {'key': 'office_list', 'name': '事業所一覧', 'endpoint': 'company.office_list'},
         ]

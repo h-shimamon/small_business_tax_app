@@ -29,7 +29,7 @@ def show():
             db.session.commit()
             mark_step_as_completed('company_info')
             flash('基本情報を更新しました。', 'success')
-            return redirect(url_for('company.show'))
+            return redirect(url_for('company.shareholders'))
     else: # GET
         form = CompanyForm(obj=company)
 
