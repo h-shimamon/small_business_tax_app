@@ -86,7 +86,8 @@ class Company(db.Model):
     def __repr__(self):
         return f'<Company {self.company_name}>'
 
-class Employee(db.Model):
+class Shareholder(db.Model):
+    __tablename__ = 'shareholder'
     id = db.Column(db.Integer, primary_key=True)
     last_name = db.Column(db.String(50), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
@@ -100,10 +101,10 @@ class Employee(db.Model):
     # investment_amount = db.Column(db.Integer) の行を完全に削除
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    company = db.relationship('Company', backref=db.backref('employees', lazy=True))
+    company = db.relationship('Company', backref=db.backref('shareholders', lazy=True))
 
     def __repr__(self):
-        return f'<Employee {self.last_name} {self.first_name}>'
+        return f'<Shareholder {self.last_name} {self.first_name}>'
 
 class Office(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -293,7 +294,7 @@ class Borrowing(db.Model):
 class ExecutiveCompensation(db.Model):
     """役員報酬手当等及び人件費の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
-    employee_name = db.Column(db.String(100), nullable=False)       # 氏名
+    shareholder_name = db.Column(db.String(100), nullable=False)       # 氏名
     relationship = db.Column(db.String(100))                        # 関係
     position = db.Column(db.String(100))                            # 役職
     base_salary = db.Column(db.Integer)                             # 基本給

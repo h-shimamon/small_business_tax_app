@@ -49,14 +49,14 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('ログイン状態を保持する')
     submit = SubmitField('ログイン')
 
-class EmployeeForm(FlaskForm):
-    """従業員登録・編集フォーム"""
-    employee_number = StringField('社員番号', validators=[Optional(), Length(max=20)])
+class ShareholderForm(FlaskForm):
+    """株主登録・編集フォーム"""
+    shareholder_number = StringField('株主番号', validators=[Optional(), Length(max=20)])
     last_name = StringField('姓', validators=[DataRequired(message="姓は必須です。"), Length(max=50)])
     first_name = StringField('名', validators=[DataRequired(message="名は必須です。"), Length(max=50)])
     last_name_kana = StringField('セイ', validators=[DataRequired(message="セイは必須です。"), Length(max=50)])
     first_name_kana = StringField('メイ', validators=[DataRequired(message="メイは必須です。"), Length(max=50)])
-    joined_date = DateField('入社年月日', format='%Y-%m-%d', validators=[Optional()])
+    joined_date = DateField('加入年月日', format='%Y-%m-%d', validators=[Optional()])
     address = StringField('住所', validators=[Optional(), Length(max=200)])
     is_officer = RadioField('役員区分', choices=[(True, '役員である'), (False, '役員ではない')], default=False, coerce=lambda x: x is True or x == 'True')
     officer_position = StringField('役職名', validators=[Optional(), Length(max=100)])
@@ -426,7 +426,7 @@ class BorrowingForm(FlaskForm):
 
 class ExecutiveCompensationForm(FlaskForm):
     """役員報酬手当等及び人件費の内訳モデル"""
-    employee_name = StringField('氏名', validators=[DataRequired(), Length(max=100)])
+    shareholder_name = StringField('氏名', validators=[DataRequired(), Length(max=100)])
     relationship = StringField('関係', validators=[Optional(), Length(max=100)])
     position = StringField('役職', validators=[Optional(), Length(max=100)])
     base_salary = IntegerField('基本給', validators=[Optional()])
