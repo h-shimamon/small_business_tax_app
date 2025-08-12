@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, flash
 from app.company import company_bp
 from app.company.models import Shareholder, Company
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
+from app.company.utils import get_officer_choices
 from app import db
 from app.navigation import get_navigation_state
 from .auth import company_required
@@ -43,10 +44,7 @@ def register_main_shareholder(company):
 
     form = MainShareholderForm(request.form)
     
-    if page_title == '株主情報':
-        form.officer_position.choices = [('代表取締役', '代表取締役'), ('取締役', '取締役'), ('会計参与', '会計参与'), ('監査役', '監査役'), ('その他', 'その他')]
-    elif page_title == '社員情報':
-        form.officer_position.choices = [('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')]
+    form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
         new_shareholder = Shareholder()
@@ -54,7 +52,8 @@ def register_main_shareholder(company):
         new_shareholder.company_id = company.id
         db.session.add(new_shareholder)
         db.session.commit()
-        return redirect(url_for('company.confirm_related_shareholder', main_shareholder_id=new_shareholder.id))
+        # is_new_group=True をクエリパラメータとして渡し、新しいグループの登録直後であることを示す
+        return redirect(url_for('company.confirm_related_shareholder', main_shareholder_id=new_shareholder.id, is_new_group=True))
     
     main_shareholders = Shareholder.query.filter_by(company_id=company.id, parent_id=None).order_by(Shareholder.id).all()
     group_number = len(main_shareholders) + 1
@@ -81,10 +80,7 @@ def register_related_shareholder(company, main_shareholder_id):
 
     form = RelatedShareholderForm(request.form)
 
-    if page_title == '株主情報':
-        form.officer_position.choices = [('代表取締役', '代表取締役'), ('取締役', '取締役'), ('会計参与', '会計参与'), ('監査役', '監査役'), ('その他', 'その他')]
-    elif page_title == '社員情報':
-        form.officer_position.choices = [('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')]
+    form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
         new_related_shareholder = Shareholder(
@@ -110,7 +106,8 @@ def register_related_shareholder(company, main_shareholder_id):
 
         db.session.add(new_related_shareholder)
         db.session.commit()
-        return redirect(url_for('company.confirm_related_shareholder_again', main_shareholder_id=main_shareholder_id))
+        # 特殊関係人登録後は、is_new_group なしで確認ページにリダイレクト
+        return redirect(url_for('company.confirm_related_shareholder', main_shareholder_id=main_shareholder_id))
 
     main_shareholders = Shareholder.query.filter_by(company_id=company.id, parent_id=None).order_by(Shareholder.id).all()
     group_number = -1
@@ -147,10 +144,7 @@ def edit_shareholder(company, shareholder_id):
         # 特殊関係人の編集
         form = RelatedShareholderForm(obj=shareholder)
 
-    if page_title == '株主情報':
-        form.officer_position.choices = [('代表取締役', '代表取締役'), ('取締役', '取締役'), ('会計参与', '会計参与'), ('監査役', '監査役'), ('その他', 'その他')]
-    elif page_title == '社員情報':
-        form.officer_position.choices = [('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')]
+    form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
         form.populate_obj(shareholder)
@@ -186,21 +180,24 @@ def delete_shareholder(company, shareholder_id):
 @company_bp.route('/shareholder/confirm/related/<int:main_shareholder_id>')
 @company_required
 def confirm_related_shareholder(company, main_shareholder_id):
-    """【中間ページ1】特殊関係人の登録意思を確認する"""
+    """【中間ページ】特殊関係人の登録意思を確認する"""
     main_shareholder = Shareholder.query.get_or_404(main_shareholder_id)
+    
+    # クエリパラメータ 'is_new_group' の有無で表示を切り替える
+    is_new_group = request.args.get('is_new_group', default=False, type=bool)
+
+    if is_new_group:
+        title = "登録が完了しました"
+        message = f"{main_shareholder.last_name} 様の株式情報を登録しました。<br>{main_shareholder.last_name}様のご家族・ご親族などの特殊関係人で株式をお持ちの方はいらっしゃいますか？"
+    else:
+        title = "特殊関係人を登録しました"
+        message = f"その他に、{main_shareholder.last_name} 様のご家族・ご親族などの特殊関係人で株式をお持ちの方はいらっしゃいますか？"
+
     return render_template(
         'company/confirm_related_shareholder.html',
-        main_shareholder=main_shareholder
-    )
-
-@company_bp.route('/shareholder/confirm/related_again/<int:main_shareholder_id>')
-@company_required
-def confirm_related_shareholder_again(company, main_shareholder_id):
-    """【中間ページ2】さらに特殊関係人を登録する意思を確認する"""
-    main_shareholder = Shareholder.query.get_or_404(main_shareholder_id)
-    return render_template(
-        'company/confirm_related_shareholder2.html',
-        main_shareholder=main_shareholder
+        main_shareholder=main_shareholder,
+        title=title,
+        message=message
     )
 
 @company_bp.route('/shareholder/confirm/next_main/')

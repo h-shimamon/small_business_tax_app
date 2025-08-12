@@ -5,10 +5,9 @@
 {% block content %}
 <div class="container-center">
     <div class="card text-center">
-        <h1 class="content-title">登録が完了しました</h1>
+        <h1 class="content-title">{{ title }}</h1>
         <p class="confirmation-message">
-            {{ main_shareholder.last_name }} 様の株式情報を登録しました。<br>
-            {{ main_shareholder.last_name }}様のご家族・ご親族などの特殊関係人で株式をお持ちの方はいらっしゃいますか？
+            {{ message|safe }}
         </p>
         <div class="form-actions">
             <a href="{{ url_for('company.register_related_shareholder', main_shareholder_id=main_shareholder.id) }}" class="button-secondary">株主がいます</a>
