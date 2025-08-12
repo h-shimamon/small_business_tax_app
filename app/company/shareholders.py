@@ -87,8 +87,27 @@ def register_related_shareholder(company, main_shareholder_id):
         form.officer_position.choices = [('代表社員', '代表社員'), ('業務執行社員', '業務執行社員'), ('有限責任社員', '有限責任社員'), ('無限責任社員', '無限責任社員'), ('その他', 'その他')]
 
     if form.validate_on_submit():
-        new_related_shareholder = Shareholder(company_id=company.id, parent_id=main_shareholder_id)
-        form.populate_obj(new_related_shareholder)
+        new_related_shareholder = Shareholder(
+            company_id=company.id,
+            parent_id=main_shareholder_id,
+            last_name=form.last_name.data,
+            relationship=form.relationship.data,
+            officer_position=form.officer_position.data,
+            investment_amount=form.investment_amount.data,
+            shares_held=form.shares_held.data,
+            voting_rights=form.voting_rights.data,
+            is_controlled_company=form.is_controlled_company.data
+        )
+        
+        if form.is_address_same_as_main.data:
+            new_related_shareholder.zip_code = main_shareholder.zip_code
+            new_related_shareholder.prefecture_city = main_shareholder.prefecture_city
+            new_related_shareholder.address = main_shareholder.address
+        else:
+            new_related_shareholder.zip_code = form.zip_code.data
+            new_related_shareholder.prefecture_city = form.prefecture_city.data
+            new_related_shareholder.address = form.address.data
+
         db.session.add(new_related_shareholder)
         db.session.commit()
         return redirect(url_for('company.confirm_related_shareholder_again', main_shareholder_id=main_shareholder_id))
