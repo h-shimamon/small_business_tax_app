@@ -1,46 +1,63 @@
 /* /app/static/css/pages/shareholder_list.css */
 
-.shareholder-card {
+.accordion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.accordion-item {
     background-color: var(--bg-content);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.shareholder-card:hover {
+.accordion-item:hover {
     background-color: #f8f8fa;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.shareholder-info .name {
+.accordion-header {
+    display: flex;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    cursor: pointer;
+}
+
+.accordion-title {
+    flex-grow: 1;
+}
+.accordion-title .main-name {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0;
+}
+.accordion-title .main-role {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
 }
 
-.shareholder-info .position {
+.accordion-summary {
+    display: flex;
+    gap: 1.5rem;
     font-size: 0.9rem;
     color: var(--text-secondary);
-    margin: 0.25rem 0 0 0;
 }
 
-.shareholder-actions {
+.accordion-actions {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
+    margin-left: 2rem;
 }
-
 .action-icon {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     color: var(--text-secondary);
     transition: background-color 0.2s, color 0.2s;
@@ -49,15 +66,77 @@
     cursor: pointer;
     padding: 0;
 }
+.action-icon:hover { background-color: #e9ecef; }
+.action-icon svg { width: 18px; height: 18px; }
 
-.action-icon:hover {
-    background-color: #e9ecef;
+.accordion-toggle {
+    transition: transform 0.3s;
+}
+.accordion-item.open .accordion-toggle {
+    transform: rotate(180deg);
 }
 
-.action-icon.edit-icon:hover {
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    padding: 0 1.5rem;
+}
+.accordion-item.open .accordion-content {
+    max-height: 1000px; /* 十分な高さを確保 */
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.related-row {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color-light);
+}
+.related-row:last-child {
+    border-bottom: none;
+}
+
+.accordion-title .main-address {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.related-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.related-address {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.related-name { font-weight: 500; }
+.related-relationship { font-size: 0.85rem; color: var(--text-secondary); margin-left: 0.5rem; }
+.related-summary { display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+.related-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: 2rem; }
+.no-related { color: var(--text-secondary); padding: 1rem 0; }
+
+.add-new-row {
+    padding: 0.75rem 0;
+}
+.add-new-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
 }
-
-.action-icon.delete-icon:hover {
-    color: var(--error-color);
+.add-new-link:hover {
+    background-color: var(--background-secondary);
 }
