@@ -135,3 +135,24 @@
 .confirmation-card .card-control {
     flex-shrink: 0;
 }
+
+/* --- Form Step Header --- */
+.step-header {
+    padding: 24px 24px 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+.step-header .step-title {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.step-header .step-description {
+    font-size: 0.9rem; /* 14.4px */
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}

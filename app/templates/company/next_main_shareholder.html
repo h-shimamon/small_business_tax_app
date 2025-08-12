@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}次の株主グループの登録確認{% endblock %}
+
+{% block content %}
+<div class="container-center">
+    <div class="card text-center confirmation-card">
+        <h1 class="content-title">グループの登録完了</h1>
+        
+        {% if main_shareholders %}
+        <div class="registered-list">
+            <p>登録済みの主たる株主：</p>
+            <ul>
+                {% for shareholder in main_shareholders %}
+                <li>・{{ shareholder.last_name }} 様（ご家族・ご親族を含む）</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <p class="confirmation-message">
+            上記の方々以外で、次に株式を多くお持ちの方はいらっしゃいますか？
+        </p>
+        
+        <div class="form-actions">
+            <a href="{{ url_for('company.register_main_shareholder') }}" class="button-secondary">株主がいます</a>
+            <a href="{{ url_for('company.shareholders') }}" class="button-secondary">株主はいません</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .container-center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+    }
+    .confirmation-card {
+        max-width: 550px; /* 少し幅を広げます */
+        padding: 2.5rem;
+    }
+    .registered-list {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background-color: var(--background-secondary);
+        border-radius: 8px;
+        text-align: left;
+    }
+    .registered-list p {
+        margin-top: 0;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+    .registered-list ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 0;
+    }
+    .registered-list li {
+        color: var(--text-primary);
+    }
+    .confirmation-message {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        margin: 1.5rem 0;
+    }
+    .form-actions {
+        justify-content: center;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

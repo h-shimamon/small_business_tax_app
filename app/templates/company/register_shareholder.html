@@ -1,44 +1,45 @@
 {% extends "base.html" %}
 {% from 'company/_form_helpers.html' import render_field, render_radio_field %}
 
-{% block title %}{{ page_title }} 登録{% endblock %}
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/register_shareholder.css') }}">
+{% endblock %}
+
+{% block title %}主たる{{ page_title }}の登録{% endblock %}
 
 {% block sidebar %}
     {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}
-<h1 class="content-title">{{ page_title }} 登録</h1>
+<h1 class="content-title">主たる{{ page_title }}の登録</h1>
 <p class="content-subtitle">会社の{{ page_title }}を登録します。</p>
 
 <div class="card">
+    <div class="instruction-header">
+        <div class="step-indicator">STEP 1 - グループ ({{ group_number }}/3)</div>
+        <p class="instruction-text">年度末時点で、保有する株式数と議決権数が最も多い株主の氏名を入力してください。</p>
+    </div>
     <form method="post" novalidate>
         {{ form.hidden_tag() }}
         <div class="form-grid">
             <fieldset>
-                <legend>基本情報</legend>
+                <legend>株主情報</legend>
                 {{ render_field(form.last_name, placeholder='例：山田 太郎') }}
                 {{ render_radio_field(form.entity_type) }}
-                
-                <div id="controlled_company_group" style="display: none;">
-                    {{ render_radio_field(form.is_controlled_company) }}
-                </div>
                 
                 <div id="officer_position_group">
                     {{ render_field(form.officer_position) }}
                 </div>
-                
-                {{ render_field(form.relationship, placeholder='例：本人、配偶者') }}
-            </fieldset>
-
-            <fieldset>
-                <legend>住所情報</legend>
-                {{ render_field(form.address, placeholder='例：東京都千代田区丸の内1-1-1') }}
+                {{ render_field(form.zip_code, placeholder='例：1000005 (ハイフンなし)') }}
+                {{ render_field(form.prefecture_city, placeholder='郵便番号を入力すると自動入力されます') }}
+                {{ render_field(form.address, placeholder='例：丸の内1-1-1') }}
             </fieldset>
 
             <fieldset>
                 <legend>持株情報</legend>
-                {{ render_field(form.joined_date, type='date') }}
+                {{ render_field(form.investment_amount, placeholder='例：1000000') }}
                 {{ render_field(form.shares_held, placeholder='例：100') }}
                 {{ render_field(form.voting_rights, placeholder='例：100') }}
             </fieldset>
@@ -54,23 +55,19 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="{{ url_for('static', filename='js/address_autofill.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    initializeAddressAutofill('zip_code', 'prefecture_city', null, 'address');
+
     const entityTypeRadios = document.querySelectorAll('input[name="entity_type"]');
-    const controlledCompanyGroup = document.getElementById('controlled_company_group');
     const officerPositionGroup = document.getElementById('officer_position_group');
 
     function toggleFields() {
         const selectedValue = document.querySelector('input[name="entity_type"]:checked').value;
-
-        if (selectedValue === 'corporation') {
-            controlledCompanyGroup.style.display = 'block';
-            officerPositionGroup.style.display = 'none';
-        } else if (selectedValue === 'individual') {
-            controlledCompanyGroup.style.display = 'none';
+        if (selectedValue === 'individual') {
             officerPositionGroup.style.display = 'block';
-        } else { // self_company
-            controlledCompanyGroup.style.display = 'none';
+        } else {
             officerPositionGroup.style.display = 'none';
         }
     }
@@ -78,8 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
     entityTypeRadios.forEach(radio => {
         radio.addEventListener('change', toggleFields);
     });
-
-    // 初期表示のために一度実行
     toggleFields();
 });
 </script>

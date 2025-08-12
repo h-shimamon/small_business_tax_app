@@ -156,3 +156,20 @@ select.form-control {
 .toggle-switch-input:checked + .toggle-switch:before {
     transform: translateX(22px);
 }
+
+/* --- Form Grid Layout --- */
+.form-grid-2-col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 24px; /* 縦のgapは0, 横のgapは24px */
+}
+
+/* form-groupをグリッドのセルとして扱う */
+.form-grid-2-col .form-group {
+    grid-column: span 1;
+}
+
+/* .full-width クラスを持つ要素は2カラムをまたぐ */
+.form-grid-2-col .full-width {
+    grid-column: span 2;
+}

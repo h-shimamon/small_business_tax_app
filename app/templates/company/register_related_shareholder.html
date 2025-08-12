@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/register_shareholder.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/tables.css') }}">
+{% endblock %}
+
+{% block title %}特殊関係人の登録{% endblock %}
+
+{% block sidebar %}
+    {% include 'company/_wizard_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<h1 class="content-title">特殊関係人の登録</h1>
+<p class="content-subtitle">主たる{{ page_title }}に紐づく親族などを登録します。</p>
+
+<div class="card">
+    <div class="instruction-header">
+        <div class="step-indicator">STEP 2 - グループ ({{ group_number }}/3)</div>
+        <p class="instruction-text">
+            <strong>主たる{{ page_title }}: {{ main_shareholder.last_name }} 様</strong><br>
+            上記の株主情報に紐づく特殊関係人の株式情報を入力してください。
+        </p>
+    </div>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <div class="form-column">
+                <fieldset>
+                    <legend>特殊関係人の情報</legend>
+                    {{ render_field(form.last_name, placeholder='例：山田 花子') }}
+                    {{ render_field(form.relationship, placeholder='例：妻や長男など、主たる株主からみた関係') }}
+                    {{ render_field(form.officer_position) }}
+                    {{ render_checkbox_field(form.is_address_same_as_main) }}
+                    <div id="address-fields">
+                        {{ render_field(form.zip_code, placeholder='例：1000005 (ハイフンなし)') }}
+                        {{ render_field(form.prefecture_city, placeholder='郵便番号を入力すると自動入力されます') }}
+                        {{ render_field(form.address, placeholder='例：丸の内1-1-1') }}
+                    </div>
+                </fieldset>
+            </div>
+            <div class="form-column">
+                <fieldset>
+                    <legend>持株情報</legend>
+                    {{ render_field(form.investment_amount, placeholder='例：500000') }}
+                    {{ render_field(form.shares_held, placeholder='例：50') }}
+                    {{ render_field(form.voting_rights, placeholder='例：50') }}
+                </fieldset>
+                <div class="explanation-box">
+                    <h4>特殊な関係にある個人や法人とは…</h4>
+                    <ul>
+                        <li>株主等の親族（配偶者、六親等以内の血族、三親等以内の姻族）</li>
+                        <li>株主等と事実上の婚姻関係にある</li>
+                        <li>個人である株主等の使用人</li>
+                        <li>株主等から受ける金銭やその他の資産により生計を立てている</li>
+                        <li>株主等並びに株主等と特殊関係のある法人</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            {{ form.submit(class="button-primary", value="登録する") }}
+            <a href="{{ url_for('company.shareholders') }}" class="button-secondary">キャンセル</a>
+        </div>
+    </form>
+</div>
+
+{% if related_shareholders %}
+<div class="card">
+    <h2 class="card-title">登録済みの特殊関係人 ({{ main_shareholder.last_name }} 様のグループ)</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>氏名</th>
+                <th>役職</th>
+                <th>保有株式数</th>
+                <th>議決権の数</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rel_shareholder in related_shareholders %}
+            <tr>
+                <td>{{ rel_shareholder.last_name }}</td>
+                <td>{{ rel_shareholder.officer_position or '-' }}</td>
+                <td>{{ rel_shareholder.shares_held or '0' }}</td>
+                <td>{{ rel_shareholder.voting_rights or '0' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/address_autofill.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sameAddressCheckbox = document.getElementById('is_address_same_as_main');
+    const addressFieldsContainer = document.getElementById('address-fields');
+    const addressFields = addressFieldsContainer.querySelectorAll('input, select');
+
+    const mainShareholderAddress = {
+        zip_code: "{{ main_shareholder.zip_code or '' }}",
+        prefecture_city: "{{ main_shareholder.prefecture_city or '' }}",
+        address: "{{ main_shareholder.address or '' }}"
+    };
+
+    function toggleAddressFields(isSame) {
+        if (isSame) {
+            document.getElementById('zip_code').value = mainShareholderAddress.zip_code;
+            document.getElementById('prefecture_city').value = mainShareholderAddress.prefecture_city;
+            document.getElementById('address').value = mainShareholderAddress.address;
+            addressFields.forEach(field => field.disabled = true);
+        } else {
+            addressFields.forEach(field => {
+                field.disabled = false;
+                if (field.type !== 'checkbox' && field.type !== 'radio') {
+                    field.value = '';
+                }
+            });
+        }
+    }
+
+    if (sameAddressCheckbox) {
+        sameAddressCheckbox.addEventListener('change', function() {
+            toggleAddressFields(this.checked);
+        });
+        toggleAddressFields(sameAddressCheckbox.checked);
+    }
+
+    initializeAddressAutofill('zip_code', 'prefecture_city', null, 'address');
+});
+</script>
+{% endblock %}
