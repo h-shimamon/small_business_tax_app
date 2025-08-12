@@ -1,0 +1,6 @@
+- PythonのコーディングスタイルはPEP8に準拠し、`ruff`による静的解析とフォーマットが適用されます。
+- 変数名、関数名はスネークケース (`snake_case`)。
+- クラス名はキャメルケース (`CamelCase`)。
+- すべての関数にdocstringを記述し、型ヒントを積極的に使用します。
+- HTMLテンプレートは`base.html`を継承し、`block content`内に記述します。
+- CSSは`base.css`（グローバル）、`components`（コンポーネント単位）、`pages`（ページ単位）に分離して管理します。

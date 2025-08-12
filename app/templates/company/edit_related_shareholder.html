@@ -1,35 +1,32 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field, render_radio_field, render_checkbox_field %}
+{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
 
 {% block styles %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/register_shareholder.css') }}">
 {% endblock %}
 
-{% block title %}{{ page_title }}の編集{% endblock %}
+{% block title %}特殊関係人の編集{% endblock %}
 
 {% block sidebar %}
     {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
 {% block content %}
-<h1 class="content-title">{{ page_title }}の編集</h1>
-<p class="content-subtitle">{{ shareholder.last_name }} 様の情報を編集します。</p>
+<h1 class="content-title">特殊関係人の編集</h1>
+<p class="content-subtitle">
+    <strong>主たる{{ page_title }}: {{ shareholder.parent.last_name }} 様</strong><br>
+    {{ shareholder.last_name }} 様の情報を編集します。
+</p>
 
 <div class="card">
     <form method="post" novalidate>
         {{ form.hidden_tag() }}
         <div class="form-grid">
             <fieldset>
-                <legend>株主情報</legend>
+                <legend>特殊関係人の情報</legend>
                 {{ render_field(form.last_name) }}
-                
-                {% if shareholder.parent_id is none %}
-                    {{ render_radio_field(form.entity_type) }}
-                {% else %}
-                    {{ render_field(form.relationship) }}
-                {% endif %}
-
+                {{ render_field(form.relationship) }}
                 {{ render_field(form.officer_position) }}
                 {{ render_field(form.zip_code) }}
                 {{ render_field(form.prefecture_city) }}

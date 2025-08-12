@@ -95,12 +95,18 @@ class Shareholder(db.Model):
     joined_date = db.Column(db.Date)
     relationship = db.Column(db.String(50))
     address = db.Column(db.String(200))
+    zip_code = db.Column(db.String(8), nullable=True)
+    prefecture_city = db.Column(db.String(100), nullable=True)
     shares_held = db.Column(db.Integer)
     voting_rights = db.Column(db.Integer)
     officer_position = db.Column(db.String(100), nullable=True)
+    investment_amount = db.Column(db.Integer, nullable=True)
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('shareholders', lazy=True))
+
+    parent_id = db.Column(db.Integer, db.ForeignKey('shareholder.id'), nullable=True)
+    children = db.relationship('Shareholder', backref=db.backref('parent', remote_side=[id]), cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Shareholder {self.last_name}>'

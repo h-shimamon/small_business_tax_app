@@ -16,7 +16,7 @@
 {{ render_page_header(
     title=page_title,
     subtitle='登録内容から自動で同族会社の判定を行うため、' ~ page_title ~ ' の作成は必須です。',
-    button_url='company.register_shareholder',
+    button_url='company.register_main_shareholder',
     button_text='新規登録'
 ) }}
 
@@ -45,36 +45,7 @@
     <div class="empty-state">
         <h2>まだ株主/社員が登録されていません</h2>
         <p>最初の株主/社員情報を登録しましょう。</p>
-        <a href="{{ url_for('company.register_shareholder') }}" class="button-primary">＋ 新規登録</a>
+        <a href="{{ url_for('company.register_main_shareholder') }}" class="button-primary">＋ 新規登録</a>
     </div>
 {% endif %}
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.context-menu-button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            event.stopPropagation();
-            // 他のメニューをすべて閉じる
-            document.querySelectorAll('.context-menu-content').forEach(menu => {
-                if (menu !== button.nextElementSibling) {
-                    menu.style.display = 'none';
-                }
-            });
-            // クリックされたメニューの表示を切り替える
-            const menu = button.nextElementSibling;
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        });
-    });
-
-    // ドキュメントのどこかをクリックしたらメニューを閉じる
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.context-menu-content').forEach(menu => {
-            menu.style.display = 'none';
-        });
-    });
-});
-</script>
 {% endblock %}

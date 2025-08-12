@@ -1,9 +1,9 @@
 {# app/templates/company/_form_helpers.html (UI改善版) #}
 
-{% macro render_field(field, placeholder=None, type=None, rows=None, id=None, class_="") %}
+{% macro render_field(field, placeholder=None, type=None, rows=None, id=None, class_="", readonly=False) %}
   <div class="form-group">
     {{ field.label(class="form-label") }}
-    {{ field(class=("form-control " ~ class_)|trim, placeholder=placeholder, type=type, rows=rows, id=id) }}
+    {{ field(class=("form-control " ~ class_)|trim, placeholder=placeholder, type=type, rows=rows, id=id, readonly=readonly) }}
     {% if field.errors %}
       <div class="form-errors">
         {% for error in field.errors %}
@@ -23,6 +23,20 @@
             {{ subfield.label }}
         {% endfor %}
     </div>
+    {% if field.errors %}
+    <div class="form-errors">
+        {% for error in field.errors %}
+        <span class="form-error">{{ error }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_checkbox_field(field, label_class='', container_class='') %}
+<div class="form-group-checkbox {{ container_class }}">
+    {{ field(class="form-checkbox") }}
+    {{ field.label(class="form-label-checkbox " + label_class) }}
     {% if field.errors %}
     <div class="form-errors">
         {% for error in field.errors %}

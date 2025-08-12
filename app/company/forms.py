@@ -49,30 +49,43 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('ログイン状態を保持する')
     submit = SubmitField('ログイン')
 
-class ShareholderForm(FlaskForm):
-    """株主登録・編集フォーム"""
+class BaseShareholderForm(FlaskForm):
+    """株主フォームの共通フィールドを定義するベースクラス"""
     shareholder_number = StringField('株主番号', validators=[Optional(), Length(max=20)])
     last_name = StringField('氏名', validators=[DataRequired(message="氏名は必須です。"), Length(max=50)])
-    entity_type = RadioField(
-        '株主の区分', 
-        choices=[('individual', '個人'), ('corporation', '法人'), ('self_company', '自社')],
-        default='individual',
-        validators=[DataRequired()]
-    )
-    first_name_kana = StringField('メイ', validators=[DataRequired(message="メイは必須です。"), Length(max=50)])
-    joined_date = DateField('加入年月日', format='%Y-%m-%d', validators=[Optional()])
-    address = StringField('住所', validators=[Optional(), Length(max=200)])
+    officer_position = SelectField('役職名', choices=[], validators=[Optional()])
+    
+    zip_code = StringField('郵便番号', validators=[Optional(), Length(max=8)])
+    prefecture_city = StringField('都道府県・市区町村', validators=[Optional(), Length(max=100)])
+    address = StringField('番地以降の住所', validators=[Optional(), Length(max=200)])
+
+    investment_amount = IntegerField('出資金額', validators=[Optional()])
+    shares_held = IntegerField('保有株式数', validators=[Optional()])
+    voting_rights = IntegerField('議決権の数', validators=[Optional()])
     is_controlled_company = RadioField(
         '被支配会社の該当', 
         choices=[('yes', '該当する'), ('no', '該当しない')], 
         default='no', 
         coerce=lambda x: x == 'yes'
     )
-    officer_position = SelectField('役職名', choices=[], validators=[Optional()])
-    relationship = StringField('法人・代表者との関係', validators=[Optional(), Length(max=100)])
-    shares_held = IntegerField('保有株式数', validators=[Optional()])
-    voting_rights = IntegerField('議決権の数', validators=[Optional()])
     submit = SubmitField('登録する')
+
+class MainShareholderForm(BaseShareholderForm):
+    """主たる株主用のフォーム"""
+    entity_type = RadioField(
+        '株主の区分', 
+        choices=[('individual', '個人'), ('corporation', '法人'), ('self_company', '自社')],
+        default='individual',
+        validators=[DataRequired(message="株主の区分は必須です。")]
+    )
+
+class RelatedShareholderForm(BaseShareholderForm):
+    """特殊関係人用のフォーム"""
+    relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)])
+    is_address_same_as_main = BooleanField('主たる株主と住所が同じ')
+
+
+
 
 class DeclarationForm(FlaskForm):
     """申告情報を登録・編集するためのフォーム"""
@@ -155,6 +168,7 @@ class DeclarationForm(FlaskForm):
     refund_account_number = StringField('口座番号', validators=[Optional()])
 
     submit = SubmitField('保存する')
+
 
 class OfficeForm(FlaskForm):
     """事業所登録・編集フォーム"""

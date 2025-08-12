@@ -1,0 +1,59 @@
+/* app/static/css/pages/register_shareholder.css */
+
+.instruction-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.step-indicator {
+    font-size: 1.1rem;
+    font-weight: 700; /* 太字で強調 */
+    color: var(--primary-color); /* 強調色 */
+    margin-bottom: 0.5rem;
+}
+
+.instruction-text {
+    color: var(--text-primary); /* 通常のテキスト色に変更 */
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* 解説ボックスのスタイル */
+.explanation-box {
+    margin-top: 1.5rem; /* 上のフィールドセットとの間隔 */
+    padding: 1.2rem;
+    background-color: var(--background-secondary); /* 背景色を少し変える */
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.explanation-box h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 0; /* デフォルトのマージンをリセット */
+    margin-bottom: 1rem;
+}
+
+.explanation-box ul {
+    list-style-type: none; /*箇条書きの点を消す*/
+    padding-left: 0;
+    margin-bottom: 0; /* デフォルトのマージンをリセット */
+}
+
+.explanation-box li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    padding-left: 1.2em;
+    position: relative;
+}
+
+/* 箇条書きの・をカスタムスタイルにする */
+.explanation-box li::before {
+    content: '・';
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}

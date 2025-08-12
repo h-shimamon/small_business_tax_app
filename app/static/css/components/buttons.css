@@ -34,8 +34,9 @@
 }
 
 .button-secondary:hover {
-    background-color: #e0e0e0;
-    border-color: #d0d0d0;
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
 }
 
 /* テーブル内のアクションボタンなど、より小さいボタン */

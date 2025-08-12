@@ -1,0 +1,4 @@
+- バックエンド: Python, Flask, SQLAlchemy, Alembic
+- フロントエンド: JavaScript (Vanilla), HTML, CSS
+- テスト: pytest
+- リンティング/フォーマット: ruff

@@ -10,18 +10,18 @@
 function initializeAddressAutofill(zipCodeFieldId, prefectureFieldId, cityFieldId, addressFieldId) {
   const zipCodeField = document.getElementById(zipCodeFieldId);
   const prefectureField = document.getElementById(prefectureFieldId);
-  const cityField = document.getElementById(cityFieldId);
+  // cityFieldId はオプショナルなので、要素が存在しない場合も考慮します
+  const cityField = cityFieldId ? document.getElementById(cityFieldId) : null;
   const addressField = document.getElementById(addressFieldId);
 
-  // 必須の要素がページに存在するか確認します
-  if (!zipCodeField || !prefectureField || !cityField || !addressField) {
-    console.error("Address autofill failed: One or more specified element IDs were not found in the DOM.", {
+  // 必須の要素（zip, prefecture, address）が存在するか確認します
+  if (!zipCodeField || !prefectureField || !addressField) {
+    console.error("Address autofill failed: One or more required element IDs were not found in the DOM.", {
       zipCodeFieldId, prefectureFieldId, cityFieldId, addressFieldId
     });
     return;
   }
 
-  // 郵便番号入力欄でキー入力が終わったタイミングでイベントを発火させます
   zipCodeField.addEventListener('keyup', async () => {
     const zipCode = zipCodeField.value.replace(/-/g, '');
     if (zipCode.length !== 7) {
@@ -29,7 +29,6 @@ function initializeAddressAutofill(zipCodeFieldId, prefectureFieldId, cityFieldI
     }
 
     try {
-      // ZipCloud APIへリクエストを送信します
       const response = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zipCode}`);
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
@@ -39,11 +38,17 @@ function initializeAddressAutofill(zipCodeFieldId, prefectureFieldId, cityFieldI
 
       if (data.status === 200 && data.results) {
         const result = data.results[0];
-        prefectureField.value = result.address1;
-        cityField.value = result.address2;
-        addressField.value = result.address3 || '';
         
-        // 番地以降の入力に集中できるよう、カーソルを移動します
+        // cityField が存在する場合（従来の分割モード）
+        if (cityField) {
+          prefectureField.value = result.address1;
+          cityField.value = result.address2;
+        } else {
+          // cityField が存在しない場合（結合モード）
+          prefectureField.value = (result.address1 || '') + (result.address2 || '');
+        }
+        
+        addressField.value = result.address3 || '';
         addressField.focus(); 
       } else {
         console.warn("Address not found for this zip code:", zipCode, "API Message:", data.message);
