@@ -47,20 +47,6 @@
 </div>
 {% endmacro %}
 
-{% macro render_checkbox_field(field, label_class='', container_class='') %}
-<div class="form-group-checkbox {{ container_class }}">
-    {{ field(class="form-checkbox") }}
-    {{ field.label(class="form-label-checkbox " + label_class) }}
-    {% if field.errors %}
-    <div class="form-errors">
-        {% for error in field.errors %}
-        <span class="form-error">{{ error }}</span>
-        {% endfor %}
-    </div>
-    {% endif %}
-</div>
-{% endmacro %}
-
 {% macro render_toggle_switch(field) %}
   <label class="toggle-switch-container">
     {{ field(class="toggle-switch-input") }}

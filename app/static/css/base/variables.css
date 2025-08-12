@@ -11,6 +11,8 @@
     --bg-main: #f5f5f7;
     --bg-content: #ffffff;
     --error-color: #dc3545;
+    --warning-color-dark: #856404;
+    --warning-color-light: #fff3cd;
 
     /* Layout */
     --header-height: 50px;

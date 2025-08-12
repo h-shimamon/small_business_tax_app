@@ -68,7 +68,6 @@ class BaseShareholderForm(FlaskForm):
         default='no', 
         coerce=lambda x: x == 'yes'
     )
-    submit = SubmitField('登録する')
 
 class MainShareholderForm(BaseShareholderForm):
     """主たる株主用のフォーム"""
@@ -78,11 +77,13 @@ class MainShareholderForm(BaseShareholderForm):
         default='individual',
         validators=[DataRequired(message="株主の区分は必須です。")]
     )
+    submit = SubmitField('登録する')
 
 class RelatedShareholderForm(BaseShareholderForm):
     """特殊関係人用のフォーム"""
     relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)])
     is_address_same_as_main = BooleanField('主たる株主と住所が同じ')
+    submit = SubmitField('登録する')
 
 
 

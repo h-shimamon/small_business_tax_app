@@ -5,6 +5,7 @@ from app.company.models import Shareholder, Company
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
 from app.company.utils import get_officer_choices
 from app import db
+from app.company.services.company_classification_service import classify_company
 from app.navigation import get_navigation_state
 from .auth import company_required
 
@@ -26,10 +27,12 @@ def shareholders(company):
         return response
     
     shareholder_list = Shareholder.query.filter_by(company_id=company.id).order_by(Shareholder.id).all()
+    classification_result = classify_company(company.id)
     navigation_state = get_navigation_state('shareholders')
     return render_template(
         'company/shareholder_list.html', 
         shareholders=shareholder_list, 
+        classification_result=classification_result,
         navigation_state=navigation_state,
         page_title=page_title
     )
@@ -42,11 +45,21 @@ def register_main_shareholder(company):
     if response:
         return response
 
+    main_shareholders_count = Shareholder.query.filter_by(company_id=company.id, parent_id=None).count()
+    if main_shareholders_count >= 3:
+        flash('登録できる株主グループは3つまでです。', 'warning')
+        return redirect(url_for('company.shareholders'))
+
     form = MainShareholderForm(request.form)
     
     form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
+        # 念のため、POST時にも再チェック
+        if Shareholder.query.filter_by(company_id=company.id, parent_id=None).count() >= 3:
+            flash('登録できる株主グループは3つまでです。', 'warning')
+            return redirect(url_for('company.shareholders'))
+            
         new_shareholder = Shareholder()
         form.populate_obj(new_shareholder)
         new_shareholder.company_id = company.id

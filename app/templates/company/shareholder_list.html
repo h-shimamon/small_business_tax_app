@@ -16,9 +16,33 @@
 {{ render_page_header(
     title=page_title,
     subtitle='登録内容から自動で同族会社の判定を行うため、' ~ page_title ~ ' の作成は必須です。',
-    button_url='company.register_main_shareholder',
+    button_href=url_for('company.register_main_shareholder') if main_shareholders|length < 3 else None,
     button_text='新規グループ登録'
 ) }}
+
+<div class="card classification-card">
+    <h2 class="classification-title">同族会社の判定結果</h2>
+    {% if classification_result and classification_result.classification %}
+        {% set result = classification_result %}
+        {% if result.classification == '同族会社' %}
+            <p class="classification-text">
+                貴社は<strong>「同族会社」</strong>に該当します。
+            </p>
+            <div class="classification-details warning">
+                資本金が1億円以下の会社でも大法人（資本金5億円以上）の100％子会社等に該当する場合は、このアプリで対応できませんのでご注意ください。
+            </div>
+        {% else %}
+            <p class="classification-text">
+                貴社は<strong>「非同族会社」</strong>に該当します。
+            </p>
+            <div class="classification-details">
+                (上位3グループの議決権割合: {{ result.top_three_percentage }}%)
+            </div>
+        {% endif %}
+    {% else %}
+        <p class="classification-text">株主情報が未登録のため、まだ判定できません。</p>
+    {% endif %}
+</div>
 
 {% set main_shareholders = shareholders|selectattr('parent_id', 'none')|list %}
 
@@ -56,8 +80,10 @@
                     {% for related in main_shareholder.children %}
                     <div class="related-row">
                         <div class="related-info">
-                            <span class="related-name">{{ related.last_name or '' }}</span>
-                            <span class="related-relationship">({{ related.relationship or '関係未設定' }})</span>
+                            <div>
+                                <span class="related-name">{{ related.last_name or '' }}</span>
+                                <span class="related-relationship">({{ related.relationship or '関係未設定' }})</span>
+                            </div>
                             <span class="related-address">{{ related.prefecture_city or '' }}{{ related.address or '' }}</span>
                         </div>
                         <div class="related-summary">
