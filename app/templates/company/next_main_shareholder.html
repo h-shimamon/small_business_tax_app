@@ -23,7 +23,9 @@
         </p>
         
         <div class="form-actions">
+            {% if main_shareholders|length < 3 %}
             <a href="{{ url_for('company.register_main_shareholder') }}" class="button-secondary">株主がいます</a>
+            {% endif %}
             <a href="{{ url_for('company.shareholders') }}" class="button-secondary">株主はいません</a>
         </div>
     </div>
@@ -72,6 +74,18 @@
     .form-actions {
         justify-content: center;
         gap: 1rem;
+        display: flex;
+    }
+    .form-actions a {
+        color: var(--text-primary);
+        background-color: #f0f0f0;
+        border: 1px solid #e0e0e0;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+    }
+    .form-actions a:hover {
+        background-color: #e0e0e0;
     }
 </style>
 {% endblock %}
