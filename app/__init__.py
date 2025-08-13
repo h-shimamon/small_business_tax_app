@@ -9,9 +9,6 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
 
-# Alembicがモデルを確実に検知できるように、ここでインポートします
-from .company import models
-
 def create_app(test_config=None):
     """
     アプリケーションファクトリ: Flaskアプリケーションのインスタンスを作成・設定します。
@@ -50,8 +47,10 @@ def create_app(test_config=None):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # ブループリントの登録
+    # ブループリントの登録前にルートをインポート
     from .company import company_bp
+    with app.app_context():
+        from .company import core, shareholders, offices, import_data, statement_of_accounts, auth
     app.register_blueprint(company_bp)
 
     # CLIコマンドの登録

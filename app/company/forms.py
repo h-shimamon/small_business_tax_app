@@ -1,5 +1,5 @@
 # app/company/forms.py
-
+from datetime import datetime
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField, FloatField
@@ -19,7 +19,6 @@ class SoftwareSelectionForm(FlaskForm):
         validators=[DataRequired(message='会計ソフトを選択してください。')]
     )
     submit = SubmitField('次へ進む')
-from datetime import datetime
 
 class CompanyForm(FlaskForm):
     """会社の基本情報を登録・編集するためのフォーム"""

@@ -1,11 +1,9 @@
 # app/company/shareholders.py
 from flask import render_template, request, redirect, url_for, flash
 from app.company import company_bp
-from app.company.models import Shareholder, Company
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
 from app.company.utils import get_officer_choices
-from app import db
-from app.company.services.company_classification_service import classify_company
+from app.company.services import shareholder_service, company_classification_service
 from app.navigation import get_navigation_state
 from .auth import company_required
 
@@ -26,9 +24,10 @@ def shareholders(company):
     if response:
         return response
     
-    shareholder_list = Shareholder.query.filter_by(company_id=company.id).order_by(Shareholder.id).all()
-    classification_result = classify_company(company.id)
+    shareholder_list = shareholder_service.get_shareholders_by_company(company.id)
+    classification_result = company_classification_service.classify_company(company.id)
     navigation_state = get_navigation_state('shareholders')
+    
     return render_template(
         'company/shareholder_list.html', 
         shareholders=shareholder_list, 
@@ -45,33 +44,23 @@ def register_main_shareholder(company):
     if response:
         return response
 
-    main_shareholders_count = Shareholder.query.filter_by(company_id=company.id, parent_id=None).count()
-    if main_shareholders_count >= 3:
-        flash('登録できる株主グループは3つまでです。', 'warning')
-        return redirect(url_for('company.shareholders'))
+    
 
     form = MainShareholderForm(request.form)
-    
     form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
-        # 念のため、POST時にも再チェック
-        if Shareholder.query.filter_by(company_id=company.id, parent_id=None).count() >= 3:
-            flash('登録できる株主グループは3つまでです。', 'warning')
+        new_shareholder, error = shareholder_service.add_main_shareholder(company.id, form)
+        if error:
+            flash(error, 'warning')
             return redirect(url_for('company.shareholders'))
-            
-        new_shareholder = Shareholder()
-        form.populate_obj(new_shareholder)
-        new_shareholder.company_id = company.id
-        db.session.add(new_shareholder)
-        db.session.commit()
-        # is_new_group=True をクエリパラメータとして渡し、新しいグループの登録直後であることを示す
+        
         return redirect(url_for('company.confirm_related_shareholder', main_shareholder_id=new_shareholder.id, is_new_group=True))
     
-    main_shareholders = Shareholder.query.filter_by(company_id=company.id, parent_id=None).order_by(Shareholder.id).all()
+    main_shareholders = shareholder_service.get_main_shareholders(company.id)
     group_number = len(main_shareholders) + 1
-
     navigation_state = get_navigation_state('shareholders')
+    
     return render_template(
         'company/register_shareholder.html', 
         form=form, 
@@ -88,41 +77,17 @@ def register_related_shareholder(company, main_shareholder_id):
     if response:
         return response
         
-    main_shareholder = Shareholder.query.get_or_404(main_shareholder_id)
-    related_shareholders = Shareholder.query.filter_by(parent_id=main_shareholder_id).all()
+    main_shareholder = shareholder_service.get_shareholder_by_id(main_shareholder_id)
+    related_shareholders = shareholder_service.get_related_shareholders(main_shareholder_id)
 
     form = RelatedShareholderForm(request.form)
-
     form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
-        new_related_shareholder = Shareholder(
-            company_id=company.id,
-            parent_id=main_shareholder_id,
-            last_name=form.last_name.data,
-            relationship=form.relationship.data,
-            officer_position=form.officer_position.data,
-            investment_amount=form.investment_amount.data,
-            shares_held=form.shares_held.data,
-            voting_rights=form.voting_rights.data,
-            is_controlled_company=form.is_controlled_company.data
-        )
-        
-        if form.is_address_same_as_main.data:
-            new_related_shareholder.zip_code = main_shareholder.zip_code
-            new_related_shareholder.prefecture_city = main_shareholder.prefecture_city
-            new_related_shareholder.address = main_shareholder.address
-        else:
-            new_related_shareholder.zip_code = form.zip_code.data
-            new_related_shareholder.prefecture_city = form.prefecture_city.data
-            new_related_shareholder.address = form.address.data
-
-        db.session.add(new_related_shareholder)
-        db.session.commit()
-        # 特殊関係人登録後は、is_new_group なしで確認ページにリダイレクト
+        shareholder_service.add_related_shareholder(company.id, main_shareholder_id, form)
         return redirect(url_for('company.confirm_related_shareholder', main_shareholder_id=main_shareholder_id))
 
-    main_shareholders = Shareholder.query.filter_by(company_id=company.id, parent_id=None).order_by(Shareholder.id).all()
+    main_shareholders = shareholder_service.get_main_shareholders(company.id)
     group_number = -1
     for i, shareholder in enumerate(main_shareholders):
         if shareholder.id == main_shareholder_id:
@@ -148,20 +113,16 @@ def edit_shareholder(company, shareholder_id):
     if response:
         return response
 
-    shareholder = Shareholder.query.get_or_404(shareholder_id)
+    # サービス層でテナントチェックが行われるため、ここでのcompany_idチェックは不要
+    shareholder = shareholder_service.get_shareholder_by_id(shareholder_id)
     
-    if shareholder.parent_id is None:
-        # 主たる株主の編集
-        form = MainShareholderForm(obj=shareholder)
-    else:
-        # 特殊関係人の編集
-        form = RelatedShareholderForm(obj=shareholder)
-
+    form_class = MainShareholderForm if shareholder.parent_id is None else RelatedShareholderForm
+    form = form_class(request.form, obj=shareholder)
     form.officer_position.choices = get_officer_choices(page_title)
 
     if form.validate_on_submit():
-        form.populate_obj(shareholder)
-        db.session.commit()
+        # サービス層のupdate_shareholderは引数としてcompany.idを不要とする
+        shareholder_service.update_shareholder(shareholder_id, form)
         flash(f'{page_title}を更新しました。', 'success')
         return redirect(url_for('company.shareholders'))
 
@@ -180,13 +141,9 @@ def edit_shareholder(company, shareholder_id):
 @company_required
 def delete_shareholder(company, shareholder_id):
     """株主/社員の削除"""
-    page_title, response = get_page_title_and_check_redirect(company.company_name)
-    if response:
-        return redirect(url_for('company.shareholders'))
-
-    shareholder = Shareholder.query.filter_by(id=shareholder_id, company_id=company.id).first_or_404()
-    db.session.delete(shareholder)
-    db.session.commit()
+    page_title, _ = get_page_title_and_check_redirect(company.company_name)
+    # サービス層のdelete_shareholderは引数としてcompany.idを不要とする
+    shareholder_service.delete_shareholder(shareholder_id)
     flash(f'{page_title}を削除しました。', 'success')
     return redirect(url_for('company.shareholders'))
 
@@ -194,11 +151,12 @@ def delete_shareholder(company, shareholder_id):
 @company_required
 def confirm_related_shareholder(company, main_shareholder_id):
     """【中間ページ】特殊関係人の登録意思を確認する"""
-    main_shareholder = Shareholder.query.get_or_404(main_shareholder_id)
-    
-    # クエリパラメータ 'is_new_group' の有無で表示を切り替える
-    is_new_group = request.args.get('is_new_group', default=False, type=bool)
+    main_shareholder = shareholder_service.get_shareholder_by_id(main_shareholder_id)
+    if main_shareholder.company_id != company.id:
+        flash('権限がありません。', 'danger')
+        return redirect(url_for('company.shareholders'))
 
+    is_new_group = request.args.get('is_new_group', default=False, type=bool)
     if is_new_group:
         title = "登録が完了しました"
         message = f"{main_shareholder.last_name} 様の株式情報を登録しました。<br>{main_shareholder.last_name}様のご家族・ご親族などの特殊関係人で株式をお持ちの方はいらっしゃいますか？"
@@ -217,7 +175,7 @@ def confirm_related_shareholder(company, main_shareholder_id):
 @company_required
 def confirm_next_main_shareholder(company):
     """【中間ページ3】次の主たる株主グループの登録意思を確認する"""
-    main_shareholders = Shareholder.query.filter_by(company_id=company.id, parent_id=None).all()
+    main_shareholders = shareholder_service.get_main_shareholders(company.id)
     return render_template(
         'company/next_main_shareholder.html',
         main_shareholders=main_shareholders

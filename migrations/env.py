@@ -5,6 +5,10 @@ from flask import current_app
 
 from alembic import context
 
+# add your model's MetaData object here
+# for 'autogenerate' support
+from app.company import models
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -32,9 +36,6 @@ def get_engine_url():
         return str(get_engine().url).replace('%', '%%')
 
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-from app.company import models
 target_metadata = models.db.metadata
 
 config.set_main_option('sqlalchemy.url', get_engine_url())

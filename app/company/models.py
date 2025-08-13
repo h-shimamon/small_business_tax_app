@@ -6,7 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
 
     def set_password(self, password):
@@ -105,7 +106,7 @@ class Shareholder(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('shareholders', lazy=True))
 
-    parent_id = db.Column(db.Integer, db.ForeignKey('shareholder.id'), nullable=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('shareholder.id', name='fk_shareholder_parent_id'), nullable=True)
     children = db.relationship('Shareholder', backref=db.backref('parent', remote_side=[id]), cascade="all, delete-orphan")
 
     def __repr__(self):

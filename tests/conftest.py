@@ -1,78 +1,97 @@
 # tests/conftest.py
-import pytest
 from datetime import date
+import pytest
 from app import create_app, db
-from app.company.models import User, Company
+from app.company.models import User, Company, Shareholder
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def app():
     """
-    テスト用のFlaskアプリケーションインスタンスを作成するフィクスチャ。
-    データベースはインメモリのSQLiteを使用する。
+    テスト関数ごとに独立したFlaskアプリケーションインスタンスを作成するフィクスチャ。
     """
     app = create_app({
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-        'WTF_CSRF_ENABLED': False,  # テストではCSRF保護を無効化
-            'SECRET_KEY': 'test-secret-key',  # テスト用セッションのためのキー
-        
+        'WTF_CSRF_ENABLED': False,
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'SERVER_NAME': 'localhost'
     })
-    with app.app_context():
-        db.create_all()
-        yield app
-        db.drop_all()
+    return app
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def client(app):
     """
-    テストクライアントを作成するフィクスチャ。
+    テスト関数ごとに独立したHTTPクライアントを返すフィクスcha。
     """
     return app.test_client()
 
 @pytest.fixture(scope='function')
 def runner(app):
     """
-    CLIコマンドをテストするためのランナーを作成するフィクスチャ。
+    テスト関数ごとに独立したCLIコマンドランナーを返すフィクスチャ。
     """
     return app.test_cli_runner()
 
 @pytest.fixture(scope='function')
 def init_database(app):
     """
-    各テストの前後にデータベースをクリーンアップし、
-    テスト用の基本データを作成するフィクスチャ。
+    各テスト関数の実行前にデータベースを初期化し、
+    テストユーザーと会社、そして株主を1名作成するフィクスチャ。
+    テスト終了後にはデータベースをクリーンアップする。
     """
     with app.app_context():
-        # 既存のデータを全て削除
-        db.drop_all()
         db.create_all()
 
-        # テスト用ユーザーを作成
-        user1 = User(username='testuser1')
+        # テスト用のユーザーを作成
+        user1 = User(username='testuser1', email='test1@example.com')
         user1.set_password('password')
-        user2 = User(username='testuser2')
+        user2 = User(username='testuser2', email='test2@example.com')
         user2.set_password('password')
-        db.session.add(user1)
-        db.session.add(user2)
+        db.session.add_all([user1, user2])
         db.session.commit()
 
-        # ユーザー1の会社を作成
+        # テスト用の会社を作成
         company1 = Company(
-            corporate_number="1111111111111",
-            company_name="株式会社テスト１",
-            company_name_kana="テストイチ",
-            zip_code="1000001",
-            prefecture="東京都",
-            city="千代田区",
-            address="丸の内1-1-1",
-            phone_number="03-1111-1111",
-            establishment_date=date(2020, 1, 1),
-            user_id=user1.id
+            user_id=user1.id,
+            corporate_number='1234567890123',
+            company_name='株式会社テスト1',
+            company_name_kana='カブシキガイシャテストイチ',
+            zip_code='1000001',
+            prefecture='東京都',
+            city='千代田区',
+            address='テスト1-1-1',
+            phone_number='0312345678',
+            establishment_date=date(2023, 1, 1)
         )
         db.session.add(company1)
         db.session.commit()
 
+        # ユーザーBの会社も作成
+        company2 = Company(
+            user_id=user2.id,
+            corporate_number='9876543210987',
+            company_name='株式会社テストB',
+            company_name_kana='カブシキガイシャテストビー',
+            zip_code='1000002',
+            prefecture='東京都',
+            city='中央区',
+            address='テスト2-2-2',
+            phone_number='0398765432',
+            establishment_date=date(2024, 1, 1)
+        )
+        db.session.add(company2)
+        db.session.commit()
+
+        # テスト用の株主を作成
+        shareholder1 = Shareholder(
+            company_id=company1.id,
+            last_name='初期株主'
+        )
+        db.session.add(shareholder1)
+        db.session.commit()
+
+
         yield db
 
-        # テスト終了後に再度クリーンアップ
+        db.session.remove()
         db.drop_all()
