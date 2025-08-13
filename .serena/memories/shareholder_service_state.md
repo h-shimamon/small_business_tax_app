@@ -1,0 +1,1 @@
+The function `get_shareholder_details` does not exist in the file `app/company/services/shareholder_service.py`. There is a similar function `get_shareholder_by_id`.

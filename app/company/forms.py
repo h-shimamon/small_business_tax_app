@@ -54,7 +54,7 @@ class BaseShareholderForm(FlaskForm):
     last_name = StringField('氏名', validators=[DataRequired(message="氏名は必須です。"), Length(max=50)])
     officer_position = SelectField('役職名', choices=[], validators=[Optional()])
     
-    zip_code = StringField('郵便番号', validators=[Optional(), Length(max=8)])
+    zip_code = StringField('郵便番号', validators=[Optional(), Length(min=7, max=7, message="郵便番号は7桁で入力してください。")])
     prefecture_city = StringField('都道府県・市区町村', validators=[Optional(), Length(max=100)])
     address = StringField('番地以降の住所', validators=[Optional(), Length(max=200)])
 
@@ -83,6 +83,12 @@ class RelatedShareholderForm(BaseShareholderForm):
     relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)])
     is_address_same_as_main = BooleanField('主たる株主と住所が同じ')
     submit = SubmitField('登録する')
+
+    def populate_address_from_main_shareholder(self, main_shareholder):
+        """主たる株主の住所情報をフォームに設定する"""
+        self.zip_code.data = main_shareholder.zip_code
+        self.prefecture_city.data = main_shareholder.prefecture_city
+        self.address.data = main_shareholder.address
 
 
 
@@ -173,7 +179,7 @@ class DeclarationForm(FlaskForm):
 class OfficeForm(FlaskForm):
     """事業所登録・編集フォーム"""
     office_name = StringField('事業所名', validators=[DataRequired(message="事業所名は必須です。"), Length(max=100)])
-    zip_code = StringField('郵便番号', validators=[Optional(), Length(max=8)])
+    zip_code = StringField('郵便番号', validators=[Optional(), Length(min=7, max=7, message="郵便番号は7桁で入力してください。")])
     prefecture = StringField('都道府県', validators=[Optional(), Length(max=20)])
     city = StringField('市区町村', validators=[Optional(), Length(max=50)])
     address = StringField('番地以降', validators=[Optional(), Length(max=200)])
