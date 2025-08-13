@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% from 'company/_form_helpers.html' import render_field, render_radio_field, render_checkbox_field %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/register_shareholder.css') }}">
+{% endblock %}
+
+{% set is_related = shareholder.parent_id is not none %}
+{% set is_new = shareholder.id is none %}
+{% set form_title = ('特殊関係人の' if is_related else '主たる' ~ page_title ~ 'の') + ('登録' if is_new else '編集') %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block sidebar %}
+    {% include 'company/_wizard_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<h1 class="content-title">{{ form_title }}</h1>
+
+{# サブタイトルの表示分け #}
+{% if is_new %}
+    <p class="content-subtitle">
+        {% if is_related %}
+            主たる{{ page_title }}に紐づく親族などを登録します。
+        {% else %}
+            会社の{{ page_title }}を登録します。
+        {% endif %}
+    </p>
+{% else %}
+    <p class="content-subtitle">
+        {% if is_related %}
+            <strong>主たる{{ page_title }}: {{ shareholder.parent.last_name }} 様</strong><br>
+        {% endif %}
+        {{ shareholder.last_name or '新規株主' }} 様の情報を{{ '登録' if is_new else '編集' }}します。
+    </p>
+{% endif %}
+
+<div class="card">
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <fieldset>
+                <legend>{{ '特殊関係人' if is_related else '株主' }}の情報</legend>
+                {{ render_field(form.last_name) }}
+                
+                {% if is_related %}
+                    {{ render_field(form.relationship) }}
+                {% else %}
+                    {{ render_radio_field(form.entity_type) }}
+                {% endif %}
+                
+                {{ render_field(form.officer_position) }}
+                
+                {% if is_related and form.is_address_same_as_main %}
+                    {{ render_checkbox_field(form.is_address_same_as_main) }}
+                {% endif %}
+
+                <div id="address-fields">
+                    {{ render_field(form.zip_code) }}
+                    {{ render_field(form.prefecture_city) }}
+                    {{ render_field(form.address) }}
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>持株情報</legend>
+                {{ render_field(form.investment_amount) }}
+                {{ render_field(form.shares_held) }}
+                {{ render_field(form.voting_rights) }}
+            </fieldset>
+        </div>
+
+        <div class="form-actions">
+            {{ form.submit(class="button-primary", value=('登録する' if is_new else '更新する')) }}
+            <a href="{{ url_for('company.shareholders') }}" class="button-secondary">キャンセル</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/address_autofill.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAddressAutofill('zip_code', 'prefecture_city', null, 'address');
+
+    // 主たる株主の場合のみ、entity_typeに応じて役職フィールドの表示を切り替える
+    {% if not is_related %}
+    const entityTypeRadios = document.querySelectorAll('input[name="entity_type"]');
+    const officerPositionGroup = document.getElementById('officer_position_group');
+
+    function toggleFields() {
+        const selectedValue = document.querySelector('input[name="entity_type"]:checked').value;
+        if (selectedValue === 'individual') {
+            officerPositionGroup.style.display = 'block';
+        } else {
+            officerPositionGroup.style.display = 'none';
+        }
+    }
+
+    if (entityTypeRadios.length > 0) {
+        entityTypeRadios.forEach(radio => {
+            radio.addEventListener('change', toggleFields);
+        });
+        toggleFields();
+    }
+    {% endif %}
+
+    // 特殊関係人の場合のみ、住所コピーのロジックを適用
+    {% if is_related and form.is_address_same_as_main %}
+    const sameAddressCheckbox = document.getElementById('is_address_same_as_main');
+    const addressFieldsContainer = document.getElementById('address-fields');
+    const addressFields = addressFieldsContainer.querySelectorAll('input, select');
+
+    const mainShareholderAddress = {
+        zip_code: "{{ shareholder.parent.zip_code or '' }}",
+        prefecture_city: "{{ shareholder.parent.prefecture_city or '' }}",
+        address: "{{ shareholder.parent.address or '' }}"
+    };
+
+    function toggleAddressFields(isSame) {
+        if (isSame) {
+            document.getElementById('zip_code').value = mainShareholderAddress.zip_code;
+            document.getElementById('prefecture_city').value = mainShareholderAddress.prefecture_city;
+            document.getElementById('address').value = mainShareholderAddress.address;
+            addressFields.forEach(field => field.disabled = true);
+        } else {
+            addressFields.forEach(field => {
+                field.disabled = false;
+                if (field.type !== 'checkbox' && field.type !== 'radio') {
+                    field.value = '';
+                }
+            });
+        }
+    }
+
+    if (sameAddressCheckbox) {
+        sameAddressCheckbox.addEventListener('change', function() {
+            toggleAddressFields(this.checked);
+        });
+        toggleAddressFields(sameAddressCheckbox.checked);
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

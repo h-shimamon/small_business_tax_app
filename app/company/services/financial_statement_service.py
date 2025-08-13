@@ -1,6 +1,5 @@
 # app/company/services/financial_statement_service.py
 from collections import defaultdict
-import pandas as pd
 from .master_data_service import MasterDataService
 
 class FinancialStatementService:

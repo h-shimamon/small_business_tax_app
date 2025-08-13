@@ -2,6 +2,7 @@
 from flask_login import current_user
 from app import db
 from app.company.models import Shareholder, Company
+from app.company.forms import MainShareholderForm, RelatedShareholderForm
 
 def get_shareholders_by_company(company_id):
     """
@@ -35,55 +36,32 @@ def get_shareholder_by_id(shareholder_id):
         Company.user_id == current_user.id
     ).first_or_404()
 
-def add_main_shareholder(company_id, form):
-    """主たる株主を新規登録する。会社が現在のユーザーのものであるか確認する。"""
+def add_shareholder(company_id, form, parent_id=None):
+    """
+    株主を新規登録する。parent_idの有無で主たる/特殊関係人を判断する。
+    成功時は (shareholder, None)、失敗時は (None, error_message) を返す。
+    """
     company = Company.query.filter_by(id=company_id, user_id=current_user.id).first_or_404()
     
-    new_shareholder = Shareholder()
+    new_shareholder = Shareholder(company_id=company.id)
+
+    if parent_id:
+        parent_shareholder = get_shareholder_by_id(parent_id)
+        if parent_shareholder.company_id != company.id:
+            return None, "親株主の会社が一致しません。"
+        new_shareholder.parent_id = parent_id
+        
+        # フォームに住所コピー機能があれば実行
+        if hasattr(form, 'is_address_same_as_main') and form.is_address_same_as_main.data:
+            if hasattr(form, 'populate_address_from_main_shareholder'):
+                form.populate_address_from_main_shareholder(parent_shareholder)
+
     form.populate_obj(new_shareholder)
-    new_shareholder.company_id = company.id
     
     db.session.add(new_shareholder)
     db.session.commit()
     
     return new_shareholder, None
-
-def add_related_shareholder(company_id, main_shareholder_id, form):
-    """特殊関係人を新規登録する。会社と主たる株主が現在のユーザーのものであるか確認する。"""
-    company = Company.query.filter_by(id=company_id, user_id=current_user.id).first_or_404()
-    main_shareholder = get_shareholder_by_id(main_shareholder_id) # get_shareholder_by_idは既テ넌트チェック済み
-    
-    # main_shareholderが指定されたcompanyに属しているかも確認
-    if main_shareholder.company_id != company.id:
-        # 404を返すか、エラーメッセージを返すかは要件による
-        # ここではNoneを返して、ビュー側で処理することを想定
-        return None
-
-    new_related_shareholder = Shareholder(
-        company_id=company.id,
-        parent_id=main_shareholder.id,
-        last_name=form.last_name.data,
-        relationship=form.relationship.data,
-        officer_position=form.officer_position.data,
-        investment_amount=form.investment_amount.data,
-        shares_held=form.shares_held.data,
-        voting_rights=form.voting_rights.data,
-        is_controlled_company=form.is_controlled_company.data
-    )
-    
-    if form.is_address_same_as_main.data:
-        new_related_shareholder.zip_code = main_shareholder.zip_code
-        new_related_shareholder.prefecture_city = main_shareholder.prefecture_city
-        new_related_shareholder.address = main_shareholder.address
-    else:
-        new_related_shareholder.zip_code = form.zip_code.data
-        new_related_shareholder.prefecture_city = form.prefecture_city.data
-        new_related_shareholder.address = form.address.data
-        
-    db.session.add(new_related_shareholder)
-    db.session.commit()
-    
-    return new_related_shareholder
 
 def get_related_shareholders(main_shareholder_id):
     """
@@ -112,4 +90,29 @@ def delete_shareholder(shareholder_id):
     db.session.delete(shareholder)
     db.session.commit()
     return shareholder
+
+
+def get_shareholder_form(shareholder):
+    """
+    株主オブジェクトに基づき、適切なフォームクラスを返す。
+    """
+    if shareholder.parent_id is None:
+        # 主たる株主の場合
+        return MainShareholderForm
+    else:
+        # 特殊関係人の場合
+        return RelatedShareholderForm
+
+
+def get_main_shareholder_group_number(company_id, main_shareholder_id):
+    """
+    指定された主たる株主が、その会社の主たる株主リストの中で何番目かを返す。
+    リストのインデックスは0から始まるため、+1して返す。
+    見つからない場合は -1 を返す。
+    """
+    main_shareholders = get_main_shareholders(company_id)
+    for i, shareholder in enumerate(main_shareholders):
+        if shareholder.id == main_shareholder_id:
+            return i + 1
+    return -1
 

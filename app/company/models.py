@@ -96,7 +96,7 @@ class Shareholder(db.Model):
     joined_date = db.Column(db.Date)
     relationship = db.Column(db.String(50))
     address = db.Column(db.String(200))
-    zip_code = db.Column(db.String(8), nullable=True)
+    zip_code = db.Column(db.String(7), nullable=True)
     prefecture_city = db.Column(db.String(100), nullable=True)
     shares_held = db.Column(db.Integer)
     voting_rights = db.Column(db.Integer)
