@@ -1,6 +1,0 @@
-- 開発サーバーの起動: `python run.py`
-- テストの実行: `pytest`
-- リンティング: `ruff check .`
-- フォーマット: `ruff format .`
-- データベースのマイグレーション: `flask db migrate -m "migration message"` および `flask db upgrade`
-- データベースの初期化: `flask init-db`

@@ -1,5 +1,5 @@
 # app/company/import_data.py
-from flask import render_template, redirect, url_for, flash, session, request, current_app
+from flask import render_template, redirect, url_for, flash, session, request
 from flask_login import login_required, current_user
 
 from app import db
@@ -213,7 +213,8 @@ def data_mapping():
     grouped_masters = {}
     for master in master_accounts:
         major = master.major_category or 'その他'
-        if major not in grouped_masters: grouped_masters[major] = []
+        if major not in grouped_masters:
+            grouped_masters[major] = []
         grouped_masters[major].append(master)
 
     form = DataMappingForm()

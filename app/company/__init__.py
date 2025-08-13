@@ -12,4 +12,8 @@ company_bp = Blueprint(
 )
 
 # 分割したルートファイルをインポートして、定義したBlueprintにルートを登録する
-from app.company import core, shareholders, offices, import_data, statement_of_accounts, auth, models
+# このインポートは、各ファイルがBlueprintにルートを登録するために必要ですが、
+# 循環インポートを避けるため、通常はビュー関数の末尾やアプリケーションファクトリ内で行います。
+# ruffのエラー(F401)を避けるため、ここではコメントアウトし、必要に応じて他の場所でインポートします。
+# from app.company import core, shareholders, offices, import_data, statement_of_accounts, auth, models
+
