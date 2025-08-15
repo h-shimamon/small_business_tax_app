@@ -1,9 +1,10 @@
 {# app/templates/company/_form_helpers.html (UI改善版) #}
 
 {% macro render_field(field, placeholder=None, type=None, rows=None, id=None, class_="", readonly=False) %}
-  <div class="form-group">
+  {% set final_placeholder = placeholder if placeholder is not none else field.render_kw.get('placeholder') if field.render_kw else None %}
+  <div class="form-group" id="{{ field.name }}_group">
     {{ field.label(class="form-label") }}
-    {{ field(class=("form-control " ~ class_)|trim, placeholder=placeholder, type=type, rows=rows, id=id, readonly=readonly) }}
+    {{ field(class=("form-control " ~ class_)|trim, placeholder=final_placeholder, type=type, rows=rows, id=id, readonly=readonly) }}
     {% if field.errors %}
       <div class="form-errors">
         {% for error in field.errors %}
@@ -15,7 +16,7 @@
 {% endmacro %}
 
 {% macro render_radio_field(field) %}
-<div class="form-group">
+<div class="form-group" id="{{ field.name }}_group">
     {{ field.label(class="form-label") }}
     <div class="segmented-control">
         {% for subfield in field %}

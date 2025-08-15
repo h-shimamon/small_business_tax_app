@@ -50,17 +50,17 @@ class LoginForm(FlaskForm):
 
 class BaseShareholderForm(FlaskForm):
     """株主フォームの共通フィールドを定義するベースクラス"""
-    shareholder_number = StringField('株主番号', validators=[Optional(), Length(max=20)])
-    last_name = StringField('氏名', validators=[DataRequired(message="氏名は必須です。"), Length(max=50)])
+    shareholder_number = StringField('株主番号', validators=[Optional(), Length(max=20)], render_kw={"placeholder": "例：12345"})
+    last_name = StringField('氏名', validators=[DataRequired(message="氏名は必須です。"), Length(max=50)], render_kw={"placeholder": "例：鈴木 一郎"})
     officer_position = SelectField('役職名', choices=[], validators=[Optional()])
     
-    zip_code = StringField('郵便番号', validators=[Optional(), Length(min=7, max=7, message="郵便番号は7桁で入力してください。")])
-    prefecture_city = StringField('都道府県・市区町村', validators=[Optional(), Length(max=100)])
-    address = StringField('番地以降の住所', validators=[Optional(), Length(max=200)])
+    zip_code = StringField('郵便番号', validators=[Optional(), Length(min=7, max=7, message="郵便番号は7桁で入力してください。")], render_kw={"placeholder": "例：1000001 (ハイフンなし)"})
+    prefecture_city = StringField('都道府県・市区町村', validators=[Optional(), Length(max=100)], render_kw={"placeholder": "例：東京都千代田区"})
+    address = StringField('番地以降の住所', validators=[Optional(), Length(max=200)], render_kw={"placeholder": "例：丸の内1-1-1"})
 
-    investment_amount = IntegerField('出資金額', validators=[Optional()])
-    shares_held = IntegerField('保有株式数', validators=[Optional()])
-    voting_rights = IntegerField('議決権の数', validators=[Optional()])
+    investment_amount = IntegerField('出資金額', validators=[Optional()], render_kw={"placeholder": "例：1000000"})
+    shares_held = IntegerField('保有株式数', validators=[Optional()], render_kw={"placeholder": "例：100"})
+    voting_rights = IntegerField('議決権の数', validators=[Optional()], render_kw={"placeholder": "例：100"})
     is_controlled_company = RadioField(
         '被支配会社の該当', 
         choices=[('yes', '該当する'), ('no', '該当しない')], 
@@ -80,7 +80,7 @@ class MainShareholderForm(BaseShareholderForm):
 
 class RelatedShareholderForm(BaseShareholderForm):
     """特殊関係人用のフォーム"""
-    relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)])
+    relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)], render_kw={"placeholder": "例：妻"})
     is_address_same_as_main = BooleanField('主たる株主と住所が同じ')
     submit = SubmitField('登録する')
 
