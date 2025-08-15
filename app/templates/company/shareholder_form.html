@@ -52,6 +52,7 @@
                 {% endif %}
                 
                 {{ render_field(form.officer_position) }}
+                {{ render_radio_field(form.is_controlled_company) }}
                 
                 {% if is_related and form.is_address_same_as_main %}
                     {{ render_checkbox_field(form.is_address_same_as_main) }}
@@ -90,21 +91,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // 主たる株主の場合のみ、entity_typeに応じて役職フィールドの表示を切り替える
     {% if not is_related %}
     const entityTypeRadios = document.querySelectorAll('input[name="entity_type"]');
-    const officerPositionGroup = document.getElementById('officer_position_group');
-
+    
     function toggleFields() {
         const selectedValue = document.querySelector('input[name="entity_type"]:checked').value;
+        const officerPositionGroup = document.getElementById('officer_position_group');
+        const controlledCompanyGroup = document.getElementById('is_controlled_company_group');
+
+        // デフォルトですべて非表示に
+        officerPositionGroup.style.display = 'none';
+        controlledCompanyGroup.style.display = 'none';
+
         if (selectedValue === 'individual') {
             officerPositionGroup.style.display = 'block';
-        } else {
-            officerPositionGroup.style.display = 'none';
+        } else if (selectedValue === 'corporation') {
+            controlledCompanyGroup.style.display = 'block';
         }
+        // 'self_company' の場合は何も表示しない
     }
 
     if (entityTypeRadios.length > 0) {
         entityTypeRadios.forEach(radio => {
             radio.addEventListener('change', toggleFields);
         });
+        // 初期表示のために一度呼び出す
         toggleFields();
     }
     {% endif %}
