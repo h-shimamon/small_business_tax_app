@@ -80,7 +80,7 @@ class MainShareholderForm(BaseShareholderForm):
 
 class RelatedShareholderForm(BaseShareholderForm):
     """特殊関係人用のフォーム"""
-    relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)], render_kw={"placeholder": "例：妻"})
+    relationship = StringField('主たる株主との関係', validators=[DataRequired(message="主たる株主との関係は必須です。"), Length(max=100)], render_kw={"placeholder": "例：妻や長男など、主たる株主からみた関係"})
     is_address_same_as_main = BooleanField('主たる株主と住所が同じ')
     submit = SubmitField('登録する')
 

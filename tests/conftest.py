@@ -13,6 +13,7 @@ def app():
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
         'WTF_CSRF_ENABLED': False,
+        'SECRET_KEY': 'test-secret-key',  # テスト用のシークレットキーを追加
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'SERVER_NAME': 'localhost'
     })

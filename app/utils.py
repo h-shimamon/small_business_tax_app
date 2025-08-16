@@ -1,6 +1,13 @@
 # app/utils.py
 import pandas as pd
 
+def format_currency(value):
+    """数値を日本円の通貨書式にフォーマットする。"""
+    if value is None:
+        return "0円"
+    # 3桁区切りのカンマを付け、末尾に「円」を追加
+    return f"{int(value):,}円"
+
 def load_master_data():
     """
     マスターCSVファイルを読み込み、データフレームの辞書として返す。

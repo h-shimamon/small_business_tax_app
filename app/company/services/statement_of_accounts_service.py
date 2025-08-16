@@ -106,3 +106,18 @@ class StatementOfAccountsService:
             total = db.session.query(db.func.sum(model.balance)).filter_by(company_id=self.company_id).scalar()
             summary[key] = total or 0
         return summary
+
+    def get_deposit_summary(self, bs_deposits_total):
+        """
+        預貯金の内訳合計と貸借対照表の金額を比較し、サマリーを返す。
+        """
+        breakdown_total = db.session.query(db.func.sum(Deposit.balance)) \
+            .filter_by(company_id=self.company_id).scalar() or 0
+        
+        difference = breakdown_total - bs_deposits_total
+        
+        return {
+            'bs_total': bs_deposits_total,
+            'breakdown_total': breakdown_total,
+            'difference': difference
+        }

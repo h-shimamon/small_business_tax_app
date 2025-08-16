@@ -41,5 +41,20 @@ def declaration(company):
         return redirect(url_for('company.office_list'))
 
     form, _ = service.populate_declaration_form()
+
+    # 文字列をdateオブジェクトに変換（失敗した場合はNoneのままにする）
+    from datetime import datetime
+    try:
+        if form.accounting_period_start.data and isinstance(form.accounting_period_start.data, str):
+            form.accounting_period_start.data = datetime.strptime(form.accounting_period_start.data, '%Y-%m-%d').date()
+    except ValueError:
+        form.accounting_period_start.data = None
+    
+    try:
+        if form.accounting_period_end.data and isinstance(form.accounting_period_end.data, str):
+            form.accounting_period_end.data = datetime.strptime(form.accounting_period_end.data, '%Y-%m-%d').date()
+    except ValueError:
+        form.accounting_period_end.data = None
+
     navigation_state = get_navigation_state('declaration')
     return render_template('company/declaration_form.html', form=form, navigation_state=navigation_state)

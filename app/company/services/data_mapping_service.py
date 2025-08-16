@@ -115,3 +115,24 @@ class DataMappingService:
             mapped_balances[master_acc] += amount
             
         return dict(mapped_balances)
+
+    def apply_mappings_to_journals(self, journals_df):
+        """
+        仕訳帳データフレームの勘定科目名を、保存されたマッピング情報に基づいてマスター名に変換する。
+        複数の勘定科目列に対応する。
+        """
+        # ユーザーのマッピング情報を辞書として取得
+        user_mappings = {
+            m.original_account_name: m.master_account.name 
+            for m in UserAccountMapping.query.filter_by(user_id=self.user_id).all()
+        }
+        
+        # マッピングを適用する可能性のある列名をリスト化
+        account_columns = ['借方勘定科目', '貸方勘定科目']
+        
+        for col in account_columns:
+            if col in journals_df.columns:
+                # .map() を使って置換。マッピングがない場合は元の値を維持するために .fillna() を使用。
+                journals_df[col] = journals_df[col].map(user_mappings).fillna(journals_df[col])
+        
+        return journals_df

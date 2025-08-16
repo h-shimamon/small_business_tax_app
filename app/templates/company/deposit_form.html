@@ -45,12 +45,17 @@
         <form method="POST" action="">
             {{ form.hidden_tag() }}
 
-            {{ render_field(form.financial_institution, placeholder="例：〇〇銀行") }}
-            {{ render_field(form.branch_name, placeholder="例：本店") }}
-            {{ render_field(form.account_type) }}
-            {{ render_field(form.account_number, placeholder="例：1234567") }}
-            {{ render_field(form.balance, type="number", placeholder="例：1000000") }}
-            {{ render_field(form.remarks, rows="3", placeholder="摘要を入力（任意）") }}
+            <div class="form-grid-2col">
+                {{ render_field(form.financial_institution, placeholder="例：〇〇銀行") }}
+                {{ render_field(form.branch_name, placeholder="例：本店") }}
+                {{ render_field(form.account_type) }}
+                {{ render_field(form.account_number, placeholder="例：1234567") }}
+                {{ render_field(form.balance, type="number", placeholder="例：1000000") }}
+                
+                <div class="full-width">
+                    {{ render_field(form.remarks, rows="3", placeholder="摘要を入力（任意）") }}
+                </div>
+            </div>
 
             <div class="form-actions">
                 <a href="{{ url_for('company.statement_of_accounts', page='deposits') }}" class="button-secondary">戻る</a>

@@ -57,8 +57,12 @@
                     <span class="main-address">{{ main_shareholder.prefecture_city or '' }}{{ main_shareholder.address or '' }}</span>
                 </div>
                 <div class="accordion-summary">
-                    <span>株式数: {{ main_shareholder.shares_held or 0 }}株</span>
-                    <span>議決権: {{ main_shareholder.voting_rights or 0 }}</span>
+                    {% if page_title == '社員情報' %}
+                        <span>出資金: {{ (main_shareholder.investment_amount or 0) | format_currency }}</span>
+                    {% else %}
+                        <span>株式数: {{ main_shareholder.shares_held or 0 }}株</span>
+                        <span>議決権: {{ main_shareholder.voting_rights or 0 }}</span>
+                    {% endif %}
                 </div>
                 <div class="accordion-actions">
                                         <a href="{{ url_for('company.edit_shareholder', shareholder_id=main_shareholder.id) }}" class="action-icon" title="編集"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
@@ -87,8 +91,12 @@
                             <span class="related-address">{{ related.prefecture_city or '' }}{{ related.address or '' }}</span>
                         </div>
                         <div class="related-summary">
-                            <span>株式数: {{ related.shares_held or 0 }}株</span>
-                            <span>議決権: {{ related.voting_rights or 0 }}</span>
+                            {% if page_title == '社員情報' %}
+                                <span>出資金: {{ (related.investment_amount or 0) | format_currency }}</span>
+                            {% else %}
+                                <span>株式数: {{ related.shares_held or 0 }}株</span>
+                                <span>議決権: {{ related.voting_rights or 0 }}</span>
+                            {% endif %}
                         </div>
                         <div class="related-actions">
                             <a href="{{ url_for('company.edit_shareholder', shareholder_id=related.id) }}" class="action-icon" title="編集"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>

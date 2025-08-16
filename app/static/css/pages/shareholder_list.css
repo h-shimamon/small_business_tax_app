@@ -52,22 +52,6 @@
     gap: 0.5rem;
     margin-left: 2rem;
 }
-.action-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    color: var(--text-secondary);
-    transition: background-color 0.2s, color 0.2s;
-    border: none;
-    background: none;
-    cursor: pointer;
-    padding: 0;
-}
-.action-icon:hover { background-color: #e9ecef; }
-.action-icon svg { width: 18px; height: 18px; }
 
 .accordion-toggle {
     transition: transform 0.3s;
@@ -141,11 +125,18 @@
     background-color: var(--background-secondary);
 }
 
+/* 罫線なしの行 */
+.related-row.no-border {
+    border-bottom: none;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
 /* 判定結果カードのスタイル */
 .classification-card {
     margin-bottom: 1.5rem;
     padding: 1.2rem 1.5rem;
-    background-color: var(--background-secondary);
+    background-color: var(--bg-content);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     text-align: center;

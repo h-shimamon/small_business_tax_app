@@ -14,9 +14,9 @@ class MoneyForwardParser(BaseParser):
         'id': '取引No.',
         'date': '取引日',
         'debit_account': '借方勘定科目',
-        'debit_amount': '借方金額(円)',
+        'debit_amount': '借方金額',
         'credit_account': '貸方勘定科目',
-        'credit_amount': '貸方金額(円)',
+        'credit_amount': '貸方金額',
     }
 
     # --- ヘッダーなしファイル用の設定 ---
@@ -59,17 +59,19 @@ class MoneyForwardParser(BaseParser):
 
     def get_journals(self):
         """
-        マネーフォワード形式のファイルから仕訳帳データを解析し、財務諸表用のデータを返す。
+        マネーフォワード形式のファイルから仕訳帳データを解析し、
+        正規化されたDataFrameを返す。
         """
         df = self._read_and_prepare_journals()
-        opening_balance_df, mid_year_transactions_df = self._separate_transactions(df)
-        opening_balances = self._calculate_balances(opening_balance_df)
-        mid_year_balances = self._calculate_balances(mid_year_transactions_df)
         
-        return {
-            'opening_balances': opening_balances,
-            'mid_year_balances': mid_year_balances
-        }
+        # FinancialStatementServiceが期待する内部的な列名に統一する
+        return df.rename(columns={
+            'debit_account': '借方勘定科目',
+            'credit_account': '貸方勘定科目',
+            'debit_amount': '借方金額',
+            'credit_amount': '貸方金額',
+            'date': '日付'
+        })
 
     def _read_and_prepare_journals(self):
         """仕訳帳CSVを読み込み、前処理を行う。ヘッダーの有無を自動判別する。"""
@@ -95,43 +97,6 @@ class MoneyForwardParser(BaseParser):
         df.dropna(subset=['id', 'date'], inplace=True)
         
         return df
-
-    def _separate_transactions(self, df):
-        """データフレームを期首残高と期中取引に分離する。"""
-        start_month = df['date'].min().month
-        start_month_df = df[df['date'].dt.month == start_month]
-        capital_transactions = start_month_df[start_month_df['credit_account'] == '資本金']
-        
-        if capital_transactions.empty:
-            return pd.DataFrame(), df
-
-        opening_balance_tx_ids = capital_transactions['id'].unique()
-        opening_balance_mask = df['id'].isin(opening_balance_tx_ids)
-        opening_balance_df = df[opening_balance_mask]
-        mid_year_transactions_df = df[~opening_balance_mask]
-        
-        return opening_balance_df, mid_year_transactions_df
-
-    def _calculate_balances(self, df):
-        """勘定科目ごとの純残高を計算する。借方はプラス、貸方はマイナスとして集計。"""
-        if df.empty:
-            return {}
-
-        debits = df[['debit_account', 'debit_amount']].rename(
-            columns={'debit_account': 'account', 'debit_amount': 'amount'}
-        )
-        credits = df[['credit_account', 'credit_amount']].rename(
-            columns={'credit_account': 'account', 'credit_amount': 'amount'}
-        )
-        credits['amount'] = -credits['amount']
-        
-        all_transactions = pd.concat([debits, credits])
-        all_transactions = all_transactions[
-            all_transactions['account'].notna() & (all_transactions['account'] != 'nan') & (all_transactions['account'] != '')
-        ]
-        balances = all_transactions.groupby('account')['amount'].sum()
-        
-        return {k: int(v) for k, v in balances.items() if v != 0}
 
     def get_fixed_assets(self):
         """

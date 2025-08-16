@@ -4,19 +4,19 @@ from flask import Flask
 from .extensions import db, login_manager, migrate
 from .company.models import User
 
-def create_app(config_class=None):
+def create_app(test_config=None):
     """
     アプリケーションファクトリ: Flaskアプリケーションのインスタンスを作成・設定します。
     """
     app = Flask(__name__, instance_relative_config=True)
 
     # --- 設定の読み込み ---
-    if config_class is None:
+    if test_config is None:
         # デフォルト設定をconfig.pyから読み込む
         app.config.from_object('config.Config')
     else:
-        # テスト時など、引数で渡された設定クラスを読み込む
-        app.config.from_object(config_class)
+        # テスト時など、引数で渡された設定を読み込む
+        app.config.from_mapping(test_config)
 
     # インスタンスフォルダがなければ作成
     try:
@@ -35,6 +35,10 @@ def create_app(config_class=None):
     def load_user(user_id):
         # Userモデルのインポートをここで行うことで循環参照を回避
         return User.query.get(int(user_id))
+
+    # --- Jinja2フィルターの登録 ---
+    from .utils import format_currency
+    app.jinja_env.filters['format_currency'] = format_currency
 
     # --- ブループリントの登録 ---
     from .company import company_bp
