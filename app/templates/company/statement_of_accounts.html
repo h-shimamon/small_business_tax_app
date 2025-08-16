@@ -18,13 +18,26 @@
         <p class="content-subtitle">登録された{{ page_title }}の情報を確認・編集します。</p>
     </div>
     <div class="header-actions">
-        <div class="summary-block">
-            <div class="summary-label">合計金額</div>
-            <div class="summary-value">{{ "{:,.0f}".format(total) }} 円</div>
-        </div>
         <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
     </div>
 </div>
+
+{% if page == 'deposits' and deposit_summary %}
+<div class="card summary-card">
+    <div class="summary-item">
+        <span class="summary-label">B/S上の預金残高</span>
+        <span class="summary-value">{{ deposit_summary.bs_total | format_currency }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">内訳明細の合計額</span>
+        <span class="summary-value">{{ deposit_summary.breakdown_total | format_currency }}</span>
+    </div>
+    <div class="summary-item result {% if deposit_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
+        <span class="summary-label">差額</span>
+        <span class="summary-value">{{ deposit_summary.difference | format_currency }}</span>
+    </div>
+</div>
+{% endif %}
 
 <div class="card-grid">
     {% if items %}

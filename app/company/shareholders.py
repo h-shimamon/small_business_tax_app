@@ -123,7 +123,8 @@ def delete_shareholder(company, shareholder_id, page_title):
 
 @company_bp.route('/shareholder/confirm/related/<int:main_shareholder_id>')
 @company_required
-def confirm_related_shareholder(company, main_shareholder_id):
+@set_page_title_and_verify_company_type
+def confirm_related_shareholder(company, main_shareholder_id, page_title):
     """【中間ページ】特殊関係人の登録意思を確認する"""
     main_shareholder = shareholder_service.get_shareholder_by_id(main_shareholder_id)
     if main_shareholder.company_id != company.id:
@@ -142,15 +143,18 @@ def confirm_related_shareholder(company, main_shareholder_id):
         'company/confirm_related_shareholder.html',
         main_shareholder=main_shareholder,
         title=title,
-        message=message
+        message=message,
+        page_title=page_title
     )
 
 @company_bp.route('/shareholder/confirm/next_main/')
 @company_required
-def confirm_next_main_shareholder(company):
+@set_page_title_and_verify_company_type
+def confirm_next_main_shareholder(company, page_title):
     """【中間ページ3】次の主たる株主グループの登録意思を確認する"""
     main_shareholders = shareholder_service.get_main_shareholders(company.id)
     return render_template(
         'company/next_main_shareholder.html',
-        main_shareholders=main_shareholders
+        main_shareholders=main_shareholders,
+        page_title=page_title
     )

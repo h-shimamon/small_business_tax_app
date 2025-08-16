@@ -1,158 +1,109 @@
-/* /app/static/css/pages/statement_of_accounts.css */
+/* app/static/css/pages/statement_of_accounts.css */
 
-/* --- Content Header --- */
-.content-header {
+.summary-card {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
-    gap: 20px;
+    justify-content: space-around;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.header-main {
-    flex-grow: 1;
+.summary-item {
+    text-align: center;
+    padding: 0 1rem;
 }
 
-.header-main .content-title {
-    margin-bottom: 4px;
-}
-
-.header-main .content-subtitle {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-shrink: 0;
-}
-
-.summary-block {
-    text-align: right;
+.summary-item + .summary-item {
+    border-left: 1px solid var(--color-border);
 }
 
 .summary-label {
     font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-bottom: 2px;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .summary-value {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--color-text-primary);
 }
 
-/* --- Card Grid --- */
+.summary-item.result .summary-value {
+    font-weight: 700;
+}
+
+.summary-item.result.zero .summary-value {
+    color: var(--color-success);
+}
+
+.summary-item.result.non-zero .summary-value {
+    color: var(--color-danger);
+}
+
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
 }
 
-/* --- Statement Card --- */
-.statement-card {
-    background-color: var(--bg-content);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-}
-
-.statement-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
-}
-
-.card-main-info .primary {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-}
-
-.card-main-info .secondary {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin: 4px 0 0 0;
-}
-
-.card-amount {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    white-space: nowrap;
-    margin-left: 16px;
-}
-
-.card-body {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
-}
-
-.card-details-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 16px;
-    font-size: 0.875rem;
-}
-
-.detail-item {
-    display: flex;
-    flex-direction: column;
-}
-
-.detail-label {
-    color: var(--text-secondary);
-    margin-bottom: 2px;
-    font-size: 0.8rem;
-}
-
-.detail-value {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.detail-item.full-width {
-    grid-column: 1 / -1;
-}
-
-/* --- Empty State --- */
 .empty-state-card {
-    grid-column: 1 / -1;
+    background-color: var(--color-background-light);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--border-radius-large);
+    padding: 2rem;
+    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 24px;
-    text-align: center;
-    border: 2px dashed var(--border-color);
-    border-radius: 12px;
-    background-color: #f9fafb;
 }
 
 .empty-state-card h2 {
     font-size: 1.25rem;
-    margin: 0 0 8px 0;
-    color: var(--text-primary);
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
 }
 
 .empty-state-card p {
-    margin: 0 0 24px 0;
-    color: var(--text-secondary);
-    max-width: 400px;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.soa-item-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    gap: 1.5rem;
+}
+
+.soa-item-card .item-info {
+    flex-grow: 1;
+}
+
+.soa-item-card .info-primary {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.soa-item-card .info-secondary {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.soa-item-card .item-amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+    min-width: 120px;
+    text-align: right;
+}
+
+.soa-item-card .item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }

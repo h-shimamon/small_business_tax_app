@@ -38,6 +38,24 @@
 {% endif %}
 
 <div class="card">
+    {% if is_new %}
+    <div class="instruction-header">
+        {% if is_related %}
+            <p class="instruction-text">
+                <strong>主たる{{ page_title }}: {{ shareholder.parent.last_name }} 様</strong><br>
+                上記に紐づく特殊関係人の情報を入力してください。
+            </p>
+        {% else %}
+            <p class="instruction-text">
+                {% if page_title == '社員情報' %}
+                    年度末時点で、出資金額が最も多い社員の氏名を入力してください。
+                {% else %}
+                    年度末時点で、保有する株式数と議決権数が最も多い株主の氏名を入力してください。
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+    {% endif %}
     <form method="post" novalidate>
         {{ form.hidden_tag() }}
         <div class="form-grid">
@@ -52,7 +70,10 @@
                 {% endif %}
                 
                 {{ render_field(form.officer_position) }}
-                {{ render_radio_field(form.is_controlled_company) }}
+                
+                {% if not is_related %}
+                    {{ render_radio_field(form.is_controlled_company) }}
+                {% endif %}
                 
                 {% if is_related and form.is_address_same_as_main %}
                     {{ render_checkbox_field(form.is_address_same_as_main) }}
@@ -66,10 +87,26 @@
             </fieldset>
 
             <fieldset>
-                <legend>持株情報</legend>
+                <legend>{% if page_title == '社員情報' %}出資情報{% else %}持株情報{% endif %}</legend>
                 {{ render_field(form.investment_amount) }}
-                {{ render_field(form.shares_held) }}
-                {{ render_field(form.voting_rights) }}
+                
+                {% if page_title == '株主情報' %}
+                    {{ render_field(form.shares_held) }}
+                    {{ render_field(form.voting_rights) }}
+                {% endif %}
+
+                {% if is_new and is_related %}
+                <div class="explanation-box" style="margin-top: 1.5rem;">
+                    <h4>特殊な関係にある個人や法人とは…</h4>
+                    <ul>
+                        <li>株主等の親族（配偶者、六親等以内の血族、三親等以内の姻族）</li>
+                        <li>株主等と事実上の婚姻関係にある</li>
+                        <li>個人である株主等の使用人</li>
+                        <li>株主等から受ける金銭やその他の資産により生計を立てている</li>
+                        <li>株主等並びに株主等と特殊関係のある法人</li>
+                    </ul>
+                </div>
+                {% endif %}
             </fieldset>
         </div>
 

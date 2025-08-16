@@ -34,7 +34,7 @@ def test_register_main_shareholder_success(client, init_database):
         assert Shareholder.query.count() == 2
         new_shareholder = Shareholder.query.filter_by(last_name='新規株主B').first()
         assert new_shareholder is not None
-        assert new_shareholder.company_id == user_a.companies[0].id
+        assert new_shareholder.company_id == user_a.company.id
 
         logout_user()
 
@@ -45,7 +45,7 @@ def test_edit_shareholder_success(client, init_database):
 
     with app.app_context():
         user_a = db.session.get(User, 1)
-        shareholder_to_edit = Shareholder.query.filter_by(company_id=user_a.companies[0].id).first()
+        shareholder_to_edit = Shareholder.query.filter_by(company_id=user_a.company.id).first()
         shareholder_id = shareholder_to_edit.id
 
         with client.session_transaction():
@@ -75,7 +75,7 @@ def test_delete_shareholder_success(client, init_database):
 
     with app.app_context():
         user_a = db.session.get(User, 1)
-        shareholder_to_delete = Shareholder.query.filter_by(company_id=user_a.companies[0].id).first()
+        shareholder_to_delete = Shareholder.query.filter_by(company_id=user_a.company.id).first()
         shareholder_id = shareholder_to_delete.id
 
         assert db.session.get(Shareholder, shareholder_id) is not None
@@ -111,7 +111,7 @@ def test_register_more_than_three_main_shareholders(client, init_database):
             assert response.status_code == 302
 
         main_shareholders_count = Shareholder.query.filter(
-            Shareholder.company_id == user_a.companies[0].id,
+            Shareholder.company_id == user_a.company.id,
             Shareholder.parent_id.is_(None)
         ).count()
         assert main_shareholders_count == 5
@@ -144,7 +144,7 @@ def test_edit_shareholder_tenancy_fails(client, init_database):
     with app.app_context():
         user_a = db.session.get(User, 1)
         user_b = db.session.get(User, 2)
-        shareholder_a = Shareholder.query.filter_by(company_id=user_a.companies[0].id).first()
+        shareholder_a = Shareholder.query.filter_by(company_id=user_a.company.id).first()
         shareholder_a_id = shareholder_a.id
 
         with client.session_transaction():
@@ -167,7 +167,7 @@ def test_delete_shareholder_tenancy_fails(client, init_database):
     with app.app_context():
         user_a = db.session.get(User, 1)
         user_b = db.session.get(User, 2)
-        shareholder_a = Shareholder.query.filter_by(company_id=user_a.companies[0].id).first()
+        shareholder_a = Shareholder.query.filter_by(company_id=user_a.company.id).first()
         shareholder_a_id = shareholder_a.id
 
         with client.session_transaction():

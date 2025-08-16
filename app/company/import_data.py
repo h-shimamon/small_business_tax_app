@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
-from app.company.models import UserAccountMapping
+from app.company.models import AccountingData, UserAccountMapping
 from app.navigation import get_navigation_state, mark_step_as_completed
 from .services import DataMappingService, FinancialStatementService
 from .parser_factory import ParserFactory
@@ -123,28 +123,44 @@ def upload_data(datatype):
                     return redirect(url_for('company.data_mapping'))
             
             elif datatype == 'journals':
-                # 【重要】保存されたマッピング情報を適用
-                mapping_service = DataMappingService(current_user.id)
-                mapped_opening_balances = mapping_service.apply_mappings_to_balances(parsed_data['opening_balances'])
-                mapped_mid_year_balances = mapping_service.apply_mappings_to_balances(parsed_data['mid_year_balances'])
-                
-                mapped_journal_data = {
-                    'opening_balances': mapped_opening_balances,
-                    'mid_year_balances': mapped_mid_year_balances
-                }
+                company = current_user.company
+                if not company or not company.accounting_period_start or not company.accounting_period_end:
+                    flash('申告情報で会計期間が設定されていません。先に基本情報を登録してください。', 'warning')
+                    return redirect(url_for('company.declaration'))
 
-                # app.configからマスターデータを取得する代わりにMasterDataServiceを使用
-                from .services.master_data_service import MasterDataService
-                master_data_service = MasterDataService()
-                fs_service = FinancialStatementService(mapped_journal_data, master_data_service)
-                bs_data, pl_data = fs_service.create_financial_statements()
-                
-                session['financial_statements'] = {
-                    'balance_sheet': bs_data,
-                    'profit_and_loss': pl_data
-                }
+                # Companyモデルから会計期間を取得し、dateオブジェクトに変換
+                from datetime import datetime
+                start_date = datetime.strptime(company.accounting_period_start, '%Y-%m-%d').date()
+                end_date = datetime.strptime(company.accounting_period_end, '%Y-%m-%d').date()
+
+                # マッピングサービスを利用してデータを変換
+                mapping_service = DataMappingService(current_user.id)
+                df_journals = mapping_service.apply_mappings_to_journals(parsed_data)
+
+                # 財務諸表サービスを呼び出し
+                fs_service = FinancialStatementService(df_journals, start_date, end_date)
+                bs_data = fs_service.create_balance_sheet()
+                pl_data = fs_service.create_profit_loss_statement()
+
+                # 既存の会計データを削除
+                AccountingData.query.filter_by(company_id=company.id).delete()
+
+                # 新しい会計データをDBに保存
+                accounting_data = AccountingData(
+                    company_id=company.id,
+                    period_start=start_date,
+                    period_end=end_date,
+                    data={
+                        'balance_sheet': bs_data,
+                        'profit_loss_statement': pl_data
+                    }
+                )
+                db.session.add(accounting_data)
+                db.session.commit()
+
                 mark_step_as_completed(datatype)
-                return redirect(url_for('company.show_financial_statements'))
+                flash('仕訳帳データが正常に取り込まれ、財務諸表が生成されました。', 'success')
+                return redirect(url_for('company.confirm_trial_balance'))
 
         except Exception as e:
             flash(f"エラーが発生しました: {e}", 'danger')

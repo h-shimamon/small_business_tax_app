@@ -36,8 +36,8 @@ class Company(db.Model):
     industry_code = db.Column(db.String(10))
     reference_number = db.Column(db.String(20))
 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref=db.backref('companies', lazy=True))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    user = db.relationship('User', backref=db.backref('company', uselist=False))
 
     # --- 申告情報 ---
     accounting_period_start = db.Column(db.String(10))
@@ -377,3 +377,18 @@ class MasterVersion(db.Model):
 
     def __repr__(self):
         return f'<MasterVersion {self.version_hash}>'
+
+class AccountingData(db.Model):
+    """
+    生成された財務諸表データ（貸借対照表、損益計算書）を永続化するためのモデル。
+    会計年度ごとにレコードが作成されることを想定。
+    """
+    __tablename__ = 'accounting_data'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    company = db.relationship('Company', backref=db.backref('accounting_data', lazy='dynamic'))
+    period_start = db.Column(db.Date, nullable=False)
+    period_end = db.Column(db.Date, nullable=False)
+    data = db.Column(db.JSON, nullable=False) # 財務諸表本体
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())

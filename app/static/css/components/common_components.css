@@ -19,3 +19,28 @@
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
 }
+
+/* --- Action Icon --- */
+/* 編集や削除などの操作に使用する円形のアイコンボタン */
+.action-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    transition: background-color 0.2s, color 0.2s;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+}
+.action-icon:hover { 
+    background-color: #e9ecef; 
+    color: var(--text-primary);
+}
+.action-icon svg { 
+    width: 18px; 
+    height: 18px; 
+}

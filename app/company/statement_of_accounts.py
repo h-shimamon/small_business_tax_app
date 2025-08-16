@@ -16,6 +16,10 @@ from app.company.forms import (
 from app import db
 from app.navigation import get_navigation_state
 from .auth import company_required
+from app.company.services.statement_of_accounts_service import StatementOfAccountsService
+from app.company.services.financial_statement_service import FinancialStatementService
+from app.company.services.master_data_service import MasterDataService
+from flask import session
 
 # 各内訳ページの情報を一元管理
 STATEMENT_PAGES_CONFIG = {
@@ -53,8 +57,46 @@ def statement_of_accounts(company):
         'page_title': config['title'],
         'items': items,
         'total': total,
-        'navigation_state': get_navigation_state(page)
+        'navigation_state': get_navigation_state(page),
+        'deposit_summary': None
     }
+
+    if page == 'deposits':
+        from .models import AccountingData
+        
+        accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
+
+        if not accounting_data:
+            flash('会計データがアップロードされていません。合計額を照合するには、先に会計データを選択してください。', 'info')
+        else:
+            bs_data = accounting_data.data.get('balance_sheet', {})
+            
+            # マスターデータから「預貯金」に該当する勘定科目リストを取得
+            master_data_service = MasterDataService()
+            bs_master_df = master_data_service.get_bs_master_df()
+            deposit_accounts = bs_master_df[bs_master_df['breakdown_document'] == '預貯金'].index.tolist()
+
+            # 貸借対照表データから該当する勘定科目の残高を合計する
+            bs_deposits_total = 0
+            
+            def find_and_sum(data_dict):
+                total = 0
+                for key, value in data_dict.items():
+                    if isinstance(value, dict):
+                        if 'items' in value and isinstance(value['items'], list):
+                            for item in value['items']:
+                                if isinstance(item, dict) and item.get('name') in deposit_accounts:
+                                    total += item.get('amount', 0)
+                        else:
+                            total += find_and_sum(value)
+                return total
+
+            bs_deposits_total = find_and_sum(bs_data)
+            
+            soa_service = StatementOfAccountsService(company.id)
+            deposit_summary = soa_service.get_deposit_summary(bs_deposits_total)
+            context['deposit_summary'] = deposit_summary
+
     return render_template('company/statement_of_accounts.html', **context)
 
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])

@@ -49,7 +49,7 @@ class MasterDataService:
                     print(f"警告: マスターファイルが見つかりません: {file_path}")
                     continue
                 
-                df = pd.read_csv(file_path)
+                df = pd.read_csv(file_path, encoding='utf-8-sig')
                 df.dropna(how='all', inplace=True)
                 df.dropna(subset=['No.', '勘定科目名'], inplace=True)
 
