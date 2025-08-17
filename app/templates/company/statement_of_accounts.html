@@ -22,26 +22,76 @@
     </div>
 </div>
 
-{% if page == 'deposits' and deposit_summary %}
+{% if page == 'deposits' %}
 <div class="card summary-card">
     <div class="summary-item">
         <span class="summary-label">B/S上の預金残高</span>
-        <span class="summary-value">{{ deposit_summary.bs_total | format_currency }}</span>
+        <span class="summary-value">{{ (deposit_summary.bs_total | default(0)) | format_currency }}</span>
     </div>
     <div class="summary-item">
         <span class="summary-label">内訳明細の合計額</span>
-        <span class="summary-value">{{ deposit_summary.breakdown_total | format_currency }}</span>
+        <span class="summary-value">{{ (deposit_summary.breakdown_total | default(0)) | format_currency }}</span>
     </div>
     <div class="summary-item result {% if deposit_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">{{ deposit_summary.difference | format_currency }}</span>
+        <span class="summary-value">{{ (deposit_summary.difference | default(0)) | format_currency }}</span>
+    </div>
+</div>
+{% endif %}
+
+{% if page == 'notes_receivable' %}
+<div class="card summary-card">
+    <div class="summary-item">
+        <span class="summary-label">B/S上の受取手形残高</span>
+        <span class="summary-value">{{ (notes_receivable_summary.bs_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">内訳明細の合計額</span>
+        <span class="summary-value">{{ (notes_receivable_summary.breakdown_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item result {% if notes_receivable_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
+        <span class="summary-label">差額</span>
+        <span class="summary-value">{{ (notes_receivable_summary.difference | default(0)) | format_currency }}</span>
+    </div>
+</div>
+{% endif %}
+
+{% if page == 'accounts_receivable' %}
+<div class="card summary-card">
+    <div class="summary-item">
+        <span class="summary-label">B/S上の売掛金（未収入金）残高</span>
+        <span class="summary-value">{{ (accounts_receivable_summary.bs_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">内訳明細の合計額</span>
+        <span class="summary-value">{{ (accounts_receivable_summary.breakdown_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item result {% if (accounts_receivable_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
+        <span class="summary-label">差額</span>
+        <span class="summary-value">{{ (accounts_receivable_summary.difference | default(0)) | format_currency }}</span>
+    </div>
+</div>
+{% endif %}
+
+{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','borrowings','executive_compensations','land_rents','miscellaneous'] %}
+<div class="card summary-card">
+    <div class="summary-item">
+        <span class="summary-label">{{ generic_summary_label }}</span>
+        <span class="summary-value">{{ (generic_summary.bs_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">内訳明細の合計額</span>
+        <span class="summary-value">{{ (generic_summary.breakdown_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item result {% if (generic_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
+        <span class="summary-label">差額</span>
+        <span class="summary-value">{{ (generic_summary.difference | default(0)) | format_currency }}</span>
     </div>
 </div>
 {% endif %}
 
 <div class="card-grid">
-    {% if items %}
-        {% include 'company/_cards/' + page + '_card.html' %}
+    {% if items %}        {% include 'company/_cards/' + page + '_card.html' %}
     {% else %}
         <div class="empty-state-card">
             <h2>まだ{{ page_title }}が登録されていません</h2>

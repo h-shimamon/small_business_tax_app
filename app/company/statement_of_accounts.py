@@ -21,6 +21,24 @@ from app.company.services.financial_statement_service import FinancialStatementS
 from app.company.services.master_data_service import MasterDataService
 from flask import session
 
+# Summary mapping for other pages: master type and breakdown document name
+SUMMARY_PAGE_MAP = {
+    'temporary_payments': ('BS', '仮払金（前渡金）'),
+    'loans_receivable': ('BS', '貸付金・受取利息'),
+    'inventories': ('BS', '棚卸資産'),
+    'securities': ('BS', '有価証券'),
+    'fixed_assets': ('BS', '固定資産（土地等）'),
+    'notes_payable': ('BS', '支払手形'),
+    'accounts_payable': ('BS', '買掛金（未払金・未払費用）'),
+    'temporary_receipts': ('BS', '仮受金（前受金・預り金）'),
+    'borrowings': ('BS', '借入金及び支払利子'),
+    # PL-based pages
+    'executive_compensations': ('PL', '役員給与等'),
+    'land_rents': ('PL', '地代家賃等'),
+    'miscellaneous': ('PL', '雑益・雑損失等'),
+}
+
+
 # 各内訳ページの情報を一元管理
 STATEMENT_PAGES_CONFIG = {
     'deposits': {'model': Deposit, 'form': DepositForm, 'title': '預貯金等', 'total_field': 'balance', 'template': 'deposit_form.html'},
@@ -61,6 +79,45 @@ def statement_of_accounts(company):
         'deposit_summary': None
     }
 
+    # Compute generic summary for pages other than those already explicitly handled
+    if page in SUMMARY_PAGE_MAP:
+        master_type, breakdown_name = SUMMARY_PAGE_MAP[page]
+        # Determine source data key and master df
+        data_key = 'balance_sheet' if master_type == 'BS' else 'profit_and_loss'
+        accounting_total = 0
+        from .models import AccountingData
+        accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
+        if accounting_data:
+            source = accounting_data.data.get(data_key, {})
+            master_service = MasterDataService()
+            df = master_service.get_bs_master_df() if master_type == 'BS' else master_service.get_pl_master_df()
+            target_accounts = df[df['breakdown_document'] == breakdown_name].index.tolist()
+            def find_and_sum(data_dict):
+                total_local = 0
+                for _, value in data_dict.items():
+                    if isinstance(value, dict):
+                        if 'items' in value and isinstance(value['items'], list):
+                            for it in value['items']:
+                                if isinstance(it, dict) and it.get('name') in target_accounts:
+                                    total_local += it.get('amount', 0)
+                        else:
+                            total_local += find_and_sum(value)
+                return total_local
+            accounting_total = find_and_sum(source)
+        else:
+            accounting_total = 0
+        # Breakdown total from DB
+        model = config['model']
+        total_field = getattr(model, config['total_field'])
+        breakdown_total = db.session.query(db.func.sum(total_field)).filter_by(company_id=company.id).scalar() or 0
+        difference = accounting_total - breakdown_total
+        context['generic_summary'] = {
+            'bs_total': accounting_total,
+            'breakdown_total': breakdown_total,
+            'difference': difference
+        }
+        context['generic_summary_label'] = f"{'B/S上の' if master_type == 'BS' else 'P/L上の'}{config['title']}残高"
+
     if page == 'deposits':
         from .models import AccountingData
         
@@ -96,6 +153,87 @@ def statement_of_accounts(company):
             soa_service = StatementOfAccountsService(company.id)
             deposit_summary = soa_service.get_deposit_summary(bs_deposits_total)
             context['deposit_summary'] = deposit_summary
+
+    elif page == 'notes_receivable':
+        from .models import AccountingData
+
+        accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
+
+        if not accounting_data:
+            bs_notes_total = 0
+            breakdown_total = db.session.query(db.func.sum(NotesReceivable.amount)).filter_by(company_id=company.id).scalar() or 0
+            difference = bs_notes_total - breakdown_total
+            context['notes_receivable_summary'] = {
+                'bs_total': bs_notes_total,
+                'breakdown_total': breakdown_total,
+                'difference': difference
+            }
+        else:
+            bs_data = accounting_data.data.get('balance_sheet', {})
+
+            # マスターデータから「受取手形」に該当する勘定科目リストを取得
+            master_data_service = MasterDataService()
+            bs_master_df = master_data_service.get_bs_master_df()
+            notes_accounts = bs_master_df[bs_master_df['breakdown_document'] == '受取手形'].index.tolist()
+
+            # 貸借対照表データから該当する勘定科目の残高を合計する
+            def find_and_sum(data_dict):
+                total = 0
+                for key, value in data_dict.items():
+                    if isinstance(value, dict):
+                        if 'items' in value and isinstance(value['items'], list):
+                            for item in value['items']:
+                                if isinstance(item, dict) and item.get('name') in notes_accounts:
+                                    total += item.get('amount', 0)
+                        else:
+                            total += find_and_sum(value)
+                return total
+
+            bs_notes_total = find_and_sum(bs_data)
+
+            breakdown_total = db.session.query(db.func.sum(NotesReceivable.amount)).filter_by(company_id=company.id).scalar() or 0
+            difference = bs_notes_total - breakdown_total
+            context['notes_receivable_summary'] = {
+                'bs_total': bs_notes_total,
+                'breakdown_total': breakdown_total,
+                'difference': difference
+            }
+
+    elif page == 'accounts_receivable':
+        from .models import AccountingData
+
+        accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
+
+        if not accounting_data:
+            bs_ar_total = 0
+        else:
+            bs_data = accounting_data.data.get('balance_sheet', {})
+
+            master_data_service = MasterDataService()
+            bs_master_df = master_data_service.get_bs_master_df()
+            ar_accounts = bs_master_df[bs_master_df['breakdown_document'] == '売掛金（未収入金）'].index.tolist()
+
+            def find_and_sum(data_dict):
+                total = 0
+                for key, value in data_dict.items():
+                    if isinstance(value, dict):
+                        if 'items' in value and isinstance(value['items'], list):
+                            for item in value['items']:
+                                if isinstance(item, dict) and item.get('name') in ar_accounts:
+                                    total += item.get('amount', 0)
+                        else:
+                            total += find_and_sum(value)
+                return total
+
+            bs_ar_total = find_and_sum(bs_data)
+
+        breakdown_total = db.session.query(db.func.sum(AccountsReceivable.balance_at_eoy)).filter_by(company_id=company.id).scalar() or 0
+        difference = bs_ar_total - breakdown_total
+        context['accounts_receivable_summary'] = {
+            'bs_total': bs_ar_total,
+            'breakdown_total': breakdown_total,
+            'difference': difference
+        }
 
     return render_template('company/statement_of_accounts.html', **context)
 

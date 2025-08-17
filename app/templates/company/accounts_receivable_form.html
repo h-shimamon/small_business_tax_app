@@ -4,6 +4,11 @@
 {# ページのタイトルを設定 #}
 {% block title %}{{ form_title }} - 勘定科目内訳書{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/statement_of_accounts.css') }}">
+{% endblock %}
+
 {# 古いform_view.cssは不要になったので削除 #}
 
 {# サイドバーは勘定科目内訳書画面と同じものを表示 #}
