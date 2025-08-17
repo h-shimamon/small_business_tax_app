@@ -39,10 +39,11 @@ class NavigationNode:
         # 子孫がアクティブかどうかも再帰的にチェック
         return any(child.is_active(current_page_key) for child in self.children)
 
-    def to_dict(self, current_page_key, completed_steps):
+    def to_dict(self, current_page_key, completed_steps, skipped_steps=None):
         """
         テンプレートに渡すための辞書形式に変換する
         """
+        skipped_steps = skipped_steps or set()
         # 親がアクティブかどうかを計算
         is_parent_active = self.is_active(current_page_key)
 
@@ -56,10 +57,13 @@ class NavigationNode:
                 'name': child.name,
                 'url': child.get_url(),
                 'is_active': is_child_active,
-                'is_completed': child.key in completed_steps
+                'is_completed': child.key in skipped_steps and False or child.key in completed_steps,
+                'is_skipped': child.key in skipped_steps,
+                'key': child.key
             })
 
         return {
+            'key': self.key,
             'name': self.name,
             'type': self.node_type,
             'is_active': is_parent_active,

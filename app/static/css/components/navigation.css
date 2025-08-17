@@ -156,3 +156,63 @@
 .progress-step.is-pending .progress-label {
     color: var(--text-secondary);
 }
+
+/* SoA group: completed steps in green */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-completed .progress-marker {
+    background-color: #34c759;
+    border-color: #34c759;
+}
+/* SoA group: bring checkmark to front and set white check */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-completed .progress-marker::after {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: 900;
+    z-index: 2;
+    pointer-events: none;
+    color: #fff; /* 要望により白いチェック */
+    font-size: 16px;
+    transform: none;
+}
+
+/* SoA group: active (表示中) のときはチェックを非表示にする */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-active .progress-marker::after {
+    content: none;
+}
+
+/* SoA group: active but not completed -> red marker (difference != 0) */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-default:not(.is-completed) .progress-marker {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+/* SoA group: active step is always blue */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-active .progress-marker {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* SoA group: skipped (source total == 0): black marker, no check */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-skipped .progress-marker {
+    background-color: #000;
+    border-color: #000;
+}
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-skipped .progress-marker::after {
+    content: none;
+}
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-skipped .progress-label {
+    color: var(--text-secondary);
+    cursor: default;
+}
+/* Keep layout and disable interactions/hover for skipped anchors */
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-skipped a {
+    pointer-events: none;
+}
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-skipped a:hover .progress-label {
+    color: var(--text-secondary);
+}

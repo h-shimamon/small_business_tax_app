@@ -18,7 +18,12 @@
         <p class="content-subtitle">登録された{{ page_title }}の情報を確認・編集します。</p>
     </div>
     <div class="header-actions">
-        <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
+        {# 差額=0のときは新規登録を隠し、次の内訳へボタンを表示（次URLがある場合） #}
+        {% if generic_summary and (generic_summary.difference | default(0)) == 0 and soa_next_url %}
+            <a href="{{ soa_next_url }}" class="button-primary">次の内訳へ</a>
+        {% else %}
+            <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
+        {% endif %}
     </div>
 </div>
 
@@ -34,8 +39,18 @@
     </div>
     <div class="summary-item result {% if deposit_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">{{ (deposit_summary.difference | default(0)) | format_currency }}</span>
+        <span class="summary-value">
+            {% if (deposit_summary.difference | default(0)) == 0 %}
+                <span class="match-status" title="差額0円">
+                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
+                </span>
+            {% else %}
+                {{ (deposit_summary.difference | default(0)) | format_currency }}
+            {% endif %}
+        </span>
+        {# 整合済みバッジは非表示 #}
     </div>
+    {# 次の内訳リンクは削除（要件により非表示） #}
 </div>
 {% endif %}
 
@@ -51,8 +66,18 @@
     </div>
     <div class="summary-item result {% if notes_receivable_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">{{ (notes_receivable_summary.difference | default(0)) | format_currency }}</span>
+        <span class="summary-value">
+            {% if (notes_receivable_summary.difference | default(0)) == 0 %}
+                <span class="match-status" title="差額0円">
+                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
+                </span>
+            {% else %}
+                {{ (notes_receivable_summary.difference | default(0)) | format_currency }}
+            {% endif %}
+        </span>
+        {# 整合済みバッジは非表示 #}
     </div>
+    {# 次の内訳リンクは削除（要件により非表示） #}
 </div>
 {% endif %}
 
@@ -68,12 +93,22 @@
     </div>
     <div class="summary-item result {% if (accounts_receivable_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">{{ (accounts_receivable_summary.difference | default(0)) | format_currency }}</span>
+        <span class="summary-value">
+            {% if (accounts_receivable_summary.difference | default(0)) == 0 %}
+                <span class="match-status" title="差額0円">
+                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
+                </span>
+            {% else %}
+                {{ (accounts_receivable_summary.difference | default(0)) | format_currency }}
+            {% endif %}
+        </span>
+        {# 整合済みバッジは非表示 #}
     </div>
+    {# 次の内訳リンクは削除（要件により非表示） #}
 </div>
 {% endif %}
 
-{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','borrowings','executive_compensations','land_rents','miscellaneous'] %}
+{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','executive_compensations','land_rents','miscellaneous'] %}
 <div class="card summary-card">
     <div class="summary-item">
         <span class="summary-label">{{ generic_summary_label }}</span>
@@ -85,7 +120,47 @@
     </div>
     <div class="summary-item result {% if (generic_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">{{ (generic_summary.difference | default(0)) | format_currency }}</span>
+        <span class="summary-value">
+            {% if (generic_summary.difference | default(0)) == 0 %}
+                <span class="match-status" title="差額0円">
+                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
+                </span>
+            {% else %}
+                {{ (generic_summary.difference | default(0)) | format_currency }}
+            {% endif %}
+        </span>
+        {# 整合済みバッジは非表示 #}
+    </div>
+    {# 次の内訳リンクは削除（要件により非表示） #}
+</div>
+{% endif %}
+
+{% if page == 'borrowings' %}
+<div class="card summary-card">
+    <div class="summary-item">
+        <span class="summary-label">B/S上の借入金残高</span>
+        <span class="summary-value">{{ (borrowings_summary.bs_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">P/L上の支払利子</span>
+        <span class="summary-value">{{ (borrowings_summary.pl_interest_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">内訳明細の合計額（期末現在高＋期間中の支払利子）</span>
+        <span class="summary-value">{{ (borrowings_summary.breakdown_total | default(0)) | format_currency }}</span>
+    </div>
+    <div class="summary-item result {% if (borrowings_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
+        <span class="summary-label">差額</span>
+        <span class="summary-value">
+            {% if (borrowings_summary.difference | default(0)) == 0 %}
+                <span class="match-status" title="差額0円">
+                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
+                </span>
+            {% else %}
+                {{ (borrowings_summary.difference | default(0)) | format_currency }}
+            {% endif %}
+        </span>
+        {# 整合済みバッジは非表示 #}
     </div>
 </div>
 {% endif %}

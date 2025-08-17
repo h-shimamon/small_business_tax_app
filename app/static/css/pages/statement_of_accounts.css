@@ -78,6 +78,40 @@
     gap: 1.5rem;
 }
 
+/* Match status (差額=0) */
+.match-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.check-circle {
+    position: relative;
+    display: inline-block;
+    width: 1em;  /* match surrounding font size */
+    height: 1em; /* match surrounding font size */
+    border-radius: 50%;
+    background-color: #34c759; /* SoA completed green */
+    vertical-align: middle;
+}
+.check-circle.mini {
+    width: 1em;
+    height: 1em;
+}
+.check-circle::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.6em; /* scale with circle size */
+    line-height: 1;
+}
+.check-circle.mini::after {
+    font-size: 0.6em;
+}
+
 .soa-item-card .item-info {
     flex-grow: 1;
 }
@@ -106,4 +140,25 @@
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
+}
+
+/* Success badge and hint for zero-difference */
+.summary-badge.success {
+    color: var(--color-success);
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+.summary-hint-row {
+    margin-top: 6px;
+}
+.summary-hint {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+.summary-next-link {
+    margin-left: 12px;
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+    text-decoration: underline;
 }
