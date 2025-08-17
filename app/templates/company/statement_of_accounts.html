@@ -11,6 +11,7 @@
     {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
+{% from 'company/_layout_helpers.html' import render_difference %}
 {% block content %}
 <div class="content-header">
     <div class="header-main">
@@ -39,15 +40,7 @@
     </div>
     <div class="summary-item result {% if deposit_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">
-            {% if (deposit_summary.difference | default(0)) == 0 %}
-                <span class="match-status" title="差額0円">
-                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
-                </span>
-            {% else %}
-                {{ (deposit_summary.difference | default(0)) | format_currency }}
-            {% endif %}
-        </span>
+        <span class="summary-value">{{ render_difference(deposit_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
     {# 次の内訳リンクは削除（要件により非表示） #}
@@ -66,15 +59,7 @@
     </div>
     <div class="summary-item result {% if notes_receivable_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">
-            {% if (notes_receivable_summary.difference | default(0)) == 0 %}
-                <span class="match-status" title="差額0円">
-                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
-                </span>
-            {% else %}
-                {{ (notes_receivable_summary.difference | default(0)) | format_currency }}
-            {% endif %}
-        </span>
+        <span class="summary-value">{{ render_difference(notes_receivable_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
     {# 次の内訳リンクは削除（要件により非表示） #}
@@ -93,15 +78,7 @@
     </div>
     <div class="summary-item result {% if (accounts_receivable_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">
-            {% if (accounts_receivable_summary.difference | default(0)) == 0 %}
-                <span class="match-status" title="差額0円">
-                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
-                </span>
-            {% else %}
-                {{ (accounts_receivable_summary.difference | default(0)) | format_currency }}
-            {% endif %}
-        </span>
+        <span class="summary-value">{{ render_difference(accounts_receivable_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
     {# 次の内訳リンクは削除（要件により非表示） #}
@@ -120,15 +97,7 @@
     </div>
     <div class="summary-item result {% if (generic_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">
-            {% if (generic_summary.difference | default(0)) == 0 %}
-                <span class="match-status" title="差額0円">
-                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
-                </span>
-            {% else %}
-                {{ (generic_summary.difference | default(0)) | format_currency }}
-            {% endif %}
-        </span>
+        <span class="summary-value">{{ render_difference(generic_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
     {# 次の内訳リンクは削除（要件により非表示） #}
@@ -151,15 +120,7 @@
     </div>
     <div class="summary-item result {% if (borrowings_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
         <span class="summary-label">差額</span>
-        <span class="summary-value">
-            {% if (borrowings_summary.difference | default(0)) == 0 %}
-                <span class="match-status" title="差額0円">
-                    <span class="check-circle mini" aria-hidden="true"></span>合致しました
-                </span>
-            {% else %}
-                {{ (borrowings_summary.difference | default(0)) | format_currency }}
-            {% endif %}
-        </span>
+        <span class="summary-value">{{ render_difference(borrowings_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
 </div>
