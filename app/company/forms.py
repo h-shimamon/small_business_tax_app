@@ -31,7 +31,7 @@ class CompanyForm(FlaskForm):
     address = StringField('番地以降の住所', validators=[DataRequired(), Length(max=200)])
     phone_number = StringField('電話番号', validators=[DataRequired(), Length(max=20)])
     homepage = StringField('ホームページアドレス', validators=[Optional(), Length(max=200)])
-    establishment_date = DateField('設立年月日', format='%Y-%m-%d', validators=[DataRequired()])
+    establishment_date = DateField('設立年月日', format='%Y-%m-%d', validators=[DataRequired()], render_kw={'class': 'js-date'})
     capital_limit = BooleanField('定款上の会計期間が１年間ですか？', default=False)
     is_supported_industry = BooleanField('電気・ガス供給業及び保険業に該当していませんか？', default=False)
     is_not_excluded_business = BooleanField('資本金または出資金の額が1億円以下の中小法人ですか？', default=False)
@@ -97,8 +97,8 @@ class DeclarationForm(FlaskForm):
     """申告情報を登録・編集するためのフォーム"""
     
     # --- 基本項目 ---
-    accounting_period_start = DateField('会計期間 開始', validators=[Optional()])
-    accounting_period_end = DateField('会計期間 終了', validators=[Optional()])
+    accounting_period_start = DateField('会計期間 開始', format='%Y-%m-%d', validators=[Optional()], render_kw={'class': 'js-date'})
+    accounting_period_end = DateField('会計期間 終了', format='%Y-%m-%d', validators=[Optional()], render_kw={'class': 'js-date'})
     office_count = RadioField(
         '事業所の数',
         choices=[('one', '１箇所'), ('multiple', '２箇所以上')],
@@ -130,7 +130,7 @@ class DeclarationForm(FlaskForm):
     representative_address = StringField('住所', validators=[Optional()])
     accounting_manager_name = StringField('氏名', validators=[Optional()])
     accounting_manager_kana = StringField('ふりがな', validators=[Optional()])
-    closing_date = DateField('決算確定年月日', validators=[Optional()])
+    closing_date = DateField('決算確定年月日', format='%Y-%m-%d', validators=[Optional()], render_kw={'class': 'js-date'})
     is_corp_tax_extended = BooleanField('法人税の申告期限を延長している', default=False)
     is_biz_tax_extended = BooleanField('事業税の申告期限を延長している', default=False)
     employee_count_at_eoy = IntegerField('期末従業者数', validators=[Optional()])
@@ -184,8 +184,8 @@ class OfficeForm(FlaskForm):
     city = StringField('市区町村', validators=[Optional(), Length(max=50)])
     address = StringField('番地以降', validators=[Optional(), Length(max=200)])
     phone_number = StringField('電話番号', validators=[Optional(), Length(max=20)])
-    opening_date = DateField('開設年月日', format='%Y-%m-%d', validators=[Optional()])
-    closing_date = DateField('廃止年月日', format='%Y-%m-%d', validators=[Optional()])
+    opening_date = DateField('開設年月日', format='%Y-%m-%d', validators=[Optional()], render_kw={'class': 'js-date'})
+    closing_date = DateField('廃止年月日', format='%Y-%m-%d', validators=[Optional()], render_kw={'class': 'js-date'})
     employee_count = IntegerField('従業者数', validators=[Optional()])
     submit = SubmitField('登録する')
 
@@ -277,12 +277,14 @@ class NotesReceivableForm(FlaskForm):
     issue_date = DateField(
         '振出年月日',
         format='%Y-%m-%d',
-        validators=[DataRequired(message="振出年月日は必須です。")]
+        validators=[DataRequired(message="振出年月日は必須です。")],
+        render_kw={'class': 'js-date'}
     )
     due_date = DateField(
         '支払期日',
         format='%Y-%m-%d',
-        validators=[DataRequired(message="支払期日は必須です。")]
+        validators=[DataRequired(message="支払期日は必須です。")],
+        render_kw={'class': 'js-date'}
     )
     payer_bank = StringField(
         '支払銀行名',
@@ -419,8 +421,8 @@ class FixedAssetForm(FlaskForm):
 class NotesPayableForm(FlaskForm):
     """支払手形の登録・編集フォーム"""
     payee = StringField('支払先', validators=[DataRequired(), Length(max=100)])
-    issue_date = DateField('振出年月日', format='%Y-%m-%d', validators=[DataRequired()])
-    due_date = DateField('支払期日', format='%Y-%m-%d', validators=[DataRequired()])
+    issue_date = DateField('振出年月日', format='%Y-%m-%d', validators=[DataRequired()], render_kw={'class': 'js-date'})
+    due_date = DateField('支払期日', format='%Y-%m-%d', validators=[DataRequired()], render_kw={'class': 'js-date'})
     amount = IntegerField('金額', validators=[DataRequired()])
     remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
