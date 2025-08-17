@@ -20,6 +20,15 @@
     margin-bottom: 1.5rem;
 }
 
+/* --- Flash Messages --- */
+.flash-messages {
+    margin-bottom: 16px;
+}
+.flash-messages .alert.alert-skip {
+    color: #CC1439; /* 指定色 */
+    font-weight: 600;
+}
+
 /* --- Action Icon --- */
 /* 編集や削除などの操作に使用する円形のアイコンボタン */
 .action-icon {

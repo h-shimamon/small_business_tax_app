@@ -1,22 +1,26 @@
 <nav class="hierarchical-nav">
     <ul>
         {% for parent in navigation_state %}
-            <li class="nav-parent {{ 'is-active' if parent.is_active else '' }}">
+            <li class="nav-parent {{ 'is-active' if parent.is_active else '' }} {{ 'nav-soa' if parent.key == 'statement_of_accounts_group' else '' }}">
                 <span class="parent-name">{{ parent.name }}</span>
                 
                 {% if parent.is_active and parent.children %}
                     <ul class="nav-children">
                         {% for child in parent.children %}
                             {% set status = '' %}
+                            {% set completed = '' %}
+                            {% set skipped = '' %}
                             {% if parent.type == 'wizard' %}
                                 {# プロセス型の場合のステータス #}
                                 {% set status = 'is-current' if child.is_active else 'is-completed' if child.is_completed else 'is-pending' %}
                             {% elif parent.type == 'menu' %}
-                                {# ハブ型の場合のステータス #}
+                                {# ハブ型（メニュー）: アクティブ/デフォルトに加えて完了/スキップクラスも併用 #}
                                 {% set status = 'is-menu-active' if child.is_active else 'is-menu-default' %}
+                                {% set completed = 'is-completed' if child.is_completed else '' %}
+                                {% set skipped = 'is-skipped' if child.is_skipped else '' %}
                             {% endif %}
-                            <li class="progress-step {{ status }}">
-                                <a href="{{ child.url }}">
+                            <li class="progress-step {{ status }} {{ completed }} {{ skipped }}">
+                                <a href="{{ child.url }}" {% if child.is_skipped %}tabindex="-1" aria-disabled="true"{% endif %}>
                                     <span class="progress-marker"></span>
                                     <span class="progress-label">{{ child.name }}</span>
                                 </a>
