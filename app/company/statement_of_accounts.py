@@ -16,10 +16,7 @@ from app.company.forms import (
 from app import db
 from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
 from .auth import company_required
-from app.company.services.statement_of_accounts_service import StatementOfAccountsService
-from app.company.services.financial_statement_service import FinancialStatementService
 from app.company.services.master_data_service import MasterDataService
-from flask import session
 
 # Summary mapping for other pages: master type and breakdown document name
 SUMMARY_PAGE_MAP = {
