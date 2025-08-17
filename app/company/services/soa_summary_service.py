@@ -57,16 +57,17 @@ class SoASummaryService:
             return {'type': 'PL', 'targets': targets}
 
     @classmethod
-    def compute_source_total(cls, company_id: int, page: str) -> Dict[str, int]:
+    def compute_source_total(cls, company_id: int, page: str, accounting_data=None) -> Dict[str, int]:
         from app.company.models import AccountingData  # local import to avoid cycles
 
-        accounting_data = (
-            AccountingData.query
-            .filter_by(company_id=company_id)
-            .order_by(AccountingData.created_at.desc())
-            .first()
-        )
-        if not accounting_data:
+        if accounting_data is None:
+            accounting_data = (
+                AccountingData.query
+                .filter_by(company_id=company_id)
+                .order_by(AccountingData.created_at.desc())
+                .first()
+            )
+        if accounting_data is None:
             if page == 'borrowings':
                 return {'bs_total': 0, 'pl_interest_total': 0, 'source_total': 0}
             return {'source_total': 0}
@@ -107,8 +108,8 @@ class SoASummaryService:
         return db.session.query(db.func.sum(total_field)).filter_by(company_id=company_id).scalar() or 0
 
     @classmethod
-    def compute_difference(cls, company_id: int, page: str, model, total_field_name: str) -> Dict[str, int]:
-        source = cls.compute_source_total(company_id, page)
+    def compute_difference(cls, company_id: int, page: str, model, total_field_name: str, accounting_data=None) -> Dict[str, int]:
+        source = cls.compute_source_total(company_id, page, accounting_data=accounting_data)
         breakdown_total = cls.compute_breakdown_total(company_id, page, model, total_field_name)
         if page == 'borrowings':
             bs_total = source.get('bs_total', 0)
@@ -130,20 +131,20 @@ class SoASummaryService:
             }
 
     @classmethod
-    def should_skip(cls, company_id: int, page: str) -> bool:
+    def should_skip(cls, company_id: int, page: str, accounting_data=None) -> bool:
         """
         A page is skipped when its source total equals zero.
         Borrowings uses the combined BS(借入金)+PL(支払利息) total.
         """
-        source = cls.compute_source_total(company_id, page)
+        source = cls.compute_source_total(company_id, page, accounting_data=accounting_data)
         if page == 'borrowings':
             return (source.get('bs_total', 0) + source.get('pl_interest_total', 0)) == 0
         return source.get('source_total', 0) == 0
 
     @classmethod
-    def compute_skip_total(cls, company_id: int, page: str) -> int:
+    def compute_skip_total(cls, company_id: int, page: str, accounting_data=None) -> int:
         """Return the numeric source total used to determine skip."""
-        source = cls.compute_source_total(company_id, page)
+        source = cls.compute_source_total(company_id, page, accounting_data=accounting_data)
         if page == 'borrowings':
             return (source.get('bs_total', 0) + source.get('pl_interest_total', 0))
         return source.get('source_total', 0)

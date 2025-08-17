@@ -27,3 +27,21 @@ class Config:
     # --- その他の設定 ---
     # ここに他のアプリケーション設定を追加できます。
     # 例: MAIL_SERVER, MAIL_PORT, etc.
+
+
+class TestingConfig(Config):
+    """テスト環境向けの設定。"""
+    TESTING = True
+    SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost')
+    # ログ関連（必要に応じてアプリ初期化時に使用）
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
+
+
+class ProductionConfig(Config):
+    """本番環境向けの設定。"""
+    # 本番では詳細ログを抑制
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+    # SQLAlchemy接続の健全性向上（ドライバが対応していれば有効）
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True
+    }

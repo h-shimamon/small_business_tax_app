@@ -186,7 +186,7 @@
 }
 
 /* SoA group: active but not completed -> red marker (difference != 0) */
-.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-default:not(.is-completed) .progress-marker {
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-default:not(.is-completed):not(.is-skipped) .progress-marker {
     background-color: var(--error-color);
     border-color: var(--error-color);
 }

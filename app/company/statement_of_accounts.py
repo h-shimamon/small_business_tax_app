@@ -1,11 +1,12 @@
 # app/company/statement_of_accounts.py
-from flask import render_template, request, redirect, url_for, flash, abort
+from flask import render_template, request, redirect, url_for, flash, abort, current_app
+from app.constants import FLASH_SKIP
 from app.company import company_bp
 from app.company.models import (
     Deposit, NotesReceivable, AccountsReceivable, TemporaryPayment,
     LoansReceivable, Inventory, Security, FixedAsset, NotesPayable,
     AccountsPayable, TemporaryReceipt, Borrowing, ExecutiveCompensation,
-    LandRent, Miscellaneous
+    LandRent, Miscellaneous, AccountingData
 )
 from app.company.forms import (
     DepositForm, NotesReceivableForm, AccountsReceivableForm, TemporaryPaymentForm,
@@ -19,28 +20,12 @@ from .auth import company_required
 from app.company.services.master_data_service import MasterDataService
 from app.company.services.soa_summary_service import SoASummaryService
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
+from app.company.soa_config import STATEMENT_PAGES_CONFIG
 
 # mappings are centralized in app.company.soa_mappings
 
 
-# 各内訳ページの情報を一元管理
-STATEMENT_PAGES_CONFIG = {
-    'deposits': {'model': Deposit, 'form': DepositForm, 'title': '預貯金等', 'total_field': 'balance', 'template': 'deposit_form.html'},
-    'notes_receivable': {'model': NotesReceivable, 'form': NotesReceivableForm, 'title': '受取手形', 'total_field': 'amount', 'template': 'notes_receivable_form.html'},
-    'accounts_receivable': {'model': AccountsReceivable, 'form': AccountsReceivableForm, 'title': '売掛金（未収入金）', 'total_field': 'balance_at_eoy', 'template': 'accounts_receivable_form.html'},
-    'temporary_payments': {'model': TemporaryPayment, 'form': TemporaryPaymentForm, 'title': '仮払金（前渡金）', 'total_field': 'balance_at_eoy', 'template': 'temporary_payment_form.html'},
-    'loans_receivable': {'model': LoansReceivable, 'form': LoansReceivableForm, 'title': '貸付金・受取利息', 'total_field': 'balance_at_eoy', 'template': 'loans_receivable_form.html'},
-    'inventories': {'model': Inventory, 'form': InventoryForm, 'title': '棚卸資産', 'total_field': 'balance_at_eoy', 'template': 'inventories_form.html'},
-    'securities': {'model': Security, 'form': SecurityForm, 'title': '有価証券', 'total_field': 'balance_at_eoy', 'template': 'securities_form.html'},
-    'fixed_assets': {'model': FixedAsset, 'form': FixedAssetForm, 'title': '固定資産（土地等）', 'total_field': 'balance_at_eoy', 'template': 'fixed_assets_form.html'},
-    'notes_payable': {'model': NotesPayable, 'form': NotesPayableForm, 'title': '支払手形', 'total_field': 'amount', 'template': 'notes_payable_form.html'},
-    'accounts_payable': {'model': AccountsPayable, 'form': AccountsPayableForm, 'title': '買掛金（未払金・未払費用）', 'total_field': 'balance_at_eoy', 'template': 'accounts_payable_form.html'},
-    'temporary_receipts': {'model': TemporaryReceipt, 'form': TemporaryReceiptForm, 'title': '仮受金（前受金・預り金）', 'total_field': 'balance_at_eoy', 'template': 'temporary_receipts_form.html'},
-    'borrowings': {'model': Borrowing, 'form': BorrowingForm, 'title': '借入金及び支払利子', 'total_field': 'balance_at_eoy', 'template': 'borrowings_form.html'},
-    'executive_compensations': {'model': ExecutiveCompensation, 'form': ExecutiveCompensationForm, 'title': '役員給与等', 'total_field': 'total_compensation', 'template': 'executive_compensations_form.html'},
-    'land_rents': {'model': LandRent, 'form': LandRentForm, 'title': '地代家賃等', 'total_field': 'rent_paid', 'template': 'land_rents_form.html'},
-    'miscellaneous': {'model': Miscellaneous, 'form': MiscellaneousForm, 'title': '雑益・雑損失等', 'total_field': 'amount', 'template': 'miscellaneous_form.html'},
-}
+"""STATEMENT_PAGES_CONFIG moved to app.company.soa_config and imported above."""
 
 @company_bp.route('/statement_of_accounts')
 @company_required
@@ -51,7 +36,8 @@ def statement_of_accounts(company):
     if not config:
         abort(404)
 
-    # Use service to determine source totals for skip decisions
+    # Pre-fetch latest AccountingData to avoid duplicate queries in skip computations
+    accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
 
     # Compute skipped pages (source total == 0) for SoA group and optionally redirect forward
     from app.navigation_builder import navigation_tree
@@ -64,7 +50,7 @@ def statement_of_accounts(company):
     for child in soa_children:
         child_page = (child.params or {}).get('page')
         if child_page:
-            if SoASummaryService.compute_skip_total(company.id, child_page) == 0:
+            if SoASummaryService.compute_skip_total(company.id, child_page, accounting_data=accounting_data) == 0:
                 skipped_steps.add(child.key)
 
     # If current page should be skipped, redirect to the next non-skipped page (forward search only)
@@ -79,7 +65,7 @@ def statement_of_accounts(company):
             # forward search to next non-skipped
             for nxt in soa_children[current_child_index+1:]:
                 if nxt.key not in skipped_steps:
-                    flash('財務諸表に計上されていない勘定科目は自動でスキップされます。', 'skip')
+                    flash('財務諸表に計上されていない勘定科目は自動でスキップされます。', FLASH_SKIP)
                     return redirect(url_for('company.statement_of_accounts', page=(nxt.params or {}).get('page')))
             # wrap-around to 申告書データ は保留のため遷移しない
 
@@ -99,9 +85,14 @@ def statement_of_accounts(company):
 
     # Helper: compute next Statement of Accounts page URL and name
     def compute_next_soa(page_key):
+        """Return URL and name of the next SoA page; log expected issues instead of silencing all exceptions."""
         try:
             from app.navigation_builder import navigation_tree
-            from flask import url_for
+        except ImportError as e:
+            current_app.logger.warning('navigation_tree import failed: %s', e)
+            return None, None
+
+        try:
             for node in navigation_tree:
                 if node.key == 'statement_of_accounts_group':
                     children = node.children
@@ -112,8 +103,9 @@ def statement_of_accounts(company):
                                 nxt = children[idx + 1]
                                 return url_for('company.statement_of_accounts', page=(nxt.params or {}).get('page')), nxt.name
                             break
-        except Exception:
-            pass
+        except (AttributeError, KeyError, IndexError, TypeError) as e:
+            current_app.logger.warning('compute_next_soa failed for page %s: %s', page_key, e)
+            return None, None
         return None, None
 
     # Compute generic summary using service (no UI/keys change)
@@ -121,7 +113,7 @@ def statement_of_accounts(company):
         master_type, _ = SUMMARY_PAGE_MAP[page]
         model = config['model']
         total_field_name = config['total_field']
-        diff = SoASummaryService.compute_difference(company.id, page, model, total_field_name)
+        diff = SoASummaryService.compute_difference(company.id, page, model, total_field_name, accounting_data=accounting_data)
         if page == 'borrowings':
             context['borrowings_summary'] = {
                 'bs_total': diff.get('bs_total', 0),
@@ -174,8 +166,29 @@ def add_item(company, page_key):
         db.session.commit()
         flash(f"{config['title']}情報を登録しました。", 'success')
         return redirect(url_for('company.statement_of_accounts', page=page_key))
+    # Compute skipped steps for sidebar consistency (same logic as main SoA view)
+    from app.navigation_builder import navigation_tree
+    from app.company.services.soa_summary_service import SoASummaryService
+    skipped_steps = set()
+    # Pre-fetch latest AccountingData once
+    accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
+    soa_children = []
+    for node in navigation_tree:
+        if node.key == 'statement_of_accounts_group':
+            soa_children = node.children
+            break
+    for child in soa_children:
+        child_page = (child.params or {}).get('page')
+        if child_page:
+            if SoASummaryService.compute_skip_total(company.id, child_page, accounting_data=accounting_data) == 0:
+                skipped_steps.add(child.key)
     form_template = f"company/{config['template']}"
-    return render_template(form_template, form=form, form_title=f"{config['title']}の新規登録", navigation_state=get_navigation_state(page_key))
+    return render_template(
+        form_template,
+        form=form,
+        form_title=f"{config['title']}の新規登録",
+        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps)
+    )
 
 @company_bp.route('/statement/<string:page_key>/edit/<int:item_id>', methods=['GET', 'POST'])
 @company_required
@@ -193,8 +206,28 @@ def edit_item(company, page_key, item_id):
         return redirect(url_for('company.statement_of_accounts', page=page_key))
     if request.method == 'GET':
         form = config['form'](obj=item)
+    # Compute skipped steps for sidebar consistency
+    from app.navigation_builder import navigation_tree
+    from app.company.services.soa_summary_service import SoASummaryService
+    skipped_steps = set()
+    accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
+    soa_children = []
+    for node in navigation_tree:
+        if node.key == 'statement_of_accounts_group':
+            soa_children = node.children
+            break
+    for child in soa_children:
+        child_page = (child.params or {}).get('page')
+        if child_page:
+            if SoASummaryService.compute_skip_total(company.id, child_page, accounting_data=accounting_data) == 0:
+                skipped_steps.add(child.key)
     form_template = f"company/{config['template']}"
-    return render_template(form_template, form=form, form_title=f"{config['title']}の編集", navigation_state=get_navigation_state(page_key))
+    return render_template(
+        form_template,
+        form=form,
+        form_title=f"{config['title']}の編集",
+        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps)
+    )
 
 @company_bp.route('/statement/<string:page_key>/delete/<int:item_id>', methods=['POST'])
 @company_required
