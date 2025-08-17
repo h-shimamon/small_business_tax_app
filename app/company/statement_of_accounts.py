@@ -17,36 +17,10 @@ from app import db
 from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
 from .auth import company_required
 from app.company.services.master_data_service import MasterDataService
+from app.company.services.soa_summary_service import SoASummaryService
+from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 
-# Summary mapping for other pages: master type and breakdown document name
-SUMMARY_PAGE_MAP = {
-    'deposits': ('BS', '預貯金'),
-    'notes_receivable': ('BS', '受取手形'),
-    'accounts_receivable': ('BS', '売掛金'),
-    'temporary_payments': ('BS', '仮払金'),
-    'loans_receivable': ('BS', '貸付金'),
-    'inventories': ('BS', '棚卸資産'),
-    'securities': ('BS', '有価証券'),
-    'fixed_assets': ('BS', '固定資産（土地等）'),
-    'notes_payable': ('BS', '支払手形'),
-    'accounts_payable': ('BS', '買掛金'),
-    'temporary_receipts': ('BS', '仮受金'),
-    'borrowings': ('BS', '借入金'),
-    # PL-based pages
-    'executive_compensations': ('PL', '役員給与等'),
-    'land_rents': ('PL', '地代家賃等'),
-    'miscellaneous': ('PL', '雑益・雑損失等'),
-}
-
-# Specific account mappings for PL pages where master does not provide breakdown_document linkage
-PL_PAGE_ACCOUNTS = {
-    # 役員給与等は少なくとも役員報酬・役員賞与を合算対象とする
-    'executive_compensations': ['役員報酬', '役員賞与'],
-    # 地代家賃等: 地代家賃と賃借料を合算
-    'land_rents': ['地代家賃', '賃借料'],
-    # 雑益・雑損失等: 雑収入と雑損失を合算
-    'miscellaneous': ['雑収入', '雑損失'],
-}
+# mappings are centralized in app.company.soa_mappings
 
 
 # 各内訳ページの情報を一元管理
@@ -77,60 +51,7 @@ def statement_of_accounts(company):
     if not config:
         abort(404)
 
-    # Helper to compute accounting (source) total for a given SoA page key
-    def compute_accounting_total_for(page_key):
-        if page_key not in SUMMARY_PAGE_MAP:
-            return 0
-        master_type, breakdown_name = SUMMARY_PAGE_MAP[page_key]
-        data_key = 'balance_sheet' if master_type == 'BS' else 'profit_loss_statement'
-        from .models import AccountingData
-        accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
-        if not accounting_data:
-            return 0
-        # Special rule: borrowings skip criterion uses BS(借入金) + PL(支払利息)
-        if page_key == 'borrowings':
-            master_service = MasterDataService()
-            def find_and_sum_names(data_dict, names):
-                total_local = 0
-                for _, value in data_dict.items():
-                    if isinstance(value, dict):
-                        if 'items' in value and isinstance(value['items'], list):
-                            for it in value['items']:
-                                if isinstance(it, dict) and it.get('name') in names:
-                                    total_local += it.get('amount', 0)
-                        else:
-                            total_local += find_and_sum_names(value, names)
-                return total_local
-            bs_source = accounting_data.data.get('balance_sheet', {})
-            bs_df = master_service.get_bs_master_df()
-            bs_accounts = bs_df[bs_df['breakdown_document'] == '借入金'].index.tolist()
-            bs_total_local = find_and_sum_names(bs_source, bs_accounts)
-            pl_source = accounting_data.data.get('profit_loss_statement', {})
-            pl_total_local = find_and_sum_names(pl_source, ['支払利息'])
-            return bs_total_local + pl_total_local
-
-        source = accounting_data.data.get(data_key, {})
-        master_service = MasterDataService()
-        df = master_service.get_bs_master_df() if master_type == 'BS' else master_service.get_pl_master_df()
-        if master_type == 'BS':
-            target_accounts = df[df['breakdown_document'] == breakdown_name].index.tolist()
-        else:
-            # PL: map by predefined accounts (no breakdown_document in PL master)
-            target_accounts = PL_PAGE_ACCOUNTS.get(page_key, [])
-            if not target_accounts and breakdown_name in df.index:
-                target_accounts = [breakdown_name]
-        def find_and_sum(data_dict):
-            total_local = 0
-            for _, value in data_dict.items():
-                if isinstance(value, dict):
-                    if 'items' in value and isinstance(value['items'], list):
-                        for it in value['items']:
-                            if isinstance(it, dict) and it.get('name') in target_accounts:
-                                total_local += it.get('amount', 0)
-                    else:
-                        total_local += find_and_sum(value)
-            return total_local
-        return find_and_sum(source)
+    # Use service to determine source totals for skip decisions
 
     # Compute skipped pages (source total == 0) for SoA group and optionally redirect forward
     from app.navigation_builder import navigation_tree
@@ -143,7 +64,7 @@ def statement_of_accounts(company):
     for child in soa_children:
         child_page = (child.params or {}).get('page')
         if child_page:
-            if compute_accounting_total_for(child_page) == 0:
+            if SoASummaryService.compute_skip_total(company.id, child_page) == 0:
                 skipped_steps.add(child.key)
 
     # If current page should be skipped, redirect to the next non-skipped page (forward search only)
@@ -195,74 +116,27 @@ def statement_of_accounts(company):
             pass
         return None, None
 
-    # Compute generic summary for pages other than those already explicitly handled
+    # Compute generic summary using service (no UI/keys change)
     if page in SUMMARY_PAGE_MAP:
-        master_type, breakdown_name = SUMMARY_PAGE_MAP[page]
-        # Determine source data key and master df
-        data_key = 'balance_sheet' if master_type == 'BS' else 'profit_loss_statement'
-        accounting_total = 0
-        from .models import AccountingData
-        accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
-        if accounting_data:
-            master_service = MasterDataService()
-            def find_and_sum_names(data_dict, names):
-                total_local = 0
-                for _, value in data_dict.items():
-                    if isinstance(value, dict):
-                        if 'items' in value and isinstance(value['items'], list):
-                            for it in value['items']:
-                                if isinstance(it, dict) and it.get('name') in names:
-                                    total_local += it.get('amount', 0)
-                        else:
-                            total_local += find_and_sum_names(value, names)
-                return total_local
-
-            if page == 'borrowings':
-                # BS total for 借入金
-                bs_source = accounting_data.data.get('balance_sheet', {})
-                bs_df = master_service.get_bs_master_df()
-                bs_accounts = bs_df[bs_df['breakdown_document'] == '借入金'].index.tolist()
-                bs_total_specific = find_and_sum_names(bs_source, bs_accounts)
-                # PL total for 支払利息
-                pl_source = accounting_data.data.get('profit_loss_statement', {})
-                pl_interest_total = find_and_sum_names(pl_source, ['支払利息'])
-            else:
-                source = accounting_data.data.get(data_key, {})
-                df = master_service.get_bs_master_df() if master_type == 'BS' else master_service.get_pl_master_df()
-                if master_type == 'BS':
-                    target_accounts = df[df['breakdown_document'] == breakdown_name].index.tolist()
-                else:
-                    target_accounts = PL_PAGE_ACCOUNTS.get(page, [])
-                    if not target_accounts and breakdown_name in df.index:
-                        target_accounts = [breakdown_name]
-                accounting_total = find_and_sum_names(source, target_accounts)
-        else:
-            accounting_total = 0
-        # Breakdown total from DB
+        master_type, _ = SUMMARY_PAGE_MAP[page]
         model = config['model']
-        total_field = getattr(model, config['total_field'])
+        total_field_name = config['total_field']
+        diff = SoASummaryService.compute_difference(company.id, page, model, total_field_name)
         if page == 'borrowings':
-            sum_balance = db.session.query(db.func.sum(model.balance_at_eoy)).filter_by(company_id=company.id).scalar() or 0
-            sum_interest = db.session.query(db.func.sum(model.paid_interest)).filter_by(company_id=company.id).scalar() or 0
-            breakdown_total = (sum_balance or 0) + (sum_interest or 0)
-            # difference = (BS借入金 + PL支払利息) - breakdown_total
-            difference = (bs_total_specific if accounting_data else 0) + (pl_interest_total if accounting_data else 0) - breakdown_total
             context['borrowings_summary'] = {
-                'bs_total': bs_total_specific if accounting_data else 0,
-                'pl_interest_total': pl_interest_total if accounting_data else 0,
-                'breakdown_total': breakdown_total,
-                'difference': difference,
+                'bs_total': diff.get('bs_total', 0),
+                'pl_interest_total': diff.get('pl_interest_total', 0),
+                'breakdown_total': diff.get('breakdown_total', 0),
+                'difference': diff.get('difference', 0),
             }
-            # 互換性のため generic_summary にも同値を入れておく（ヘッダー等の判定用）
+            # Keep generic_summary aligned for header logic
             context['generic_summary'] = context['borrowings_summary']
             context['generic_summary_label'] = 'B/S上の借入金残高'
         else:
-            breakdown_total = db.session.query(db.func.sum(total_field)).filter_by(company_id=company.id).scalar() or 0
-            difference = accounting_total - breakdown_total
             context['generic_summary'] = {
-                'bs_total': accounting_total,
-                'breakdown_total': breakdown_total,
-                'difference': difference
+                'bs_total': diff.get('bs_total', 0),
+                'breakdown_total': diff.get('breakdown_total', 0),
+                'difference': diff.get('difference', 0),
             }
             context['generic_summary_label'] = f"{'B/S上の' if master_type == 'BS' else 'P/L上の'}{config['title']}残高"
         # Map to page-specific summary keys for templates
@@ -274,6 +148,7 @@ def statement_of_accounts(company):
             context['accounts_receivable_summary'] = context['generic_summary']
         # Mark step completed if reconciled
         step_key = 'fixed_assets_soa' if page == 'fixed_assets' else page
+        difference = context.get('generic_summary', {}).get('difference', 0)
         if difference == 0:
             mark_step_as_completed(step_key)
         else:

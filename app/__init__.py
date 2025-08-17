@@ -34,7 +34,7 @@ def create_app(test_config=None):
     @login_manager.user_loader
     def load_user(user_id):
         # Userモデルのインポートをここで行うことで循環参照を回避
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     # --- Jinja2フィルターの登録 ---
     from .utils import format_currency

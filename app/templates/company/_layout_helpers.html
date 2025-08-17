@@ -47,3 +47,14 @@
     </table>
 </div>
 {% endmacro %}
+
+{# Render difference value: if 0 -> 合致しました with green check, else -> formatted currency #}
+{% macro render_difference(value) %}
+    {% if (value | default(0)) == 0 %}
+        <span class="match-status" title="差額0円">
+            <span class="check-circle mini" aria-hidden="true"></span>合致しました
+        </span>
+    {% else %}
+        {{ (value | default(0)) | format_currency }}
+    {% endif %}
+{% endmacro %}
