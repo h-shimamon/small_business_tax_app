@@ -84,3 +84,50 @@ def test_soa_deposits_basic_bs_flow(app, init_database):
         assert diff['difference'] == 1000
         assert skip_total == 1000
 
+
+def test_soa_pl_mappings_executive_and_rent_and_misc(app, init_database):
+    with app.app_context():
+        # Arrange PL master accounts used by mappings
+        for i, name in enumerate(['役員報酬', '役員賞与', '地代家賃', '賃借料', '雑収入', '雑損失']):
+            db.session.add(AccountTitleMaster(
+                number=2000 + i, name=name, statement_name='PL', major_category='費用/収益',
+                middle_category='', minor_category='', breakdown_document=None, master_type='PL'
+            ))
+        db.session.commit()
+
+        company = Company.query.first()
+        data = {
+            'balance_sheet': {},
+            'profit_loss_statement': {
+                'expenses': {'items': [
+                    {'name': '役員報酬', 'amount': 300},
+                    {'name': '役員賞与', 'amount': 200},
+                    {'name': '地代家賃', 'amount': 150},
+                    {'name': '賃借料', 'amount': 50},
+                    {'name': '雑損失', 'amount': 25},
+                ]},
+                'revenues': {'items': [
+                    {'name': '雑収入', 'amount': 75},
+                ]},
+            }
+        }
+        db.session.add(AccountingData(company_id=company.id, period_start=date(2024,1,1), period_end=date(2024,12,31), data=data))
+        db.session.commit()
+
+        # Executive compensations mapping = 300 + 200 = 500
+        d1 = SoASummaryService.compute_difference(company.id, 'executive_compensations', None, 'total_compensation')
+        assert d1['bs_total'] == 500
+        assert d1['breakdown_total'] == 0
+        assert d1['difference'] == 500
+
+        # Land rents mapping = 150 + 50 = 200
+        d2 = SoASummaryService.compute_difference(company.id, 'land_rents', None, 'rent_paid')
+        assert d2['bs_total'] == 200
+        assert d2['breakdown_total'] == 0
+        assert d2['difference'] == 200
+
+        # Miscellaneous mapping = 雑収入(75) + 雑損失(25) = 100
+        d3 = SoASummaryService.compute_difference(company.id, 'miscellaneous', None, 'amount')
+        assert d3['bs_total'] == 100
+        assert d3['breakdown_total'] == 0
+        assert d3['difference'] == 100
