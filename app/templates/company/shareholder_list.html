@@ -20,6 +20,10 @@
     button_text='新規グループ登録'
 ) }}
 
+<div class="page-actions">
+  <a class="button-primary" href="{{ url_for('company.shareholders_pdf_beppyou_02', year='2025') }}" target="_blank" rel="noopener">PDF出力（別表二）</a>
+</div>
+
 {% set main_shareholders = shareholders|selectattr('parent_id', 'none')|list %}
 
 {% if main_shareholders %}

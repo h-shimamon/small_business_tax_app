@@ -1,5 +1,7 @@
 # app/company/shareholders.py
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, send_file, current_app
+import os
+from datetime import datetime
 from app.company import company_bp
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
 from app.company.models import Shareholder
@@ -7,6 +9,7 @@ from app.company.utils import get_officer_choices, set_page_title_and_verify_com
 from app.company.services import shareholder_service, company_classification_service
 from app.navigation import get_navigation_state
 from .auth import company_required
+from app.pdf.beppyou_02 import generate_beppyou_02
 
 @company_bp.route('/shareholders')
 @company_required
@@ -100,6 +103,17 @@ def edit_shareholder(company, shareholder_id, page_title):
     form = form_class(request.form, obj=shareholder)
     form.officer_position.choices = get_officer_choices(page_title)
 
+    # UX: 特殊関係人の編集画面で、主たる株主と住所が同一ならチェック状態を初期表示で反映する
+    if request.method == 'GET' and shareholder.parent_id is not None and hasattr(form, 'is_address_same_as_main'):
+        def _eq(a, b):
+            return (a or '') == (b or '')
+        same = (
+            _eq(shareholder.zip_code, shareholder.parent.zip_code) and
+            _eq(shareholder.prefecture_city, shareholder.parent.prefecture_city) and
+            _eq(shareholder.address, shareholder.parent.address)
+        )
+        form.is_address_same_as_main.data = same
+
     if form.validate_on_submit():
         shareholder_service.update_shareholder(shareholder_id, form)
         flash(f'{page_title}を更新しました。', 'success')
@@ -157,4 +171,23 @@ def confirm_next_main_shareholder(company, page_title):
         'company/next_main_shareholder.html',
         main_shareholders=main_shareholders,
         page_title=page_title
+    )
+
+
+@company_bp.route('/shareholders/pdf/beppyou_02')
+@company_required
+def shareholders_pdf_beppyou_02(company):
+    """別表二（beppyou_02）を生成し、ブラウザで表示（印刷可）する。"""
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"beppyou_02_{company.id}_{ts}.pdf")
+    generate_beppyou_02(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"beppyou_02_{year}.pdf"
     )

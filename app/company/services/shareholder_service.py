@@ -1,5 +1,7 @@
 # app/company/services/shareholder_service.py
+from flask import g, has_request_context
 from flask_login import current_user
+from sqlalchemy import func, or_
 from app import db
 from app.company.models import Shareholder, Company
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
@@ -76,8 +78,19 @@ def update_shareholder(shareholder_id, form):
     株主情報を更新する。
     更新対象が現在のユーザーの会社に属することを確認する。
     """
-    shareholder = get_shareholder_by_id(shareholder_id) # get_shareholder_by_idは既テ넌트チェック済み
+    shareholder = get_shareholder_by_id(shareholder_id) # get_shareholder_by_idは既テナントチェック済み
+    # まずフォーム値でモデルを更新
     form.populate_obj(shareholder)
+    # 特殊関係人の編集時、「主たる株主と住所が同じ」チェックがONなら住所を主たる株主からコピー
+    if shareholder.parent_id is not None and hasattr(form, 'is_address_same_as_main'):
+        try:
+            same = bool(form.is_address_same_as_main.data)
+        except Exception:
+            same = False
+        if same and shareholder.parent is not None:
+            shareholder.zip_code = shareholder.parent.zip_code
+            shareholder.prefecture_city = shareholder.parent.prefecture_city
+            shareholder.address = shareholder.parent.address
     db.session.commit()
     return shareholder
 
@@ -116,3 +129,78 @@ def get_main_shareholder_group_number(company_id, main_shareholder_id):
             return i + 1
     return -1
 
+
+# ===== 集計ユーティリティ（最小差分・UI非変更） =====
+
+def _get_metric_column_for_company(company_id):
+    company = Company.query.filter_by(id=company_id, user_id=current_user.id).first_or_404()
+    name = company.company_name or ""
+    if any(corp_type in name for corp_type in ['合同会社', '合名会社', '合資会社']):
+        return Shareholder.investment_amount, 'investment_amount'
+    return Shareholder.voting_rights, 'voting_rights'
+
+
+def _get_request_cache():
+    if has_request_context():
+        if not hasattr(g, '_shareholder_totals_cache'):
+            g._shareholder_totals_cache = {}
+        return g._shareholder_totals_cache
+    return {}
+
+
+def compute_company_total(company_id):
+    metric_col, metric_name = _get_metric_column_for_company(company_id)
+    cache = _get_request_cache()
+    key = ("company_total", company_id, metric_name)
+    if key in cache:
+        return cache[key]
+
+    total = db.session.query(func.sum(metric_col)).join(Company).filter(
+        Company.id == company_id,
+        Company.user_id == current_user.id,
+        metric_col.isnot(None),
+    ).scalar() or 0
+
+    cache[key] = int(total)
+    return int(total)
+
+
+def compute_group_total(company_id, main_shareholder_id):
+    metric_col, metric_name = _get_metric_column_for_company(company_id)
+    cache = _get_request_cache()
+    key = ("group_total", company_id, main_shareholder_id, metric_name)
+    if key in cache:
+        return cache[key]
+
+    main = get_shareholder_by_id(main_shareholder_id)
+    if main.company_id != company_id:
+        return 0
+
+    total = db.session.query(func.sum(metric_col)).join(Company).filter(
+        Company.id == company_id,
+        Company.user_id == current_user.id,
+        metric_col.isnot(None),
+        or_(Shareholder.id == main_shareholder_id, Shareholder.parent_id == main_shareholder_id),
+    ).scalar() or 0
+
+    cache[key] = int(total)
+    return int(total)
+
+
+def compute_group_totals_map(company_id):
+    metric_col, metric_name = _get_metric_column_for_company(company_id)
+    cache = _get_request_cache()
+    key = ("group_totals_map", company_id, metric_name)
+    if key in cache:
+        return cache[key]
+
+    group_key = func.coalesce(Shareholder.parent_id, Shareholder.id)
+    rows = db.session.query(group_key.label('gid'), func.sum(metric_col)).join(Company).filter(
+        Company.id == company_id,
+        Company.user_id == current_user.id,
+        metric_col.isnot(None),
+    ).group_by('gid').all()
+
+    result = {int(gid): int(total or 0) for gid, total in rows}
+    cache[key] = result
+    return result
