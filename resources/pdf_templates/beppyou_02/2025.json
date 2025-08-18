@@ -1,0 +1,13 @@
+{
+  "fonts": {
+    "NotoSansJP": "resources/fonts/NotoSansJP-Regular.ttf"
+  },
+  "global_offset": { "dx": 0.0, "dy": 0.0 },
+  "texts": [
+    { "page": 0, "x": 120, "y": 700, "text": "{{ company.company_name }}", "font": "NotoSansJP", "size": 10 }
+  ],
+  "grids": [
+    { "page": 0, "x0": 420, "y0": 700, "box_width": 12, "box_count": 12, "value": "{{ totals.capital }}", "font": "Helvetica", "size": 10, "rtl": true, "fill_char": null, "neg_mark": "▲" }
+  ]
+}
+
