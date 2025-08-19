@@ -117,6 +117,22 @@ def get_shareholder_form(shareholder):
         return RelatedShareholderForm
 
 
+def is_same_address(a: Shareholder, b: Shareholder) -> bool:
+    """
+    住所一致判定を単一情報源で提供するヘルパー。
+    None/空文字は空として比較し、完全一致のみを真とする（現行仕様と等価）。
+    """
+    def _nz(s):
+        return (s or '').strip()
+    if a is None or b is None:
+        return False
+    return (
+        _nz(getattr(a, 'zip_code', None)) == _nz(getattr(b, 'zip_code', None)) and
+        _nz(getattr(a, 'prefecture_city', None)) == _nz(getattr(b, 'prefecture_city', None)) and
+        _nz(getattr(a, 'address', None)) == _nz(getattr(b, 'address', None))
+    )
+
+
 def get_main_shareholder_group_number(company_id, main_shareholder_id):
     """
     指定された主たる株主が、その会社の主たる株主リストの中で何番目かを返す。
@@ -166,6 +182,7 @@ def compute_company_total(company_id):
 
 
 def compute_group_total(company_id, main_shareholder_id):
+    # DRY: group totals map を用いて対象グループID（=主たる株主ID）の合計を取得
     metric_col, metric_name = _get_metric_column_for_company(company_id)
     cache = _get_request_cache()
     key = ("group_total", company_id, main_shareholder_id, metric_name)
@@ -176,15 +193,10 @@ def compute_group_total(company_id, main_shareholder_id):
     if main.company_id != company_id:
         return 0
 
-    total = db.session.query(func.sum(metric_col)).join(Company).filter(
-        Company.id == company_id,
-        Company.user_id == current_user.id,
-        metric_col.isnot(None),
-        or_(Shareholder.id == main_shareholder_id, Shareholder.parent_id == main_shareholder_id),
-    ).scalar() or 0
-
-    cache[key] = int(total)
-    return int(total)
+    totals_map = compute_group_totals_map(company_id)
+    total = int(totals_map.get(int(main_shareholder_id), 0))
+    cache[key] = total
+    return total
 
 
 def compute_group_totals_map(company_id):
@@ -195,11 +207,17 @@ def compute_group_totals_map(company_id):
         return cache[key]
 
     group_key = func.coalesce(Shareholder.parent_id, Shareholder.id)
-    rows = db.session.query(group_key.label('gid'), func.sum(metric_col)).join(Company).filter(
-        Company.id == company_id,
-        Company.user_id == current_user.id,
-        metric_col.isnot(None),
-    ).group_by('gid').all()
+    rows = (
+        db.session.query(group_key.label('gid'), func.sum(metric_col))
+        .join(Company)
+        .filter(
+            Company.id == company_id,
+            Company.user_id == current_user.id,
+            metric_col.isnot(None),
+        )
+        .group_by('gid')
+        .all()
+    )
 
     result = {int(gid): int(total or 0) for gid, total in rows}
     cache[key] = result

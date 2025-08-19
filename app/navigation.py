@@ -3,20 +3,22 @@ from flask import session
 from flask_login import current_user
 from .navigation_builder import navigation_tree
 
-def _compute_skipped_steps_for_company(company_id):
+def compute_skipped_steps_for_company(company_id, accounting_data=None):
     """Compute skipped steps (SoA pages with source total == 0) for the given company.
+    Optionally accepts pre-fetched accounting_data to avoid duplicate queries.
     Safe no-op if company or accounting data is missing.
     """
     skipped = set()
     try:
         from app.company.models import AccountingData
         from app.company.services.soa_summary_service import SoASummaryService
-        accounting_data = (
-            AccountingData.query
-            .filter_by(company_id=company_id)
-            .order_by(AccountingData.created_at.desc())
-            .first()
-        )
+        if accounting_data is None:
+            accounting_data = (
+                AccountingData.query
+                .filter_by(company_id=company_id)
+                .order_by(AccountingData.created_at.desc())
+                .first()
+            )
         if not accounting_data:
             return skipped
         soa_children = []
@@ -45,7 +47,7 @@ def get_navigation_state(current_page_key, skipped_steps=None):
     if skipped_steps is None:
         try:
             company = getattr(current_user, 'company', None)
-            skipped_steps = _compute_skipped_steps_for_company(company.id) if company else set()
+            skipped_steps = compute_skipped_steps_for_company(company.id) if company else set()
         except Exception:
             skipped_steps = set()
     else:

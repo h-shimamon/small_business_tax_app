@@ -19,8 +19,8 @@
         {{ render_field(form.balance_at_eoy) }}
         {{ render_field(form.transaction_details, rows=3) }}
         <div class="form-actions">
-            <a href="{{ url_for('company.statement_of_accounts', page='temporary_receipts') }}" class="button-secondary">キャンセル</a>
             {{ form.submit(class="button-primary") }}
+            <a href="{{ url_for('company.statement_of_accounts', page='temporary_receipts') }}" class="button-secondary">キャンセル</a>
         </div>
     </form>
 </div>

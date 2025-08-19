@@ -21,8 +21,8 @@
         {{ render_field(form.other_allowances) }}
         {{ render_field(form.total_compensation) }}
         <div class="form-actions">
-            <a href="{{ url_for('company.statement_of_accounts', page='executive_compensations') }}" class="button-secondary">キャンセル</a>
             {{ form.submit(class="button-primary") }}
+            <a href="{{ url_for('company.statement_of_accounts', page='executive_compensations') }}" class="button-secondary">キャンセル</a>
         </div>
     </form>
 </div>

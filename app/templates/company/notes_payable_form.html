@@ -20,8 +20,8 @@
         {{ render_field(form.amount) }}
         {{ render_field(form.remarks, rows=3) }}
         <div class="form-actions">
-            <a href="{{ url_for('company.statement_of_accounts', page='notes_payable') }}" class="button-secondary">キャンセル</a>
             {{ form.submit(class="button-primary") }}
+            <a href="{{ url_for('company.statement_of_accounts', page='notes_payable') }}" class="button-secondary">キャンセル</a>
         </div>
     </form>
 </div>
