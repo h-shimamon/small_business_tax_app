@@ -134,15 +134,25 @@ def overlay_pdf(
     for name, path in font_registrations.items():
         _register_font_if_needed(name, path)
 
-    for i, page in enumerate(reader.pages):
-        if i not in texts_by_page and i not in grids_by_page and i not in rects_by_page:
-            writer.add_page(page)
-            continue
+    # Determine total pages to render (support repeating last base page for overflow)
+    max_index = -1
+    if texts_by_page:
+        max_index = max(max_index, max(texts_by_page.keys()))
+    if grids_by_page:
+        max_index = max(max_index, max(grids_by_page.keys()))
+    if rects_by_page:
+        max_index = max(max_index, max(rects_by_page.keys()))
+    total_pages = max(len(reader.pages), max_index + 1)
 
-        media = page.mediabox
+    for i in range(total_pages):
+        base_idx = min(i, len(reader.pages) - 1)
+        base_page = reader.pages[base_idx]
+
+        media = base_page.mediabox
         width = float(media.width)
         height = float(media.height)
 
+        # Create overlay canvas
         packet = BytesIO()
         c = canvas.Canvas(packet, pagesize=(width, height))
 
@@ -186,8 +196,12 @@ def overlay_pdf(
 
         overlay_reader = PdfReader(packet)
         overlay_page = overlay_reader.pages[0]
-        page.merge_page(overlay_page)
-        writer.add_page(page)
+
+        # Duplicate base page when needed by merging base onto a blank page first
+        blank = pypdf.PageObject.create_blank_page(None, width, height)
+        blank.merge_page(base_page)
+        blank.merge_page(overlay_page)
+        writer.add_page(blank)
 
     with open(output_pdf_path, "wb") as f:
         writer.write(f)

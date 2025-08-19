@@ -14,6 +14,12 @@ from .pdf_fill import overlay_pdf, TextSpec
 from sqlalchemy import func
 from app import db
 from app.company.services import company_classification_service
+from .date_jp import (
+    to_wareki as _to_wareki,
+    wareki_with_spaces as _wareki_with_spaces,
+    wareki_era_name as _wareki_era_name,
+    wareki_numeric_parts as _wareki_numeric_parts,
+)
 
 
 def _string_width(text: str, font_name: str, font_size: float) -> float:
@@ -97,8 +103,18 @@ def _format_number(n: Optional[int]) -> str:
         return ""
 
 
-def _same_address(a: Shareholder, b: Shareholder) -> bool:
-    return (a.zip_code or "") == (b.zip_code or "") and (a.prefecture_city or "") == (b.prefecture_city or "") and (a.address or "") == (b.address or "")
+def _load_geometry(repo_root: str, year: str):
+    """Load optional geometry constants from JSON; return dict or {} on failure."""
+    import json
+    path = os.path.join(repo_root, f"resources/pdf_templates/beppyou_02/{year}_geometry.json")
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f) or {}
+    except Exception:
+        return {}
+
+
+ 
 
 
 def _collect_rows(company_id: int, limit: int = 12) -> List[Dict]:
@@ -195,89 +211,7 @@ RECT_START_YY  = (340.66, 834.92, 8.67, 13.33)
 RECT_START_MM  = (360.66, 834.92, 6.67, 13.33)
 RECT_START_DD  = (383.99, 835.59, 10.67, 13.33)
 
-_ERAS = [
-    ("令和", (2019, 5, 1)),
-    ("平成", (1989, 1, 8)),
-    ("昭和", (1926, 12, 25)),
-]
-
-
-def _to_wareki(date_str: Optional[str]) -> str:
-    """Convert 'YYYY-MM-DD' style to Japanese era like '令和X年M月D日'. Returns '' if invalid."""
-    if not date_str:
-        return ""
-    from datetime import datetime
-    try:
-        # Allow both YYYY-MM-DD and YYYY/MM/DD
-        ds = date_str.strip()
-        fmt = "%Y-%m-%d" if "-" in ds else "%Y/%m/%d"
-        dt = datetime.strptime(ds, fmt)
-    except Exception:
-        return ""
-    y, m, d = dt.year, dt.month, dt.day
-    era_name = None
-    era_year = None
-    for name, (ey, em, ed) in _ERAS:
-        if (y, m, d) >= (ey, em, ed):
-            era_name = name
-            era_year = y - ey + 1
-            break
-    if era_name is None or era_year is None:
-        return ""
-    # Year 1 uses '元' commonly, but未指定のため数字で統一
-    return f"{era_name}{era_year}年{m}月{d}日"
-
-def _wareki_with_spaces(date_str: Optional[str]) -> str:
-    s = _to_wareki(date_str)
-    if not s:
-        return ""
-    ideographic_space = "\u3000"  # full-width space
-    s = s.replace("年", ideographic_space).replace("月", ideographic_space).replace("日", "")
-    return s.strip()
-
-
-def _wareki_era_name(date_str: Optional[str]) -> str:
-    """Return era name (e.g., '令和', '平成', '昭和') for the given date string.
-    Returns '' if invalid or before supported eras.
-    """
-    if not date_str:
-        return ""
-    from datetime import datetime
-    try:
-        ds = date_str.strip()
-        fmt = "%Y-%m-%d" if "-" in ds else "%Y/%m/%d"
-        dt = datetime.strptime(ds, fmt)
-    except Exception:
-        return ""
-    y, m, d = dt.year, dt.month, dt.day
-    for name, (ey, em, ed) in _ERAS:
-        if (y, m, d) >= (ey, em, ed):
-            return name
-    return ""
-
-
-def _wareki_numeric_parts(date_str: Optional[str]) -> Optional[Tuple[str, str, str]]:
-    """Return (yy, mm, dd) as zero-padded 2-digit strings for the given date in wareki.
-    Returns None if input invalid."""
-    if not date_str:
-        return None
-    from datetime import datetime
-    try:
-        ds = date_str.strip()
-        fmt = "%Y-%m-%d" if "-" in ds else "%Y/%m/%d"
-        dt = datetime.strptime(ds, fmt)
-    except Exception:
-        return None
-    y, m, d = dt.year, dt.month, dt.day
-    era_start = None
-    for _, (ey, em, ed) in _ERAS:
-        if (y, m, d) >= (ey, em, ed):
-            era_start = (ey, em, ed)
-            break
-    if era_start is None:
-        return None
-    wy = y - era_start[0] + 1
-    return (f"{wy:02d}", f"{m:02d}", f"{d:02d}")
+# 和暦処理は app/utils/date_jp.py に集約（関数名の互換性維持のため import で別名化）
 
 
 def _place_ymd_triplet(page: int, x0: float, y0: float, w: float, h: float, date_str: Optional[str], texts_list: List[TextSpec], *, font: str = "NotoSansJP", size: float = 8.0) -> None:
@@ -402,21 +336,39 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     base_pdf = os.path.join(repo_root, f"resources/pdf_forms/beppyou_02/{year}/source.pdf")
     font_map = {"NotoSansJP": os.path.join(repo_root, "resources/fonts/NotoSansJP-Regular.ttf")}
 
+    # Optional external geometry override (non-functional change; defaults preserved)
+    _geom = _load_geometry(repo_root, year)
+
     # Geometry constants (row 1 baseline rects), and vertical step
-    STEP_Y = 27.32
-    PADDING_X = 2.0
+    STEP_Y = float(_geom.get('row', {}).get('STEP_Y', 27.32))
+    PADDING_X = float(_geom.get('row', {}).get('PADDING_X', 2.0))
     # Rects: (x0, y0, width, height)
-    NUM_RECT = (64.00, 377.15, 16.66, 18.66)
-    ADDR_RECT = (106.00, 375.15, 100.66, 21.32)
-    NAME_RECT = (209.99, 374.48, 100.66, 21.99)
-    REL_RECT = (312.66, 374.48, 48.00, 21.99)
-    SHARES_RECT = (459.99, 374.48, 46.00, 22.66)
+    NUM_RECT = tuple(_geom.get('rects', {}).get('NUM_RECT', (64.00, 377.15, 16.66, 18.66)))
+    ADDR_RECT = tuple(_geom.get('rects', {}).get('ADDR_RECT', (106.00, 375.15, 100.66, 21.32)))
+    NAME_RECT = tuple(_geom.get('rects', {}).get('NAME_RECT', (209.99, 374.48, 100.66, 21.99)))
+    REL_RECT = tuple(_geom.get('rects', {}).get('REL_RECT', (312.66, 374.48, 48.00, 21.99)))
+    SHARES_RECT = tuple(_geom.get('rects', {}).get('SHARES_RECT', (459.99, 374.48, 46.00, 22.66)))
 
+    # Allow overriding header/period rects and row centers
+    ROW1_CENTER = float(_geom.get('row', {}).get('ROW1_CENTER', 387.0))
+    ROW_STEP = float(_geom.get('row', {}).get('ROW_STEP', 24.5))
+    # Header rects
+    RECT_TOTAL_SHARES = tuple(_geom.get('rects', {}).get('RECT_TOTAL_SHARES', RECT_TOTAL_SHARES))
+    RECT_TOP3_SHARES = tuple(_geom.get('rects', {}).get('RECT_TOP3_SHARES', RECT_TOP3_SHARES))
+    RECT_RATIO_RAW = tuple(_geom.get('rects', {}).get('RECT_RATIO_RAW', RECT_RATIO_RAW))
+    RECT_RATIO_PCT = tuple(_geom.get('rects', {}).get('RECT_RATIO_PCT', RECT_RATIO_PCT))
+    # Classification boxes
+    BOX_DOUZOKU = tuple(_geom.get('rects', {}).get('BOX_DOUZOKU', BOX_DOUZOKU))
+    BOX_HI_DOUZOKU = tuple(_geom.get('rects', {}).get('BOX_HI_DOUZOKU', BOX_HI_DOUZOKU))
+    # Period/company rects
+    RECT_PERIOD_START = tuple(_geom.get('rects', {}).get('RECT_PERIOD_START', RECT_PERIOD_START))
+    RECT_PERIOD_END = tuple(_geom.get('rects', {}).get('RECT_PERIOD_END', RECT_PERIOD_END))
+    RECT_COMPANY_NAME = tuple(_geom.get('rects', {}).get('RECT_COMPANY_NAME', RECT_COMPANY_NAME))
+    RECT_START_ERA = tuple(_geom.get('rects', {}).get('RECT_START_ERA', RECT_START_ERA))
+    RECT_START_YY = tuple(_geom.get('rects', {}).get('RECT_START_YY', RECT_START_YY))
+    RECT_START_MM = tuple(_geom.get('rects', {}).get('RECT_START_MM', RECT_START_MM))
+    RECT_START_DD = tuple(_geom.get('rects', {}).get('RECT_START_DD', RECT_START_DD))
     rows = _collect_rows(company_id, limit=12)
-
-    # Row center-line specification (pt): row1=386, each subsequent row −26pt
-    ROW1_CENTER = 387.0
-    ROW_STEP = 24.5
 
     texts: List[TextSpec] = []
     rectangles: List[Tuple[int, float, float, float, float]] = []
@@ -445,7 +397,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
         addr_font = "NotoSansJP"
         addr_start = 8.0  # start 8pt (−1pt from previous)
         addr_min = 7.0    # allow down to 7pt
-        if not row["is_main"] and _same_address(person, main):
+        if not row["is_main"] and shs.is_same_address(person, main):
             line1 = "同上"
             line2 = ""
         else:

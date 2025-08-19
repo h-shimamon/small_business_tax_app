@@ -15,12 +15,18 @@ from app.company.forms import (
     LandRentForm, MiscellaneousForm
 )
 from app import db
-from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
+from app.navigation import (
+    get_navigation_state,
+    mark_step_as_completed,
+    unmark_step_as_completed,
+    compute_skipped_steps_for_company,
+)
 from .auth import company_required
 from app.company.services.master_data_service import MasterDataService
 from app.company.services.soa_summary_service import SoASummaryService
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
+from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
 
 # mappings are centralized in app.company.soa_mappings
 
@@ -40,20 +46,19 @@ def statement_of_accounts(company):
     accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
 
     # Compute skipped pages (source total == 0) for SoA group and optionally redirect forward
-    from app.navigation_builder import navigation_tree
-    skipped_steps = set()
-    soa_children = []
-    for node in navigation_tree:
-        if node.key == 'statement_of_accounts_group':
-            soa_children = node.children
-            break
-    for child in soa_children:
-        child_page = (child.params or {}).get('page')
-        if child_page:
-            if SoASummaryService.compute_skip_total(company.id, child_page, accounting_data=accounting_data) == 0:
-                skipped_steps.add(child.key)
+    skipped_steps = compute_skipped_steps_for_company(company.id, accounting_data=accounting_data)
 
     # If current page should be skipped, redirect to the next non-skipped page (forward search only)
+    # Collect SoA children (navigation order) for forward search
+    try:
+        from app.navigation_builder import navigation_tree
+        soa_children = []
+        for node in navigation_tree:
+            if node.key == 'statement_of_accounts_group':
+                soa_children = node.children
+                break
+    except Exception:
+        soa_children = []
     current_child_index = None
     for idx, child in enumerate(soa_children):
         if (child.params or {}).get('page') == page:
@@ -151,6 +156,27 @@ def statement_of_accounts(company):
     context['navigation_state'] = get_navigation_state(page, skipped_steps=skipped_steps)
     return render_template('company/statement_of_accounts.html', **context)
 
+@company_bp.route('/statement/deposits/pdf')
+@company_required
+def deposits_pdf(company):
+    """預貯金等の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_yocyokin_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_yocyokin(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_yocyokin_{year}.pdf"
+    )
+
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])
 @company_required
 def add_item(company, page_key):
@@ -167,21 +193,9 @@ def add_item(company, page_key):
         flash(f"{config['title']}情報を登録しました。", 'success')
         return redirect(url_for('company.statement_of_accounts', page=page_key))
     # Compute skipped steps for sidebar consistency (same logic as main SoA view)
-    from app.navigation_builder import navigation_tree
-    from app.company.services.soa_summary_service import SoASummaryService
-    skipped_steps = set()
-    # Pre-fetch latest AccountingData once
+    # Pre-fetch latest AccountingData once then compute skipped steps via helper
     accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
-    soa_children = []
-    for node in navigation_tree:
-        if node.key == 'statement_of_accounts_group':
-            soa_children = node.children
-            break
-    for child in soa_children:
-        child_page = (child.params or {}).get('page')
-        if child_page:
-            if SoASummaryService.compute_skip_total(company.id, child_page, accounting_data=accounting_data) == 0:
-                skipped_steps.add(child.key)
+    skipped_steps = compute_skipped_steps_for_company(company.id, accounting_data=accounting_data)
     form_template = f"company/{config['template']}"
     return render_template(
         form_template,
@@ -207,20 +221,8 @@ def edit_item(company, page_key, item_id):
     if request.method == 'GET':
         form = config['form'](obj=item)
     # Compute skipped steps for sidebar consistency
-    from app.navigation_builder import navigation_tree
-    from app.company.services.soa_summary_service import SoASummaryService
-    skipped_steps = set()
     accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
-    soa_children = []
-    for node in navigation_tree:
-        if node.key == 'statement_of_accounts_group':
-            soa_children = node.children
-            break
-    for child in soa_children:
-        child_page = (child.params or {}).get('page')
-        if child_page:
-            if SoASummaryService.compute_skip_total(company.id, child_page, accounting_data=accounting_data) == 0:
-                skipped_steps.add(child.key)
+    skipped_steps = compute_skipped_steps_for_company(company.id, accounting_data=accounting_data)
     form_template = f"company/{config['template']}"
     return render_template(
         form_template,

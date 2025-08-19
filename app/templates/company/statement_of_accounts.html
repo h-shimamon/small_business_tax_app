@@ -25,6 +25,10 @@
         {% else %}
             <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
         {% endif %}
+        {# 検証用のPDF出力（預貯金等のみ、サービスリリース時は非表示前提） #}
+        {% if page == 'deposits' %}
+            <a href="{{ url_for('company.deposits_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（預貯金等・検証用）</a>
+        {% endif %}
     </div>
 </div>
 

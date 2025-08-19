@@ -60,7 +60,6 @@
 }
 
 .accordion-summary {
-    padding-left: 0.75rem;
     display: grid; /* 2列グリッドで縦2行 */
     grid-template-columns: var(--summary-first-col, max-content) 1fr; /* 左列幅を共有し、右列は可変 */
     column-gap: 1.5rem; /* 列間隔 */
@@ -138,7 +137,6 @@
 .related-name { font-weight: 500; }
 .related-relationship { font-size: 0.85rem; color: var(--text-secondary); margin-left: 0.5rem; }
 .related-summary {
-    padding-left: 0.75rem;
     display: grid;
     grid-template-columns: var(--summary-first-col, max-content) 1fr; /* 左列幅を共有し、右列は可変 */
     column-gap: 1.5rem;

@@ -17,6 +17,8 @@ from app.pdf.beppyou_02 import generate_beppyou_02
 def shareholders(company, page_title):
     """株主/社員情報の一覧ページ"""
     shareholder_list = shareholder_service.get_shareholders_by_company(company.id)
+    # 主たる株主（親がいない）を先に計算してテンプレートへ安全に引き渡す
+    main_shareholders = [s for s in shareholder_list if s.parent_id is None]
     group_totals_both_map = shareholder_service.compute_group_totals_both_map(company.id)
     classification_result = company_classification_service.classify_company(company.id)
     navigation_state = get_navigation_state('shareholders')
@@ -24,6 +26,7 @@ def shareholders(company, page_title):
     return render_template(
         'company/shareholder_list.html', 
         shareholders=shareholder_list, 
+        main_shareholders=main_shareholders,
         classification_result=classification_result,
         navigation_state=navigation_state,
         page_title=page_title,
@@ -107,13 +110,8 @@ def edit_shareholder(company, shareholder_id, page_title):
 
     # UX: 特殊関係人の編集画面で、主たる株主と住所が同一ならチェック状態を初期表示で反映する
     if request.method == 'GET' and shareholder.parent_id is not None and hasattr(form, 'is_address_same_as_main'):
-        def _eq(a, b):
-            return (a or '') == (b or '')
-        same = (
-            _eq(shareholder.zip_code, shareholder.parent.zip_code) and
-            _eq(shareholder.prefecture_city, shareholder.parent.prefecture_city) and
-            _eq(shareholder.address, shareholder.parent.address)
-        )
+        # サービス層の共通ロジックで住所一致を判定（単一情報源化）
+        same = shareholder_service.is_same_address(shareholder, shareholder.parent) if shareholder.parent is not None else False
         form.is_address_same_as_main.data = same
 
     if form.validate_on_submit():
