@@ -1,12 +1,21 @@
 {# app/templates/company/_layout_helpers.html #}
 
-{% macro render_page_header(title, subtitle, button_href, button_text) %}
+{% macro render_page_header(title, subtitle, button_href, button_text, secondary_href=None, secondary_text=None, secondary_first=False) %}
 <div class="page-header">
     <div class="header-content">
         <h1 class="content-title">{{ title }}</h1>
         <p class="content-subtitle">{{ subtitle }}</p>
     </div>
     <div class="header-actions">
+        {% if secondary_first and secondary_href %}
+            <a 
+                href="{{ secondary_href }}" 
+                class="button-secondary"
+                target="_blank" rel="noopener"
+            >
+                {{ secondary_text or '' }}
+            </a>
+        {% endif %}
         <a 
             href="{{ button_href if button_href else '#' }}" 
             class="button-primary"
@@ -14,6 +23,15 @@
         >
             ＋ {{ button_text }}
         </a>
+        {% if (not secondary_first) and secondary_href %}
+            <a 
+                href="{{ secondary_href }}" 
+                class="button-secondary"
+                target="_blank" rel="noopener"
+            >
+                {{ secondary_text or '' }}
+            </a>
+        {% endif %}
     </div>
 </div>
 {% endmacro %}

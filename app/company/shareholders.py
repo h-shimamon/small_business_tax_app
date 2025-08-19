@@ -17,6 +17,7 @@ from app.pdf.beppyou_02 import generate_beppyou_02
 def shareholders(company, page_title):
     """株主/社員情報の一覧ページ"""
     shareholder_list = shareholder_service.get_shareholders_by_company(company.id)
+    group_totals_both_map = shareholder_service.compute_group_totals_both_map(company.id)
     classification_result = company_classification_service.classify_company(company.id)
     navigation_state = get_navigation_state('shareholders')
     
@@ -25,7 +26,8 @@ def shareholders(company, page_title):
         shareholders=shareholder_list, 
         classification_result=classification_result,
         navigation_state=navigation_state,
-        page_title=page_title
+        page_title=page_title,
+        group_totals_both_map=group_totals_both_map
     )
 
 @company_bp.route('/shareholder/register/main', methods=['GET', 'POST'])

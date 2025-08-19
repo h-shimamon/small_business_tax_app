@@ -204,3 +204,35 @@ def compute_group_totals_map(company_id):
     result = {int(gid): int(total or 0) for gid, total in rows}
     cache[key] = result
     return result
+
+
+def compute_group_totals_both_map(company_id):
+    """
+    主たる株主グループ（主＋特殊関係人）ごとの総株式数・総議決権をマップで返す。
+    返り値: { main_id: { 'shares_held': int, 'voting_rights': int } }
+    UI変更最小化のための補助関数（他画面に副作用なし）。
+    """
+    cache = _get_request_cache()
+    key = ("group_totals_both_map", company_id)
+    if key in cache:
+        return cache[key]
+
+    group_key = func.coalesce(Shareholder.parent_id, Shareholder.id)
+    rows = db.session.query(
+        group_key.label('gid'),
+        func.sum(Shareholder.shares_held).label('sum_shares'),
+        func.sum(Shareholder.voting_rights).label('sum_votes'),
+    ).join(Company).filter(
+        Company.id == company_id,
+        Company.user_id == current_user.id,
+    ).group_by('gid').all()
+
+    result = {}
+    for gid, sum_shares, sum_votes in rows:
+        result[int(gid)] = {
+            'shares_held': int(sum_shares or 0),
+            'voting_rights': int(sum_votes or 0),
+        }
+
+    cache[key] = result
+    return result
