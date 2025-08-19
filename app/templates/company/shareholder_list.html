@@ -17,12 +17,11 @@
     title=page_title,
     subtitle='登録内容から自動で同族会社の判定を行うため、' ~ page_title ~ ' の作成は必須です。',
     button_href=url_for('company.register_main_shareholder') if main_shareholders|length < 3 else None,
-    button_text='新規グループ登録'
+    button_text='新規グループ登録',
+    secondary_href=(url_for('company.shareholders_pdf_beppyou_02', year='2025') if (shareholders|selectattr('parent_id', 'none')|list)|length > 0 else None),
+    secondary_text='PDF出力（別表二）',
+    secondary_first=True
 ) }}
-
-<div class="page-actions">
-  <a class="button-primary" href="{{ url_for('company.shareholders_pdf_beppyou_02', year='2025') }}" target="_blank" rel="noopener">PDF出力（別表二）</a>
-</div>
 
 {% set main_shareholders = shareholders|selectattr('parent_id', 'none')|list %}
 
@@ -62,10 +61,21 @@
                 </div>
                 <div class="accordion-summary">
                     {% if page_title == '社員情報' %}
-                        <span>出資金: {{ (main_shareholder.investment_amount or 0) | format_currency }}</span>
+                        <div class="summary-row">
+                            <span>出資金: {{ (main_shareholder.investment_amount or 0) | format_currency }}</span>
+                        </div>
                     {% else %}
-                        <span>株式数: {{ main_shareholder.shares_held or 0 }}株</span>
-                        <span>議決権: {{ main_shareholder.voting_rights or 0 }}</span>
+                        {# 1行目: グループ合計（主＋特殊関係人） #}
+                        {% set totals = group_totals_both_map.get(main_shareholder.id) %}
+                        <div class="summary-row">
+                            <span>関係人を含めた総株式数: {{ (totals['shares_held'] if totals is not none else 0) | int }}株</span>
+                            <span>関係人を含めた総議決権: {{ (totals['voting_rights'] if totals is not none else 0) | int }}</span>
+                        </div>
+                        {# 2行目: 主たる株主本人の内訳 #}
+                        <div class="summary-row">
+                            <span>株式数: {{ main_shareholder.shares_held or 0 }}株</span>
+                            <span>議決権: {{ main_shareholder.voting_rights or 0 }}</span>
+                        </div>
                     {% endif %}
                 </div>
                 <div class="accordion-actions">
@@ -78,12 +88,6 @@
                 </div>
             </div>
             <div class="accordion-content">
-                <div class="related-row add-new-row">
-                    <a href="{{ url_for('company.register_related_shareholder', main_shareholder_id=main_shareholder.id) }}" class="add-new-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        <span>特殊関係人を追加登録する</span>
-                    </a>
-                </div>
                 {% if main_shareholder.children %}
                     {% for related in main_shareholder.children %}
                     <div class="related-row">
@@ -113,6 +117,12 @@
                 {% else %}
                 <p class="no-related">登録されている特殊関係人はいません。</p>
                 {% endif %}
+                <div class="related-row add-new-row">
+                    <a href="{{ url_for('company.register_related_shareholder', main_shareholder_id=main_shareholder.id) }}" class="add-new-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>特殊関係人を追加登録する</span>
+                    </a>
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -138,8 +148,48 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const item = header.parentElement;
             item.classList.toggle('open');
+            // 開閉後にレイアウトが変わるため再計測
+            requestAnimationFrame(computeDimensions);
         });
     });
+
+    // ヘッダ情報カラム幅・サマリー左列幅・サマリー全体幅を算出し、CSS変数で共有
+    function computeDimensions() {
+        document.querySelectorAll('.accordion-item').forEach(item => {
+            const titleEl = item.querySelector('.accordion-header .accordion-title');
+            const sumRows = item.querySelectorAll('.accordion-header .accordion-summary .summary-row');
+            if (!titleEl) return;
+            const infoWidth = Math.ceil(titleEl.getBoundingClientRect().width);
+            if (infoWidth > 0) {
+                item.style.setProperty('--info-col-width', infoWidth + 'px');
+            }
+            let maxFirstCol = 0;
+            let maxRowTotal = 0;
+            let columnGapPx = 24; // デフォルト（1.5rem ≒ 24px）
+            const summaryEl = item.querySelector('.accordion-header .accordion-summary');
+            if (summaryEl) {
+                const cs = getComputedStyle(summaryEl);
+                const gap = parseFloat(cs.columnGap || '24');
+                if (!isNaN(gap)) columnGapPx = gap;
+            }
+            sumRows.forEach(row => {
+                const firstSpan = row.querySelector('span:first-child');
+                const secondSpan = row.querySelector('span:nth-child(2)');
+                const w1 = firstSpan ? Math.ceil(firstSpan.getBoundingClientRect().width) : 0;
+                const w2 = secondSpan ? Math.ceil(secondSpan.getBoundingClientRect().width) : 0;
+                maxFirstCol = Math.max(maxFirstCol, w1);
+                maxRowTotal = Math.max(maxRowTotal, w1 + columnGapPx + w2);
+            });
+            if (maxFirstCol > 0) {
+                item.style.setProperty('--summary-first-col', maxFirstCol + 'px');
+            }
+            if (maxRowTotal > 0) {
+                item.style.setProperty('--summary-col-width', maxRowTotal + 'px');
+            }
+        });
+    }
+    computeDimensions();
+    window.addEventListener('resize', computeDimensions);
 });
 </script>
 {% endblock %}

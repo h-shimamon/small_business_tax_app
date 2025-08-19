@@ -11,6 +11,9 @@ from app.company.services import shareholder_service as shs
 from reportlab.pdfbase import pdfmetrics
 
 from .pdf_fill import overlay_pdf, TextSpec
+from sqlalchemy import func
+from app import db
+from app.company.services import company_classification_service
 
 
 def _string_width(text: str, font_name: str, font_size: float) -> float:
@@ -150,6 +153,239 @@ def _collect_rows(company_id: int, limit: int = 12) -> List[Dict]:
     return rows[:limit]
 
 
+# ===== Header metrics/geometry (modularized, shares-based) =====
+# Rects: (x0, y0, width, height) in points on page 0
+RECT_TOTAL_SHARES = (250.66, 785.61, 50.00, 28.65)  # (1)
+RECT_TOP3_SHARES = (251.33, 752.96, 49.33, 27.99)   # (2)
+RECT_RATIO_RAW   = (251.33, 721.64, 47.33, 27.99)   # (3)
+RECT_RATIO_PCT   = (247.99, 495.09, 50.00, 28.65)   # (4)
+
+BOX_DOUZOKU      = (465.99, 519.08, 88.66, 12.66)   # (5)
+BOX_HI_DOUZOKU   = (467.99, 506.42, 86.00, 12.66)   # (6)
+
+
+def _right_edge(x0: float, y0: float, w: float, h: float) -> float:
+    return x0 + w - 2.0
+
+
+def _compute_total_shares(company_id: int) -> int:
+    return int(db.session.query(func.sum(Shareholder.shares_held)).filter(
+        Shareholder.company_id == company_id
+    ).scalar() or 0)
+
+
+def _compute_top3_shares(company_id: int) -> int:
+    group_key = func.coalesce(Shareholder.parent_id, Shareholder.id)
+    rows = db.session.query(group_key.label('gid'), func.sum(Shareholder.shares_held)).filter(
+        Shareholder.company_id == company_id
+    ).group_by('gid').all()
+    totals = sorted([int(v or 0) for _, v in rows], reverse=True)
+    return sum(totals[:3]) if totals else 0
+
+
+# ===== Declaration header (dates/company) =====
+# Period start/end (wareki) and company name
+RECT_PERIOD_START = (329.32, 833.59, 64.66, 10.00)
+RECT_PERIOD_END   = (329.32, 822.26, 62.00, 11.33)
+RECT_COMPANY_NAME = (438.66, 822.93, 115.33, 20.66)
+
+# New specific rects for period start split (era, YY, MM, DD)
+RECT_START_ERA = (327.32, 834.26, 14.00, 13.33)
+RECT_START_YY  = (340.66, 834.92, 8.67, 13.33)
+RECT_START_MM  = (360.66, 834.92, 6.67, 13.33)
+RECT_START_DD  = (383.99, 835.59, 10.67, 13.33)
+
+_ERAS = [
+    ("令和", (2019, 5, 1)),
+    ("平成", (1989, 1, 8)),
+    ("昭和", (1926, 12, 25)),
+]
+
+
+def _to_wareki(date_str: Optional[str]) -> str:
+    """Convert 'YYYY-MM-DD' style to Japanese era like '令和X年M月D日'. Returns '' if invalid."""
+    if not date_str:
+        return ""
+    from datetime import datetime
+    try:
+        # Allow both YYYY-MM-DD and YYYY/MM/DD
+        ds = date_str.strip()
+        fmt = "%Y-%m-%d" if "-" in ds else "%Y/%m/%d"
+        dt = datetime.strptime(ds, fmt)
+    except Exception:
+        return ""
+    y, m, d = dt.year, dt.month, dt.day
+    era_name = None
+    era_year = None
+    for name, (ey, em, ed) in _ERAS:
+        if (y, m, d) >= (ey, em, ed):
+            era_name = name
+            era_year = y - ey + 1
+            break
+    if era_name is None or era_year is None:
+        return ""
+    # Year 1 uses '元' commonly, but未指定のため数字で統一
+    return f"{era_name}{era_year}年{m}月{d}日"
+
+def _wareki_with_spaces(date_str: Optional[str]) -> str:
+    s = _to_wareki(date_str)
+    if not s:
+        return ""
+    ideographic_space = "\u3000"  # full-width space
+    s = s.replace("年", ideographic_space).replace("月", ideographic_space).replace("日", "")
+    return s.strip()
+
+
+def _wareki_era_name(date_str: Optional[str]) -> str:
+    """Return era name (e.g., '令和', '平成', '昭和') for the given date string.
+    Returns '' if invalid or before supported eras.
+    """
+    if not date_str:
+        return ""
+    from datetime import datetime
+    try:
+        ds = date_str.strip()
+        fmt = "%Y-%m-%d" if "-" in ds else "%Y/%m/%d"
+        dt = datetime.strptime(ds, fmt)
+    except Exception:
+        return ""
+    y, m, d = dt.year, dt.month, dt.day
+    for name, (ey, em, ed) in _ERAS:
+        if (y, m, d) >= (ey, em, ed):
+            return name
+    return ""
+
+
+def _wareki_numeric_parts(date_str: Optional[str]) -> Optional[Tuple[str, str, str]]:
+    """Return (yy, mm, dd) as zero-padded 2-digit strings for the given date in wareki.
+    Returns None if input invalid."""
+    if not date_str:
+        return None
+    from datetime import datetime
+    try:
+        ds = date_str.strip()
+        fmt = "%Y-%m-%d" if "-" in ds else "%Y/%m/%d"
+        dt = datetime.strptime(ds, fmt)
+    except Exception:
+        return None
+    y, m, d = dt.year, dt.month, dt.day
+    era_start = None
+    for _, (ey, em, ed) in _ERAS:
+        if (y, m, d) >= (ey, em, ed):
+            era_start = (ey, em, ed)
+            break
+    if era_start is None:
+        return None
+    wy = y - era_start[0] + 1
+    return (f"{wy:02d}", f"{m:02d}", f"{d:02d}")
+
+
+def _place_ymd_triplet(page: int, x0: float, y0: float, w: float, h: float, date_str: Optional[str], texts_list: List[TextSpec], *, font: str = "NotoSansJP", size: float = 8.0) -> None:
+    parts = _wareki_numeric_parts(date_str)
+    if not parts:
+        return
+    yy, mm, dd = parts
+    # Baseline centered vertically
+    y = _baseline_center(y0 + h / 2.0, size)
+    # Widths
+    w_yy = _string_width(yy, font, size)
+    w_mm = _string_width(mm, font, size)
+    w_dd = _string_width(dd, font, size)
+    # Positions
+    x_yy = x0
+    x_dd = x0 + w - w_dd - 2.0
+    x_mm_center = (x_yy + x_dd) / 2.0
+    x_mm = x_mm_center - (w_mm / 2.0)
+    # Draw
+    texts_list.append(TextSpec(page=page, x=x_yy, y=y, text=yy, font_name=font, font_size=size))
+    texts_list.append(TextSpec(page=page, x=x_mm, y=y, text=mm, font_name=font, font_size=size))
+    texts_list.append(TextSpec(page=page, x=x_dd, y=y, text=dd, font_name=font, font_size=size))
+
+
+def _place_text_rect_left(page: int, x0: float, y0: float, w: float, h: float, text: str, texts_list: List[TextSpec], *, start_size: float = 10.0, min_size: float = 8.0, font: str = "NotoSansJP") -> None:
+    if not text:
+        return
+    fit_text, used_size = _fit_text(text, font, start_size, min_size, w - 2.0)
+    y = _baseline_center(y0 + h / 2.0, used_size)
+    texts_list.append(TextSpec(page=page, x=x0, y=y, text=fit_text, font_name=font, font_size=used_size))
+
+
+def _place_center_left_fit(page: int, x0: float, y0: float, w: float, h: float, text: str, texts_list: List[TextSpec], *, start_size: float = 8.0, min_size: float = 6.0, font: str = "NotoSansJP") -> None:
+    if not text:
+        return
+    # No fitting: draw at requested size, allow overflow to the right if needed.
+    used_size = start_size
+    y = _baseline_center(y0 + h / 2.0, used_size)  # vertical center
+    texts_list.append(TextSpec(page=page, x=x0, y=y, text=text, font_name=font, font_size=used_size))
+
+
+def _place_center_right_fit(page: int, x0: float, y0: float, w: float, h: float, text: str, texts_list: List[TextSpec], *, start_size: float = 8.0, min_size: float = 6.0, font: str = "NotoSansJP") -> None:
+    if not text:
+        return
+    # No fitting: draw at requested size; align right edge at x0+w, allow extending to the left if wider.
+    used_size = start_size
+    sw = _string_width(text, font, used_size)
+    x = x0 + (w - sw)
+    y = _baseline_center(y0 + h / 2.0, used_size)  # vertical center
+    texts_list.append(TextSpec(page=page, x=x, y=y, text=text, font_name=font, font_size=used_size))
+
+
+def _place_at_left(page: int, x: float, y: float, text: str, texts_list: List[TextSpec], *, size: float, font: str = "NotoSansJP") -> None:
+    if not text:
+        return
+    texts_list.append(TextSpec(page=page, x=x, y=y, text=text, font_name=font, font_size=size))
+
+
+def _place_at_right(page: int, x_right: float, y: float, text: str, texts_list: List[TextSpec], *, size: float, font: str = "NotoSansJP") -> None:
+    if not text:
+        return
+    sw = _string_width(text, font, size)
+    x = x_right - sw
+    texts_list.append(TextSpec(page=page, x=x, y=y, text=text, font_name=font, font_size=size))
+
+def _wrap_text_to_width(text: str, font_name: str, font_size: float, max_width: float) -> List[str]:
+    lines: List[str] = []
+    cur = ""
+    for ch in text:
+        if _string_width(cur + ch, font_name, font_size) <= max_width:
+            cur += ch
+        else:
+            if cur:
+                lines.append(cur)
+            cur = ch
+    if cur:
+        lines.append(cur)
+    return lines
+
+def _place_wrapped_text_rect_left(page: int, x0: float, y0: float, w: float, h: float, text: str, texts_list: List[TextSpec], *, start_size: float = 10.0, min_size: float = 8.0, line_gap: float = 0.0, font: str = "NotoSansJP") -> None:
+    if not text:
+        return
+    max_w = w - 2.0
+    size = start_size
+    while size >= min_size:
+        lines = _wrap_text_to_width(text, font, size, max_w)
+        total_h = len(lines) * size + (len(lines) - 1) * line_gap if lines else 0
+        if lines and total_h <= h:
+            y_bases = _multiline_center(y0 + h / 2.0, [size] * len(lines), line_gap)
+            for ln, yb in zip(lines, y_bases):
+                texts_list.append(TextSpec(page=page, x=x0, y=yb, text=ln, font_name=font, font_size=size))
+            return
+        size -= 1.0
+    # 最小サイズでも収まらない場合、行数制限して末尾を省略
+    size = max(min_size, 1.0)
+    lines = _wrap_text_to_width(text, font, size, max_w)
+    if size > 0:
+        max_lines = max(1, int(h // size))
+    else:
+        max_lines = 1
+    if len(lines) > max_lines:
+        lines = lines[:max_lines]
+        lines[-1] = _ellipsize(lines[-1], font, size, max_w)
+    y_bases = _multiline_center(y0 + h / 2.0, [size] * len(lines), line_gap)
+    for ln, yb in zip(lines, y_bases):
+        texts_list.append(TextSpec(page=page, x=x0, y=yb, text=ln, font_name=font, font_size=size))
+
+
 def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output_path: str) -> str:
     """
     Generate 'beppyou_02' PDF overlay for the given company (current_user tenant).
@@ -183,6 +419,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     ROW_STEP = 24.5
 
     texts: List[TextSpec] = []
+    rectangles: List[Tuple[int, float, float, float, float]] = []
 
     for idx, row in enumerate(rows):
         y_shift = STEP_Y * idx
@@ -192,7 +429,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
         # group number centered (single-line around row_center)
         gx, gy, gw, gh = NUM_RECT
         gnum = str(row["group"]) if row.get("group") is not None else ""
-        num_font = "Helvetica"
+        num_font = "NotoSansJP"
         num_size = 10
         num_w = _string_width(gnum, num_font, num_size)
         num_x = gx + (gw - num_w) / 2.0
@@ -260,7 +497,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
 
         # shares (right aligned, comma separated)
         sx, sy, sw, sh = SHARES_RECT
-        shares_font = "Helvetica"
+        shares_font = "NotoSansJP"
         shares_size = 10.0
         shares_text = _format_number(person.shares_held)
         shares_w = _string_width(shares_text, shares_font, shares_size)
@@ -268,11 +505,85 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
         shares_y = _baseline_center(row_center, shares_size)
         texts.append(TextSpec(page=0, x=shares_x, y=shares_y, text=shares_text, font_name=shares_font, font_size=shares_size))
 
+    # ---- Header totals and classification boxes ----
+    total_shares = _compute_total_shares(company_id)
+    top3_total = _compute_top3_shares(company_id)
+    ratio = (top3_total / total_shares) if total_shares else 0.0
+    ratio_pct = round(ratio * 100, 2)
+
+    # Helpers to place number within a rect (right aligned, vertically centered)
+    def _place_number_rect(page: int, x0: float, y0: float, w: float, h: float, value: str, *, font="Helvetica", size=10.0, right_edge: Optional[float] = None):
+        sw = _string_width(value, font, size)
+        if right_edge is not None:
+            x = right_edge - sw
+        else:
+            x = x0 + (w - sw) - 2.0
+        y = _baseline_center(y0 + h / 2.0, size)
+        texts.append(TextSpec(page=page, x=x, y=y, text=value, font_name=font, font_size=size))
+
+    # Coordinates provided in 1-based page notation; our pages are 0-indexed
+    p = 0
+    # Precompute a shared right edge (to keep all within their rects, use the minimum right edge among the four)
+    rects = [RECT_TOTAL_SHARES, RECT_TOP3_SHARES, RECT_RATIO_RAW, RECT_RATIO_PCT]
+    right_edges = [_right_edge(*r) for r in rects]
+    common_right = min(right_edges)  # 最小の右端に合わせてはみ出し防止
+
+    # (1) total shares with unit
+    _place_number_rect(p, *RECT_TOTAL_SHARES, f"{_format_number(total_shares)}株", right_edge=common_right, font="NotoSansJP")
+    # (2) top3 total with unit
+    _place_number_rect(p, *RECT_TOP3_SHARES, f"{_format_number(top3_total)}株", right_edge=common_right, font="NotoSansJP")
+    # (3) raw ratio number (no %)
+    _place_number_rect(p, *RECT_RATIO_RAW, f"{ratio_pct}", right_edge=common_right, font="NotoSansJP")
+    # (4) percent with %
+    _place_number_rect(p, *RECT_RATIO_PCT, f"{ratio_pct}%", right_edge=common_right, font="NotoSansJP")
+
+    # (5)(6) classification boxes (stroke only)
+    try:
+        classification = company_classification_service.classify_company(company_id)
+        cls = (classification or {}).get('classification')
+    except Exception:
+        cls = None
+    if cls == '同族会社':
+        rectangles.append((p, *BOX_DOUZOKU))
+    elif cls == '非同族会社':
+        rectangles.append((p, *BOX_HI_DOUZOKU))
+
+    # --- Period (wareki) and company name ---
+    company = Company.query.get(company_id)
+    if company:
+        # 会計期間 開始: era/YY/MM/DD を分割し、それぞれ指定矩形に下寄せ配置
+        era = _wareki_era_name(company.accounting_period_start)
+        parts = _wareki_numeric_parts(company.accounting_period_start) or ("", "", "")
+        yy, mm, dd = parts
+        # Era 6pt (left), YY/MM/DD 9pt (right), all bottom-aligned to DD's baseline (y of RECT_START_DD)
+        y_base = RECT_START_DD[1]
+        # Left align era at its x0
+        _place_at_left(p, RECT_START_ERA[0], y_base, era, texts, size=6.0)
+        # Right align YY/MM/DD at their x-right = x0 + w
+        _place_at_right(p, RECT_START_YY[0] + RECT_START_YY[2], y_base, yy, texts, size=9.0)
+        _place_at_right(p, RECT_START_MM[0] + RECT_START_MM[2], y_base, mm, texts, size=9.0)
+        _place_at_right(p, RECT_START_DD[0] + RECT_START_DD[2] - 10.0, y_base, dd, texts, size=9.0)
+
+        # 会計期間 終了: 開始の設定を踏襲して分割配置（矩形幅は無視）
+        era_e = _wareki_era_name(company.accounting_period_end)
+        yy_e, mm_e, dd_e = _wareki_numeric_parts(company.accounting_period_end) or ("", "", "")
+        y_base_e = RECT_PERIOD_END[1]  # 終了DDのy座標を基準（下揃え）
+        # X軸は開始と同一座標を使用
+        _place_at_left(p, RECT_START_ERA[0], y_base_e, era_e, texts, size=6.0)
+        _place_at_right(p, RECT_START_YY[0] + RECT_START_YY[2], y_base_e, yy_e, texts, size=9.0)
+        _place_at_right(p, RECT_START_MM[0] + RECT_START_MM[2], y_base_e, mm_e, texts, size=9.0)
+        # DDは開始のXに合わせ、開始と同様の-10pt補正を適用
+        _place_at_right(p, RECT_START_DD[0] + RECT_START_DD[2] - 10.0, y_base_e, dd_e, texts, size=9.0)
+        name_text = company.company_name or ""
+        # 法人名はフォント-2pt（start 8pt / min 7pt）、上下中央寄せ・折返し
+        _place_wrapped_text_rect_left(p, *RECT_COMPANY_NAME, name_text, texts, start_size=8.0, min_size=7.0, line_gap=0.0)
+
     overlay_pdf(
         base_pdf_path=base_pdf,
         output_pdf_path=output_path,
         texts=texts,
         grids=[],
+        rectangles=rectangles,
         font_registrations=font_map,
     )
 

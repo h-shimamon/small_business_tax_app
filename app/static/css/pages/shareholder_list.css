@@ -18,9 +18,26 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.accordion-header {
+/* ヘッダーの「新規グループ登録」ボタンの直下に配置するPDF出力ボタンの整列 */
+.page-actions {
     display: flex;
-    align-items: center;
+    justify-content: flex-end; /* 右寄せ（ヘッダーのボタン直下に見えるように） */
+    margin: 0.5rem 0 1rem;
+}
+
+/* 本ページ限定: ヘッダー内で主ボタンの直下にPDFボタンを重ねて配置 */
+.page-header .header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.accordion-header {
+    display: grid; /* 4トラック化（2列目はスペーサー） */
+    grid-template-columns: var(--info-col-width, 360px) minmax(420px, var(--summary-col-width, 1fr)) auto;
+    align-items: start;
+    column-gap: 1.25rem;
     padding: 1.2rem 1.5rem;
     cursor: pointer;
 }
@@ -28,6 +45,9 @@
 .accordion-title {
     flex-grow: 1;
 }
+
+
+
 .accordion-title .main-name {
     font-size: 1.1rem;
     font-weight: 600;
@@ -40,17 +60,27 @@
 }
 
 .accordion-summary {
-    display: flex;
-    gap: 1.5rem;
+    padding-left: 0.75rem;
+    display: grid; /* 2列グリッドで縦2行 */
+    grid-template-columns: var(--summary-first-col, max-content) 1fr; /* 左列幅を共有し、右列は可変 */
+    column-gap: 1.5rem; /* 列間隔 */
+    row-gap: 0.25rem;   /* 行間隔 */
     font-size: 0.9rem;
     color: var(--text-secondary);
+    width: 100%;
+    padding-left: 0.25rem;
+}
+
+/* 行ラッパーはレイアウト上“透明化”して子要素を親グリッドに流し込む */
+.accordion-summary .summary-row {
+    display: contents;
 }
 
 .accordion-actions {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-left: 2rem;
+    margin-left: 0.5rem;
 }
 
 .accordion-toggle {
@@ -73,8 +103,10 @@
 }
 
 .related-row {
-    display: flex;
+    display: grid; /* ヘッダと同じ4トラック（2列目はスペーサー） */
+    grid-template-columns: var(--info-col-width, 360px) minmax(420px, var(--summary-col-width, 1fr)) auto;
     align-items: center;
+    column-gap: 1.25rem;
     padding: 0.75rem 0;
     border-bottom: 1px solid var(--border-color-light);
 }
@@ -94,6 +126,9 @@
     flex-direction: column;
     flex-grow: 1;
 }
+
+
+
 .related-address {
     font-size: 0.8rem;
     color: var(--text-secondary);
@@ -102,8 +137,17 @@
 
 .related-name { font-weight: 500; }
 .related-relationship { font-size: 0.85rem; color: var(--text-secondary); margin-left: 0.5rem; }
-.related-summary { display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); }
-.related-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: 2rem; }
+.related-summary {
+    padding-left: 0.75rem;
+    display: grid;
+    grid-template-columns: var(--summary-first-col, max-content) 1fr; /* 左列幅を共有し、右列は可変 */
+    column-gap: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    width: 100%;
+    padding-left: 0.25rem;
+}
+.related-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: 0.5rem; }
 .no-related { color: var(--text-secondary); padding: 1rem 0; }
 
 .add-new-row {

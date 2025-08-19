@@ -109,6 +109,7 @@ def overlay_pdf(
     output_pdf_path: str,
     texts: Iterable[TextSpec] = (),
     grids: Iterable[GridSpec] = (),
+    rectangles: Iterable[Tuple[int, float, float, float, float]] = (),
     *,
     font_registrations: Optional[Dict[str, str]] = None,
 ) -> None:
@@ -120,17 +121,21 @@ def overlay_pdf(
 
     texts_by_page: Dict[int, List[TextSpec]] = {}
     grids_by_page: Dict[int, List[GridSpec]] = {}
+    rects_by_page: Dict[int, List[Tuple[float, float, float, float]]] = {}
     for t in texts:
         texts_by_page.setdefault(t.page, []).append(t)
     for g in grids:
         grids_by_page.setdefault(g.page, []).append(g)
+    for r in rectangles:
+        p, x, y, w, h = r
+        rects_by_page.setdefault(p, []).append((x, y, w, h))
 
     font_registrations = font_registrations or {}
     for name, path in font_registrations.items():
         _register_font_if_needed(name, path)
 
     for i, page in enumerate(reader.pages):
-        if i not in texts_by_page and i not in grids_by_page:
+        if i not in texts_by_page and i not in grids_by_page and i not in rects_by_page:
             writer.add_page(page)
             continue
 
@@ -170,6 +175,11 @@ def overlay_pdf(
             if is_negative and gspec.negative_mark:
                 mark_x = gspec.x0 - (gspec.box_width if gspec.rtl else 0) - 2
                 c.drawString(mark_x, gspec.y0 + gspec.y_offset, gspec.negative_mark)
+
+        # simple rectangle strokes
+        for (rx, ry, rw, rh) in rects_by_page.get(i, []):
+            c.setLineWidth(1)
+            c.rect(rx, ry, rw, rh, stroke=1, fill=0)
 
         c.save()
         packet.seek(0)
