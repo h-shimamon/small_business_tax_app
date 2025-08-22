@@ -3,10 +3,22 @@ from .data_mapping_service import DataMappingService
 from .financial_statement_service import FinancialStatementService
 from .declaration_service import DeclarationService
 from .statement_of_accounts_service import StatementOfAccountsService
+from .import_consistency_service import (
+    invalidate_accounting_data,
+    has_accounting_data,
+    on_mapping_saved,
+    on_mapping_deleted,
+    on_mappings_reset,
+)
 
 __all__ = [
     'DataMappingService',
     'FinancialStatementService',
     'DeclarationService',
-    'StatementOfAccountsService'
+    'StatementOfAccountsService',
+    'invalidate_accounting_data',
+    'has_accounting_data',
+    'on_mapping_saved',
+    'on_mapping_deleted',
+    'on_mappings_reset',
 ]

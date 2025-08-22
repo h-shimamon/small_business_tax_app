@@ -7,8 +7,15 @@ from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import AccountingData, UserAccountMapping
 from app.navigation import get_navigation_state, mark_step_as_completed
-from .services import DataMappingService, FinancialStatementService
+from .services import (
+    DataMappingService,
+    FinancialStatementService,
+    on_mapping_saved,
+    on_mapping_deleted,
+    on_mappings_reset,
+)
 from .parser_factory import ParserFactory
+
 
 # --- ウィザードと設定の定義 ---
 
@@ -215,9 +222,7 @@ def data_mapping():
             flash('マッピング情報を保存しました。', 'success')
             mark_step_as_completed('chart_of_accounts')
             # マッピング更新により既存の財務データは無効化（再アップロード前提）
-            if current_user.company is not None:
-                db.session.query(AccountingData).filter_by(company_id=current_user.company.id).delete()
-                db.session.commit()
+            on_mapping_saved(current_user.id)
         except Exception as e:
             flash(str(e), 'danger')
         finally:
@@ -265,9 +270,7 @@ def reset_account_mappings_execution():
         db.session.commit()
         flash(f'{num_deleted}件の勘定科目マッピング情報をリセットしました。', 'success')
         # マッピングのリセットに伴い、会計データも破棄してフローを初期化
-        if current_user.company is not None:
-            db.session.query(AccountingData).filter_by(company_id=current_user.company.id).delete()
-            db.session.commit()
+        on_mappings_reset(current_user.id)
         session['wizard_completed_steps'] = ['select_software']
     except Exception as e:
         db.session.rollback()
@@ -299,16 +302,10 @@ def delete_mapping(mapping_id):
         flash('マッピングを削除しました。', 'success')
 
         # マッピング削除後の整合性維持: 既存の会計データがあれば破棄し、勘定科目データ取込から再スタート
-        company = current_user.company
-        if company is not None:
-            from app.company.models import AccountingData
-            has_data = db.session.query(AccountingData.id).filter_by(company_id=company.id).first() is not None
-            if has_data:
-                db.session.query(AccountingData).filter_by(company_id=company.id).delete()
-                db.session.commit()
-                session['wizard_completed_steps'] = ['select_software']
-                flash('既存の会計データを破棄しました。勘定科目データ取込から再スタートしてください。', 'info')
-                return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
+        if on_mapping_deleted(current_user.id):
+            session['wizard_completed_steps'] = ['select_software']
+            flash('既存の会計データを破棄しました。勘定科目データ取込から再スタートしてください。', 'info')
+            return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
     except Exception as e:
         db.session.rollback()
         flash(f'削除中にエラーが発生しました: {e}', 'danger')

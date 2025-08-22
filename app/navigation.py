@@ -2,6 +2,7 @@
 from flask import session
 from flask_login import current_user
 from .navigation_builder import navigation_tree
+from app.navigation_completion import compute_completed
 
 def compute_skipped_steps_for_company(company_id, accounting_data=None):
     """Compute skipped steps (SoA pages with source total == 0) for the given company.
@@ -128,8 +129,8 @@ def get_navigation_state(current_page_key, skipped_steps=None):
     # 動的完了（非ゲーティング）: 会社に基づく進捗の自動付与（現状は株主/社員情報のみ）
     try:
         company = getattr(current_user, 'company', None)
-        if company:
-            completed_steps |= compute_completed_steps_for_company(company.id)
+        if company and getattr(current_user, 'id', None) is not None:
+            completed_steps |= compute_completed(company.id, current_user.id)
     except Exception:
         pass
     
