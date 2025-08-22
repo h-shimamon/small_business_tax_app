@@ -2,7 +2,7 @@
 from flask import render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.company import company_bp
-from app.company.models import AccountingData
+from app.company.models import AccountingData, UserAccountMapping
 from app.navigation import get_navigation_state
 
 @company_bp.route('/confirm_trial_balance', methods=['GET'])
@@ -11,6 +11,12 @@ def confirm_trial_balance():
     """
     データベースに永続化された最新の財務諸表データを表示する。
     """
+    # 防御的ガード: マッピングが存在しない場合は残高確認を許可しない（整合性維持）
+    has_mapping = UserAccountMapping.query.filter_by(user_id=current_user.id).first() is not None
+    if not has_mapping:
+        flash('勘定科目マッピングが未設定または削除されています。勘定科目データ取込から再スタートしてください。', 'warning')
+        return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
+
     # 現在の会社に紐づく最新の会計データを取得
     accounting_data = AccountingData.query.filter_by(
         company_id=current_user.company.id
