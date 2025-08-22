@@ -184,3 +184,12 @@ select.form-control {
 .form-grid-2col .full-width {
     grid-column: 1 / -1; /* 2カラムをまたいで全幅に */
 }
+
+/* --- Explicit column placement helpers for forms --- */
+.form-grid .col-left {
+    grid-column: 1;
+}
+
+.form-grid .col-right {
+    grid-column: 2;
+}

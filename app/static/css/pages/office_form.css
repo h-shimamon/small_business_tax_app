@@ -1,0 +1,26 @@
+/* /app/static/css/pages/office_form.css */
+
+/* タブ順はDOM順（縦）。視覚配置はグリッドエリアで制御 */
+.office-form-grid {
+  display: grid; /* 再宣言しても既存のform-grid設定と整合 */
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "office_name    employee_count"
+    "zip_code       opening_date"
+    "prefecture     closing_date"
+    "city           ."
+    "address        ."
+    "phone_number   .";
+}
+
+/* 各フィールドのラッパー（_form_helpers.html の規約: id="<name>_group"）を配置 */
+#office_name_group    { grid-area: office_name; }
+#employee_count_group { grid-area: employee_count; }
+#zip_code_group       { grid-area: zip_code; }
+#opening_date_group   { grid-area: opening_date; }
+#prefecture_group     { grid-area: prefecture; }
+#closing_date_group   { grid-area: closing_date; }
+#city_group           { grid-area: city; }
+#address_group        { grid-area: address; }
+#phone_number_group   { grid-area: phone_number; }
+

@@ -158,12 +158,14 @@
 }
 
 /* SoA group: completed steps in green */
-.hierarchical-nav .nav-parent.nav-soa .progress-step.is-completed .progress-marker {
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-completed .progress-marker,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-completed .progress-marker {
     background-color: #34c759;
     border-color: #34c759;
 }
 /* SoA group: bring checkmark to front and set white check */
-.hierarchical-nav .nav-parent.nav-soa .progress-step.is-completed .progress-marker::after {
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-completed .progress-marker::after,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-completed .progress-marker::after {
     content: '✓';
     position: absolute;
     top: -1px;
@@ -181,18 +183,24 @@
 }
 
 /* SoA group: active (表示中) のときはチェックを非表示にする */
-.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-active .progress-marker::after {
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-active .progress-marker::after,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-menu-active .progress-marker::after,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-current .progress-marker::after {
     content: none;
 }
 
 /* SoA group: active but not completed -> red marker (difference != 0) */
-.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-default:not(.is-completed):not(.is-skipped) .progress-marker {
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-default:not(.is-completed):not(.is-skipped) .progress-marker,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-menu-default:not(.is-completed):not(.is-skipped) .progress-marker,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-pending .progress-marker {
     background-color: var(--error-color);
     border-color: var(--error-color);
 }
 
 /* SoA group: active step is always blue */
-.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-active .progress-marker {
+.hierarchical-nav .nav-parent.nav-soa .progress-step.is-menu-active .progress-marker,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-menu-active .progress-marker,
+.hierarchical-nav .nav-parent.nav-progress .progress-step.is-current .progress-marker {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
 }

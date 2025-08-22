@@ -16,7 +16,7 @@
 {{ render_page_header(
     title=page_title,
     subtitle='登録内容から自動で同族会社の判定を行うため、' ~ page_title ~ ' の作成は必須です。',
-    button_href=url_for('company.register_main_shareholder') if main_shareholders|length < 3 else None,
+    button_href=url_for('company.register_main_shareholder'),
     button_text='新規グループ登録',
     secondary_href=(url_for('company.shareholders_pdf_beppyou_02', year='2025') if (shareholders|selectattr('parent_id', 'none')|list)|length > 0 else None),
     secondary_text='PDF出力（別表二）',

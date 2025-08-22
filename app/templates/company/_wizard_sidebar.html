@@ -1,7 +1,7 @@
 <nav class="hierarchical-nav">
     <ul>
         {% for parent in navigation_state %}
-            <li class="nav-parent {{ 'is-active' if parent.is_active else '' }} {{ 'nav-soa' if parent.key == 'statement_of_accounts_group' else '' }}">
+            <li class="nav-parent {{ 'is-active' if parent.is_active else '' }} {{ 'nav-soa' if parent.key == 'statement_of_accounts_group' else '' }} {{ 'nav-progress' if parent.key in ['company_info_group','import_data_group','statement_of_accounts_group'] else '' }}">
                 <span class="parent-name">{{ parent.name }}</span>
                 
                 {% if parent.is_active and parent.children %}

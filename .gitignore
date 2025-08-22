@@ -11,3 +11,14 @@ __pycache__/
 
 # macOS specific files
 .DS_Store
+
+# Temporary artifacts (generated PDFs, etc.)
+temporary/
+!temporary/.gitkeep
+
+# Node / Playwright artifacts
+node_modules/
+playwright-report/
+test-results/
+dist/
+tmp/

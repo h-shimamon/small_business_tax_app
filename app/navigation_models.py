@@ -53,12 +53,15 @@ class NavigationNode:
             is_child_active = (child.key == current_page_key) or \
                               (child.params and child.params.get('page') == current_page_key)
             
+            # SoA以外のグループではスキップ概念を適用しない（堅牢化）
+            is_child_skipped = (self.key == 'statement_of_accounts_group') and (child.key in skipped_steps)
+
             children_states.append({
                 'name': child.name,
                 'url': child.get_url(),
                 'is_active': is_child_active,
                 'is_completed': child.key in skipped_steps and False or child.key in completed_steps,
-                'is_skipped': child.key in skipped_steps,
+                'is_skipped': is_child_skipped,
                 'key': child.key
             })
 

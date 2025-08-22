@@ -37,12 +37,76 @@ def compute_skipped_steps_for_company(company_id, accounting_data=None):
         return set()
     return skipped
 
+def compute_completed_steps_for_company(company_id):
+    """Compute dynamically completed steps outside the session-managed set.
+    Current scope: mark 'shareholders' completed when there is at least one main shareholder.
+    Does not enforce gating; used only for progress markers.
+    """
+    completed = set()
+    try:
+        from app.company.models import Shareholder, Company, Office, UserAccountMapping
+        # main shareholders: parent_id is None
+        cnt = (
+            Shareholder.query
+            .filter_by(company_id=company_id, parent_id=None)
+            .count()
+        )
+        if cnt and cnt > 0:
+            completed.add('shareholders')
+        # company info: required fields filled
+        company = Company.query.get(company_id)
+        if company:
+            def _filled_str(v):
+                try:
+                    return bool(str(v).strip())
+                except Exception:
+                    return False
+            basic_ok = all([
+                _filled_str(company.corporate_number),
+                _filled_str(company.company_name),
+                _filled_str(company.company_name_kana),
+                _filled_str(company.zip_code),
+                _filled_str(company.prefecture),
+                _filled_str(company.city),
+                _filled_str(company.address),
+                _filled_str(company.phone_number),
+                bool(company.establishment_date),
+            ])
+            if basic_ok:
+                completed.add('company_info')
+        # office list: at least one office registered
+        office_cnt = (
+            Office.query
+            .filter_by(company_id=company_id)
+            .count()
+        )
+        if office_cnt and office_cnt > 0:
+            completed.add('office_list')
+        # data mapping: completed if user has at least one mapping saved
+        try:
+            uid = getattr(current_user, 'id', None)
+            if uid is not None:
+                map_cnt = UserAccountMapping.query.filter_by(user_id=uid).count()
+                if map_cnt and map_cnt > 0:
+                    completed.add('data_mapping')
+        except Exception:
+            pass
+        # declaration: accounting period start/end set
+        if company:
+            aps = (company.accounting_period_start or '').strip()
+            ape = (company.accounting_period_end or '').strip()
+            if aps and ape:
+                completed.add('declaration')
+    except Exception:
+        return set()
+    return completed
+
 def get_navigation_state(current_page_key, skipped_steps=None):
     """
     現在のページキーに基づき、ナビゲーション全体のUI状態を計算して返す。
     計算ロジックはNavigationNodeクラスに委譲する。
     """
-    completed_steps = session.get('wizard_completed_steps', [])
+    completed_steps = set(session.get('wizard_completed_steps', []))
     # skipped_steps が未指定の場合は、認証済みユーザーの会社に基づいてSoAスキップを自動計算
     if skipped_steps is None:
         try:
@@ -52,9 +116,16 @@ def get_navigation_state(current_page_key, skipped_steps=None):
             skipped_steps = set()
     else:
         skipped_steps = skipped_steps or set()
+    # 動的完了（非ゲーティング）: 会社に基づく進捗の自動付与（現状は株主/社員情報のみ）
+    try:
+        company = getattr(current_user, 'company', None)
+        if company:
+            completed_steps |= compute_completed_steps_for_company(company.id)
+    except Exception:
+        pass
     
     nav_state = [
-        node.to_dict(current_page_key, completed_steps, skipped_steps)
+        node.to_dict(current_page_key, list(completed_steps), skipped_steps)
         for node in navigation_tree
     ]
     

@@ -3,3 +3,7 @@ extend-exclude = [
     "migrations",
 ]
 
+# Keep config minimal to avoid noise; enable core Pyflakes/pycodestyle checks.
+select = ["E", "F"]
+ignore = []
+
