@@ -214,6 +214,10 @@ def data_mapping():
             mapping_service.save_mappings(request.form, software_name)
             flash('マッピング情報を保存しました。', 'success')
             mark_step_as_completed('chart_of_accounts')
+            # マッピング更新により既存の財務データは無効化（再アップロード前提）
+            if current_user.company is not None:
+                db.session.query(AccountingData).filter_by(company_id=current_user.company.id).delete()
+                db.session.commit()
         except Exception as e:
             flash(str(e), 'danger')
         finally:
@@ -222,7 +226,8 @@ def data_mapping():
 
     unmatched_accounts = session.get('unmatched_accounts', [])
     if not unmatched_accounts:
-        return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
+        # 未マッピング項目がない場合は、管理画面を表示（戻り導線用）
+        return redirect(url_for('company.manage_mappings'))
 
     mapping_items, master_accounts = mapping_service.get_mapping_suggestions(unmatched_accounts)
     
@@ -259,6 +264,10 @@ def reset_account_mappings_execution():
         num_deleted = db.session.query(UserAccountMapping).filter_by(user_id=current_user.id).delete()
         db.session.commit()
         flash(f'{num_deleted}件の勘定科目マッピング情報をリセットしました。', 'success')
+        # マッピングのリセットに伴い、会計データも破棄してフローを初期化
+        if current_user.company is not None:
+            db.session.query(AccountingData).filter_by(company_id=current_user.company.id).delete()
+            db.session.commit()
         session['wizard_completed_steps'] = ['select_software']
     except Exception as e:
         db.session.rollback()
@@ -270,7 +279,9 @@ def reset_account_mappings_execution():
 def manage_mappings():
     """登録済みのマッピングを一覧表示・管理する画面"""
     mappings = UserAccountMapping.query.filter_by(user_id=current_user.id).order_by(UserAccountMapping.original_account_name).all()
-    return render_template('company/manage_mappings.html', mappings=mappings)
+    # サイドバーは「勘定科目マッピング」をアクティブとして表示（data_mappingキー）
+    navigation_state = get_navigation_state('data_mapping')
+    return render_template('company/manage_mappings.html', mappings=mappings, navigation_state=navigation_state)
 
 @import_bp.route('/delete_mapping/<int:mapping_id>', methods=['POST'])
 @login_required
@@ -286,6 +297,18 @@ def delete_mapping(mapping_id):
         db.session.delete(mapping_to_delete)
         db.session.commit()
         flash('マッピングを削除しました。', 'success')
+
+        # マッピング削除後の整合性維持: 既存の会計データがあれば破棄し、勘定科目データ取込から再スタート
+        company = current_user.company
+        if company is not None:
+            from app.company.models import AccountingData
+            has_data = db.session.query(AccountingData.id).filter_by(company_id=company.id).first() is not None
+            if has_data:
+                db.session.query(AccountingData).filter_by(company_id=company.id).delete()
+                db.session.commit()
+                session['wizard_completed_steps'] = ['select_software']
+                flash('既存の会計データを破棄しました。勘定科目データ取込から再スタートしてください。', 'info')
+                return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
     except Exception as e:
         db.session.rollback()
         flash(f'削除中にエラーが発生しました: {e}', 'danger')

@@ -44,7 +44,7 @@ def compute_completed_steps_for_company(company_id):
     """
     completed = set()
     try:
-        from app.company.models import Shareholder, Company, Office, UserAccountMapping
+        from app.company.models import Shareholder, Company, Office, UserAccountMapping, AccountingData
         # main shareholders: parent_id is None
         cnt = (
             Shareholder.query
@@ -82,6 +82,15 @@ def compute_completed_steps_for_company(company_id):
         )
         if office_cnt and office_cnt > 0:
             completed.add('office_list')
+        # journals (仕訳帳データ取込): completed if accounting data exists for the company
+        ad = (
+            AccountingData.query
+            .filter_by(company_id=company_id)
+            .order_by(AccountingData.created_at.desc())
+            .first()
+        )
+        if ad is not None:
+            completed.add('journals')
         # data mapping: completed if user has at least one mapping saved
         try:
             uid = getattr(current_user, 'id', None)
