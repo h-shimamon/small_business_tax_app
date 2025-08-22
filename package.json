@@ -1,0 +1,17 @@
+{
+  "name": "small_business_tax_app-e2e",
+  "private": true,
+  "version": "0.0.1",
+  "description": "E2E tests for small_business_tax_app (Playwright)",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.0",
+    "fast-check": "^3.14.0",
+    "typescript": "^5.3.0"
+  }
+}
+

@@ -20,6 +20,7 @@ from .date_jp import (
     wareki_era_name as _wareki_era_name,
     wareki_numeric_parts as _wareki_numeric_parts,
 )
+from .geom import merge_rects, get_row_metrics
 
 
 def _string_width(text: str, font_name: str, font_size: float) -> float:
@@ -339,35 +340,60 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     # Optional external geometry override (non-functional change; defaults preserved)
     _geom = _load_geometry(repo_root, year)
 
-    # Geometry constants (row 1 baseline rects), and vertical step
-    STEP_Y = float(_geom.get('row', {}).get('STEP_Y', 27.32))
-    PADDING_X = float(_geom.get('row', {}).get('PADDING_X', 2.0))
-    # Rects: (x0, y0, width, height)
-    NUM_RECT = tuple(_geom.get('rects', {}).get('NUM_RECT', (64.00, 377.15, 16.66, 18.66)))
-    ADDR_RECT = tuple(_geom.get('rects', {}).get('ADDR_RECT', (106.00, 375.15, 100.66, 21.32)))
-    NAME_RECT = tuple(_geom.get('rects', {}).get('NAME_RECT', (209.99, 374.48, 100.66, 21.99)))
-    REL_RECT = tuple(_geom.get('rects', {}).get('REL_RECT', (312.66, 374.48, 48.00, 21.99)))
-    SHARES_RECT = tuple(_geom.get('rects', {}).get('SHARES_RECT', (459.99, 374.48, 46.00, 22.66)))
+    # Geometry (row/spacing metrics)
+    metrics = get_row_metrics(_geom, default_row1_center=387.0, default_row_step=24.5, default_step_y=27.32, default_padding_x=2.0)
+    STEP_Y = metrics["STEP_Y"]
+    PADDING_X = metrics["PADDING_X"]
+    ROW1_CENTER = metrics["ROW1_CENTER"]
+    ROW_STEP = metrics["ROW_STEP"]
 
-    # Allow overriding header/period rects and row centers
-    ROW1_CENTER = float(_geom.get('row', {}).get('ROW1_CENTER', 387.0))
-    ROW_STEP = float(_geom.get('row', {}).get('ROW_STEP', 24.5))
-    # Header rects
-    RECT_TOTAL_SHARES = tuple(_geom.get('rects', {}).get('RECT_TOTAL_SHARES', RECT_TOTAL_SHARES))
-    RECT_TOP3_SHARES = tuple(_geom.get('rects', {}).get('RECT_TOP3_SHARES', RECT_TOP3_SHARES))
-    RECT_RATIO_RAW = tuple(_geom.get('rects', {}).get('RECT_RATIO_RAW', RECT_RATIO_RAW))
-    RECT_RATIO_PCT = tuple(_geom.get('rects', {}).get('RECT_RATIO_PCT', RECT_RATIO_PCT))
-    # Classification boxes
-    BOX_DOUZOKU = tuple(_geom.get('rects', {}).get('BOX_DOUZOKU', BOX_DOUZOKU))
-    BOX_HI_DOUZOKU = tuple(_geom.get('rects', {}).get('BOX_HI_DOUZOKU', BOX_HI_DOUZOKU))
-    # Period/company rects
-    RECT_PERIOD_START = tuple(_geom.get('rects', {}).get('RECT_PERIOD_START', RECT_PERIOD_START))
-    RECT_PERIOD_END = tuple(_geom.get('rects', {}).get('RECT_PERIOD_END', RECT_PERIOD_END))
-    RECT_COMPANY_NAME = tuple(_geom.get('rects', {}).get('RECT_COMPANY_NAME', RECT_COMPANY_NAME))
-    RECT_START_ERA = tuple(_geom.get('rects', {}).get('RECT_START_ERA', RECT_START_ERA))
-    RECT_START_YY = tuple(_geom.get('rects', {}).get('RECT_START_YY', RECT_START_YY))
-    RECT_START_MM = tuple(_geom.get('rects', {}).get('RECT_START_MM', RECT_START_MM))
-    RECT_START_DD = tuple(_geom.get('rects', {}).get('RECT_START_DD', RECT_START_DD))
+    # Rects: (x0, y0, width, height) — merge overrides safely
+    rect_defaults = {
+        "NUM_RECT": (64.00, 377.15, 16.66, 18.66),
+        "ADDR_RECT": (106.00, 375.15, 100.66, 21.32),
+        "NAME_RECT": (209.99, 374.48, 100.66, 21.99),
+        "REL_RECT": (312.66, 374.48, 48.00, 21.99),
+        "SHARES_RECT": (459.99, 374.48, 46.00, 22.66),
+        # header metrics
+        "RECT_TOTAL_SHARES": RECT_TOTAL_SHARES,
+        "RECT_TOP3_SHARES": RECT_TOP3_SHARES,
+        "RECT_RATIO_RAW": RECT_RATIO_RAW,
+        "RECT_RATIO_PCT": RECT_RATIO_PCT,
+        # classification boxes
+        "BOX_DOUZOKU": BOX_DOUZOKU,
+        "BOX_HI_DOUZOKU": BOX_HI_DOUZOKU,
+        # period/company rects
+        "RECT_PERIOD_START": RECT_PERIOD_START,
+        "RECT_PERIOD_END": RECT_PERIOD_END,
+        "RECT_COMPANY_NAME": RECT_COMPANY_NAME,
+        "RECT_START_ERA": RECT_START_ERA,
+        "RECT_START_YY": RECT_START_YY,
+        "RECT_START_MM": RECT_START_MM,
+        "RECT_START_DD": RECT_START_DD,
+    }
+    rects_overridden = merge_rects(rect_defaults, _geom.get('rects', {}))
+
+    NUM_RECT = rects_overridden["NUM_RECT"]
+    ADDR_RECT = rects_overridden["ADDR_RECT"]
+    NAME_RECT = rects_overridden["NAME_RECT"]
+    REL_RECT = rects_overridden["REL_RECT"]
+    SHARES_RECT = rects_overridden["SHARES_RECT"]
+
+    rect_total_shares = rects_overridden["RECT_TOTAL_SHARES"]
+    rect_top3_shares = rects_overridden["RECT_TOP3_SHARES"]
+    rect_ratio_raw = rects_overridden["RECT_RATIO_RAW"]
+    rect_ratio_pct = rects_overridden["RECT_RATIO_PCT"]
+
+    box_douzoku = rects_overridden["BOX_DOUZOKU"]
+    box_hi_douzoku = rects_overridden["BOX_HI_DOUZOKU"]
+
+    rect_period_start = rects_overridden["RECT_PERIOD_START"]
+    rect_period_end = rects_overridden["RECT_PERIOD_END"]
+    rect_company_name = rects_overridden["RECT_COMPANY_NAME"]
+    rect_start_era = rects_overridden["RECT_START_ERA"]
+    rect_start_yy = rects_overridden["RECT_START_YY"]
+    rect_start_mm = rects_overridden["RECT_START_MM"]
+    rect_start_dd = rects_overridden["RECT_START_DD"]
     rows = _collect_rows(company_id, limit=12)
 
     texts: List[TextSpec] = []
@@ -476,18 +502,18 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     # Coordinates provided in 1-based page notation; our pages are 0-indexed
     p = 0
     # Precompute a shared right edge (to keep all within their rects, use the minimum right edge among the four)
-    rects = [RECT_TOTAL_SHARES, RECT_TOP3_SHARES, RECT_RATIO_RAW, RECT_RATIO_PCT]
+    rects = [rect_total_shares, rect_top3_shares, rect_ratio_raw, rect_ratio_pct]
     right_edges = [_right_edge(*r) for r in rects]
     common_right = min(right_edges)  # 最小の右端に合わせてはみ出し防止
 
     # (1) total shares with unit
-    _place_number_rect(p, *RECT_TOTAL_SHARES, f"{_format_number(total_shares)}株", right_edge=common_right, font="NotoSansJP")
+    _place_number_rect(p, *rect_total_shares, f"{_format_number(total_shares)}株", right_edge=common_right, font="NotoSansJP")
     # (2) top3 total with unit
-    _place_number_rect(p, *RECT_TOP3_SHARES, f"{_format_number(top3_total)}株", right_edge=common_right, font="NotoSansJP")
+    _place_number_rect(p, *rect_top3_shares, f"{_format_number(top3_total)}株", right_edge=common_right, font="NotoSansJP")
     # (3) raw ratio number (no %)
-    _place_number_rect(p, *RECT_RATIO_RAW, f"{ratio_pct}", right_edge=common_right, font="NotoSansJP")
+    _place_number_rect(p, *rect_ratio_raw, f"{ratio_pct}", right_edge=common_right, font="NotoSansJP")
     # (4) percent with %
-    _place_number_rect(p, *RECT_RATIO_PCT, f"{ratio_pct}%", right_edge=common_right, font="NotoSansJP")
+    _place_number_rect(p, *rect_ratio_pct, f"{ratio_pct}%", right_edge=common_right, font="NotoSansJP")
 
     # (5)(6) classification boxes (stroke only)
     try:
@@ -496,9 +522,9 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     except Exception:
         cls = None
     if cls == '同族会社':
-        rectangles.append((p, *BOX_DOUZOKU))
+        rectangles.append((p, *box_douzoku))
     elif cls == '非同族会社':
-        rectangles.append((p, *BOX_HI_DOUZOKU))
+        rectangles.append((p, *box_hi_douzoku))
 
     # --- Period (wareki) and company name ---
     company = Company.query.get(company_id)
@@ -508,27 +534,27 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
         parts = _wareki_numeric_parts(company.accounting_period_start) or ("", "", "")
         yy, mm, dd = parts
         # Era 6pt (left), YY/MM/DD 9pt (right), all bottom-aligned to DD's baseline (y of RECT_START_DD)
-        y_base = RECT_START_DD[1]
+        y_base = rect_start_dd[1]
         # Left align era at its x0
-        _place_at_left(p, RECT_START_ERA[0], y_base, era, texts, size=6.0)
+        _place_at_left(p, rect_start_era[0], y_base, era, texts, size=6.0)
         # Right align YY/MM/DD at their x-right = x0 + w
-        _place_at_right(p, RECT_START_YY[0] + RECT_START_YY[2], y_base, yy, texts, size=9.0)
-        _place_at_right(p, RECT_START_MM[0] + RECT_START_MM[2], y_base, mm, texts, size=9.0)
-        _place_at_right(p, RECT_START_DD[0] + RECT_START_DD[2] - 10.0, y_base, dd, texts, size=9.0)
+        _place_at_right(p, rect_start_yy[0] + rect_start_yy[2], y_base, yy, texts, size=9.0)
+        _place_at_right(p, rect_start_mm[0] + rect_start_mm[2], y_base, mm, texts, size=9.0)
+        _place_at_right(p, rect_start_dd[0] + rect_start_dd[2] - 10.0, y_base, dd, texts, size=9.0)
 
         # 会計期間 終了: 開始の設定を踏襲して分割配置（矩形幅は無視）
         era_e = _wareki_era_name(company.accounting_period_end)
         yy_e, mm_e, dd_e = _wareki_numeric_parts(company.accounting_period_end) or ("", "", "")
-        y_base_e = RECT_PERIOD_END[1]  # 終了DDのy座標を基準（下揃え）
+        y_base_e = rect_period_end[1]  # 終了DDのy座標を基準（下揃え）
         # X軸は開始と同一座標を使用
-        _place_at_left(p, RECT_START_ERA[0], y_base_e, era_e, texts, size=6.0)
-        _place_at_right(p, RECT_START_YY[0] + RECT_START_YY[2], y_base_e, yy_e, texts, size=9.0)
-        _place_at_right(p, RECT_START_MM[0] + RECT_START_MM[2], y_base_e, mm_e, texts, size=9.0)
+        _place_at_left(p, rect_start_era[0], y_base_e, era_e, texts, size=6.0)
+        _place_at_right(p, rect_start_yy[0] + rect_start_yy[2], y_base_e, yy_e, texts, size=9.0)
+        _place_at_right(p, rect_start_mm[0] + rect_start_mm[2], y_base_e, mm_e, texts, size=9.0)
         # DDは開始のXに合わせ、開始と同様の-10pt補正を適用
-        _place_at_right(p, RECT_START_DD[0] + RECT_START_DD[2] - 10.0, y_base_e, dd_e, texts, size=9.0)
+        _place_at_right(p, rect_start_dd[0] + rect_start_dd[2] - 10.0, y_base_e, dd_e, texts, size=9.0)
         name_text = company.company_name or ""
         # 法人名はフォント-2pt（start 8pt / min 7pt）、上下中央寄せ・折返し
-        _place_wrapped_text_rect_left(p, *RECT_COMPANY_NAME, name_text, texts, start_size=8.0, min_size=7.0, line_gap=0.0)
+        _place_wrapped_text_rect_left(p, *rect_company_name, name_text, texts, start_size=8.0, min_size=7.0, line_gap=0.0)
 
     overlay_pdf(
         base_pdf_path=base_pdf,

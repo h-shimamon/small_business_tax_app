@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "rootDir": ".",
+    "outDir": "dist",
+    "strict": true,
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["tests", "playwright.config.ts"]
+}
+
