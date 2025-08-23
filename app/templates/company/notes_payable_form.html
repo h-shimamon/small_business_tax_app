@@ -15,8 +15,8 @@
     <form method="POST" action="" novalidate>
         {{ form.hidden_tag() }}
         {{ render_field(form.payee) }}
-        {{ render_field(form.issue_date, type='date') }}
-        {{ render_field(form.due_date, type='date') }}
+        {{ render_field(form.issue_date, class_='js-date') }}
+        {{ render_field(form.due_date, class_='js-date') }}
         {{ render_field(form.amount) }}
         {{ render_field(form.remarks, rows=3) }}
         <div class="form-actions">

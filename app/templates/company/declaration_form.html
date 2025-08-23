@@ -20,8 +20,8 @@
             <!-- 基本情報 -->
             <fieldset>
                 <legend>基本情報</legend>
-                {{ render_field(form.accounting_period_start, type='date') }}
-                {{ render_field(form.accounting_period_end, type='date') }}
+                {{ render_field(form.accounting_period_start, class_='js-date') }}
+                {{ render_field(form.accounting_period_end, class_='js-date') }}
                 {{ render_radio_field(form.office_count) }}
                 {{ render_radio_field(form.declaration_type) }}
                 {{ render_radio_field(form.tax_system) }}
@@ -50,7 +50,7 @@
             <!-- 決算・申告期限 -->
             <fieldset>
                 <legend>決算・申告</legend>
-                {{ render_field(form.closing_date, type='date') }}
+                {{ render_field(form.closing_date, class_='js-date') }}
                 {{ render_checkbox_field(form.is_corp_tax_extended) }}
                 {{ render_checkbox_field(form.is_biz_tax_extended) }}
                 {{ render_field(form.employee_count_at_eoy, placeholder='10') }}
