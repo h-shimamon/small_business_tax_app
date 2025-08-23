@@ -75,15 +75,15 @@
           if (!cal) return;
           const currentMonth = cal.querySelector('.flatpickr-current-month');
           if (!currentMonth) return;
+          // Avoid duplicate insertion if already built
           if (currentMonth.querySelector('.nr-year-select')) return;
           const yearInputWrapper = currentMonth.querySelector('.numInputWrapper');
           const yearInput = currentMonth.querySelector('input.cur-year');
           if (!yearInputWrapper || !yearInput) return;
+          // Build year select (visible ±10 years)
           const select = document.createElement('select');
           select.className = 'nr-year-select';
           const curY = instance.currentYear || new Date().getFullYear();
-          // 10-year window before and after current year (inclusive): curY-10 .. curY+10
-          // clipped to min/max when provided.
           const baseMin = curY - 10;
           const baseMax = curY + 10;
           const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
@@ -97,50 +97,24 @@
             if (y === curY) opt.selected = true;
             select.appendChild(opt);
           }
-          // caret button to reveal older years in 10-year chunks
-          const expandBtn = document.createElement('button');
-          expandBtn.type = 'button';
-          expandBtn.className = 'nr-year-expand';
-          expandBtn.title = '過去の年を表示';
-          expandBtn.textContent = '＾';
-          expandBtn.addEventListener('click', function() {
-            // Determine current minimum year in options
-            const years = Array.from(select.options).map(o => parseInt(o.value, 10)).filter(n => !Number.isNaN(n));
-            if (!years.length) return;
-            const currentMin = Math.min.apply(null, years);
-            const cfgMinYear = cfgMin;
-            let added = 0;
-            for (let y = currentMin - 1; y >= currentMin - 10; y--) {
-              if (cfgMinYear !== null && y < cfgMinYear) break;
-              const opt = document.createElement('option');
-              opt.value = String(y);
-              opt.textContent = y + '年';
-              select.appendChild(opt); // descending list, older years go to bottom
-              added++;
-            }
-            if (added === 0) {
-              // nothing to add (already at min), optionally disable button
-              expandBtn.disabled = true;
-            }
-          });
+          // Change year handler
           select.addEventListener('change', function() {
             const y = parseInt(this.value, 10);
-            if (typeof instance.changeYear === 'function') {
+            if (typeof instance.jumpToDate === 'function') {
+              instance.jumpToDate(new Date(y, instance.currentMonth, 1));
+            } else if (typeof instance.changeYear === 'function') {
               instance.changeYear(y);
-            } else {
-              const sel = instance.selectedDates && instance.selectedDates[0];
-              const day = sel ? sel.getDate() : 1;
-              instance.setDate(new Date(y, instance.currentMonth, day), false);
-              instance.redraw();
+              if (typeof instance.redraw === 'function') instance.redraw();
             }
           });
+          // Hide native year input to avoid duplication
           yearInputWrapper.style.display = 'none';
-          // Insert year controls before the month dropdown to swap positions (year first)
+          currentMonth.querySelectorAll('.cur-year').forEach(function(el){ el.style.display = 'none'; });
+          // Insert year select before month dropdown to keep year-first order
           (function() {
             const monthDropdown = currentMonth.querySelector('.flatpickr-monthDropdown-months');
             const insertBeforeNode = monthDropdown || yearInputWrapper;
             currentMonth.insertBefore(select, insertBeforeNode);
-            currentMonth.insertBefore(expandBtn, insertBeforeNode);
           })();
         }
 
@@ -180,16 +154,6 @@
       background: transparent;
       border: none;
     }
-    .flatpickr-current-month .nr-year-expand {
-      margin-left: 4px;
-      height: 28px;
-      line-height: 28px;
-      font-size: 14px;
-      font-family: inherit;
-      color: inherit;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-    }
+    
   </style>
 {% endblock %}
