@@ -144,14 +144,12 @@
             if (!target) return;
             const y = parseInt(target.dataset.year, 10);
             btn.textContent = y + '年';
-            if (typeof instance.changeYear === 'function') {
+            // Navigate the calendar to the chosen year without selecting a date
+            if (typeof instance.jumpToDate === 'function') {
+              instance.jumpToDate(new Date(y, instance.currentMonth, 1));
+            } else if (typeof instance.changeYear === 'function') {
               instance.changeYear(y);
               if (instance && typeof instance.redraw === 'function') { instance.redraw(); }
-            } else {
-              const sel = instance.selectedDates && instance.selectedDates[0];
-              const day = sel ? sel.getDate() : 1;
-              instance.setDate(new Date(y, instance.currentMonth, day), false);
-              instance.redraw();
             }
             panel.classList.remove('open');
           });
