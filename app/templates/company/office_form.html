@@ -41,8 +41,8 @@
     {{ render_field(form.address, placeholder='丸の内1-1-1') }}
     {{ render_field(form.phone_number, placeholder='03-1234-5678') }}
     {{ render_field(form.employee_count, placeholder='10') }}
-    {{ render_field(form.opening_date, type='date') }}
-    {{ render_field(form.closing_date, type='date') }}
+    {{ render_field(form.opening_date, class_='js-date') }}
+    {{ render_field(form.closing_date, class_='js-date') }}
 
     <div class="form-actions">
       {{ form.submit(class="button-primary") }}
