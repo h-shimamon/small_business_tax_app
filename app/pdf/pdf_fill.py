@@ -85,6 +85,7 @@ class TextSpec:
     text: str
     font_name: str = "Helvetica"
     font_size: float = 10.0
+    align: str = "left"  # "left" or "right"
 
 
 def _register_font_if_needed(font_name: str, font_path: Optional[str]) -> None:
@@ -158,7 +159,13 @@ def overlay_pdf(
 
         for spec in texts_by_page.get(i, []):
             c.setFont(spec.font_name, spec.font_size)
-            c.drawString(spec.x, spec.y, spec.text)
+            if getattr(spec, "align", "left") == "right":
+                try:
+                    c.drawRightString(spec.x, spec.y, spec.text)
+                except Exception:
+                    c.drawString(spec.x, spec.y, spec.text)
+            else:
+                c.drawString(spec.x, spec.y, spec.text)
 
         for gspec in grids_by_page.get(i, []):
             c.setFont(gspec.font_name, gspec.font_size)

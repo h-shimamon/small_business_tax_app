@@ -27,6 +27,7 @@ from app.company.services.soa_summary_service import SoASummaryService
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
+from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
 
 # mappings are centralized in app.company.soa_mappings
 
@@ -151,6 +152,8 @@ def statement_of_accounts(company):
         else:
             unmark_step_as_completed(step_key)
         # Next link
+        # NOTE: `soa_next_url` はヘッダ右上の主要CTA（「次の内訳へ」）表示にのみ使用する。サマリー内にCTAは置かない（UI方針）。
+
         context['soa_next_url'], context['soa_next_name'] = compute_next_soa(page)
     # Refresh navigation after potential step completion
     context['navigation_state'] = get_navigation_state(page, skipped_steps=skipped_steps)
@@ -175,6 +178,27 @@ def deposits_pdf(company):
         mimetype='application/pdf',
         as_attachment=False,
         download_name=f"uchiwakesyo_yocyokin_{year}.pdf"
+    )
+
+@company_bp.route('/statement/accounts_receivable/pdf')
+@company_required
+def accounts_receivable_pdf(company):
+    """売掛金（未収入金）の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_urikakekin_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_urikakekin(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_urikakekin_{year}.pdf"
     )
 
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])
