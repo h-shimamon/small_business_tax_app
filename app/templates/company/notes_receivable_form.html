@@ -70,6 +70,42 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.flatpickr) {
+        function buildYearSelect(instance) {
+          const cal = instance.calendarContainer;
+          if (!cal) return;
+          const currentMonth = cal.querySelector('.flatpickr-current-month');
+          if (!currentMonth) return;
+          if (currentMonth.querySelector('.nr-year-select')) return;
+          const yearInputWrapper = currentMonth.querySelector('.numInputWrapper');
+          const yearInput = currentMonth.querySelector('input.cur-year');
+          if (!yearInputWrapper || !yearInput) return;
+          const select = document.createElement('select');
+          select.className = 'nr-year-select';
+          const curY = instance.currentYear || new Date().getFullYear();
+          const minY = instance.config.minDate ? instance.config.minDate.getFullYear() : curY - 50;
+          const maxY = instance.config.maxDate ? instance.config.maxDate.getFullYear() : curY + 20;
+          for (let y = maxY; y >= minY; y--) {
+            const opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = y + '年';
+            if (y === curY) opt.selected = true;
+            select.appendChild(opt);
+          }
+          select.addEventListener('change', function() {
+            const y = parseInt(this.value, 10);
+            if (typeof instance.changeYear === 'function') {
+              instance.changeYear(y);
+            } else {
+              const sel = instance.selectedDates && instance.selectedDates[0];
+              const day = sel ? sel.getDate() : 1;
+              instance.setDate(new Date(y, instance.currentMonth, day), false);
+              instance.redraw();
+            }
+          });
+          yearInputWrapper.style.display = 'none';
+          currentMonth.insertBefore(select, yearInputWrapper);
+        }
+
         const opts = {
           wrap: true,
           dateFormat: 'Y-m-d',
@@ -80,6 +116,12 @@
           weekNumbers: true,
           disableMobile: true,
           allowInput: true,
+          onReady: function(selectedDates, dateStr, instance) { buildYearSelect(instance); },
+          onOpen: function(selectedDates, dateStr, instance) { buildYearSelect(instance); },
+          onYearChange: function(selectedDates, dateStr, instance) {
+            const sel = instance.calendarContainer && instance.calendarContainer.querySelector('.nr-year-select');
+            if (sel) sel.value = String(instance.currentYear);
+          }
         };
         document.querySelectorAll('.nr-date-picker').forEach(function(el){
           flatpickr(el, opts);
@@ -91,5 +133,6 @@
     .nr-date-picker { position: relative; }
     .nr-date-picker .calendar-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #666; cursor: pointer; padding: 4px; display: flex; align-items: center; }
     .nr-date-picker .form-control { padding-left: 36px; }
+    .flatpickr-current-month .nr-year-select { margin-left: 6px; height: 28px; font-size: 14px; }
   </style>
 {% endblock %}
