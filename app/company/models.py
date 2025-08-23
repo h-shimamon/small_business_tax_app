@@ -1,6 +1,7 @@
 # app/company/models.py
 
 from app import db
+from app.models_utils.date_sync import attach_date_string_sync
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -41,7 +42,9 @@ class Company(db.Model):
 
     # --- 申告情報 ---
     accounting_period_start = db.Column(db.String(10))
+    accounting_period_start_date = db.Column(db.Date)
     accounting_period_end = db.Column(db.String(10))
+    accounting_period_end_date = db.Column(db.Date)
     term_number = db.Column(db.Integer)
     office_count = db.Column(db.String(10))
     declaration_type = db.Column(db.String(10))
@@ -63,6 +66,7 @@ class Company(db.Model):
     
     # --- 決算日・延長 ---
     closing_date = db.Column(db.String(10))
+    closing_date_date = db.Column(db.Date)
     is_corp_tax_extended = db.Column(db.Boolean, default=False)
     is_biz_tax_extended = db.Column(db.Boolean, default=False)
     
@@ -153,7 +157,9 @@ class NotesReceivable(db.Model):
     drawer = db.Column(db.String(100), nullable=False)              # 振出人
     registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
     issue_date = db.Column(db.String(10), nullable=False)           # 振出年月日
+    issue_date_date = db.Column(db.Date)
     due_date = db.Column(db.String(10), nullable=False)             # 支払期日
+    due_date_date = db.Column(db.Date)
     payer_bank = db.Column(db.String(100), nullable=False)          # 支払銀行名
     payer_branch = db.Column(db.String(100))                        # 支払支店名
     amount = db.Column(db.Integer, nullable=False)                  # 金額
@@ -183,6 +189,13 @@ class AccountsReceivable(db.Model):
 
     def __repr__(self):
         return f'<AccountsReceivable {self.partner_name}>'
+
+# Keep String and Date columns in sync (no behavior change for callers)
+attach_date_string_sync(Company, 'accounting_period_start', 'accounting_period_start_date')
+attach_date_string_sync(Company, 'accounting_period_end', 'accounting_period_end_date')
+attach_date_string_sync(Company, 'closing_date', 'closing_date_date')
+attach_date_string_sync(NotesReceivable, 'issue_date', 'issue_date_date')
+attach_date_string_sync(NotesReceivable, 'due_date', 'due_date_date')
 
 class TemporaryPayment(db.Model):
     """仮払金（前渡金）の内訳モデル"""
