@@ -45,17 +45,19 @@ def fill_acroform_fields(pdf_path: str, output_path: str, values: Dict[str, Any]
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
+    import logging
+    log = logging.getLogger(__name__)
     for page in reader.pages:
         try:
             reader.update_page_form_field_values(page, values)
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("Failed to update form field values on a page: %s", e)
         writer.add_page(page)
 
     try:
         writer.update_page_form_field_values(writer.pages[0], {})
-    except Exception:
-        pass
+    except Exception as e:
+        log.warning("Failed to finalize form field values: %s", e)
 
     with open(output_path, "wb") as f:
         writer.write(f)
