@@ -47,8 +47,8 @@
 
             {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
             {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
-            {{ render_field(form.issue_date) }}
-            {{ render_field(form.due_date) }}
+            {{ render_field(form.issue_date, type="date") }}
+            {{ render_field(form.due_date, type="date") }}
             {{ render_field(form.payer_bank, placeholder="例：〇〇銀行") }}
             {{ render_field(form.payer_branch, placeholder="例：本店") }}
             {{ render_field(form.amount, type="number", placeholder="例：1000000") }}
