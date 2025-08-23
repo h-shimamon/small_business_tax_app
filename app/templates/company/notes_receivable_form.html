@@ -82,10 +82,10 @@
           const select = document.createElement('select');
           select.className = 'nr-year-select';
           const curY = instance.currentYear || new Date().getFullYear();
-          // 10-year window centered around current year (curY-5 .. curY+4),
+          // 10-year window before and after current year (inclusive): curY-10 .. curY+10
           // clipped to min/max when provided.
-          const baseMin = curY - 5;
-          const baseMax = curY + 4;
+          const baseMin = curY - 10;
+          const baseMax = curY + 10;
           const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
           const cfgMax = instance.config.maxDate ? instance.config.maxDate.getFullYear() : null;
           const minY = cfgMin !== null ? Math.max(baseMin, cfgMin) : baseMin;
@@ -97,6 +97,32 @@
             if (y === curY) opt.selected = true;
             select.appendChild(opt);
           }
+          // caret button to reveal older years in 10-year chunks
+          const expandBtn = document.createElement('button');
+          expandBtn.type = 'button';
+          expandBtn.className = 'nr-year-expand';
+          expandBtn.title = '過去の年を表示';
+          expandBtn.textContent = '＾';
+          expandBtn.addEventListener('click', function() {
+            // Determine current minimum year in options
+            const years = Array.from(select.options).map(o => parseInt(o.value, 10)).filter(n => !Number.isNaN(n));
+            if (!years.length) return;
+            const currentMin = Math.min.apply(null, years);
+            const cfgMinYear = cfgMin;
+            let added = 0;
+            for (let y = currentMin - 1; y >= currentMin - 10; y--) {
+              if (cfgMinYear !== null && y < cfgMinYear) break;
+              const opt = document.createElement('option');
+              opt.value = String(y);
+              opt.textContent = y + '年';
+              select.appendChild(opt); // descending list, older years go to bottom
+              added++;
+            }
+            if (added === 0) {
+              // nothing to add (already at min), optionally disable button
+              expandBtn.disabled = true;
+            }
+          });
           select.addEventListener('change', function() {
             const y = parseInt(this.value, 10);
             if (typeof instance.changeYear === 'function') {
@@ -109,7 +135,9 @@
             }
           });
           yearInputWrapper.style.display = 'none';
+          // Insert select and caret button before the hidden native input
           currentMonth.insertBefore(select, yearInputWrapper);
+          currentMonth.insertBefore(expandBtn, yearInputWrapper);
         }
 
         const opts = {
@@ -147,6 +175,17 @@
       color: inherit;
       background: transparent;
       border: none;
+    }
+    .flatpickr-current-month .nr-year-expand {
+      margin-left: 4px;
+      height: 28px;
+      line-height: 28px;
+      font-size: 14px;
+      font-family: inherit;
+      color: inherit;
+      background: transparent;
+      border: none;
+      cursor: pointer;
     }
   </style>
 {% endblock %}
