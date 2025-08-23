@@ -168,7 +168,11 @@
             }
           });
 
+          // Hide flatpickr's native year input/display to avoid duplicate year rendering
           yearInputWrapper.style.display = 'none';
+          currentMonth.querySelectorAll('.cur-year').forEach(function(el){
+            el.style.display = 'none';
+          });
           // Insert custom controls before the hidden native year input
           currentMonth.insertBefore(btn, yearInputWrapper);
           currentMonth.insertBefore(panel, yearInputWrapper);
@@ -201,6 +205,11 @@
     .nr-date-picker { position: relative; }
     .nr-date-picker .calendar-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #666; cursor: pointer; padding: 4px; display: flex; align-items: center; }
     .nr-date-picker .form-control { padding-left: 36px; }
+    /* Ensure native year input in header is hidden to prevent duplicate year display */
+    .flatpickr-current-month .numInputWrapper,
+    .flatpickr-current-month input.cur-year,
+    .flatpickr-current-month .cur-year { display: none !important; }
+
     .flatpickr-current-month .nr-year-button {
       margin-left: 6px;
       height: 28px;
