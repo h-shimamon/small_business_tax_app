@@ -75,7 +75,8 @@
           if (!cal) return;
           const currentMonth = cal.querySelector('.flatpickr-current-month');
           if (!currentMonth) return;
-          if (currentMonth.querySelector('.nr-year-select')) return;
+          // Avoid duplicate insertion if already built
+          if (currentMonth.querySelector('.nr-year-button') || currentMonth.querySelector('.nr-year-panel')) return;
           const yearInputWrapper = currentMonth.querySelector('.numInputWrapper');
           const yearInput = currentMonth.querySelector('input.cur-year');
           if (!yearInputWrapper || !yearInput) return;
@@ -191,8 +192,8 @@
           onReady: function(selectedDates, dateStr, instance) { buildYearSelect(instance); },
           onOpen: function(selectedDates, dateStr, instance) { buildYearSelect(instance); },
           onYearChange: function(selectedDates, dateStr, instance) {
-            const sel = instance.calendarContainer && instance.calendarContainer.querySelector('.nr-year-select');
-            if (sel) sel.value = String(instance.currentYear);
+            const btn = instance.calendarContainer && instance.calendarContainer.querySelector('.nr-year-button');
+            if (btn) btn.textContent = String(instance.currentYear) + '年';
           }
         };
         document.querySelectorAll('.nr-date-picker').forEach(function(el){
