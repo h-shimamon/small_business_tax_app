@@ -88,9 +88,11 @@
           const baseMax = curY + 10;
           const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
           const cfgMax = instance.config.maxDate ? instance.config.maxDate.getFullYear() : null;
-          const REQUIRED_MIN_YEAR = 2005;
-          const minYLimit = (cfgMin !== null) ? Math.max(REQUIRED_MIN_YEAR, cfgMin) : REQUIRED_MIN_YEAR;
-          const minY = Math.min(baseMin, minYLimit);
+          const baseMin = curY - 10;
+          const baseMax = curY + 10;
+          const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
+          const cfgMax = instance.config.maxDate ? instance.config.maxDate.getFullYear() : null;
+          const minY = cfgMin !== null ? Math.max(baseMin, cfgMin) : baseMin;
           const maxY = cfgMax !== null ? Math.min(baseMax, cfgMax) : baseMax;
           for (let y = maxY; y >= minY; y--) {
             const opt = document.createElement('option');
