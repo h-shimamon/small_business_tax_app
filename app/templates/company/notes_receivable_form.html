@@ -146,6 +146,7 @@
             btn.textContent = y + '年';
             if (typeof instance.changeYear === 'function') {
               instance.changeYear(y);
+              if (instance && typeof instance.redraw === 'function') { instance.redraw(); }
             } else {
               const sel = instance.selectedDates && instance.selectedDates[0];
               const day = sel ? sel.getDate() : 1;
