@@ -56,5 +56,12 @@ def declaration(company):
     except ValueError:
         form.accounting_period_end.data = None
 
+    # Ensure closing_date (String in DB) is converted to date for WTForms DateField
+    try:
+        if form.closing_date.data and isinstance(form.closing_date.data, str):
+            form.closing_date.data = datetime.strptime(form.closing_date.data, '%Y-%m-%d').date()
+    except ValueError:
+        form.closing_date.data = None
+
     navigation_state = get_navigation_state('declaration')
     return render_template('company/declaration_form.html', form=form, navigation_state=navigation_state)
