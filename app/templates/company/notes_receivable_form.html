@@ -135,9 +135,13 @@
             }
           });
           yearInputWrapper.style.display = 'none';
-          // Insert select and caret button before the hidden native input
-          currentMonth.insertBefore(select, yearInputWrapper);
-          currentMonth.insertBefore(expandBtn, yearInputWrapper);
+          // Insert year controls before the month dropdown to swap positions (year first)
+          (function() {
+            const monthDropdown = currentMonth.querySelector('.flatpickr-monthDropdown-months');
+            const insertBeforeNode = monthDropdown || yearInputWrapper;
+            currentMonth.insertBefore(select, insertBeforeNode);
+            currentMonth.insertBefore(expandBtn, insertBeforeNode);
+          })();
         }
 
         const opts = {
@@ -168,7 +172,7 @@
     .nr-date-picker .calendar-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #666; cursor: pointer; padding: 4px; display: flex; align-items: center; }
     .nr-date-picker .form-control { padding-left: 36px; }
     .flatpickr-current-month .nr-year-select {
-      margin-left: 6px;
+      margin-right: 6px; /* place a gap between year and month when year appears first */
       height: 28px;
       font-size: 14px;
       font-family: inherit;
