@@ -41,10 +41,7 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
         return {}
 
     if validate:
-        _require_keys(data, ["row"])
         _require_keys(data, ["cols"])
-        _require_keys(data, ["row", "ROW1_CENTER"])
-        _require_keys(data, ["row", "DETAIL_ROWS"])
         cols = data.get("cols", {})
         if not isinstance(cols, dict) or not cols:
             raise GeometryError("geometry cols must be a non-empty object")
