@@ -76,104 +76,64 @@
           const currentMonth = cal.querySelector('.flatpickr-current-month');
           if (!currentMonth) return;
           // Avoid duplicate insertion if already built
-          if (currentMonth.querySelector('.nr-year-button') || currentMonth.querySelector('.nr-year-panel')) return;
-          let yearInputWrapper = currentMonth.querySelector('.numInputWrapper');
+          if (currentMonth.querySelector('.nr-year-select') || currentMonth.querySelector('.nr-year-expand')) return;
+          const yearInputWrapper = currentMonth.querySelector('.numInputWrapper');
           const yearInput = currentMonth.querySelector('input.cur-year');
-          if (!yearInputWrapper) { yearInputWrapper = currentMonth.firstChild; }
+          if (!yearInputWrapper || !yearInput) return;
+          const select = document.createElement('select');
+          select.className = 'nr-year-select';
           const curY = instance.currentYear || new Date().getFullYear();
-          // initial window: show only ±10 years around current (inclusive)
+          // initial window: show ±10 years around current (inclusive)
           const baseMin = curY - 10;
           const baseMax = curY + 10;
           const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
           const cfgMax = instance.config.maxDate ? instance.config.maxDate.getFullYear() : null;
           const minY = cfgMin !== null ? Math.max(baseMin, cfgMin) : baseMin;
           const maxY = cfgMax !== null ? Math.min(baseMax, cfgMax) : baseMax;
-
-          // Build custom dropdown: a button and a scrollable panel
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'nr-year-button';
-          btn.textContent = curY + '年';
-
-          const panel = document.createElement('div');
-          panel.className = 'nr-year-panel';
-          panel.setAttribute('role', 'listbox');
-          const list = document.createElement('ul');
-          list.className = 'nr-year-list';
-          panel.appendChild(list);
-
-          function prependYears(fromYearInclusive, count) {
+          for (let y = maxY; y >= minY; y--) {
+            const opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = y + '年';
+            if (y === curY) opt.selected = true;
+            select.appendChild(opt);
+          }
+          // caret button to reveal older years in 10-year chunks
+          const expandBtn = document.createElement('button');
+          expandBtn.type = 'button';
+          expandBtn.className = 'nr-year-expand';
+          expandBtn.title = '過去の年を表示';
+          expandBtn.textContent = '＾';
+          expandBtn.addEventListener('click', function() {
+            const years = Array.from(select.options).map(o => parseInt(o.value, 10)).filter(n => !Number.isNaN(n));
+            if (!years.length) return;
+            const currentMin = Math.min.apply(null, years);
+            const cfgMinYear = cfgMin;
             let added = 0;
-            for (let y = fromYearInclusive; y > fromYearInclusive - count; y--) {
-              if (cfgMin !== null && y < cfgMin) break;
-              const li = document.createElement('li');
-              li.className = 'nr-year-item';
-              li.setAttribute('role', 'option');
-              li.dataset.year = String(y);
-              li.textContent = y + '年';
-              list.insertBefore(li, list.firstChild);
+            for (let y = currentMin - 1; y >= currentMin - 10; y--) {
+              if (cfgMinYear !== null && y < cfgMinYear) break;
+              const opt = document.createElement('option');
+              opt.value = String(y);
+              opt.textContent = y + '年';
+              select.appendChild(opt);
               added++;
             }
-            return added;
-          }
-
-          // Initial fill: maxY down to minY
-          for (let y = maxY; y >= minY; y--) {
-            const li = document.createElement('li');
-            li.className = 'nr-year-item';
-            li.setAttribute('role', 'option');
-            li.dataset.year = String(y);
-            li.textContent = y + '年';
-            list.appendChild(li);
-          }
-
-          // Toggle panel open/close
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            panel.classList.toggle('open');
+            if (added === 0) expandBtn.disabled = true;
           });
-          document.addEventListener('click', function(ev) {
-            if (!panel.contains(ev.target) && ev.target !== btn) {
-              panel.classList.remove('open');
-            }
-          });
-
-          // Selection handler
-          list.addEventListener('click', function(e) {
-            const target = e.target.closest('.nr-year-item');
-            if (!target) return;
-            const y = parseInt(target.dataset.year, 10);
-            btn.textContent = y + '年';
-            // Navigate the calendar to the chosen year without selecting a date
+          select.addEventListener('change', function() {
+            const y = parseInt(this.value, 10);
             if (typeof instance.jumpToDate === 'function') {
               instance.jumpToDate(new Date(y, instance.currentMonth, 1));
             } else if (typeof instance.changeYear === 'function') {
               instance.changeYear(y);
               if (instance && typeof instance.redraw === 'function') { instance.redraw(); }
             }
-            panel.classList.remove('open');
           });
-
-          // Infinite prepend on scroll to top (older years)
-          panel.addEventListener('scroll', function() {
-            if (panel.scrollTop <= 8) {
-              const first = list.firstElementChild;
-              const currentMin = first ? parseInt(first.dataset.year, 10) : (maxY);
-              const prevScrollHeight = panel.scrollHeight;
-              const added = prependYears(currentMin - 1, 10);
-              if (added > 0) {
-                const newScrollHeight = panel.scrollHeight;
-                panel.scrollTop += (newScrollHeight - prevScrollHeight);
-              }
-            }
-          });
-
-          // Hide flatpickr's native year input/display to avoid duplicate year rendering
-          if (yearInputWrapper && yearInputWrapper.style) { yearInputWrapper.style.display = 'none'; }
+          // Hide native year input
+          yearInputWrapper.style.display = 'none';
           currentMonth.querySelectorAll('.cur-year').forEach(function(el){ el.style.display = 'none'; });
-          // Insert custom controls before the hidden native year input
-          currentMonth.insertBefore(btn, yearInputWrapper);
-          currentMonth.insertBefore(panel, yearInputWrapper);
+          // Insert select and expand button before native input
+          currentMonth.insertBefore(select, yearInputWrapper);
+          currentMonth.insertBefore(expandBtn, yearInputWrapper);
         }
 
         const opts = {
@@ -207,12 +167,21 @@
     .flatpickr-current-month .numInputWrapper,
     .flatpickr-current-month input.cur-year,
     .flatpickr-current-month .cur-year { display: none !important; }
-    /* Ensure panel can overflow the month header area */
+    /* Keep month header area usable */
     .flatpickr-months { overflow: visible !important; }
     .flatpickr-current-month { position: relative; z-index: 6; }
 
-    .flatpickr-current-month .nr-year-button {
+    .flatpickr-current-month .nr-year-select {
       margin-left: 6px;
+      height: 28px;
+      font-size: 14px;
+      font-family: inherit;
+      color: inherit;
+      background: transparent;
+      border: none;
+    }
+    .flatpickr-current-month .nr-year-expand {
+      margin-left: 4px;
       height: 28px;
       line-height: 28px;
       font-size: 14px;
@@ -222,30 +191,5 @@
       border: none;
       cursor: pointer;
     }
-    .flatpickr-current-month .nr-year-panel {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      z-index: 5;
-      display: none;
-      width: 6.5em;
-      max-height: 160px; /* about 8 items */
-      overflow-y: auto;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      border-radius: 4px;
-      padding: 4px 0;
-    }
-    .flatpickr-current-month .nr-year-panel.open { display: block; }
-    .flatpickr-current-month .nr-year-list { list-style: none; margin: 0; padding: 0; }
-    .flatpickr-current-month .nr-year-item {
-      padding: 4px 8px;
-      font-size: 14px;
-      font-family: inherit;
-      color: #333;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .flatpickr-current-month .nr-year-item:hover { background: #f2f2f2; }
   </style>
 {% endblock %}
