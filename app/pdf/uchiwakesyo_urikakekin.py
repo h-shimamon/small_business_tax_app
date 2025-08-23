@@ -11,26 +11,20 @@ from app.company.models import Company, AccountsReceivable
 
 from reportlab.pdfbase import pdfmetrics
 from .pdf_fill import overlay_pdf, TextSpec
+from .layout_utils import (
+    load_geometry,
+    baseline0_from_center,
+    center_from_baseline,
+    append_left,
+    append_right,
+)
+from .fonts import default_font_map, ensure_font_registered
+from app.utils import format_number
 
 
 
 def _format_currency(n: Optional[int]) -> str:
-    if n is None:
-        return ""
-    try:
-        return f"{int(n):,}"
-    except Exception:
-        return ""
-
-
-def _load_geometry(repo_root: str, year: str):
-    import json
-    path = os.path.join(repo_root, f"resources/pdf_templates/uchiwakesyo_urikakekin/{year}_geometry.json")
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f) or {}
-    except Exception:
-        return {}
+    return format_number(n)
 
 
 def generate_uchiwakesyo_urikakekin(company_id: Optional[int], year: str = "2025", *, output_path: str) -> str:
@@ -47,18 +41,16 @@ def generate_uchiwakesyo_urikakekin(company_id: Optional[int], year: str = "2025
     # Resolve paths
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     base_pdf = os.path.join(repo_root, f"resources/pdf_forms/uchiwakesyo_urikakekin/{year}/source.pdf")
-    font_map = {"NotoSansJP": os.path.join(repo_root, "resources/fonts/NotoSansJP-Regular.ttf")}
+    font_map = default_font_map(repo_root)
 
     # Ensure font is registered before measuring string widths for right alignment
     try:
-        from reportlab.pdfbase.ttfonts import TTFont  # type: ignore
-        if "NotoSansJP" not in pdfmetrics.getRegisteredFontNames():
-            pdfmetrics.registerFont(TTFont("NotoSansJP", font_map["NotoSansJP"]))
+        ensure_font_registered("NotoSansJP", font_map["NotoSansJP"])  # best-effort
     except Exception:
         pass
 
     # Optional geometry override
-    geom = _load_geometry(repo_root, year)
+    geom = load_geometry("uchiwakesyo_urikakekin", year, repo_root=repo_root, required=True, validate=True)
 
     # Row layout
     ROW1_CENTER = float(geom.get('row', {}).get('ROW1_CENTER', 760.0))
@@ -107,8 +99,6 @@ def generate_uchiwakesyo_urikakekin(company_id: Optional[int], year: str = "2025
         chunk = items[start:end]
 
         baseline0 = None
-        baseline1 = None
-        step = None
 
         # 明細行
         for i, it in enumerate(chunk):
@@ -124,27 +114,21 @@ def generate_uchiwakesyo_urikakekin(company_id: Optional[int], year: str = "2025
             }
             if row_idx == 0:
                 center_y = natural_center
-                baseline0 = center_y - fs['balance'] / 2.0
+                baseline0 = baseline0_from_center(center_y, fs['balance'])
             else:
                 eff_step = 20.3
-                baseline_n = (baseline0 if baseline0 is not None else (ROW1_CENTER - fs['balance'] / 2.0)) - eff_step * row_idx
-                center_y = baseline_n + fs['balance'] / 2.0
+                center_y = center_from_baseline((baseline0 if baseline0 is not None else baseline0_from_center(ROW1_CENTER, fs['balance'])), eff_step, row_idx, fs['balance'])
 
             def left(page: int, x: float, w: float, text: str, size: float):
-                if not text:
-                    return
-                y = center_y - size / 2.0
-                texts.append(TextSpec(page=page, x=x, y=y, text=text, font_name="NotoSansJP", font_size=size))
+                append_left(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size)
 
             def right(page: int, x: float, w: float, text: str, size: float):
-                if not text:
-                    return
-                y = center_y - size / 2.0
-                texts.append(TextSpec(page=page, x=(x + w - right_margin), y=y, text=text, font_name="NotoSansJP", font_size=size, align="right"))
+                append_right(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size, right_margin=right_margin)
                 # debug guideline
                 try:
                     if has_request_context() and request.args.get('debug_y') == '1':
-                        rectangles.append((page, 50.0, y, 500.0, 0.6))
+                        y_dbg = center_y - size / 2.0
+                        rectangles.append((page, 50.0, y_dbg, 500.0, 0.6))
                         current_app.logger.info(f"row_idx={row_idx} y={y:.2f} size={size}")
                 except Exception:
                     pass

@@ -11,26 +11,25 @@ from app.company.models import Company, Deposit
 
 from reportlab.pdfbase import pdfmetrics
 from .pdf_fill import overlay_pdf, TextSpec
+from .layout_utils import (
+    load_geometry,
+    center_from_row1,
+    append_left,
+    append_right,
+)
+from .fonts import default_font_map, ensure_font_registered
+from app.utils import format_number
 
 
 
 def _format_currency(n: Optional[int]) -> str:
-    if n is None:
-        return ""
-    try:
-        return f"{int(n):,}"
-    except Exception:
-        return ""
+    return format_number(n)
 
 
 def _load_geometry(repo_root: str, year: str):
-    import json
-    path = os.path.join(repo_root, f"resources/pdf_templates/uchiwakesyo_yocyokin/{year}_geometry.json")
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f) or {}
-    except Exception:
-        return {}
+    # Backward compatibility shim if called directly elsewhere
+    from .layout_utils import load_geometry as _lg
+    return _lg("uchiwakesyo_yocyokin", year, repo_root=repo_root, required=True, validate=True)
 
 
 def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025", *, output_path: str) -> str:
@@ -47,10 +46,14 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
     # Resolve paths
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     base_pdf = os.path.join(repo_root, f"resources/pdf_forms/uchiwakesyo_yocyokin/{year}/source.pdf")
-    font_map = {"NotoSansJP": os.path.join(repo_root, "resources/fonts/NotoSansJP-Regular.ttf")}
+    font_map = default_font_map(repo_root)
+    try:
+        ensure_font_registered("NotoSansJP", font_map["NotoSansJP"])  # best-effort registration
+    except Exception:
+        pass
 
     # Optional geometry override
-    geom = _load_geometry(repo_root, year)
+    geom = load_geometry("uchiwakesyo_yocyokin", year, repo_root=repo_root, required=True, validate=True)
 
     # Row layout
     ROW1_CENTER = float(geom.get('row', {}).get('ROW1_CENTER', 700.0))
@@ -101,7 +104,7 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
         # 明細行（1..23）
         for i, it in enumerate(chunk):
             row_idx = i  # 0..rows_per_page-1
-            center_y = ROW1_CENTER - ROW_STEP * row_idx
+            center_y = center_from_row1(ROW1_CENTER, ROW_STEP, row_idx)
             # font sizes
             fs = {
                 'bank': 9.0,
@@ -113,16 +116,10 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
             }
             # helpers
             def left(page: int, x: float, w: float, text: str, size: float):
-                if not text:
-                    return
-                y = center_y - size / 2.0
-                texts.append(TextSpec(page=page, x=x, y=y, text=text, font_name="NotoSansJP", font_size=size))
+                append_left(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size)
 
             def right(page: int, x: float, w: float, text: str, size: float):
-                if not text:
-                    return
-                y = center_y - size / 2.0
-                texts.append(TextSpec(page=page, x=(x + w - right_margin), y=y, text=text, font_name="NotoSansJP", font_size=size, align="right"))
+                append_right(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size, right_margin=right_margin)
 
             p = page_index
             bx, bw = col('bank')

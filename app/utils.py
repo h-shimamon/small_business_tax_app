@@ -32,3 +32,13 @@ def load_master_data():
         raise RuntimeError(f"マスターファイルが見つかりません: {e}. アプリケーションを起動できません。")
     except Exception as e:
         raise RuntimeError(f"マスターファイルの読み込み中にエラーが発生しました: {e}")
+
+
+def format_number(value):
+    """整数値を3桁区切りの文字列にフォーマット（単位や通貨記号は付けない）。"""
+    if value is None:
+        return ""
+    try:
+        return f"{int(value):,}"
+    except Exception:
+        return ""
