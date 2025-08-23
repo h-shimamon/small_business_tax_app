@@ -25,9 +25,11 @@
         {% else %}
             <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
         {% endif %}
-        {# 検証用のPDF出力（預貯金等のみ、サービスリリース時は非表示前提） #}
+        {# 検証用のPDF出力（検証用。サービスリリース時は非表示前提） #}
         {% if page == 'deposits' %}
             <a href="{{ url_for('company.deposits_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（預貯金等・検証用）</a>
+        {% elif page == 'accounts_receivable' %}
+            <a href="{{ url_for('company.accounts_receivable_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（売掛金・検証用）</a>
         {% endif %}
     </div>
 </div>
@@ -47,7 +49,7 @@
         <span class="summary-value">{{ render_difference(deposit_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
-    {# 次の内訳リンクは削除（要件により非表示） #}
+    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
 </div>
 {% endif %}
 
@@ -66,7 +68,7 @@
         <span class="summary-value">{{ render_difference(notes_receivable_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
-    {# 次の内訳リンクは削除（要件により非表示） #}
+    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
 </div>
 {% endif %}
 
@@ -85,7 +87,7 @@
         <span class="summary-value">{{ render_difference(accounts_receivable_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
-    {# 次の内訳リンクは削除（要件により非表示） #}
+    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
 </div>
 {% endif %}
 
@@ -104,7 +106,7 @@
         <span class="summary-value">{{ render_difference(generic_summary.difference) }}</span>
         {# 整合済みバッジは非表示 #}
     </div>
-    {# 次の内訳リンクは削除（要件により非表示） #}
+    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
 </div>
 {% endif %}
 

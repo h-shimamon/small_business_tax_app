@@ -143,19 +143,23 @@
 }
 
 /* Success badge and hint for zero-difference */
+/* 現状未使用の補助UIスタイル。サマリー内にCTAを置かない方針のため使用しない（将来削除候補） */
 .summary-badge.success {
     color: var(--color-success);
     font-weight: 600;
     font-size: 0.8rem;
     margin-left: 8px;
 }
+/* 現状未使用の補助UIスタイル。サマリー内にCTAを置かない方針のため使用しない（将来削除候補） */
 .summary-hint-row {
     margin-top: 6px;
 }
+/* 現状未使用の補助UIスタイル。サマリー内にCTAを置かない方針のため使用しない（将来削除候補） */
 .summary-hint {
     color: var(--color-text-secondary);
     font-size: 0.85rem;
 }
+/* 現状未使用の補助UIスタイル。サマリー内にCTAを置かない方針のため使用しない（将来削除候補） */
 .summary-next-link {
     margin-left: 12px;
     font-size: 0.85rem;

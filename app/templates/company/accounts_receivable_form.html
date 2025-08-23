@@ -47,8 +47,8 @@
             {{ form.hidden_tag() }}
 
             {{ render_field(form.account_name) }}
-            {{ render_field(form.partner_name, placeholder="例：株式会社 △△商会") }}
             {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+            {{ render_field(form.partner_name, placeholder="例：株式会社 △△商会") }}
             {{ render_field(form.partner_address, placeholder="例：東京都千代田区〇〇町1-2-3") }}
             {{ render_field(form.balance_at_eoy, type="number", placeholder="例：500000") }}
             {{ render_field(form.remarks, rows="3", placeholder="例：商品Aの売上代金") }}

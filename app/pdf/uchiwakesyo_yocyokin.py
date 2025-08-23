@@ -13,12 +13,6 @@ from reportlab.pdfbase import pdfmetrics
 from .pdf_fill import overlay_pdf, TextSpec
 
 
-def _string_width(text: str, font_name: str, font_size: float) -> float:
-    try:
-        return pdfmetrics.stringWidth(text, font_name, font_size)
-    except Exception:
-        return len(text) * font_size * 0.55
-
 
 def _format_currency(n: Optional[int]) -> str:
     if n is None:
@@ -114,7 +108,7 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
                 'branch': 9.0,
                 'type': 9.0,
                 'number': 9.0,
-                'balance': 14.0,
+                'balance': 15.0,
                 'remarks': 8.5,
             }
             # helpers
@@ -127,9 +121,8 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
             def right(page: int, x: float, w: float, text: str, size: float):
                 if not text:
                     return
-                sw = _string_width(text, "NotoSansJP", size)
                 y = center_y - size / 2.0
-                texts.append(TextSpec(page=page, x=common_right - sw, y=y, text=text, font_name="NotoSansJP", font_size=size))
+                texts.append(TextSpec(page=page, x=(x + w - right_margin), y=y, text=text, font_name="NotoSansJP", font_size=size, align="right"))
 
             p = page_index
             bx, bw = col('bank')
@@ -148,11 +141,10 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
         # 合計行（24行目）: そのページの明細合計を期末現在高列にのみ表示。
         page_sum = sum((it.balance or 0) for it in chunk)
         center_y = ROW1_CENTER - ROW_STEP * sum_row_index
-        fs_balance = 14.0
+        fs_balance = 15.0
         sum_text = _format_currency(page_sum)
-        sw = _string_width(sum_text, "NotoSansJP", fs_balance)
         y = center_y - fs_balance / 2.0
-        texts.append(TextSpec(page=page_index, x=common_right - sw, y=y, text=sum_text, font_name="NotoSansJP", font_size=fs_balance))
+        texts.append(TextSpec(page=page_index, x=(vx0 + vw0 - right_margin), y=y, text=sum_text, font_name="NotoSansJP", font_size=fs_balance, align="right"))
 
     overlay_pdf(
         base_pdf_path=base_pdf,
