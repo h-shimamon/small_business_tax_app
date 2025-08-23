@@ -193,3 +193,20 @@ select.form-control {
 .form-grid .col-right {
     grid-column: 2;
 }
+
+/* Date picker (icon + input) */
+.nr-date-picker { position: relative; }
+.nr-date-picker .calendar-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.nr-date-picker .form-control { padding-left: 36px; }
