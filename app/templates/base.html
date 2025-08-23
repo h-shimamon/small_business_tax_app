@@ -72,22 +72,31 @@
         <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.flatpickr) {
-                    flatpickr('.js-date', {
-                        dateFormat: 'Y-m-d',
-                        locale: flatpickr.l10ns.ja,
-                        onReady: function(selectedDates, dateStr, instance) {
-                            if (window.DatePickerEnhancer) {
-                                window.DatePickerEnhancer.applyYearFirstHeader(instance);
-                            }
-                        },
-                        onOpen: function(selectedDates, dateStr, instance) {
-                            if (window.DatePickerEnhancer) {
-                                window.DatePickerEnhancer.applyYearFirstHeader(instance);
-                            }
+                if (!window.flatpickr) return;
+                var opts = {
+                    dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'Y年m月d日',
+                    locale: flatpickr.l10ns.ja,
+                    allowInput: true,
+                    onReady: function(selectedDates, dateStr, instance) {
+                        if (window.DatePickerEnhancer) {
+                            window.DatePickerEnhancer.applyYearFirstHeader(instance);
                         }
-                    });
-                }
+                    },
+                    onOpen: function(selectedDates, dateStr, instance) {
+                        if (window.DatePickerEnhancer) {
+                            window.DatePickerEnhancer.applyYearFirstHeader(instance);
+                        }
+                    }
+                };
+                document.querySelectorAll('.nr-date-picker').forEach(function(el){
+                    flatpickr(el, Object.assign({ wrap: true }, opts));
+                });
+                document.querySelectorAll('.js-date').forEach(function(input){
+                    if (input.closest('.nr-date-picker')) return;
+                    flatpickr(input, opts);
+                });
             });
         </script>
         <style>
