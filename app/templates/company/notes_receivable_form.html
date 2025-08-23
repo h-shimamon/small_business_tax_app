@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field %}
+{% from 'company/_form_helpers.html' import render_field, render_date_field %}
 
 {# ページのタイトルを設定 #}
 {% block title %}{{ form_title }} - 勘定科目内訳書{% endblock %}
@@ -47,8 +47,8 @@
 
             {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
             {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
-            {{ render_field(form.issue_date, type="date") }}
-            {{ render_field(form.due_date, type="date") }}
+            {{ render_date_field(form.issue_date) }}
+            {{ render_date_field(form.due_date) }}
             {{ render_field(form.payer_bank, placeholder="例：〇〇銀行") }}
             {{ render_field(form.payer_branch, placeholder="例：本店") }}
             {{ render_field(form.amount, type="number", placeholder="例：1000000") }}
@@ -63,4 +63,33 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.flatpickr) {
+        const opts = {
+          wrap: true,
+          dateFormat: 'Y-m-d',
+          altInput: true,
+          altFormat: 'Y年m月d日',
+          locale: flatpickr.l10ns.ja,
+          monthSelectorType: 'dropdown',
+          weekNumbers: true,
+          disableMobile: true,
+          allowInput: true,
+        };
+        document.querySelectorAll('.nr-date-picker').forEach(function(el){
+          flatpickr(el, opts);
+        });
+      }
+    });
+  </script>
+  <style>
+    .nr-date-picker { position: relative; }
+    .nr-date-picker .calendar-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #666; cursor: pointer; padding: 4px; display: flex; align-items: center; }
+    .nr-date-picker .form-control { padding-left: 36px; }
+  </style>
 {% endblock %}

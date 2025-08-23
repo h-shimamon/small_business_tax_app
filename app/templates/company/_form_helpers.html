@@ -54,3 +54,25 @@
     <span class="toggle-switch"></span>
   </label>
 {% endmacro %}
+
+{# Date field with left calendar icon using flatpickr wrap mode (scoped to templates that use it) #}
+{% macro render_date_field(field, placeholder=None, container_class="") %}
+  <div class="form-group {{ container_class }}" id="{{ field.name }}_group">
+    {{ field.label(class="form-label") }}
+    <div class="nr-date-picker" data-wrap="true">
+      <button type="button" class="calendar-icon" aria-label="カレンダーを開く" data-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 1 1 2 0v1zm12 6H5v10h14V8z"/>
+        </svg>
+      </button>
+      {{ field(class="form-control", placeholder=placeholder, **{'data-input': ''}) }}
+    </div>
+    {% if field.errors %}
+      <div class="form-errors">
+        {% for error in field.errors %}
+          <span class="form-error">{{ error }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
