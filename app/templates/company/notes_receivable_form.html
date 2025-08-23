@@ -97,25 +97,9 @@
             if (y === curY) opt.selected = true;
             select.appendChild(opt);
           }
-          // Change year handler
-          select.addEventListener('change', function() {
-            const y = parseInt(this.value, 10);
-            if (typeof instance.jumpToDate === 'function') {
-              instance.jumpToDate(new Date(y, instance.currentMonth, 1));
-            } else if (typeof instance.changeYear === 'function') {
-              instance.changeYear(y);
-              if (typeof instance.redraw === 'function') instance.redraw();
-            }
-          });
-          // Hide native year input to avoid duplication
-          yearInputWrapper.style.display = 'none';
-          currentMonth.querySelectorAll('.cur-year').forEach(function(el){ el.style.display = 'none'; });
-          // Insert year select before month dropdown to keep year-first order
-          (function() {
-            const monthDropdown = currentMonth.querySelector('.flatpickr-monthDropdown-months');
-            const insertBeforeNode = monthDropdown || yearInputWrapper;
-            currentMonth.insertBefore(select, insertBeforeNode);
-          })();
+          if (window.DatePickerEnhancer && typeof window.DatePickerEnhancer.applyYearFirstHeader === 'function') {
+            window.DatePickerEnhancer.applyYearFirstHeader(instance);
+          }
         }
 
         const opts = {

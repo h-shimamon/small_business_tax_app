@@ -69,16 +69,39 @@
         <script src="https://unpkg.com/alpinejs@3.14.1" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+        <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 if (window.flatpickr) {
                     flatpickr('.js-date', {
                         dateFormat: 'Y-m-d',
-                        locale: flatpickr.l10ns.ja
+                        locale: flatpickr.l10ns.ja,
+                        onReady: function(selectedDates, dateStr, instance) {
+                            if (window.DatePickerEnhancer) {
+                                window.DatePickerEnhancer.applyYearFirstHeader(instance);
+                            }
+                        },
+                        onOpen: function(selectedDates, dateStr, instance) {
+                            if (window.DatePickerEnhancer) {
+                                window.DatePickerEnhancer.applyYearFirstHeader(instance);
+                            }
+                        }
                     });
                 }
             });
         </script>
+        <style>
+            /* Small spacing for the injected year select when year-first order is used */
+            .flatpickr-current-month .dp-year-select {
+                margin-right: 6px;
+                height: 28px;
+                font-size: 14px;
+                font-family: inherit;
+                color: inherit;
+                background: transparent;
+                border: none;
+            }
+        </style>
     {% endblock %}
 </body>
 </html>
