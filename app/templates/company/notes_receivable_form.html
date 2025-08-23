@@ -82,8 +82,14 @@
           const select = document.createElement('select');
           select.className = 'nr-year-select';
           const curY = instance.currentYear || new Date().getFullYear();
-          const minY = instance.config.minDate ? instance.config.minDate.getFullYear() : curY - 50;
-          const maxY = instance.config.maxDate ? instance.config.maxDate.getFullYear() : curY + 20;
+          // 10-year window centered around current year (curY-5 .. curY+4),
+          // clipped to min/max when provided.
+          const baseMin = curY - 5;
+          const baseMax = curY + 4;
+          const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
+          const cfgMax = instance.config.maxDate ? instance.config.maxDate.getFullYear() : null;
+          const minY = cfgMin !== null ? Math.max(baseMin, cfgMin) : baseMin;
+          const maxY = cfgMax !== null ? Math.min(baseMax, cfgMax) : baseMax;
           for (let y = maxY; y >= minY; y--) {
             const opt = document.createElement('option');
             opt.value = String(y);
@@ -133,6 +139,14 @@
     .nr-date-picker { position: relative; }
     .nr-date-picker .calendar-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #666; cursor: pointer; padding: 4px; display: flex; align-items: center; }
     .nr-date-picker .form-control { padding-left: 36px; }
-    .flatpickr-current-month .nr-year-select { margin-left: 6px; height: 28px; font-size: 14px; }
+    .flatpickr-current-month .nr-year-select {
+      margin-left: 6px;
+      height: 28px;
+      font-size: 14px;
+      font-family: inherit;
+      color: inherit;
+      background: transparent;
+      border: none;
+    }
   </style>
 {% endblock %}
