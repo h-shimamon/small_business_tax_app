@@ -31,30 +31,16 @@
 
 
 {# メインコンテンツ部分を定義 #}
+{% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-<div class="content-header">
-    <h1 class="content-title">{{ form_title }}</h1>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-
-            {{ render_field(form.account_name) }}
-            {{ render_field(form.partner_name, placeholder="例：株式会社 □□") }}
-            {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
-            {{ render_field(form.partner_address, placeholder="例：東京都中央区〇〇1-2-3") }}
-            {{ render_field(form.relationship, placeholder="例：代表者の子会社") }}
-            {{ render_field(form.balance_at_eoy, type="number", placeholder="例：300000") }}
-            {{ render_field(form.transaction_details, rows="3", placeholder="例：出張旅費の仮払い") }}
-            {{ render_field(form.is_subsidiary) }}
-
-            <div class="form-actions">
-                {{ form.submit(class="button-primary") }}
-                <a href="{{ url_for('company.statement_of_accounts', page='temporary_payments') }}" class="button-secondary">キャンセル</a>
-            </div>
-        </form>
-    </div>
-</div>
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='temporary_payments'), cancel_label='キャンセル') %}
+  {{ render_field(form.account_name) }}
+  {{ render_field(form.partner_name, placeholder="例：株式会社 □□") }}
+  {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+  {{ render_field(form.partner_address, placeholder="例：東京都中央区〇〇1-2-3") }}
+  {{ render_field(form.relationship, placeholder="例：代表者の子会社") }}
+  {{ render_field(form.balance_at_eoy, type="number", placeholder="例：300000") }}
+  {{ render_field(form.transaction_details, rows="3", placeholder="例：出張旅費の仮払い") }}
+  {{ render_field(form.is_subsidiary) }}
+{% endcall %}
 {% endblock %}

@@ -1,4 +1,5 @@
 {# /app/templates/company/_cards/loans_receivable_card.html #}
+{% from 'company/_components_item_actions.html' import item_actions_menu %}
 {% for item in items %}
 <div class="statement-card">
     <div class="card-header">
@@ -20,14 +21,6 @@
             </div>
         </div>
     </div>
-    <div class="action-menu">
-        <button class="action-menu-button" aria-label="アクション">…</button>
-        <div class="action-menu-content">
-            <a href="{{ url_for('company.edit_item', page_key=page, item_id=item.id) }}" class="action-menu-item">編集</a>
-            <form action="{{ url_for('company.delete_item', page_key=page, item_id=item.id) }}" method="post" onsubmit="return confirm('本当に削除しますか？');">
-                <button type="submit" class="action-menu-item delete">削除</button>
-            </form>
-        </div>
-    </div>
+    {{ item_actions_menu(page, item.id) }}
 </div>
 {% endfor %}

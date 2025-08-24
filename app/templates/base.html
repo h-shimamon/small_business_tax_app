@@ -83,6 +83,11 @@
                         if (window.DatePickerEnhancer) {
                             window.DatePickerEnhancer.applyYearFirstHeader(instance);
                         }
+                        try {
+                            if (instance && instance.altInput) {
+                                instance.altInput.placeholder = '例：2025年04月01日';
+                            }
+                        } catch (e) { /* no-op */ }
                     },
                     onOpen: function(selectedDates, dateStr, instance) {
                         if (window.DatePickerEnhancer) {

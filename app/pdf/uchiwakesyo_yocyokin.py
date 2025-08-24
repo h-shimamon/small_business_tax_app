@@ -112,7 +112,7 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
                 'type': 9.0,
                 'number': 9.0,
                 'balance': 15.0,
-                'remarks': 8.5,
+                'remarks': 7.5,
             }
             # helpers
             def left(page: int, x: float, w: float, text: str, size: float):
