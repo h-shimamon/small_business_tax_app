@@ -11,6 +11,7 @@
     {% include 'company/_wizard_sidebar.html' %}
 {% endblock %}
 
+{% from 'company/_soa_macros.html' import header_actions, empty_state, summary_generic, summary_borrowings %}
 {% from 'company/_layout_helpers.html' import render_difference %}
 {% block content %}
 <div class="content-header">
@@ -19,127 +20,39 @@
         <p class="content-subtitle">登録された{{ page_title }}の情報を確認・編集します。</p>
     </div>
     <div class="header-actions">
-        {# 差額=0のときは新規登録を隠し、次の内訳へボタンを表示（次URLがある場合） #}
-        {% if generic_summary and (generic_summary.difference | default(0)) == 0 and soa_next_url %}
-            <a href="{{ soa_next_url }}" class="button-primary">次の内訳へ</a>
-        {% else %}
-            <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
-        {% endif %}
-        {# 検証用のPDF出力（検証用。サービスリリース時は非表示前提） #}
-        {% if page == 'deposits' %}
-            <a href="{{ url_for('company.deposits_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（預貯金等・検証用）</a>
-        {% elif page == 'accounts_receivable' %}
-            <a href="{{ url_for('company.accounts_receivable_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（売掛金・検証用）</a>
-        {% endif %}
+        {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url) }}
     </div>
 </div>
 
+{# Soft-commonized post-create panel: appears once after successful creation. No layout changes elsewhere. #}
+{% if post_create %}
+  {% include '_components/success_panel.html' %}
+{% endif %}
+
 {% if page == 'deposits' %}
-<div class="card summary-card">
-    <div class="summary-item">
-        <span class="summary-label">B/S上の預金残高</span>
-        <span class="summary-value">{{ (deposit_summary.bs_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item">
-        <span class="summary-label">内訳明細の合計額</span>
-        <span class="summary-value">{{ (deposit_summary.breakdown_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item result {% if deposit_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
-        <span class="summary-label">差額</span>
-        <span class="summary-value">{{ render_difference(deposit_summary.difference) }}</span>
-        {# 整合済みバッジは非表示 #}
-    </div>
-    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
-</div>
+  {{ summary_generic('B/S上の預金残高', deposit_summary.bs_total, deposit_summary.breakdown_total, deposit_summary.difference) }}
 {% endif %}
 
 {% if page == 'notes_receivable' %}
-<div class="card summary-card">
-    <div class="summary-item">
-        <span class="summary-label">B/S上の受取手形残高</span>
-        <span class="summary-value">{{ (notes_receivable_summary.bs_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item">
-        <span class="summary-label">内訳明細の合計額</span>
-        <span class="summary-value">{{ (notes_receivable_summary.breakdown_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item result {% if notes_receivable_summary.difference == 0 %}zero{% else %}non-zero{% endif %}">
-        <span class="summary-label">差額</span>
-        <span class="summary-value">{{ render_difference(notes_receivable_summary.difference) }}</span>
-        {# 整合済みバッジは非表示 #}
-    </div>
-    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
-</div>
+  {{ summary_generic('B/S上の受取手形残高', notes_receivable_summary.bs_total, notes_receivable_summary.breakdown_total, notes_receivable_summary.difference) }}
 {% endif %}
 
 {% if page == 'accounts_receivable' %}
-<div class="card summary-card">
-    <div class="summary-item">
-        <span class="summary-label">B/S上の売掛金（未収入金）残高</span>
-        <span class="summary-value">{{ (accounts_receivable_summary.bs_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item">
-        <span class="summary-label">内訳明細の合計額</span>
-        <span class="summary-value">{{ (accounts_receivable_summary.breakdown_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item result {% if (accounts_receivable_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
-        <span class="summary-label">差額</span>
-        <span class="summary-value">{{ render_difference(accounts_receivable_summary.difference) }}</span>
-        {# 整合済みバッジは非表示 #}
-    </div>
-    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
-</div>
+  {{ summary_generic('B/S上の売掛金（未収入金）残高', accounts_receivable_summary.bs_total, accounts_receivable_summary.breakdown_total, accounts_receivable_summary.difference) }}
 {% endif %}
 
 {% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','executive_compensations','land_rents','miscellaneous'] %}
-<div class="card summary-card">
-    <div class="summary-item">
-        <span class="summary-label">{{ generic_summary_label }}</span>
-        <span class="summary-value">{{ (generic_summary.bs_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item">
-        <span class="summary-label">内訳明細の合計額</span>
-        <span class="summary-value">{{ (generic_summary.breakdown_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item result {% if (generic_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
-        <span class="summary-label">差額</span>
-        <span class="summary-value">{{ render_difference(generic_summary.difference) }}</span>
-        {# 整合済みバッジは非表示 #}
-    </div>
-    {# 主要CTAはヘッダ右上で制御。サマリー内にCTAは置かない（UI方針） #}
-</div>
+  {{ summary_generic(generic_summary_label, generic_summary.bs_total, generic_summary.breakdown_total, generic_summary.difference) }}
 {% endif %}
 
 {% if page == 'borrowings' %}
-<div class="card summary-card">
-    <div class="summary-item">
-        <span class="summary-label">B/S上の借入金残高</span>
-        <span class="summary-value">{{ (borrowings_summary.bs_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item">
-        <span class="summary-label">P/L上の支払利子</span>
-        <span class="summary-value">{{ (borrowings_summary.pl_interest_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item">
-        <span class="summary-label">内訳明細の合計額（期末現在高＋期間中の支払利子）</span>
-        <span class="summary-value">{{ (borrowings_summary.breakdown_total | default(0)) | format_currency }}</span>
-    </div>
-    <div class="summary-item result {% if (borrowings_summary.difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
-        <span class="summary-label">差額</span>
-        <span class="summary-value">{{ render_difference(borrowings_summary.difference) }}</span>
-        {# 整合済みバッジは非表示 #}
-    </div>
-</div>
+  {{ summary_borrowings(borrowings_summary.bs_total, borrowings_summary.pl_interest_total, borrowings_summary.breakdown_total, borrowings_summary.difference) }}
 {% endif %}
 
 <div class="card-grid">
     {% if items %}        {% include 'company/_cards/' + page + '_card.html' %}
     {% else %}
-        <div class="empty-state-card">
-            <h2>まだ{{ page_title }}が登録されていません</h2>
-            <p>右上の「＋ 新規登録」ボタンから最初の情報を登録してください。</p>
-            <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
-        </div>
+        {{ empty_state(page_title, page) }}
     {% endif %}
 </div>
 {% endblock %}

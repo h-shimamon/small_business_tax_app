@@ -1,0 +1,20 @@
+{# Reusable success panel for post-create actions on Statement of Accounts pages #}
+<div class="card" role="status" aria-live="polite">
+  <div class="card-body">
+    <h2 class="content-title" style="margin-top:0;">{{ post_create.title }}</h2>
+    {% if post_create.desc %}
+      <p class="content-subtitle">{{ post_create.desc }}</p>
+    {% endif %}
+    <div class="header-actions" style="margin-top: 8px;">
+      {% for cta in (post_create.ctas or []) %}
+        {% if cta.href %}
+          <a href="{{ cta.href }}" class="{{ cta.class or 'button-primary' }}">{{ cta.label }}</a>
+        {% elif cta.endpoint %}
+          <a href="{{ url_for(cta.endpoint, **(cta.params or {})) }}" class="{{ cta.class or 'button-primary' }}">{{ cta.label }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {# Optional: light divider could be added with existing styles if present; avoid extra CSS #}
+</div>
+

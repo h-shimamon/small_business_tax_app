@@ -89,6 +89,30 @@ def statement_of_accounts(company):
         'soa_next_name': None
     }
 
+    # Post-create success panel context (soft commonization)
+    try:
+        created_flag = request.args.get('created')
+        created_id = request.args.get('created_id')
+        if created_flag:
+            # Default CTAs: continue adding and back to list
+            ctas = [
+                {'label': f'続けて{config["title"]}を登録', 'href': url_for('company.add_item', page_key=page), 'class': 'button-primary'},
+                {'label': '一覧へ戻る', 'href': url_for('company.statement_of_accounts', page=page), 'class': 'button-secondary'},
+            ]
+            # Optional: PDF preview CTA when available
+            if page == 'deposits':
+                ctas.append({'label': 'PDF出力（預貯金等・検証用）', 'href': url_for('company.deposits_pdf', year='2025'), 'class': 'button-secondary'})
+            elif page == 'accounts_receivable':
+                ctas.append({'label': 'PDF出力（売掛金・検証用）', 'href': url_for('company.accounts_receivable_pdf', year='2025'), 'class': 'button-secondary'})
+            context['post_create'] = {
+                'title': f'{config["title"]}を登録しました',
+                'desc': None,
+                'ctas': ctas,
+                'created_id': created_id,
+            }
+    except Exception:
+        pass
+
     # Helper: compute next Statement of Accounts page URL and name
     def compute_next_soa(page_key):
         """Return URL and name of the next SoA page; log expected issues instead of silencing all exceptions."""
@@ -215,7 +239,7 @@ def add_item(company, page_key):
         db.session.add(new_item)
         db.session.commit()
         flash(f"{config['title']}情報を登録しました。", 'success')
-        return redirect(url_for('company.statement_of_accounts', page=page_key))
+        return redirect(url_for('company.statement_of_accounts', page=page_key, created=1, created_id=new_item.id))
     # Compute skipped steps for sidebar consistency (same logic as main SoA view)
     # Pre-fetch latest AccountingData once then compute skipped steps via helper
     accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()

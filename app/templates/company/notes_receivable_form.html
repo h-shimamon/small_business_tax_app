@@ -35,109 +35,22 @@
 {% endblock %}
 
 {# メインコンテンツ部分を定義 #}
+{% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-<div class="content-header">
-    <h1 class="content-title">{{ form_title }}</h1>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-
-            {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
-            {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
-            {{ render_date_field(form.issue_date) }}
-            {{ render_date_field(form.due_date) }}
-            {{ render_field(form.payer_bank, placeholder="例：〇〇銀行") }}
-            {{ render_field(form.payer_branch, placeholder="例：本店") }}
-            {{ render_field(form.amount, type="number", placeholder="例：1000000") }}
-            {{ render_field(form.discount_bank, placeholder="（割引した場合）") }}
-            {{ render_field(form.discount_branch, placeholder="（割引した場合）") }}
-            {{ render_field(form.remarks, rows="3", placeholder="例：売掛金の回収分") }}
-
-            <div class="form-actions">
-                {{ form.submit(class="button-primary") }}
-                <a href="{{ url_for('company.statement_of_accounts', page='notes_receivable') }}" class="button-secondary">キャンセル</a>
-            </div>
-        </form>
-    </div>
-</div>
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='notes_receivable'), cancel_label='キャンセル') %}
+  {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
+  {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+  {{ render_date_field(form.issue_date, placeholder="例：2025年04月01日") }}
+  {{ render_date_field(form.due_date, placeholder="例：2025年05月31日") }}
+  {{ render_field(form.payer_bank, placeholder="例：〇〇銀行") }}
+  {{ render_field(form.payer_branch, placeholder="例：本店") }}
+  {{ render_field(form.amount, type="number", placeholder="例：1000000") }}
+  {{ render_field(form.discount_bank, placeholder="（割引した場合）") }}
+  {{ render_field(form.discount_branch, placeholder="（割引した場合）") }}
+  {{ render_field(form.remarks, rows="3", placeholder="例：売掛金の回収分") }}
+{% endcall %}
 {% endblock %}
 
 {% block scripts %}
   {{ super() }}
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      if (window.flatpickr) {
-        function buildYearSelect(instance) {
-          const cal = instance.calendarContainer;
-          if (!cal) return;
-          const currentMonth = cal.querySelector('.flatpickr-current-month');
-          if (!currentMonth) return;
-          // Avoid duplicate insertion if already built
-          if (currentMonth.querySelector('.nr-year-select')) return;
-          const yearInputWrapper = currentMonth.querySelector('.numInputWrapper');
-          const yearInput = currentMonth.querySelector('input.cur-year');
-          if (!yearInputWrapper || !yearInput) return;
-          // Build year select (visible ±10 years)
-          const select = document.createElement('select');
-          select.className = 'nr-year-select';
-          const curY = instance.currentYear || new Date().getFullYear();
-          const baseMin = curY - 10;
-          const baseMax = curY + 10;
-          const cfgMin = instance.config.minDate ? instance.config.minDate.getFullYear() : null;
-          const cfgMax = instance.config.maxDate ? instance.config.maxDate.getFullYear() : null;
-          const minY = cfgMin !== null ? Math.max(baseMin, cfgMin) : baseMin;
-          const maxY = cfgMax !== null ? Math.min(baseMax, cfgMax) : baseMax;
-          for (let y = maxY; y >= minY; y--) {
-            const opt = document.createElement('option');
-            opt.value = String(y);
-            opt.textContent = y + '年';
-            if (y === curY) opt.selected = true;
-            select.appendChild(opt);
-          }
-          if (window.DatePickerEnhancer && typeof window.DatePickerEnhancer.applyYearFirstHeader === 'function') {
-            window.DatePickerEnhancer.applyYearFirstHeader(instance);
-          }
-        }
-
-        const opts = {
-          wrap: true,
-          dateFormat: 'Y-m-d',
-          altInput: true,
-          altFormat: 'Y年m月d日',
-          locale: flatpickr.l10ns.ja,
-          monthSelectorType: 'dropdown',
-          weekNumbers: true,
-          disableMobile: true,
-          allowInput: true,
-          onReady: function(selectedDates, dateStr, instance) { buildYearSelect(instance); },
-          onOpen: function(selectedDates, dateStr, instance) { buildYearSelect(instance); },
-          onYearChange: function(selectedDates, dateStr, instance) {
-            const sel = instance.calendarContainer && instance.calendarContainer.querySelector('.nr-year-select');
-            if (sel) sel.value = String(instance.currentYear);
-          }
-        };
-        document.querySelectorAll('.nr-date-picker').forEach(function(el){
-          flatpickr(el, opts);
-        });
-      }
-    });
-  </script>
-  <style>
-    .nr-date-picker { position: relative; }
-    .nr-date-picker .calendar-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #666; cursor: pointer; padding: 4px; display: flex; align-items: center; }
-    .nr-date-picker .form-control { padding-left: 36px; }
-    .flatpickr-current-month .nr-year-select {
-      margin-right: 6px; /* place a gap between year and month when year appears first */
-      height: 28px;
-      font-size: 14px;
-      font-family: inherit;
-      color: inherit;
-      background: transparent;
-      border: none;
-    }
-    
-  </style>
 {% endblock %}

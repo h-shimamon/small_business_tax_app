@@ -1,0 +1,29 @@
+{# Common macros for Statement of Accounts new-item forms (soft commonization).
+   UI/markup is kept identical to existing pages; only the outer frame and footer are shared.
+#}
+
+{% macro soa_form_card(form, title, cancel_url, cancel_label=None, card_class='card', form_attrs='') -%}
+  <div class="content-header">
+      <h1 class="content-title">{{ title }}</h1>
+  </div>
+
+  <div class="{{ card_class }}">
+    <div class="card-body">
+      <form method="POST" action="" {{ form_attrs|safe }}>
+        {# Hidden tag for CSRF etc. If the caller also includes it, double output is harmless; this is defensive. #}
+        {% if form is defined and form.hidden_tag is defined %}
+          {{ form.hidden_tag() }}
+        {% endif %}
+
+        {{ caller() }}
+
+        <div class="form-actions">
+          {% if form is defined and form.submit is defined %}
+            {{ form.submit(class="button-primary") }}
+          {% endif %}
+          <a href="{{ cancel_url }}" class="button-secondary">{{ cancel_label or 'キャンセル' }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{%- endmacro %}

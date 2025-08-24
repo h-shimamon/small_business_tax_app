@@ -7,21 +7,12 @@
     {# ... sidebar content from statement_of_accounts.html ... #}
 {% endblock %}
 
+{% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-<div class="content-header">
-    <h1 class="content-title">{{ form_title }}</h1>
-</div>
-<div class="card">
-    <form method="POST" action="" novalidate>
-        {{ form.hidden_tag() }}
-        {{ render_field(form.account_name) }}
-        {{ render_field(form.partner_name) }}
-        {{ render_field(form.balance_at_eoy) }}
-        {{ render_field(form.transaction_details, rows=3) }}
-        <div class="form-actions">
-            {{ form.submit(class="button-primary") }}
-            <a href="{{ url_for('company.statement_of_accounts', page='temporary_receipts') }}" class="button-secondary">キャンセル</a>
-        </div>
-    </form>
-</div>
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='temporary_receipts'), cancel_label='キャンセル', form_attrs='novalidate') %}
+  {{ render_field(form.account_name) }}
+  {{ render_field(form.partner_name) }}
+  {{ render_field(form.balance_at_eoy) }}
+  {{ render_field(form.transaction_details, rows=3) }}
+{% endcall %}
 {% endblock %}

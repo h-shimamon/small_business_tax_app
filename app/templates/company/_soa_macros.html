@@ -1,0 +1,65 @@
+{# Soft-commonization macros for Statement of Accounts index view.
+   UI and markup mirror existing templates; only logic is centralized. #}
+
+{% from 'company/_layout_helpers.html' import render_difference %}
+
+{% macro header_actions(page, difference, next_url) -%}
+  {% if difference is not none and (difference | default(0)) == 0 and next_url %}
+    <a href="{{ next_url }}" class="button-primary">次の内訳へ</a>
+  {% else %}
+    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
+  {% endif %}
+  {% if page == 'deposits' %}
+    <a href="{{ url_for('company.deposits_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（預貯金等・検証用）</a>
+  {% elif page == 'accounts_receivable' %}
+    <a href="{{ url_for('company.accounts_receivable_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（売掛金・検証用）</a>
+  {% endif %}
+{%- endmacro %}
+
+{% macro empty_state(page_title, page) -%}
+  <div class="empty-state-card">
+    <h2>まだ{{ page_title }}が登録されていません</h2>
+    <p>右上の「＋ 新規登録」ボタンから最初の情報を登録してください。</p>
+    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
+  </div>
+{%- endmacro %}
+
+{# Generic summary card (three rows) with difference highlighting #}
+{% macro summary_generic(label, bs_total, breakdown_total, difference) -%}
+<div class="card summary-card">
+  <div class="summary-item">
+    <span class="summary-label">{{ label }}</span>
+    <span class="summary-value">{{ (bs_total | default(0)) | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">内訳明細の合計額</span>
+    <span class="summary-value">{{ (breakdown_total | default(0)) | format_currency }}</span>
+  </div>
+  <div class="summary-item result {% if (difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
+    <span class="summary-label">差額</span>
+    <span class="summary-value">{{ render_difference(difference) }}</span>
+  </div>
+</div>
+{%- endmacro %}
+
+{# Borrowings-specific summary card #}
+{% macro summary_borrowings(bs_total, pl_interest_total, breakdown_total, difference) -%}
+<div class="card summary-card">
+  <div class="summary-item">
+    <span class="summary-label">B/S上の借入金残高</span>
+    <span class="summary-value">{{ (bs_total | default(0)) | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">P/L上の支払利子</span>
+    <span class="summary-value">{{ (pl_interest_total | default(0)) | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">内訳明細の合計額（期末現在高＋期間中の支払利子）</span>
+    <span class="summary-value">{{ (breakdown_total | default(0)) | format_currency }}</span>
+  </div>
+  <div class="summary-item result {% if (difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
+    <span class="summary-label">差額</span>
+    <span class="summary-value">{{ render_difference(difference) }}</span>
+  </div>
+</div>
+{%- endmacro %}
