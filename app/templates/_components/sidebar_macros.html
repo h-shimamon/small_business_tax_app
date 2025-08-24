@@ -1,0 +1,12 @@
+{#
+  Sidebar UI macros (additive-only). Not used until explicitly imported.
+  Keeps existing templates unchanged while offering a paved path.
+#}
+{% macro sidebar_dot(active=True, skipped=False, size='sm') -%}
+  {%- set cls = ['sidebar-dot'] -%}
+  {%- if active %}{% do cls.append('is-active') %}{% endif -%}
+  {%- if skipped %}{% do cls.append('is-skipped') %}{% endif -%}
+  {%- if size in ['xs','sm','md','lg'] %}{% do cls.append('size-' ~ size) %}{% endif -%}
+  <span class="{{ ' '.join(cls) }}" aria-hidden="true"></span>
+{%- endmacro %}
+

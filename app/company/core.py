@@ -7,6 +7,8 @@ from app.navigation import get_navigation_state, mark_step_as_completed
 from .services import DeclarationService
 from .auth import company_required
 from .services.company_service import CompanyService
+from app.primitives.dates import get_company_period, company_closing_date
+from app.models_utils.date_readers import ensure_date
 
 @company_bp.route('/info', methods=['GET', 'POST'])
 @login_required
@@ -42,26 +44,26 @@ def declaration(company):
 
     form, _ = service.populate_declaration_form()
 
-    # 文字列をdateオブジェクトに変換（失敗した場合はNoneのままにする）
+    # 文字列→date変換の前に、共通プリミティブから安全に日付を取得（内部読み取りのみの変更）
     from datetime import datetime
-    try:
-        if form.accounting_period_start.data and isinstance(form.accounting_period_start.data, str):
-            form.accounting_period_start.data = datetime.strptime(form.accounting_period_start.data, '%Y-%m-%d').date()
-    except ValueError:
-        form.accounting_period_start.data = None
-    
-    try:
-        if form.accounting_period_end.data and isinstance(form.accounting_period_end.data, str):
-            form.accounting_period_end.data = datetime.strptime(form.accounting_period_end.data, '%Y-%m-%d').date()
-    except ValueError:
-        form.accounting_period_end.data = None
+    period = get_company_period(company)
+    if period.start:
+        form.accounting_period_start.data = period.start
+    else:
+        # 直 strptime を避け、共通の ensure_date を使用
+        form.accounting_period_start.data = ensure_date(form.accounting_period_start.data)
+
+    if period.end:
+        form.accounting_period_end.data = period.end
+    else:
+        form.accounting_period_end.data = ensure_date(form.accounting_period_end.data)
 
     # Ensure closing_date (String in DB) is converted to date for WTForms DateField
-    try:
-        if form.closing_date.data and isinstance(form.closing_date.data, str):
-            form.closing_date.data = datetime.strptime(form.closing_date.data, '%Y-%m-%d').date()
-    except ValueError:
-        form.closing_date.data = None
+    close_d = company_closing_date(company)
+    if close_d:
+        form.closing_date.data = close_d
+    else:
+        form.closing_date.data = ensure_date(form.closing_date.data)
 
     navigation_state = get_navigation_state('declaration')
     return render_template('company/declaration_form.html', form=form, navigation_state=navigation_state)

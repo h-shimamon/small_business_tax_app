@@ -3,6 +3,7 @@ from flask import session
 from flask_login import current_user
 from .navigation_builder import navigation_tree
 from app.navigation_completion import compute_completed
+from app.primitives.dates import get_company_period
 
 def compute_skipped_steps_for_company(company_id, accounting_data=None):
     """Compute skipped steps (SoA pages with source total == 0) for the given company.
@@ -105,7 +106,14 @@ def compute_completed_steps_for_company(company_id):
         if company:
             aps = (company.accounting_period_start or '').strip()
             ape = (company.accounting_period_end or '').strip()
-            if aps and ape:
+            # Prefer existing string gating, but also allow date-pair presence via centralized readers.
+            has_strings = bool(aps and ape)
+            try:
+                period = get_company_period(company)
+                has_dates = bool(period.start and period.end)
+            except Exception:
+                has_dates = False
+            if has_strings or has_dates:
                 completed.add('declaration')
     except Exception:
         return set()

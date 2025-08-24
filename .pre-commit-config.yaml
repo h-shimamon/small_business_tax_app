@@ -1,0 +1,14 @@
+repos:
+  - repo: local
+    hooks:
+      - id: forbid-strptime
+        name: forbid direct strptime calls (except primitives)
+        language: system
+        pass_filenames: false
+        entry: bash -lc
+        args:
+          - |
+            if grep -nR "strptime\(" app --exclude-dir=primitives; then \
+              echo "ERROR: direct strptime detected outside primitives. Use ensure_date()/primitives." >&2; \
+              exit 1; \
+            fi

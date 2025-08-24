@@ -15,6 +15,7 @@ from .services import (
     on_mappings_reset,
 )
 from .parser_factory import ParserFactory
+from app.primitives.dates import get_company_period
 
 
 # --- ウィザードと設定の定義 ---
@@ -131,14 +132,17 @@ def upload_data(datatype):
             
             elif datatype == 'journals':
                 company = current_user.company
-                if not company or not company.accounting_period_start or not company.accounting_period_end:
+                if not company:
                     flash('申告情報で会計期間が設定されていません。先に基本情報を登録してください。', 'warning')
                     return redirect(url_for('company.declaration'))
 
-                # Companyモデルから会計期間を取得し、dateオブジェクトに変換
-                from datetime import datetime
-                start_date = datetime.strptime(company.accounting_period_start, '%Y-%m-%d').date()
-                end_date = datetime.strptime(company.accounting_period_end, '%Y-%m-%d').date()
+                # Companyモデルから会計期間を取得（共通プリミティブを使用）
+                period = get_company_period(company)
+                start_date = period.start
+                end_date = period.end
+                if not start_date or not end_date:
+                    flash('申告情報で会計期間が設定されていません。先に基本情報を登録してください。', 'warning')
+                    return redirect(url_for('company.declaration'))
 
                 # マッピングサービスを利用してデータを変換
                 mapping_service = DataMappingService(current_user.id)
