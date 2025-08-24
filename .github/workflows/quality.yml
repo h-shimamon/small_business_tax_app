@@ -1,0 +1,59 @@
+name: Quality
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  precommit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pre-commit
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  date_health:
+    needs: precommit
+    runs-on: ubuntu-latest
+    env:
+      FLASK_APP: app:create_app
+      DATABASE_URL: sqlite:////tmp/ci.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Initialize database (SQLite)
+        run: |
+          python -c "import os; os.makedirs('/tmp', exist_ok=True)"
+          pip install flask SQLAlchemy Flask-SQLAlchemy Flask-Migrate
+          flask db upgrade || true
+      - name: Run date-health report (JSON) and fail on mismatch
+        run: |
+          python - << 'PY'
+          import json, subprocess, sys
+          res = subprocess.run(['flask','report-date-health','--format','json'], capture_output=True, text=True)
+          print(res.stdout)
+          if res.returncode != 0:
+              sys.exit(res.returncode)
+          data = json.loads(res.stdout or '{}')
+          def any_mismatch(d):
+              return any((v or {}).get('mismatch',0) or (v or {}).get('str_only',0) or (v or {}).get('date_only',0) for v in d.values())
+          if any_mismatch(data):
+              print('date-health: mismatch/only detected', file=sys.stderr)
+              sys.exit(1)
+          PY

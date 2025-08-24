@@ -26,6 +26,14 @@ def _to_date(value) -> Optional[_dt.date]:
     except Exception:
         return None
 
+def ensure_date(value) -> Optional[_dt.date]:
+    """Public alias for internal date normalization (String(10) -> date)."""
+    return _to_date(value)
+
+def to_iso(d: Optional[_dt.date]) -> Optional[str]:
+    """Public helper to return ISO string from a date or None."""
+    return d.isoformat() if isinstance(d, _dt.date) else None
+
 
 # --- Company ---
 def company_accounting_period_start(company) -> Optional[_dt.date]:
@@ -56,5 +64,6 @@ __all__ = [
     'company_closing_date',
     'notes_receivable_issue_date',
     'notes_receivable_due_date',
+    'ensure_date',
+    'to_iso',
 ]
-

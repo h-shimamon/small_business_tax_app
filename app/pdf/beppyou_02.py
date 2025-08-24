@@ -7,6 +7,7 @@ from flask_login import current_user
 from flask import has_request_context
 from app.company.models import Company, Shareholder
 from app.company.services import shareholder_service as shs
+from app.primitives.dates import get_company_period, to_iso
 
 from reportlab.pdfbase import pdfmetrics
 
@@ -14,12 +15,7 @@ from .pdf_fill import overlay_pdf, TextSpec
 from sqlalchemy import func
 from app import db
 from app.company.services import company_classification_service
-from .date_jp import (
-    to_wareki as _to_wareki,
-    wareki_with_spaces as _wareki_with_spaces,
-    wareki_era_name as _wareki_era_name,
-    wareki_numeric_parts as _wareki_numeric_parts,
-)
+from app.primitives import wareki as _w
 from .geom import merge_rects, get_row_metrics
 
 
@@ -216,7 +212,7 @@ RECT_START_DD  = (383.99, 835.59, 10.67, 13.33)
 
 
 def _place_ymd_triplet(page: int, x0: float, y0: float, w: float, h: float, date_str: Optional[str], texts_list: List[TextSpec], *, font: str = "NotoSansJP", size: float = 8.0) -> None:
-    parts = _wareki_numeric_parts(date_str)
+    parts = _w.numeric_parts(date_str)
     if not parts:
         return
     yy, mm, dd = parts
@@ -530,8 +526,10 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     company = Company.query.get(company_id)
     if company:
         # 会計期間 開始: era/YY/MM/DD を分割し、それぞれ指定矩形に下寄せ配置
-        era = _wareki_era_name(company.accounting_period_start)
-        parts = _wareki_numeric_parts(company.accounting_period_start) or ("", "", "")
+        period = get_company_period(company)
+        iso_start = to_iso(period.start)
+        era = _w.era_name(iso_start)
+        parts = _w.numeric_parts(iso_start) or ("", "", "")
         yy, mm, dd = parts
         # Era 6pt (left), YY/MM/DD 9pt (right), all bottom-aligned to DD's baseline (y of RECT_START_DD)
         y_base = rect_start_dd[1]
@@ -543,8 +541,9 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
         _place_at_right(p, rect_start_dd[0] + rect_start_dd[2] - 10.0, y_base, dd, texts, size=9.0)
 
         # 会計期間 終了: 開始の設定を踏襲して分割配置（矩形幅は無視）
-        era_e = _wareki_era_name(company.accounting_period_end)
-        yy_e, mm_e, dd_e = _wareki_numeric_parts(company.accounting_period_end) or ("", "", "")
+        iso_end = to_iso(period.end)
+        era_e = _w.era_name(iso_end)
+        yy_e, mm_e, dd_e = _w.numeric_parts(iso_end) or ("", "", "")
         y_base_e = rect_period_end[1]  # 終了DDのy座標を基準（下揃え）
         # X軸は開始と同一座標を使用
         _place_at_left(p, rect_start_era[0], y_base_e, era_e, texts, size=6.0)

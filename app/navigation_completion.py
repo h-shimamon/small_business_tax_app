@@ -9,6 +9,7 @@ from app.company.models import (
     UserAccountMapping,
     AccountingData,
 )
+from app.primitives.dates import get_company_period
 
 
 def _filled_str(v) -> bool:
@@ -43,7 +44,14 @@ def _declaration_completed(company_id: int, user_id: int) -> bool:
     c = Company.query.get(company_id)
     if not c:
         return False
-    return _filled_str(c.accounting_period_start or '') and _filled_str(c.accounting_period_end or '')
+    # Keep original string-based gating, but also accept date presence via centralized readers
+    str_ok = _filled_str(c.accounting_period_start or '') and _filled_str(c.accounting_period_end or '')
+    try:
+        period = get_company_period(c)
+        date_ok = bool(period.start and period.end)
+    except Exception:
+        date_ok = False
+    return str_ok or date_ok
 
 
 def _office_list_completed(company_id: int, user_id: int) -> bool:
@@ -77,4 +85,3 @@ def compute_completed(company_id: int, user_id: int) -> Set[str]:
         except Exception:
             continue
     return completed
-
