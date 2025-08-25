@@ -9,7 +9,7 @@ from app.company.forms import (
     DepositForm, NotesReceivableForm, AccountsReceivableForm, TemporaryPaymentForm,
     LoansReceivableForm, InventoryForm, SecurityForm, FixedAssetForm, NotesPayableForm,
     AccountsPayableForm, TemporaryReceiptForm, BorrowingForm, ExecutiveCompensationForm,
-    LandRentForm, MiscellaneousForm
+    LandRentForm, MiscellaneousForm, MiscellaneousIncomeForm, MiscellaneousLossForm
 )
 
 STATEMENT_PAGES_CONFIG = {
@@ -28,4 +28,7 @@ STATEMENT_PAGES_CONFIG = {
     'executive_compensations': {'model': ExecutiveCompensation, 'form': ExecutiveCompensationForm, 'title': '役員給与等', 'total_field': 'total_compensation', 'template': 'executive_compensations_form.html'},
     'land_rents': {'model': LandRent, 'form': LandRentForm, 'title': '地代家賃等', 'total_field': 'rent_paid', 'template': 'land_rents_form.html'},
     'miscellaneous': {'model': Miscellaneous, 'form': MiscellaneousForm, 'title': '雑益・雑損失等', 'total_field': 'amount', 'template': 'miscellaneous_form.html'},
+    # 分割ページ（雑収入 / 雑損失）
+    'misc_income': {'model': Miscellaneous, 'form': MiscellaneousIncomeForm, 'title': '雑収入', 'total_field': 'amount', 'template': 'miscellaneous_form.html', 'query_filter': lambda q: q.filter(Miscellaneous.account_name == '雑収入')},
+    'misc_losses': {'model': Miscellaneous, 'form': MiscellaneousLossForm, 'title': '雑損失', 'total_field': 'amount', 'template': 'miscellaneous_form.html', 'query_filter': lambda q: q.filter(Miscellaneous.account_name == '雑損失')},
 }

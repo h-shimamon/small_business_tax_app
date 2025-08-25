@@ -25,9 +25,8 @@ def info():
         return redirect(url_for('company.shareholders'))
 
     navigation_state = get_navigation_state('company_info')
-    # テンプレート名を register.html から company/info.html のような適切なものに変更すべきだが、
-    # UI変更禁止の原則に基づき、既存の register.html を使用する
-    return render_template('register.html', form=form, navigation_state=navigation_state)
+    # テンプレート名を register.html から、実態に即した company/company_info_form.html へ移行
+    return render_template('company/company_info_form.html', form=form, navigation_state=navigation_state)
 
 @company_bp.route('/declaration', methods=['GET', 'POST'])
 @company_required

@@ -46,7 +46,9 @@ NAVIGATION_STRUCTURE_DATA = [
             {'key': 'borrowings', 'name': '借入金及び支払利子', 'endpoint': 'company.statement_of_accounts', 'params': {'page': 'borrowings'}},
             {'key': 'executive_compensations', 'name': '役員給与等', 'endpoint': 'company.statement_of_accounts', 'params': {'page': 'executive_compensations'}},
             {'key': 'land_rents', 'name': '地代家賃等', 'endpoint': 'company.statement_of_accounts', 'params': {'page': 'land_rents'}},
-            {'key': 'miscellaneous', 'name': '雑益・雑損失等', 'endpoint': 'company.statement_of_accounts', 'params': {'page': 'miscellaneous'}},
+            # 雑益・雑損失等を分割
+            {'key': 'misc_income', 'name': '雑収入', 'endpoint': 'company.statement_of_accounts', 'params': {'page': 'misc_income'}},
+            {'key': 'misc_losses', 'name': '雑損失', 'endpoint': 'company.statement_of_accounts', 'params': {'page': 'misc_losses'}},
         ]
     },
 ]

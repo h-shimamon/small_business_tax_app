@@ -18,12 +18,14 @@ SUMMARY_PAGE_MAP = {
     'executive_compensations': ('PL', '役員給与等'),
     'land_rents': ('PL', '地代家賃等'),
     'miscellaneous': ('PL', '雑益・雑損失等'),
+    'misc_income': ('PL', '雑収入'),
+    'misc_losses': ('PL', '雑損失'),
 }
 
 # Specific account mappings for PL pages where master does not provide breakdown_document linkage
 PL_PAGE_ACCOUNTS = {
     'executive_compensations': ['役員報酬', '役員賞与'],
     'land_rents': ['地代家賃', '賃借料'],
-    'miscellaneous': ['雑収入', '雑損失'],
+    'misc_income': ['雑収入'],
+    'misc_losses': ['雑損失'],
 }
-

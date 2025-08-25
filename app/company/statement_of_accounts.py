@@ -28,6 +28,7 @@ from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
 from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
+from app.models_utils.date_readers import ensure_date
 
 # mappings are centralized in app.company.soa_mappings
 
@@ -39,6 +40,10 @@ from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
 def statement_of_accounts(company):
     """勘定科目内訳書ページ"""
     page = request.args.get('page', 'deposits')
+    # 旧ページキー 'miscellaneous' は分割済みのため、雑収入へ案内
+    if page == 'miscellaneous':
+        flash('「雑益・雑損失等」は「雑収入」「雑損失」に分割されました。雑収入のページへ案内します。', 'info')
+        return redirect(url_for('company.statement_of_accounts', page='misc_income'))
     config = STATEMENT_PAGES_CONFIG.get(page)
     if not config:
         abort(404)
@@ -75,9 +80,25 @@ def statement_of_accounts(company):
                     return redirect(url_for('company.statement_of_accounts', page=(nxt.params or {}).get('page')))
             # wrap-around to 申告書データ は保留のため遷移しない
 
-    items = db.session.query(config['model']).filter_by(company_id=company.id).all()
+    # Build base query and allow optional page-specific filter from config
+    query = db.session.query(config['model']).filter_by(company_id=company.id)
+    try:
+        qf = config.get('query_filter')
+    except Exception:
+        qf = None
+    if callable(qf):
+        try:
+            query = qf(query)
+        except Exception:
+            pass
+    items = query.all()
     total = sum(getattr(item, config['total_field'], 0) for item in items)
     
+    # Provide pdf_year for template-level PDF button rendering (fallback to accounting period or default)
+    try:
+        _pdf_year = (accounting_data.period_end.year if accounting_data and accounting_data.period_end else None)
+    except Exception:
+        _pdf_year = None
     context = {
         'page': page,
         'page_title': config['title'],
@@ -86,7 +107,8 @@ def statement_of_accounts(company):
         'navigation_state': get_navigation_state(page, skipped_steps=skipped_steps),
         'deposit_summary': None,
         'soa_next_url': None,
-        'soa_next_name': None
+        'soa_next_name': None,
+        'pdf_year': _pdf_year or '2025',
     }
 
     # Post-create success panel context (soft commonization)
@@ -99,11 +121,6 @@ def statement_of_accounts(company):
                 {'label': f'続けて{config["title"]}を登録', 'href': url_for('company.add_item', page_key=page), 'class': 'button-primary'},
                 {'label': '一覧へ戻る', 'href': url_for('company.statement_of_accounts', page=page), 'class': 'button-secondary'},
             ]
-            # Optional: PDF preview CTA when available
-            if page == 'deposits':
-                ctas.append({'label': 'PDF出力（預貯金等・検証用）', 'href': url_for('company.deposits_pdf', year='2025'), 'class': 'button-secondary'})
-            elif page == 'accounts_receivable':
-                ctas.append({'label': 'PDF出力（売掛金・検証用）', 'href': url_for('company.accounts_receivable_pdf', year='2025'), 'class': 'button-secondary'})
             context['post_create'] = {
                 'title': f'{config["title"]}を登録しました',
                 'desc': None,
@@ -233,6 +250,15 @@ def add_item(company, page_key):
     if not config:
         abort(404)
     form = config['form'](request.form)
+    # ページに応じて初期値を与える（雑収入/雑損失の科目固定）
+    try:
+        if request.method == 'GET' and hasattr(form, 'account_name'):
+            if page_key == 'misc_income':
+                form.account_name.data = '雑収入'
+            elif page_key == 'misc_losses':
+                form.account_name.data = '雑損失'
+    except Exception:
+        pass
     if form.validate_on_submit():
         new_item = config['model'](company_id=company.id)
         form.populate_obj(new_item)
@@ -268,6 +294,15 @@ def edit_item(company, page_key, item_id):
         return redirect(url_for('company.statement_of_accounts', page=page_key))
     if request.method == 'GET':
         form = config['form'](obj=item)
+        # Ensure date fields are date objects for templates
+        try:
+            if page_key == 'notes_receivable':
+                if hasattr(form, 'issue_date'):
+                    form.issue_date.data = ensure_date(form.issue_date.data)
+                if hasattr(form, 'due_date'):
+                    form.due_date.data = ensure_date(form.due_date.data)
+        except Exception:
+            pass
     # Compute skipped steps for sidebar consistency
     accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
     skipped_steps = compute_skipped_steps_for_company(company.id, accounting_data=accounting_data)

@@ -1,4 +1,5 @@
 {# Reusable success panel for post-create actions on Statement of Accounts pages #}
+{% from '_components/_button_macros.html' import render_pdf_button_if_available %}
 <div class="card" role="status" aria-live="polite">
   <div class="card-body">
     <h2 class="content-title" style="margin-top:0;">{{ post_create.title }}</h2>
@@ -13,8 +14,9 @@
           <a href="{{ url_for(cta.endpoint, **(cta.params or {})) }}" class="{{ cta.class or 'button-primary' }}">{{ cta.label }}</a>
         {% endif %}
       {% endfor %}
+      {# Render page-aware PDF button (if supported) #}
+      {{ render_pdf_button_if_available(page, pdf_year) }}
     </div>
   </div>
   {# Optional: light divider could be added with existing styles if present; avoid extra CSS #}
 </div>
-

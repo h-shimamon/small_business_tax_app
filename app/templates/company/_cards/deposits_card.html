@@ -1,13 +1,8 @@
-{% from 'company/_components_item_actions.html' import item_actions_icons %}
+{% from 'company/_cards/_card_base.html' import render_card %}
+
 {% for item in items %}
-<div class="card soa-item-card">
-    <div class="item-info">
-        <p class="info-primary">{{ item.financial_institution }} {{ item.branch_name }}</p>
-        <p class="info-secondary">({{ item.account_type }} / {{ item.account_number }})</p>
-    </div>
-    <div class="item-amount">
-        <span class="summary-value">{{ item.balance | format_currency }}</span>
-    </div>
-    <div class="item-actions">{{ item_actions_icons('deposits', item.id) }}</div>
-</div>
+  {% call render_card(item=item, page=page, amount=item.balance) %}
+    <p class="info-primary">{{ item.financial_institution }} {{ item.branch_name }}</p>
+    <p class="info-secondary">({{ item.account_type }} / {{ item.account_number }})</p>
+  {% endcall %}
 {% endfor %}

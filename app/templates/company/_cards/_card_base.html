@@ -1,0 +1,29 @@
+{% from 'company/_components_item_actions.html' import item_actions_icons, item_actions_menu %}
+
+{# 共通カード枠：caller に item-info の中身を差し込む #}
+{% macro render_card(item, page, amount=None) %}
+<div class="card soa-item-card">
+  <div class="item-info">
+    {{ caller() }}
+  </div>
+  <div class="item-amount">
+    {# 金額表示の優先順位: (引数amount) -> balance -> balance_at_eoy -> amount（フォールバック） #}
+    {% set _amount = amount if amount is not none else none %}
+    {% if _amount is none %}
+      {% if item.balance is defined and item.balance is not none %}
+        {% set _amount = item.balance %}
+      {% elif item.balance_at_eoy is defined and item.balance_at_eoy is not none %}
+        {% set _amount = item.balance_at_eoy %}
+      {% elif item.amount is defined and item.amount is not none %}
+        {% set _amount = item.amount %}
+      {% endif %}
+    {% endif %}
+    {% if _amount is not none %}
+      <span class="summary-value">{{ _amount | format_currency }}</span>
+    {% endif %}
+  </div>
+  <div class="item-actions">
+    {{ item_actions_icons(page, item.id) }}
+  </div>
+</div>
+{% endmacro %}

@@ -1,10 +1,11 @@
-{# /app/templates/company/_cards/notes_payable_card.html #}
+{# /app/templates/company/_cards/misc_losses_card.html #}
 {% from 'company/_cards/_card_base.html' import render_card %}
 
 {% for item in items %}
   {% call render_card(item=item, page=page, amount=item.amount) %}
-    <p class="info-primary">{{ item.partner_name }}</p>
+    <p class="info-primary">{{ item.details }}</p>
     <p class="info-secondary">{{ item.account_name }}</p>
-    <p class="info-tertiary">支払期日: {{ item.due_date_str or '-' }}</p>
+    <p class="info-tertiary">摘要: {{ item.remarks or '-' }}</p>
   {% endcall %}
 {% endfor %}
+

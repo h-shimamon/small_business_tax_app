@@ -1,15 +1,29 @@
 {# /app/templates/company/_cards/notes_receivable_card.html #}
-{% from 'company/_components_item_actions.html' import item_actions_icons %}
-<!-- debug: notes_receivable card v1 -->
+{% from 'company/_cards/_card_base.html' import render_card %}
+
 {% for item in items %}
-<div class="card soa-item-card">
-    <div class="item-info">
-        <p class="info-primary">{{ item.drawer }}</p>
-        <p class="info-secondary">({{ item.payer_bank }}{% if item.payer_branch %} {{ item.payer_branch }}{% endif %} / 支払期日: {{ item.due_date }})</p>
-    </div>
-    <div class="item-amount">
-        <span class="summary-value">{{ item.amount | format_currency }}</span>
-    </div>
-    <div class="item-actions">{{ item_actions_icons(page, item.id) }}</div>
-</div>
+  {% call render_card(item, page) %}
+    <p class="info-primary">{{ item.drawer }}</p>
+    <p class="info-secondary">
+      支払期日:
+      {% if item.due_date is string %}
+        {{ item.due_date }}
+      {% elif item.due_date %}
+        {{ item.due_date.strftime('%Y-%m-%d') }}
+      {% else %}
+        -
+      {% endif %}
+      / 振出日:
+      {% if item.issue_date is string %}
+        {{ item.issue_date }}
+      {% elif item.issue_date %}
+        {{ item.issue_date.strftime('%Y-%m-%d') }}
+      {% else %}
+        -
+      {% endif %}
+    </p>
+    <p class="info-tertiary">
+      支払銀行: {{ item.payer_bank }}{% if item.payer_branch %} {{ item.payer_branch }}{% endif %}
+    </p>
+  {% endcall %}
 {% endfor %}

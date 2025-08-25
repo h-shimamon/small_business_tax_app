@@ -1,14 +1,9 @@
 {# /app/templates/company/_cards/accounts_receivable_card.html #}
-{% from 'company/_components_item_actions.html' import item_actions_icons %}
+{% from 'company/_cards/_card_base.html' import render_card %}
+
 {% for item in items %}
-<div class="card soa-item-card">
-    <div class="item-info">
-        <p class="info-primary">{{ item.partner_name }}</p>
-        <p class="info-secondary">({{ item.account_name }}{% if item.partner_address %} / {{ item.partner_address }}{% endif %})</p>
-    </div>
-    <div class="item-amount">
-        <span class="summary-value">{{ item.balance_at_eoy | format_currency }}</span>
-    </div>
-    <div class="item-actions">{{ item_actions_icons(page, item.id) }}</div>
-</div>
+  {% call render_card(item=item, page=page, amount=item.balance_at_eoy) %}
+    <p class="info-primary">{{ item.partner_name }}</p>
+    <p class="info-secondary">({{ item.account_name }}{% if item.partner_address %} / {{ item.partner_address }}{% endif %})</p>
+  {% endcall %}
 {% endfor %}

@@ -1,0 +1,24 @@
+{# Common button macros, focused on PDF actions #}
+{% macro render_pdf_button(href, label, btn_class='button-secondary', aria_label=None) %}
+  <a href="{{ href }}"
+     class="{{ btn_class }}"
+     target="_blank"
+     rel="noopener noreferrer"
+     {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}>
+    {{ label }}
+  </a>
+{% endmacro %}
+
+{# Page-aware PDF button renderer: renders nothing if page not supported #}
+{% macro render_pdf_button_if_available(page, pdf_year) %}
+  {# Centralized mapping: page key -> Flask endpoint #}
+  {% set PDF_ENDPOINTS = {
+    'deposits': 'company.deposits_pdf',
+    'accounts_receivable': 'company.accounts_receivable_pdf'
+  } %}
+  {% if page in PDF_ENDPOINTS %}
+    {{ render_pdf_button(url_for(PDF_ENDPOINTS[page], year=pdf_year|string),
+                         'PDF出力（' ~ (page == 'deposits' and '預貯金等' or '売掛金') ~ '・検証用）') }}
+  {% endif %}
+{% endmacro %}
+

@@ -1,22 +1,10 @@
 {# /app/templates/company/_cards/fixed_assets_card.html #}
-{% from 'company/_components_item_actions.html' import item_actions_menu %}
+{% from 'company/_cards/_card_base.html' import render_card %}
+
 {% for item in items %}
-<div class="statement-card">
-    <div class="card-header">
-        <div class="card-main-info">
-            <p class="primary">{{ item.asset_type }}</p>
-            <p class="secondary">{{ item.location }}</p>
-        </div>
-        <div class="card-amount">{{ "{:,.0f}".format(item.balance_at_eoy) }}円</div>
-    </div>
-    <div class="card-body">
-        <div class="card-details-grid">
-            <div class="detail-item">
-                <span class="detail-label">面積</span>
-                <span class="detail-value">{{ item.area or '-' }} ㎡</span>
-            </div>
-        </div>
-    </div>
-    {{ item_actions_menu(page, item.id) }}
-</div>
+  {% call render_card(item=item, page=page, amount=item.balance_at_eoy) %}
+    <p class="info-primary">{{ item.asset_type }}</p>
+    <p class="info-secondary">{{ item.location }}</p>
+    <p class="info-tertiary">面積: {{ item.area or '-' }} ㎡</p>
+  {% endcall %}
 {% endfor %}

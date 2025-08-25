@@ -2,7 +2,7 @@
 from datetime import datetime
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
-from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField, FloatField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FileField, RadioField, BooleanField, IntegerField, TextAreaField, FloatField, HiddenField
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, Optional
 
@@ -481,5 +481,12 @@ class MiscellaneousForm(FlaskForm):
     amount = IntegerField('金額', validators=[DataRequired()])
     remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
+
+# 分割後の固定フォーム（雑収入/雑損失）: account_name を固定し、選択ミスを防止
+class MiscellaneousIncomeForm(MiscellaneousForm):
+    account_name = HiddenField(default='雑収入')
+
+class MiscellaneousLossForm(MiscellaneousForm):
+    account_name = HiddenField(default='雑損失')
 
 # ▲▲▲▲▲ ここまで新規追加 ▲▲▲▲▲
