@@ -14,11 +14,18 @@
   {# Centralized mapping: page key -> Flask endpoint #}
   {% set PDF_ENDPOINTS = {
     'deposits': 'company.deposits_pdf',
-    'accounts_receivable': 'company.accounts_receivable_pdf'
+    'accounts_receivable': 'company.accounts_receivable_pdf',
+    'notes_receivable': 'company.notes_receivable_pdf',
+    'temporary_payments': 'company.temporary_payments_pdf'
+  } %}
+  {% set PDF_LABELS = {
+    'deposits': '預貯金等',
+    'accounts_receivable': '売掛金',
+    'notes_receivable': '受取手形',
+    'temporary_payments': '仮払金（前渡金）'
   } %}
   {% if page in PDF_ENDPOINTS %}
     {{ render_pdf_button(url_for(PDF_ENDPOINTS[page], year=pdf_year|string),
-                         'PDF出力（' ~ (page == 'deposits' and '預貯金等' or '売掛金') ~ '・検証用）') }}
+                         'PDF出力（' ~ PDF_LABELS.get(page, page) ~ '・検証用）') }}
   {% endif %}
 {% endmacro %}
-

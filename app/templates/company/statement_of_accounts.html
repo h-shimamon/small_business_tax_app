@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% from 'company/_soa_macros.html' import header_actions, empty_state, summary_generic, summary_borrowings %}
+{% from '_components/_button_macros.html' import render_pdf_button_if_available %}
 {% from 'company/_layout_helpers.html' import render_difference %}
 {% block content %}
 <div class="content-header">
@@ -21,6 +22,12 @@
     </div>
     <div class="header-actions">
         {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url) }}
+        {% if page == 'notes_receivable' %}
+          {{ render_pdf_button_if_available(page, pdf_year) }}
+        {% endif %}
+        {% if page == 'temporary_payments' %}
+          {{ render_pdf_button_if_available(page, pdf_year) }}
+        {% endif %}
     </div>
 </div>
 

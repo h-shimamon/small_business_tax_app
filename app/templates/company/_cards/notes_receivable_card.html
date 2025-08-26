@@ -3,7 +3,9 @@
 
 {% for item in items %}
   {% call render_card(item, page) %}
-    <p class="info-primary">{{ item.drawer }}</p>
+    <p class="info-primary">
+      {% if item.registration_number %}{{ item.registration_number }} / {{ item.drawer }}{% else %}{{ item.drawer }}{% endif %}
+    </p>
     <p class="info-secondary">
       支払期日:
       {% if item.due_date is string %}

@@ -28,6 +28,8 @@ from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
 from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
+from app.pdf.uchiwakesyo_uketoritegata import generate_uchiwakesyo_uketoritegata
+from app.pdf.uchiwakesyo_karibaraikin_kashitukekin import generate_uchiwakesyo_karibaraikin_kashitukekin
 from app.models_utils.date_readers import ensure_date
 
 # mappings are centralized in app.company.soa_mappings
@@ -240,6 +242,48 @@ def accounts_receivable_pdf(company):
         mimetype='application/pdf',
         as_attachment=False,
         download_name=f"uchiwakesyo_urikakekin_{year}.pdf"
+    )
+
+@company_bp.route('/statement/temporary_payments/pdf')
+@company_required
+def temporary_payments_pdf(company):
+    """仮払金（前渡金）の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_karibaraikin-kashitukekin_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_karibaraikin_kashitukekin(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_karibaraikin-kashitukekin_{year}.pdf"
+    )
+
+@company_bp.route('/statement/notes_receivable/pdf')
+@company_required
+def notes_receivable_pdf(company):
+    """受取手形の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_uketoritegata_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_uketoritegata(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_uketoritegata_{year}.pdf"
     )
 
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])

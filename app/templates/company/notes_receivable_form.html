@@ -38,8 +38,8 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='notes_receivable'), cancel_label='キャンセル') %}
-  {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
   {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+  {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
   {{ render_date_field(form.issue_date, placeholder="例：2025年04月01日") }}
   {{ render_date_field(form.due_date, placeholder="例：2025年05月31日") }}
   {{ render_field(form.payer_bank, placeholder="例：〇〇銀行") }}
@@ -47,7 +47,7 @@
   {{ render_field(form.amount, type="number", placeholder="例：1000000") }}
   {{ render_field(form.discount_bank, placeholder="（割引した場合）") }}
   {{ render_field(form.discount_branch, placeholder="（割引した場合）") }}
-  {{ render_field(form.remarks, rows="3", placeholder="例：売掛金の回収分") }}
+  {{ render_field(form.remarks, placeholder="例：売掛金の回収分") }}
 {% endcall %}
 {% endblock %}
 

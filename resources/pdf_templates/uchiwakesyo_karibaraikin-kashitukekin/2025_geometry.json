@@ -1,0 +1,18 @@
+{
+  "row": {
+    "ROW1_CENTER": 773.0,
+    "ROW_STEP": 28.3,
+    "DETAIL_ROWS": 26
+  },
+  "cols": {
+    "account":  { "x": 75.5,  "w": 60.0 },
+    "reg_no":   { "x": 120.0, "w": 90.0 },
+    "partner":  { "x": 205.0, "w": 110.0 },
+    "address":  { "x": 295.0, "w": 110.0 },
+    "balance":  { "x": 407.0, "w": 90.0 },
+    "remarks":  { "x": 505.0, "w": 60.0 }
+  },
+  "margins": {
+    "right_margin": 0.0
+  }
+}

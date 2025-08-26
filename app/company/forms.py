@@ -261,7 +261,7 @@ class DepositForm(FlaskForm):
         '期末現在高', 
         validators=[DataRequired(message="期末現在高は必須です。")]
     )
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class NotesReceivableForm(FlaskForm):
@@ -306,7 +306,7 @@ class NotesReceivableForm(FlaskForm):
         '割引支店名',
         validators=[Optional(), Length(max=100)]
     )
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class AccountsReceivableForm(FlaskForm):
@@ -336,7 +336,7 @@ class AccountsReceivableForm(FlaskForm):
         '期末現在高',
         validators=[DataRequired(message="期末現在高は必須です。")]
     )
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class TemporaryPaymentForm(FlaskForm):
@@ -386,7 +386,7 @@ class LoansReceivableForm(FlaskForm):
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
     interest_rate = FloatField('利率（%）', validators=[DataRequired()])
     received_interest = IntegerField('期間中の受取利息', validators=[Optional()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class InventoryForm(FlaskForm):
@@ -397,7 +397,7 @@ class InventoryForm(FlaskForm):
     unit = StringField('単位', validators=[Optional(), Length(max=20)])
     unit_price = IntegerField('単価', validators=[DataRequired()])
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class SecurityForm(FlaskForm):
@@ -406,7 +406,7 @@ class SecurityForm(FlaskForm):
     issuer = StringField('銘柄・発行者', validators=[DataRequired(), Length(max=100)])
     quantity = IntegerField('数量（株・口）', validators=[Optional()])
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class FixedAssetForm(FlaskForm):
@@ -415,7 +415,7 @@ class FixedAssetForm(FlaskForm):
     location = StringField('所在地', validators=[DataRequired(), Length(max=200)])
     area = FloatField('面積（㎡）', validators=[Optional()])
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class NotesPayableForm(FlaskForm):
@@ -424,7 +424,7 @@ class NotesPayableForm(FlaskForm):
     issue_date = DateField('振出年月日', format='%Y-%m-%d', validators=[DataRequired()], render_kw={'class': 'js-date'})
     due_date = DateField('支払期日', format='%Y-%m-%d', validators=[DataRequired()], render_kw={'class': 'js-date'})
     amount = IntegerField('金額', validators=[DataRequired()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class AccountsPayableForm(FlaskForm):
@@ -434,7 +434,7 @@ class AccountsPayableForm(FlaskForm):
     is_subsidiary = BooleanField('関係会社')
     partner_address = StringField('取引先住所', validators=[Optional(), Length(max=200)])
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class TemporaryReceiptForm(FlaskForm):
@@ -452,7 +452,7 @@ class BorrowingForm(FlaskForm):
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
     interest_rate = FloatField('利率（%）', validators=[DataRequired()])
     paid_interest = IntegerField('期間中の支払利子', validators=[Optional()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class ExecutiveCompensationForm(FlaskForm):
@@ -471,7 +471,7 @@ class LandRentForm(FlaskForm):
     lessor_name = StringField('支払先', validators=[DataRequired(), Length(max=100)])
     property_details = StringField('物件の詳細', validators=[Optional(), Length(max=200)])
     rent_paid = IntegerField('支払賃借料', validators=[DataRequired()])
-    remarks = TextAreaField('摘要', validators=[Optional(), Length(max=200)])
+    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class MiscellaneousForm(FlaskForm):

@@ -1,0 +1,23 @@
+{
+  "row": {
+    "ROW1_CENTER": 770.9,
+    "ROW_STEP": 28.3,
+    "DETAIL_ROWS": 23
+  },
+  "cols": {
+    "account":         { "x": 75.5,  "w": 45.0 },
+    "reg_no":          { "x": 75.0,  "w": 45.0 },
+    "partner":         { "x": 138.5, "w": 45.0 },
+    "issue_date":      { "x": 204.0, "w": 45.0 },
+    "due_date":        { "x": 254.5, "w": 45.0 },
+    "payer_bank":      { "x": 302.5, "w": 45.0 },
+    "payer_branch":    { "x": 354.5, "w": 45.0 },
+    "balance":         { "x": 422.5, "w": 45.0 },
+    "discount_bank":   { "x": 470.5, "w": 45.0 },
+    "discount_branch": { "x": 518.5, "w": 45.0 },
+    "remarks":         { "x": 526.5, "w": 45.0 }
+  },
+  "margins": {
+    "right_margin": 0.0
+  }
+}

@@ -10,6 +10,14 @@ def register_commands(app):
     app.cli.add_command(init_db_command)
     app.cli.add_command(seed_masters_command)
     app.cli.add_command(report_date_health_command)
+    app.cli.add_command(seed_soa_command)
+    try:
+        env = app.config.get('ENV')
+    except Exception:
+        env = None
+    if not (env and str(env).lower() == 'production'):
+        app.cli.add_command(delete_seeded_command)
+    app.cli.add_command(seed_notes_receivable_command)
 
 @click.command('init-db')
 @with_appcontext
@@ -212,3 +220,141 @@ def report_date_health_command(fmt):
         for title, m in sections:
             if m is not None:
                 click.echo(_row(title, m))
+
+
+@click.command('seed-soa')
+@with_appcontext
+@click.option('--page', required=True, help='対象ページキー（例: notes_receivable）')
+@click.option('--company-id', type=int, default=None, help='対象会社ID（未指定時は単一会社がある場合それを使用）')
+@click.option('--count', type=int, default=23, show_default=True, help='生成件数')
+@click.option('--prefix', type=str, default='', show_default=True, help='名称/摘要に付与する識別用プレフィクス')
+def seed_soa_command(page: str, company_id: int | None, count: int, prefix: str):
+    """汎用 勘定科目内訳（SoA）ダミーデータ投入CLI。
+
+    例: flask seed-soa --page notes_receivable --count 23
+    """
+    try:
+        from app.cli.seed_soas import run_seed
+        created = run_seed(page=page, company_id=company_id, count=count, prefix=prefix)
+        click.echo(f"page='{page}' に {created} 件投入しました。")
+    except KeyError as e:
+        click.echo(str(e))
+    except Exception as e:
+        click.echo(f"エラー: ダミーデータ投入中に問題が発生しました: {e}")
+
+
+@click.command('delete-seeded')
+@with_appcontext
+@click.option('--page', required=True, help='対象ページキー（例: notes_receivable）')
+@click.option('--company-id', type=int, required=True, help='対象会社ID（必須）')
+@click.option('--prefix', type=str, required=True, help='生成時に付与した識別用プレフィクス（必須）')
+@click.option('--execute', is_flag=True, default=False, help='実際に削除を実行（指定がない場合はドライラン）')
+def delete_seeded_command(page: str, company_id: int, prefix: str, execute: bool):
+    """プレフィクス一致のダミーデータを一括削除（dev/staging専用）。
+
+    デフォルトはドライラン（件数とID一覧のみ表示）。--execute 指定時のみ削除を実行します。
+    本番環境（ENV=production）では register されません。
+    """
+    from app.cli.seed_soas import run_delete
+    try:
+        count, ids = run_delete(page=page, company_id=company_id, prefix=prefix, dry_run=(not execute))
+        mode = '削除実行' if execute else 'ドライラン'
+        click.echo(f"[{mode}] page='{page}' company_id={company_id} prefix='{prefix}' 対象件数={count}")
+        preview = ids[:10]
+        if preview:
+            click.echo(f"先頭IDプレビュー: {preview}{' ...' if len(ids) > 10 else ''}")
+        if execute:
+            click.echo(f"削除完了: {count} 件")
+        else:
+            click.echo("--execute を付けると削除を実行します（dev/staging専用）")
+    except Exception as e:
+        click.echo(f"エラー: {e}")
+
+
+@click.command('seed-soa')
+@with_appcontext
+@click.option('--page', required=True, help='対象ページキー（例: notes_receivable）')
+@click.option('--company-id', type=int, default=None, help='対象会社ID（未指定時は単一会社がある場合それを使用）')
+@click.option('--count', type=int, default=23, show_default=True, help='生成件数')
+@click.option('--prefix', type=str, default='', show_default=True, help='名称/摘要に付与する識別用プレフィクス')
+def seed_soa_command(page: str, company_id: int | None, count: int, prefix: str):
+    """汎用 勘定科目内訳（SoA）ダミーデータ投入CLI。
+
+    例: flask seed-soa --page notes_receivable --count 23
+    """
+    try:
+        from app.cli.seed_soas import run_seed
+        created = run_seed(page=page, company_id=company_id, count=count, prefix=prefix)
+        click.echo(f"page='{page}' に {created} 件投入しました。")
+    except KeyError as e:
+        click.echo(str(e))
+    except Exception as e:
+        click.echo(f"エラー: ダミーデータ投入中に問題が発生しました: {e}")
+
+
+@click.command('seed-notes-receivable')
+@with_appcontext
+@click.option('--company-id', type=int, default=None, help='対象会社ID（未指定時は単一会社がある場合それを使用）')
+@click.option('--count', type=int, default=23, show_default=True, help='生成する受取手形の件数')
+def seed_notes_receivable_command(company_id: int | None, count: int):
+    """受取手形（NotesReceivable）をダミーデータで一括投入します。"""
+    from datetime import date, timedelta
+    import random
+    from app.company.models import Company, NotesReceivable
+
+    # 会社の決定
+    target_company = None
+    if company_id is not None:
+        target_company = Company.query.filter_by(id=company_id).first()
+        if not target_company:
+            click.echo(f"エラー: company_id={company_id} の会社が見つかりません。")
+            return
+    else:
+        companies = Company.query.all()
+        if len(companies) == 1:
+            target_company = companies[0]
+        elif len(companies) == 0:
+            click.echo('エラー: Company が存在しません。先に会社を作成してください。')
+            return
+        else:
+            click.echo('エラー: 複数の Company が存在します。--company-id で対象を指定してください。')
+            return
+
+    rng = random.Random(42)
+    today = date.today()
+    bank_names = ['みずほ銀行', '三菱UFJ銀行', '三井住友銀行', 'りそな銀行', 'ゆうちょ銀行']
+    branches = ['本店', '新宿支店', '渋谷支店', '大阪支店', '名古屋支店']
+
+    created = 0
+    for i in range(count):
+        reg_no = ''.join(rng.choice('0123456789') for _ in range(13))
+        drawer = f"ダミー株式会社 {i+1:02d}"
+        issue_dt = today - timedelta(days=60 + i)
+        due_dt = today + timedelta(days=30 + i)
+        payer_bank = rng.choice(bank_names)
+        payer_branch = rng.choice(branches)
+        amount = (i + 1) * 10000
+        discount_bank = rng.choice(bank_names)
+        discount_branch = rng.choice(branches)
+        remarks = f"ダミー明細 {i+1:02d}"
+
+        nr = NotesReceivable(
+            company_id=target_company.id,
+            registration_number=reg_no,
+            drawer=drawer,
+            issue_date=issue_dt.strftime('%Y-%m-%d'),
+            issue_date_date=issue_dt,
+            due_date=due_dt.strftime('%Y-%m-%d'),
+            due_date_date=due_dt,
+            payer_bank=payer_bank,
+            payer_branch=payer_branch,
+            amount=amount,
+            discount_bank=discount_bank,
+            discount_branch=discount_branch,
+            remarks=remarks,
+        )
+        db.session.add(nr)
+        created += 1
+
+    db.session.commit()
+    click.echo(f"受取手形を {created} 件、Company(id={target_company.id}) に作成しました。")
