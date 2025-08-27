@@ -28,6 +28,9 @@
         {% if page == 'temporary_payments' %}
           {{ render_pdf_button_if_available(page, pdf_year) }}
         {% endif %}
+        {% if page == 'loans_receivable' %}
+          {{ render_pdf_button_if_available(page, pdf_year) }}
+        {% endif %}
     </div>
 </div>
 

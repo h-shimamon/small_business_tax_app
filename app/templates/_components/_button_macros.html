@@ -12,18 +12,21 @@
 {# Page-aware PDF button renderer: renders nothing if page not supported #}
 {% macro render_pdf_button_if_available(page, pdf_year) %}
   {# Centralized mapping: page key -> Flask endpoint #}
-  {% set PDF_ENDPOINTS = {
-    'deposits': 'company.deposits_pdf',
-    'accounts_receivable': 'company.accounts_receivable_pdf',
-    'notes_receivable': 'company.notes_receivable_pdf',
-    'temporary_payments': 'company.temporary_payments_pdf'
-  } %}
-  {% set PDF_LABELS = {
-    'deposits': '預貯金等',
-    'accounts_receivable': '売掛金',
-    'notes_receivable': '受取手形',
-    'temporary_payments': '仮払金（前渡金）'
-  } %}
+{% set PDF_ENDPOINTS = {
+  'deposits': 'company.deposits_pdf',
+  'accounts_receivable': 'company.accounts_receivable_pdf',
+  'notes_receivable': 'company.notes_receivable_pdf',
+  'temporary_payments': 'company.temporary_payments_pdf',
+  'loans_receivable': 'company.temporary_payments_pdf'
+} %}
+{% set PDF_LABELS = {
+  'deposits': '預貯金等',
+  'accounts_receivable': '売掛金',
+  'notes_receivable': '受取手形',
+  'temporary_payments': '仮払金（前渡金）',
+  'loans_receivable': '貸付金・受取利息'
+} %}
+
   {% if page in PDF_ENDPOINTS %}
     {{ render_pdf_button(url_for(PDF_ENDPOINTS[page], year=pdf_year|string),
                          'PDF出力（' ~ PDF_LABELS.get(page, page) ~ '・検証用）') }}

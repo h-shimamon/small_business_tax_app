@@ -7,7 +7,7 @@ from flask import has_request_context, request, current_app
 from flask_login import current_user
 
 from app import db
-from app.company.models import Company, TemporaryPayment
+from app.company.models import Company, TemporaryPayment, LoansReceivable
 
 from reportlab.pdfbase import pdfmetrics  # noqa: F401 (kept for parity)
 from .pdf_fill import overlay_pdf, TextSpec
@@ -61,6 +61,7 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
         'reg_no':   {'x': 120.0, 'w': 90.0},   # 登録番号（法人番号）
         'partner':  {'x': 205.0, 'w': 110.0},  # 取引先名
         'address':  {'x': 295.0, 'w': 110.0},  # 取引先住所
+        'relationship': {'x': 408.0, 'w': 48.0}, # 法人・代表者との関係
         'balance':  {'x': 407.0, 'w': 90.0},   # 期末現在高（右寄せ）
         'remarks':  {'x': 505.0, 'w': 60.0},   # 摘要（取引の内容）
     })
@@ -72,16 +73,16 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
     texts: List[TextSpec] = []
     rectangles: List[Tuple[int, float, float, float, float]] = []
 
-    # Fetch items (仮払金のみを対象)
+    # Fetch items (仮払金のみを対象) - 期末残高の高い順
     items: List[TemporaryPayment] = (
         db.session.query(TemporaryPayment)
         .filter_by(company_id=company_id)
-        .order_by(TemporaryPayment.id.asc())
+        .order_by(TemporaryPayment.balance_at_eoy.desc(), TemporaryPayment.id.asc())
         .all()
     )
 
-    # Paging config
-    rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS', 26))
+    # Paging config: 最大行は11行
+    rows_per_page = 11
     sum_row_index = rows_per_page
 
     vx0, vw0 = col('balance')
@@ -103,18 +104,25 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
             natural_center = ROW1_CENTER - ROW_STEP * row_idx
             fs = {
                 'account': 9.0,
-                'reg_no': 9.0,
-                'partner': 7.0,
-                'address': 7.0,
-                'balance': 13.0,
-                'remarks': 7.5,
+                'reg_no': 8.0,   # -1pt
+                'partner': 6.0,  # -1pt
+                'address': 6.0,  # -1pt
+                'relationship': 6.0,
+                'balance': 12.0,
+                'remarks': 6.5,  # -1pt
             }
             if row_idx == 0:
                 center_y = natural_center
                 baseline0 = baseline0_from_center(center_y, fs['balance'])
             else:
-                eff_step = 20.3
-                center_y = center_from_baseline((baseline0 if baseline0 is not None else baseline0_from_center(ROW1_CENTER, fs['balance'])), eff_step, row_idx, fs['balance'])
+                # Use geometry-defined row step for spacing between rows
+                eff_step = ROW_STEP
+                center_y = center_from_baseline(
+                    (baseline0 if baseline0 is not None else baseline0_from_center(ROW1_CENTER, fs['balance'])),
+                    eff_step,
+                    row_idx,
+                    fs['balance'],
+                )
 
             def left(page: int, x: float, w: float, text: str, size: float):
                 append_left(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size)
@@ -139,21 +147,96 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
             left(p, px, pw, (it.partner_name or ""), fs['partner'])
             ox, ow = col('address')
             left(p, ox, ow, (it.partner_address or ""), fs['address'])
+            rx2, rw2 = col('relationship')
+            left(p, rx2, rw2, (it.relationship or ""), fs['relationship'])
             bx, bw = col('balance')
             right(p, bx, bw, _format_currency(it.balance_at_eoy), fs['balance'])
             mx, mw = col('remarks')
             left(p, mx, mw, (it.transaction_details or ""), fs['remarks'])
 
-        # 合計行（期末現在高の合計）
-        page_sum = sum((it.balance_at_eoy or 0) for it in chunk)
-        fs_balance = 13.0
-        eff_step_sum = 20.3
-        baseline0_sum = (baseline0 if baseline0 is not None else (ROW1_CENTER - fs_balance / 2.0))
-        baseline_sum = baseline0_sum - eff_step_sum * sum_row_index
-        center_y = baseline_sum + fs_balance / 2.0
-        sum_text = _format_currency(page_sum)
-        y = center_y - fs_balance / 2.0
-        texts.append(TextSpec(page=page_index, x=(vx0 + vw0 - right_margin), y=y, text=sum_text, font_name="NotoSansJP", font_size=fs_balance, align="right"))
+        # 合計行（期末現在高の合計）は表示しない
+        # page_sum = sum((it.balance_at_eoy or 0) for it in chunk)
+        # fs_balance = 12.0
+        # eff_step_sum = ROW_STEP
+        # baseline0_sum = (baseline0 if baseline0 is not None else (ROW1_CENTER - fs_balance / 2.0))
+        # baseline_sum = baseline0_sum - eff_step_sum * sum_row_index
+        # center_y = baseline_sum + fs_balance / 2.0
+        # sum_text = _format_currency(page_sum)
+        # y = center_y - fs_balance / 2.0
+        # texts.append(TextSpec(page=page_index, x=(vx0 + vw0 - right_margin), y=y, text=sum_text, font_name="NotoSansJP", font_size=fs_balance, align="right"))
+
+# lower zone (kashitsuke) start
+    # Kashitsuke (lower zone)
+    row_k = geom.get('row_kashitsuke', {})
+    k_ROW1_CENTER = float(row_k.get('ROW1_CENTER', 400.0))
+    k_ROW_STEP = float(row_k.get('ROW_STEP', 21.3))
+    k_rows_per_page = int(row_k.get('DETAIL_ROWS', 10))
+
+    cols_k = geom.get('cols_kashitsuke', {
+        'partner': {'x': 226.0, 'w': 110.0},
+        'balance': {'x': 411.0, 'w': 90.0},
+        'remarks': {'x': 506.0, 'w': 41.0},
+    })
+    def k_col(name: str) -> Tuple[float, float]:
+        c = cols_k.get(name, {})
+        return float(c.get('x', 0.0)), float(c.get('w', 0.0))
+
+    right_margin_k = float(geom.get('margins_kashitsuke', {}).get('right_margin', 0.0))
+    k_items: List[LoansReceivable] = (
+        db.session.query(LoansReceivable)
+        .filter_by(company_id=company_id)
+        .order_by(LoansReceivable.id.asc())
+        .all()
+    )
+    k_total = len(k_items)
+    if k_total > 0:
+        k_pages = (k_total + k_rows_per_page - 1) // k_rows_per_page
+        for page_index in range(k_pages):
+            start = page_index * k_rows_per_page
+            end = min(start + k_rows_per_page, k_total)
+            chunk = k_items[start:end]
+
+            k_baseline0 = None
+            for i, it in enumerate(chunk):
+                row_idx = i
+                natural_center = k_ROW1_CENTER - k_ROW_STEP * row_idx
+                fs = {
+                    'partner': 7.0,
+                    'balance': 12.0,
+                    'remarks': 7.0,
+                }
+                if row_idx == 0:
+                    center_y = natural_center
+                    k_baseline0 = baseline0_from_center(center_y, fs['balance'])
+                else:
+                    center_y = center_from_baseline(
+                        (k_baseline0 if k_baseline0 is not None else baseline0_from_center(k_ROW1_CENTER, fs['balance'])),
+                        k_ROW_STEP,
+                        row_idx,
+                        fs['balance'],
+                    )
+
+                def k_left(page: int, x: float, w: float, text: str, size: float):
+                    append_left(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size)
+
+                def k_right(page: int, x: float, w: float, text: str, size: float):
+                    append_right(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size, right_margin=right_margin_k)
+                    try:
+                        if has_request_context() and request.args.get('debug_y') == '1':
+                            y_dbg = center_y - size / 2.0
+                            rectangles.append((page, 50.0, y_dbg, 500.0, 0.6))
+                            current_app.logger.info(f"k_row_idx={row_idx} y={y_dbg:.2f} size={size}")
+                    except Exception:
+                        pass
+
+                p = page_index
+                px, pw = k_col('partner')
+                k_left(p, px, pw, (getattr(it, 'borrower_name', '') or ''), fs['partner'])
+                bx, bw = k_col('balance')
+                k_right(p, bx, bw, _format_currency(getattr(it, 'balance_at_eoy', None)), fs['balance'])
+                mx, mw = k_col('remarks')
+                k_left(p, mx, mw, (getattr(it, 'remarks', '') or ''), fs['remarks'])
+# lower zone end
 
     overlay_pdf(
         base_pdf_path=base_pdf,
@@ -165,4 +248,3 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
     )
 
     return output_path
-

@@ -26,7 +26,12 @@
 して, 保存して, 変更しろ, 実行してください）
   - 長文承認も可（命令句を含む場合のみ）。いずれも 1回の承認で実行できるのは 1操
 作のみ。
-  - 回答のみは承認不要。ただし回答にツール使用が必要な場合は承認必須。
+  - 回答のみは承認不要。
+  - 読取り（READ）のみは承認不要。
+  - シェルで書く必要がある場合のみ、承認付きで権限昇格を明示して実行。
+  - それ以外のコード変更は、プロジェクト編集API（例: `serena__replace_symbol_body` / `serena__replace_regex`）を使う。
+  - コミットやgit操作はローカルで実行（または権限昇格の承認を得て単発実行）
+
 - 私の計画提示（1行）
   - 目的 / 対象 / 操作（単一） / 影響 / STOP条件
   - 例: 目的=受取手形のDBカラム列挙, 対象=app/company/models.py, 操作=read, 影響
@@ -90,7 +95,57 @@ UI 原則
 - ユーザーの質問に対して説明より先に行動すること。
 - 失敗の黙殺や暗黙のフォールバック。
 
+[Serena-first Nano Addendum v1.0] 
+位置づけ/優先
+- 本付記は deny-only（STOP専用）。許可は本文側でのみ与える。
+- 序列（統一）: 憲法（A–D含む） > 承認 > 実行プロトコル > 本付記（deny-only） > ツール（Serena等）
+
+Preflight（fail-closed / キャッシュ）
+- /status 合格（Serena Connected & trust:true & tools>0 & write-capable、かつ非 read-only）以外は即 STOP。
+- 合格結果は cache_ttl=2h。TTL内は再実行不要。失敗時は復旧手順提示のみ（自動再試行禁止）。
+
+実行順序（Serena Gate）
+- Gate: Preflight 合格
+- Plan: Serena consult で差分 plan を提示（READのみ・書込なし、plan_id/hash を明示）
+- Approve: 承認は **GUIパネル**で行う（下記）。テキスト承認は「パネルを開く」にのみ展開
+- Apply: Serena write/patch を **unchanged-only(plan_id)** で適用（GUIの[適用]押下時）
+
+GUI承認ゲート（必須）
+- write/patch は **必ず GUI**：plan_id/hash、files/hunks/lines、対象一覧、抜粋diff、影響Tier(G/Y/R)を表示
+- アクション: [適用] / [キャンセル]。Red（DB/共通/セキュリティ/マイグレーション）は確認語で二段承認
+- Window中でも **各 apply ごとに 1クリック必須**。一括自動適用は不可
+
+Standing Green（常時事前承認：可逆・非コード）
+- 対象: templates/**/*.html, resources/**/*geometry.json 等の可逆・非コード小修正
+- 上限: files≤3, hunks≤10, lines≤60, ttl=60m/セッション
+- 禁止: Python/DB/セキュリティ/共通モジュール、既存キー上書き、仕様変更
+- 実行: plan → **GUI** → apply（Serena必須・ローカル直書き禁止）
+- パネルは「ミニ版」（plan要旨＋抜粋diffのみ）を許可
+
+Shorthand（短文指示は“GUIを開く”だけに降格）
+- 「承認」: 直近 plan（≤15m & unchanged）が1件 → その plan の **GUIパネルを開く**
+- 「承認 窓」: Standing Green の Window を開始（既定上限適用）→ 以降は各 plan ごとに **GUI** 必須
+- 「実行」: 直前に提示済み plan がある場合に限り **GUI** を開く（なければ STOP）
+- 「OK」: plan 提示直後 ≤2m & 1件のみ → **GUI** を開く（それ以外は無効）
+※ テキスト指示での自動 apply は一切行わない
+
+Observability（証跡）
+- 各 apply 末尾に必須出力:
+  "Used Serena: yes|no, plan_id, elapsed_ms, reason_if_no"
+- no / 欠落 / plan変更検知 は即 STOP（自動再試行禁止）
+
+SLA / STOP
+- Plan 生成 t≤15s、apply t≤5s（目安）。超過時は STOP → 手動パッチを提示（適用はしない）
+- STOPトリガ: Preflight未合格、Serena未使用、証跡欠落、上限超過、仕様不明確、Python/DB変更兆候
+
+Fallback / Override
+- Fallback: Serena不可時は「手動パッチ提示のみ」許可。適用は不可（Serena復旧後に GUI で）
+- Override: 本付記の STOP を越える場合のみ
+  "APPROVED: Override GUI Gate | 目的 | 対象 | 範囲 | ttl"
+  を単一操作で使用（Serena・GUI経由）
+
 付記
-- 衝突時は「A–D > 承認 > プロトコル > 憲法 > ツール」の順で解決する。
-- 大きな設計変更や提案は本指令の範囲外。必要時はまず可否を質問し、承認があれば最
-小差分で案を提示する。
+- 衝突時は「憲法（A–D含む） > 承認 > 実行プロトコル > Serena-first Nano Addendum > ツール（Serena等）」の順で解決する。
+- 大きな設計変更や提案は本指令の範囲外。必要時はまず可否を質問し、承認があれば最小差分で案を提示する。
+
+

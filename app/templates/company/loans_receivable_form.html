@@ -10,12 +10,13 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='loans_receivable'), cancel_label='キャンセル', form_attrs='novalidate') %}
+  {{ render_field(form.registration_number) }}
   {{ render_field(form.borrower_name) }}
-  {{ render_checkbox_field(form.is_subsidiary) }}
   {{ render_field(form.borrower_address) }}
+  {{ render_field(form.relationship) }}
   {{ render_field(form.balance_at_eoy) }}
-  {{ render_field(form.interest_rate) }}
   {{ render_field(form.received_interest) }}
-  {{ render_field(form.remarks) }}
+  {{ render_field(form.interest_rate) }}
+  {{ render_field(form.collateral_details) }}
 {% endcall %}
 {% endblock %}

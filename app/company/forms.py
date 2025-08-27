@@ -370,8 +370,8 @@ class TemporaryPaymentForm(FlaskForm):
         '期末現在高',
         validators=[DataRequired(message="期末現在高は必須です。")]
     )
-    transaction_details = TextAreaField(
-        '取引の内容', 
+    transaction_details = StringField(
+        '摘要', 
         validators=[Optional(), Length(max=200)]
     )
     submit = SubmitField('保存する')
@@ -380,13 +380,14 @@ class TemporaryPaymentForm(FlaskForm):
 
 class LoansReceivableForm(FlaskForm):
     """貸付金及び受取利息の登録・編集フォーム"""
-    borrower_name = StringField('貸付先', validators=[DataRequired(), Length(max=100)])
-    is_subsidiary = BooleanField('関係会社')
-    borrower_address = StringField('貸付先住所', validators=[Optional(), Length(max=200)])
+    registration_number = StringField('登録番号（法人番号）', validators=[Optional(), Length(max=20)])
+    borrower_name = StringField('貸付先（氏名）', validators=[DataRequired(), Length(max=100)])
+    borrower_address = StringField('貸付先（住所）', validators=[Optional(), Length(max=200)])
+    relationship = StringField('法人・代表者との関係', validators=[Optional(), Length(max=100)])
     balance_at_eoy = IntegerField('期末現在高', validators=[DataRequired()])
-    interest_rate = FloatField('利率（%）', validators=[DataRequired()])
-    received_interest = IntegerField('期間中の受取利息', validators=[Optional()])
-    remarks = StringField('摘要', validators=[Optional(), Length(max=200)])
+    received_interest = IntegerField('期中の受取利息額', validators=[Optional()])
+    interest_rate = FloatField('利率', validators=[DataRequired()])
+    collateral_details = StringField('担保の内容', validators=[Optional(), Length(max=200)])
     submit = SubmitField('保存する')
 
 class InventoryForm(FlaskForm):

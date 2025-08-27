@@ -63,6 +63,19 @@ def run_seed(page: str, company_id: Optional[int], count: int, prefix: str = "")
     if page not in REGISTRY:
         raise KeyError(f"未対応のpageです: {page}")
     ctx = make_context(company_id=company_id, seed=42, prefix=prefix)
+    # Pre-execution context visibility (DB / company / params)
+    try:
+        db_url = str(db.engine.url)
+    except Exception:
+        db_url = "<unknown>"
+    print(f"[seed-soa] DB={db_url}")
+    print(
+        f"[seed-soa] company_id={getattr(ctx.company, 'id', '?')} name={getattr(ctx.company, 'company_name', '?')}"
+    )
+    print(f"[seed-soa] page={page} count={count} prefix='{prefix}'")
+    # Gentle warning for common local mismatch patterns (no behavior change)
+    if db_url.startswith("sqlite") and not db_url.endswith("dev.db"):
+        print(f"[seed-soa][warn] 非標準DBに接続中: {db_url}")
     seeder = REGISTRY[page]
     return seeder(ctx, count)
 
@@ -243,6 +256,20 @@ def run_delete(page: str, company_id: Optional[int], prefix: str, dry_run: bool 
     if page not in DELETE_REGISTRY:
         raise KeyError(f"未対応のpageです: {page}")
     ctx = make_context(company_id=company_id, seed=42, prefix=prefix)
+    # Pre-execution context visibility (DB / company / params)
+    try:
+        db_url = str(db.engine.url)
+    except Exception:
+        db_url = "<unknown>"
+    print(f"[delete-seeded] DB={db_url}")
+    print(
+        f"[delete-seeded] company_id={getattr(ctx.company, 'id', '?')} name={getattr(ctx.company, 'company_name', '?')}"
+    )
+    print(
+        f"[delete-seeded] page={page} prefix='{prefix}' dry_run={dry_run}"
+    )
+    if db_url.startswith("sqlite") and not db_url.endswith("dev.db"):
+        print(f"[delete-seeded][warn] 非標準DBに接続中: {db_url}")
     q = DELETE_REGISTRY[page](ctx, prefix)
     rows = q.all()
     ids = [getattr(r, 'id', None) for r in rows]

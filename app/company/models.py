@@ -220,12 +220,14 @@ class TemporaryPayment(db.Model):
 class LoansReceivable(db.Model):
     """貸付金及び受取利息の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
-    borrower_name = db.Column(db.String(100), nullable=False)       # 貸付先
-    is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
-    borrower_address = db.Column(db.String(200))                    # 貸付先住所
+    registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
+    borrower_name = db.Column(db.String(100), nullable=False)       # 貸付先（氏名）
+    borrower_address = db.Column(db.String(200))                    # 貸付先（住所）
+    relationship = db.Column(db.String(100))                        # 法人・代表者との関係
     balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
+    received_interest = db.Column(db.Integer)                       # 期中の受取利息額
     interest_rate = db.Column(db.Float, nullable=False)             # 利率
-    received_interest = db.Column(db.Integer)                       # 受取利息
+    collateral_details = db.Column(db.String(200))                  # 担保の内容
     remarks = db.Column(db.String(200))                             # 摘要
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('loans_receivable', lazy=True))
