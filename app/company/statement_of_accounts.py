@@ -286,6 +286,50 @@ def notes_receivable_pdf(company):
         download_name=f"uchiwakesyo_uketoritegata_{year}.pdf"
     )
 
+@company_bp.route('/statement/notes_payable/pdf')
+@company_required
+def notes_payable_pdf(company):
+    """支払手形の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    from app.pdf.uchiwakesyo_shiharaitegata import generate_uchiwakesyo_shiharaitegata
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_shiharaitegata_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_shiharaitegata(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_shiharaitegata_{year}.pdf"
+    )
+
+@company_bp.route('/statement/accounts_payable/pdf')
+@company_required
+def accounts_payable_pdf(company):
+    """買掛金（未払金・未払費用）の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    from app.pdf.uchiwakesyo_kaikakekin import generate_uchiwakesyo_kaikakekin
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_kaikakekin_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_kaikakekin(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_kaikakekin_{year}.pdf"
+    )
+
 @company_bp.route('/statement/loans_receivable/pdf')
 @company_required
 def loans_receivable_pdf(company):

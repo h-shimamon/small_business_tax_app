@@ -10,11 +10,10 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='accounts_payable'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.account_name) }}
-  {{ render_field(form.partner_name) }}
-  {{ render_checkbox_field(form.is_subsidiary) }}
-  {{ render_field(form.partner_address) }}
-  {{ render_field(form.balance_at_eoy) }}
-  {{ render_field(form.remarks) }}
+  {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+  {{ render_field(form.partner_name, placeholder="例：株式会社〇〇商事（または氏名）") }}
+  {{ render_field(form.partner_address, placeholder="例：東京都千代田区丸の内…") }}
+  {{ render_field(form.balance_at_eoy, type="number", placeholder="例：1000000") }}
+  {{ render_field(form.remarks, placeholder="例：仕入代金") }}
 {% endcall %}
 {% endblock %}

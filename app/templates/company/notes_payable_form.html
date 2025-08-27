@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field %}
+{% from 'company/_form_helpers.html' import render_field, render_date_field %}
 
 {% block title %}{{ form_title }}{% endblock %}
 
@@ -10,10 +10,13 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='notes_payable'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.payee) }}
-  {{ render_field(form.issue_date, class_='js-date') }}
-  {{ render_field(form.due_date, class_='js-date') }}
-  {{ render_field(form.amount) }}
-  {{ render_field(form.remarks) }}
+  {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+  {{ render_field(form.payee, placeholder="例：株式会社〇〇商事") }}
+  {{ render_date_field(form.issue_date, placeholder="例：2025-04-01") }}
+  {{ render_date_field(form.due_date, placeholder="例：2025-05-31") }}
+  {{ render_field(form.payer_bank, placeholder="例：〇〇銀行") }}
+  {{ render_field(form.payer_branch, placeholder="例：本店") }}
+  {{ render_field(form.amount, type="number", placeholder="例：1000000") }}
+  {{ render_field(form.remarks, placeholder="例：仕入代金") }}
 {% endcall %}
 {% endblock %}

@@ -270,9 +270,12 @@ class FixedAsset(db.Model):
 class NotesPayable(db.Model):
     """支払手形の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
+    registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
     payee = db.Column(db.String(100), nullable=False)               # 支払先
     issue_date = db.Column(db.Date, nullable=False)                 # 振出年月日
     due_date = db.Column(db.Date, nullable=False)                   # 支払期日
+    payer_bank = db.Column(db.String(100))                          # 支払銀行名
+    payer_branch = db.Column(db.String(100))                        # 支払支店名
     amount = db.Column(db.Integer, nullable=False)                  # 金額
     remarks = db.Column(db.String(200))                             # 摘要
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
@@ -282,9 +285,10 @@ class AccountsPayable(db.Model):
     """買掛金（未払金・未払費用）の内訳モデル"""
     id = db.Column(db.Integer, primary_key=True)
     account_name = db.Column(db.String(50), nullable=False)         # 科目
-    partner_name = db.Column(db.String(100), nullable=False)        # 取引先名
+    partner_name = db.Column(db.String(100), nullable=False)        # 名称（氏名）
+    registration_number = db.Column(db.String(20))                  # 登録番号（法人番号）
     is_subsidiary = db.Column(db.Boolean, default=False)            # 関係会社
-    partner_address = db.Column(db.String(200))                     # 取引先住所
+    partner_address = db.Column(db.String(200))                     # 所在地（住所）
     balance_at_eoy = db.Column(db.Integer, nullable=False)          # 期末現在高
     remarks = db.Column(db.String(200))                             # 摘要
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)

@@ -154,11 +154,16 @@ def seed_notes_payable(ctx: SeedContext, count: int) -> int:
     for i in range(count):
         issue_dt = ctx.today - timedelta(days=45 + i)
         due_dt = ctx.today + timedelta(days=45 + i)
+        reg_no = corporate_number_13(ctx.rng)
+        payer_bank, payer_branch = random_bank(ctx.rng)
         np = NotesPayable(
             company_id=ctx.company.id,
+            registration_number=reg_no,
             payee=f"{ctx.prefix}支払先 {i+1:02d}".strip(),
             issue_date=issue_dt,
             due_date=due_dt,
+            payer_bank=payer_bank,
+            payer_branch=payer_branch,
             amount=(i + 1) * 80000,
             remarks=(f"{ctx.prefix}支払手形 {i+1:02d}").strip(),
         )
@@ -176,6 +181,7 @@ def seed_accounts_payable(ctx: SeedContext, count: int) -> int:
             company_id=ctx.company.id,
             account_name=ctx.rng.choice(acct_names),
             partner_name=f"{ctx.prefix}仕入先 {i+1:02d}".strip(),
+            registration_number=corporate_number_13(ctx.rng),
             is_subsidiary=bool(ctx.rng.getrandbits(1)),
             partner_address=f"愛知県名古屋市中村区名駅{i+1:02d}-3",
             balance_at_eoy=(i + 1) * 60000,
