@@ -1,33 +1,32 @@
 {
-    "row": {
-        "ROW1_CENTER": 778.5,
-        "ROW_STEP": 21.3,
-        "DETAIL_ROWS": 26
-    },
-    "cols": {
-        "account":  { "x": 93.5,  "w": 60.0 },
-        "reg_no":   { "x": 150.0, "w": 90.0 },
-        "partner":  { "x": 226.0, "w": 110.0 },
-        "address":  { "x": 296.0, "w": 110.0 },
-        "relationship": { "x": 386.0, "w": 48.0 },
-        "balance":  { "x": 411.0, "w": 90.0 },
-        "remarks":  { "x": 506.0, "w": 41.0 }
-    },
-    "margins": {
-        "right_margin": 0.0
-    }
-    ,
-      "row_kashitsuke": {
-        "ROW1_CENTER": 400.0,
-        "ROW_STEP": 21.3,
-        "DETAIL_ROWS": 10
-      },
-      "cols_kashitsuke": {
-        "partner":  { "x": 226.0, "w": 110.0 },
-        "balance":  { "x": 411.0, "w": 90.0 },
-        "remarks":  { "x": 506.0, "w": 41.0 }
-      },
-      "margins_kashitsuke": {
-        "right_margin": 0.0
-      }
+  "row": {
+    "ROW1_CENTER": 778.5,
+    "ROW_STEP": 21.3,
+    "DETAIL_ROWS": 26
+  },
+  "cols": {
+    "account": { "x": 93.5, "w": 60.0 },
+    "reg_no":  { "x": 150.0, "w": 90.0 },
+    "partner": { "x": 226.0, "w": 110.0 },
+    "address": { "x": 296.0, "w": 110.0 },
+    "relationship": { "x": 386.0, "w": 48.0 },
+    "balance": { "x": 411.0, "w": 90.0 },
+    "remarks": { "x": 506.0, "w": 41.0 }
+  },
+  "margins": { "right_margin": 0.0 },
+
+  "row_kashitsuke": {
+    "ROW1_CENTER": 383.0,
+    "ROW_STEP": 22.7,
+    "DETAIL_ROWS": 10
+  },
+  "cols_kashitsuke": {
+    "reg_no":  { "x": 80.0, "w": 90.0 },
+    "partner": { "x": 156.0, "w": 110.0 },
+    "address": { "x": 243.0, "w": 110.0 },
+    "relationship": { "x": 328.0, "w": 48.0 },
+    "balance": { "x": 339.0, "w": 90.0 },
+    "remarks": { "x": 481.0, "w": 41.0 }
+  },
+  "margins_kashitsuke": { "right_margin": 0.0 }
 }

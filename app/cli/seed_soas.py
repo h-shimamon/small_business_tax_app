@@ -10,6 +10,7 @@ from app.company.models import (
     TemporaryPayment,
     NotesPayable,
     AccountsPayable,
+    LoansReceivable,
 )
 from .seed_utils import SeedContext, make_context, random_bank, corporate_number_13, BANKS, BRANCHES
 
@@ -186,6 +187,32 @@ def seed_accounts_payable(ctx: SeedContext, count: int) -> int:
     return created
 
 
+# ----------------------
+# Loans Receivable seeder
+# ----------------------
+
+def seed_loans_receivable(ctx: SeedContext, count: int) -> int:
+    created = 0
+    relationships = ['代表者', '役員', '子会社', '取引先']
+    for i in range(count):
+        lr = LoansReceivable(
+            company_id=ctx.company.id,
+            registration_number=corporate_number_13(ctx.rng),
+            borrower_name=f"{ctx.prefix}貸付先 {i+1:02d}".strip(),
+            borrower_address=f"東京都港区赤坂{i+1:02d}-1",
+            relationship=ctx.rng.choice(relationships),
+            balance_at_eoy=(i + 1) * 40000,
+            received_interest=(i + 1) * 1000,
+            interest_rate=round(0.5 + (i % 5) * 0.5, 2),
+            collateral_details=(f"{ctx.prefix}担保メモ {i+1:02d}").strip(),
+            remarks=(f"{ctx.prefix}貸付ダミー {i+1:02d}").strip(),
+        )
+        db.session.add(lr)
+        created += 1
+    db.session.commit()
+    return created
+
+
 # extend registry
 REGISTRY.update({
     'deposits': seed_deposits,
@@ -193,6 +220,7 @@ REGISTRY.update({
     'temporary_payments': seed_temporary_payments,
     'notes_payable': seed_notes_payable,
     'accounts_payable': seed_accounts_payable,
+    'loans_receivable': seed_loans_receivable,
 })
 
 
@@ -240,6 +268,13 @@ def _delete_query_accounts_payable(ctx: SeedContext, prefix: str):
     )
 
 
+def _delete_query_loans_receivable(ctx: SeedContext, prefix: str):
+    q = LoansReceivable.query.filter_by(company_id=ctx.company.id)
+    return q.filter(
+        (LoansReceivable.borrower_name.startswith(prefix)) | (LoansReceivable.remarks.startswith(prefix))
+    )
+
+
 DELETE_REGISTRY = {
     'notes_receivable': _delete_query_notes_receivable,
     'deposits': _delete_query_deposits,
@@ -247,35 +282,10 @@ DELETE_REGISTRY = {
     'temporary_payments': _delete_query_temporary_payments,
     'notes_payable': _delete_query_notes_payable,
     'accounts_payable': _delete_query_accounts_payable,
+    'loans_receivable': _delete_query_loans_receivable,
 }
 
 
 def run_delete(page: str, company_id: Optional[int], prefix: str, dry_run: bool = True) -> Tuple[int, List[int]]:
     if not prefix:
         raise ValueError('prefix は必須です（空文字は不可）')
-    if page not in DELETE_REGISTRY:
-        raise KeyError(f"未対応のpageです: {page}")
-    ctx = make_context(company_id=company_id, seed=42, prefix=prefix)
-    # Pre-execution context visibility (DB / company / params)
-    try:
-        db_url = str(db.engine.url)
-    except Exception:
-        db_url = "<unknown>"
-    print(f"[delete-seeded] DB={db_url}")
-    print(
-        f"[delete-seeded] company_id={getattr(ctx.company, 'id', '?')} name={getattr(ctx.company, 'company_name', '?')}"
-    )
-    print(
-        f"[delete-seeded] page={page} prefix='{prefix}' dry_run={dry_run}"
-    )
-    if db_url.startswith("sqlite") and not db_url.endswith("dev.db"):
-        print(f"[delete-seeded][warn] 非標準DBに接続中: {db_url}")
-    q = DELETE_REGISTRY[page](ctx, prefix)
-    rows = q.all()
-    ids = [getattr(r, 'id', None) for r in rows]
-    count = len(rows)
-    if not dry_run and count > 0:
-        for r in rows:
-            db.session.delete(r)
-        db.session.commit()
-    return count, ids

@@ -286,6 +286,28 @@ def notes_receivable_pdf(company):
         download_name=f"uchiwakesyo_uketoritegata_{year}.pdf"
     )
 
+@company_bp.route('/statement/loans_receivable/pdf')
+@company_required
+def loans_receivable_pdf(company):
+    """貸付金・受取利息の内訳をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    year = request.args.get('year', '2025')
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    # 同一様式（上段: 仮払金 / 下段: 貸付金）を使用
+    out_path = os.path.join(filled_dir, f"uchiwakesyo_karibaraikin-kashitukekin_{company.id}_{ts}.pdf")
+    generate_uchiwakesyo_karibaraikin_kashitukekin(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"uchiwakesyo_karibaraikin-kashitukekin_{year}.pdf"
+    )
+
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])
 @company_required
 def add_item(company, page_key):
