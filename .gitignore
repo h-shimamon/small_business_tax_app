@@ -23,6 +23,9 @@ env/
 # Node
 node_modules/
 
+# Serena local data
+.serena/
+
 # Reports / temp
 playwright-report/
 test-results/
@@ -33,6 +36,15 @@ coverage/
 .python-version
 instance/
 *.db
+# Local env files
+.env
+.env.*
+.envrc
+
+# Python tooling caches
+.pytest_cache/
+.ruff_cache/
+
 
 
 # Temp outputs (generated PDFs and artifacts)
