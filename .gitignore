@@ -34,3 +34,7 @@ coverage/
 instance/
 *.db
 
+
+# Temp outputs (generated PDFs and artifacts)
+temporary/**
+!temporary/.gitkeep
