@@ -86,12 +86,13 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
     )
 
     tp_rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS', 11))
+    tp_data_rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS_DATA', 11))
     tp_total = len(tp_items)
-    tp_pages = (tp_total + tp_rows_per_page - 1) // tp_rows_per_page if tp_total > 0 else 1
+    tp_pages = (tp_total + tp_data_rows_per_page - 1) // tp_data_rows_per_page if tp_total > 0 else 1
 
     for page_index in range(tp_pages):
-        start = page_index * tp_rows_per_page
-        end = min(start + tp_rows_per_page, tp_total)
+        start = page_index * tp_data_rows_per_page
+        end = min(start + tp_data_rows_per_page, tp_total)
         chunk = tp_items[start:end]
 
         baseline0 = None
@@ -150,6 +151,7 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
     k_ROW1_CENTER = float(row_k.get('ROW1_CENTER', 400.0))
     k_ROW_STEP = float(row_k.get('ROW_STEP', 21.3))
     k_rows_per_page = int(row_k.get('DETAIL_ROWS', 10))
+    k_data_rows_per_page = int(row_k.get('DETAIL_ROWS_DATA', 7))
 
     cols_k = geom.get('cols_kashitsuke', {})
 
@@ -168,10 +170,10 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
 
     k_total = len(k_items)
     if k_total > 0:
-        k_pages = (k_total + k_rows_per_page - 1) // k_rows_per_page
+        k_pages = (k_total + k_data_rows_per_page - 1) // k_data_rows_per_page
         for page_index in range(k_pages):
-            start = page_index * k_rows_per_page
-            end = min(start + k_rows_per_page, k_total)
+            start = page_index * k_data_rows_per_page
+            end = min(start + k_data_rows_per_page, k_total)
             chunk = k_items[start:end]
 
             k_baseline0 = None
@@ -204,7 +206,6 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
                             current_app.logger.info(f"k_row_idx={row_idx} y={y_dbg:.2f} size={size}")
                     except Exception:
                         pass
-
                 p = page_index
                 # Columns for lower zone
                 px, pw = k_col('partner')
@@ -220,45 +221,67 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
 
                 # Remarks: 横並び [受取利息] [利率%] [担保]
                 mx, mw = k_col('remarks')
-                try:
-                    base_font = 6.5
-                    ri_val = getattr(it, 'received_interest', None)
-                    ir_val = getattr(it, 'interest_rate', None)
-                    cd_val = (getattr(it, 'collateral_details', '') or '')
+                base_font = 6.5
+                rate_font = base_font + 1.0
+                ri_val = getattr(it, 'received_interest', None)
+                ir_val = getattr(it, 'interest_rate', None)
+                cd_val = (getattr(it, 'collateral_details', '') or '')
 
-                    ri_text = _format_currency(ri_val) if ri_val else ''
-                    if ir_val is not None:
-                        try:
-                            rate_text = f"{float(ir_val):.2f}%"
-                        except Exception:
-                            rate_text = str(ir_val)
-                    else:
-                        rate_text = ''
-                    collateral_text = cd_val
-
-                    # X offsets per instruction
-                    x_ri = mx - 30.0
-                    cur_x = mx + 1.0
-
-                    # width measurement (best-effort)
+                ri_text = _format_currency(ri_val) if ri_val else ''
+                if ir_val is not None:
                     try:
-                        def _w(t: str) -> float:
-                            return pdfmetrics.stringWidth(t, "NotoSansJP", base_font)
+                        rate_text = f"{float(str(ir_val).rstrip('%')):.1f}"
                     except Exception:
-                        def _w(t: str) -> float:
-                            return float(len(t)) * 6.0
+                        _s = str(ir_val)
+                        rate_text = _s[:-1] if _s.endswith('%') else _s
+                else:
+                    rate_text = ''
 
-                    gap = 6.0
-                    if ri_text:
-                        # 期中の受取利息額のフォントを期末現在高に揃える（12pt）
-                        append_left(texts, page=p, x=x_ri, w=mw, center_y=center_y, text=ri_text, font_name="NotoSansJP", font_size=(fs['balance'] - 2.0))
-                    if rate_text:
-                        append_left(texts, page=p, x=cur_x, w=mw, center_y=center_y, text=rate_text, font_name="NotoSansJP", font_size=base_font)
-                        cur_x += _w(rate_text) + gap
-                    if collateral_text:
-                        append_left(texts, page=p, x=cur_x, w=mw, center_y=center_y, text=collateral_text, font_name="NotoSansJP", font_size=base_font)
-                except Exception:
-                    pass
+                parts = [t for t in [ri_text, rate_text, cd_val] if t]
+                # Precise placement for remarks
+                # Optional geometry overrides (no-op if absent)
+                opts = geom.get('remarks_kashitsuke', {}) if isinstance(geom.get('remarks_kashitsuke', {}), dict) else {}
+                dx_interest = float(opts.get('interest_dx', -30.0))
+                dx_rate = float(opts.get('rate_dx', 1.0))
+                gap = float(opts.get('gap', 6.0))
+                interest_font_delta = float(opts.get('interest_font_delta', -2.0))
+
+                # Interest amount near balance, slightly smaller than balance font
+                if ri_text:
+                    anchor_x = mx + dx_rate - gap
+                    append_right(texts, page=p, x=anchor_x, w=0.0, center_y=center_y, text=ri_text, font_name="NotoSansJP", font_size=(fs['balance'] + interest_font_delta), right_margin=0.0)
+
+                # Helper for width (best-effort)
+                def _w(t: str) -> float:
+                    try:
+                        return float(pdfmetrics.stringWidth(t, "NotoSansJP", base_font))
+                    except Exception:
+                        return float(len(t)) * 6.0
+
+                def _w_rate(t: str) -> float:
+                    try:
+                        return float(pdfmetrics.stringWidth(t, "NotoSansJP", rate_font))
+                    except Exception:
+                        return float(len(t)) * 6.0 * (rate_font / base_font)
+
+                # Rate and collateral laid out from remarks baseline
+                anchor_const = mx + dx_rate + 10.0 - 4.0
+                rate_anchor_x = 498.0
+                if rate_text:
+                    append_right(texts, page=p, x=rate_anchor_x, w=0.0, center_y=center_y, text=rate_text, font_name="NotoSansJP", font_size=rate_font, right_margin=0.0)
+                cur_x = 505.5
+                if cd_val:
+                    k_left(p, cur_x, mw, cd_val, base_font)
+
+                # Page subtotal row (this page only)
+                if row_idx == len(chunk) - 1:
+                        sum_balance = sum((getattr(x, 'balance_at_eoy', 0) or 0) for x in chunk)
+                        sum_interest = sum((getattr(x, 'received_interest', 0) or 0) for x in chunk)
+                        sum_center_y = center_from_baseline((k_baseline0 if k_baseline0 is not None else baseline0_from_center(k_ROW1_CENTER, fs['balance'])), k_ROW_STEP, k_data_rows_per_page, fs['balance'])
+                        append_right(texts, page=p, x=bx, w=bw, center_y=sum_center_y, text=_format_currency(sum_balance), font_name="NotoSansJP", font_size=fs['balance'], right_margin=right_margin_k)
+                        if sum_interest:
+                            append_right(texts, page=p, x=(mx + dx_rate - gap), w=0.0, center_y=sum_center_y, text=_format_currency(sum_interest), font_name="NotoSansJP", font_size=(fs['balance'] + interest_font_delta), right_margin=0.0)
+
 
     overlay_pdf(
         base_pdf_path=base_pdf,

@@ -9,11 +9,6 @@
   {% else %}
     <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
   {% endif %}
-  {% if page == 'deposits' %}
-    <a href="{{ url_for('company.deposits_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（預貯金等・検証用）</a>
-  {% elif page == 'accounts_receivable' %}
-    <a href="{{ url_for('company.accounts_receivable_pdf', year='2025') }}" class="button-secondary" target="_blank" rel="noopener">PDF出力（売掛金・検証用）</a>
-  {% endif %}
 {%- endmacro %}
 
 {% macro empty_state(page_title, page) -%}

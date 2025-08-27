@@ -22,15 +22,7 @@
     </div>
     <div class="header-actions">
         {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url) }}
-        {% if page == 'notes_receivable' %}
-          {{ render_pdf_button_if_available(page, pdf_year) }}
-        {% endif %}
-        {% if page == 'temporary_payments' %}
-          {{ render_pdf_button_if_available(page, pdf_year) }}
-        {% endif %}
-        {% if page == 'loans_receivable' %}
-          {{ render_pdf_button_if_available(page, pdf_year) }}
-        {% endif %}
+        {{ render_pdf_button_if_available(page, pdf_year) }}
     </div>
 </div>
 
