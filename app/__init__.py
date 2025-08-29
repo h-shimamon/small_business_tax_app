@@ -43,6 +43,18 @@ def create_app(test_config=None):
     # --- ブループリントの登録 ---
     from .company import company_bp
     app.register_blueprint(company_bp)
+    # --- HoujinBangou integration (dev stub; read-only API) ---
+    try:
+        from app.integrations.houjinbangou.stub_client import StubHojinClient
+        from app.services.corporate_number_service import CorporateNumberService
+        from app.api.corporate_number import create_blueprint as create_corp_api
+
+        hojin_client = StubHojinClient()
+        corp_service = CorporateNumberService(hojin_client)
+        app.register_blueprint(create_corp_api(corp_service))
+    except Exception:
+        # 連携失敗は起動を阻害しない
+        pass
 
     # --- CLIコマンドの登録 ---
     from . import commands
