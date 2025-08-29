@@ -24,6 +24,7 @@ from app.navigation import (
 from .auth import company_required
 from app.company.services.master_data_service import MasterDataService
 from app.company.services.soa_summary_service import SoASummaryService
+from app.progress.evaluator import SoAProgressEvaluator
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
@@ -113,13 +114,14 @@ def statement_of_accounts(company):
         'pdf_year': _pdf_year or '2025',
     }
 
-    # Mark completion in session based on difference (0 => completed; non-zero => unmark)
+    # Optional: legacy GET-side marking (controlled by flag)
     try:
-        diff = SoASummaryService.compute_difference(company.id, page, config['model'], config['total_field'], accounting_data=accounting_data)
-        if isinstance(diff, dict) and (diff.get('difference', None) == 0):
-            mark_step_as_completed(page)
-        else:
-            unmark_step_as_completed(page)
+        if current_app.config.get('SOA_MARK_ON_GET', True):
+            diff = SoASummaryService.compute_difference(company.id, page, config['model'], config['total_field'], accounting_data=accounting_data)
+            if isinstance(diff, dict) and (diff.get('difference', None) == 0):
+                mark_step_as_completed(page)
+            else:
+                unmark_step_as_completed(page)
     except Exception:
         pass
 
@@ -382,6 +384,15 @@ def add_item(company, page_key):
     if form.validate_on_submit():
         new_item = config['model'](company_id=company.id)
         form.populate_obj(new_item)
+        # Optional: POST-side completion marking
+        try:
+            if current_app.config.get('SOA_MARK_ON_POST', True):
+                if SoAProgressEvaluator.is_completed(company.id, page_key):
+                    mark_step_as_completed(page_key)
+                else:
+                    unmark_step_as_completed(page_key)
+        except Exception:
+            pass
         db.session.add(new_item)
         db.session.commit()
         flash(f"{config['title']}情報を登録しました。", 'success')
@@ -409,6 +420,15 @@ def edit_item(company, page_key, item_id):
     form = config['form'](request.form, obj=item)
     if form.validate_on_submit():
         form.populate_obj(item)
+        # Optional: POST-side completion marking
+        try:
+            if current_app.config.get('SOA_MARK_ON_POST', True):
+                if SoAProgressEvaluator.is_completed(company.id, page_key):
+                    mark_step_as_completed(page_key)
+                else:
+                    unmark_step_as_completed(page_key)
+        except Exception:
+            pass
         db.session.commit()
         flash(f"{config['title']}情報を更新しました。", 'success')
         return redirect(url_for('company.statement_of_accounts', page=page_key))
@@ -446,6 +466,15 @@ def delete_item(company, page_key, item_id):
     db.session.commit()
     flash(f"{config['title']}情報を削除しました。", 'success')
     return redirect(url_for('company.statement_of_accounts', page=page_key))
+    # Optional: POST-side completion marking after delete
+    try:
+        if current_app.config.get('SOA_MARK_ON_POST', True):
+            if SoAProgressEvaluator.is_completed(company.id, page_key):
+                mark_step_as_completed(page_key)
+            else:
+                unmark_step_as_completed(page_key)
+    except Exception:
+        pass
 
 
 # 旧パス互換のための薄いエイリアスのみ追加（既存の /statement_of_accounts は重複させない）
@@ -455,8 +484,3 @@ def legacy_add_item(page_key):
     return redirect(url_for('company.add_item', page_key=page_key), code=302)
 
 
-@company_bp.route('/statement_of_accounts')
-def legacy_statement_of_accounts():
-    # /statement_of_accounts?page=deposits → 新実装へ委譲
-    page = request.args.get('page', default='deposits')
-    return redirect(url_for('company.statement_of_accounts', page=page), code=302)
