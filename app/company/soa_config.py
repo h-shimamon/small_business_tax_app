@@ -11,7 +11,6 @@ from app.company.forms import (
     AccountsPayableForm, TemporaryReceiptForm, BorrowingForm, ExecutiveCompensationForm,
     LandRentForm, MiscellaneousForm, MiscellaneousIncomeForm, MiscellaneousLossForm
 )
-from app.company.forms_notes_payable_accounts import NotesPayableForm, AccountsPayableForm
 
 STATEMENT_PAGES_CONFIG = {
     'deposits': {'model': Deposit, 'form': DepositForm, 'title': '預貯金等', 'total_field': 'balance', 'template': 'deposit_form.html'},

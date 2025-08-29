@@ -65,7 +65,7 @@ def generate_uchiwakesyo_kaikakekin(company_id: Optional[int], year: str = "2025
     items: List[AccountsPayable] = (
         db.session.query(AccountsPayable)
         .filter_by(company_id=company_id)
-        .order_by(AccountsPayable.id.asc())
+        .order_by(AccountsPayable.balance_at_eoy.desc(), AccountsPayable.id.asc())
         .all()
     )
 
