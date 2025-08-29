@@ -18,6 +18,7 @@ def register_commands(app):
     if not (env and str(env).lower() == 'production'):
         app.cli.add_command(delete_seeded_command)
     app.cli.add_command(seed_notes_receivable_command)
+    app.cli.add_command(soa_recompute_command)
 
 @click.command('init-db')
 @with_appcontext
@@ -358,3 +359,17 @@ def seed_notes_receivable_command(company_id: int | None, count: int):
 
     db.session.commit()
     click.echo(f"受取手形を {created} 件、Company(id={target_company.id}) に作成しました。")
+
+
+@click.command('soa-recompute')
+@with_appcontext
+@click.option('--company-id', type=int, required=True, help='対象会社ID（必須）')
+def soa_recompute_command(company_id: int):
+    """SoAの全ページについて完了状態を再評価し、結果をJSONで表示します（読み取りのみ）。"""
+    import json
+    from app.progress.evaluator import SoAProgressEvaluator
+    try:
+        results = SoAProgressEvaluator.recompute_company(company_id)
+        click.echo(json.dumps(results, ensure_ascii=False, indent=2))
+    except Exception as e:
+        click.echo(f'エラー: 再評価中に問題が発生しました: {e}')
