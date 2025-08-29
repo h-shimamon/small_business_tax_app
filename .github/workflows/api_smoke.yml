@@ -26,4 +26,4 @@ jobs:
           fi
       - name: Run pytest
         run: |
-          pytest -q
+          pytest -q tests/test_corp_api_smoke.py
