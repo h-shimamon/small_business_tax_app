@@ -113,6 +113,16 @@ def statement_of_accounts(company):
         'pdf_year': _pdf_year or '2025',
     }
 
+    # Mark completion in session based on difference (0 => completed; non-zero => unmark)
+    try:
+        diff = SoASummaryService.compute_difference(company.id, page, config['model'], config['total_field'], accounting_data=accounting_data)
+        if isinstance(diff, dict) and (diff.get('difference', None) == 0):
+            mark_step_as_completed(page)
+        else:
+            unmark_step_as_completed(page)
+    except Exception:
+        pass
+
     # Post-create success panel context (soft commonization)
     try:
         created_flag = request.args.get('created')
@@ -436,3 +446,17 @@ def delete_item(company, page_key, item_id):
     db.session.commit()
     flash(f"{config['title']}情報を削除しました。", 'success')
     return redirect(url_for('company.statement_of_accounts', page=page_key))
+
+
+# 旧パス互換のための薄いエイリアスのみ追加（既存の /statement_of_accounts は重複させない）
+@company_bp.route('/statement/<page_key>/add')
+def legacy_add_item(page_key):
+    # 互換: /statement/accounts_payable/add → 新実装の add_item に誘導
+    return redirect(url_for('company.add_item', page_key=page_key), code=302)
+
+
+@company_bp.route('/statement_of_accounts')
+def legacy_statement_of_accounts():
+    # /statement_of_accounts?page=deposits → 新実装へ委譲
+    page = request.args.get('page', default='deposits')
+    return redirect(url_for('company.statement_of_accounts', page=page), code=302)

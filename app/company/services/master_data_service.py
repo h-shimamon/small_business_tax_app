@@ -97,16 +97,18 @@ class MasterDataService:
         """貸借対照表マスターをDataFrameとして取得する。"""
         query = AccountTitleMaster.query.filter_by(master_type='BS').all()
         df = pd.DataFrame([m.__dict__ for m in query])
-        df.drop(columns=['_sa_instance_state'], inplace=True)
-        df.set_index('name', inplace=True)
+        df.drop(columns=['_sa_instance_state'], inplace=True, errors='ignore')
+        if 'name' in df.columns:
+            df.set_index('name', inplace=True)
         return df
 
     def get_pl_master_df(self):
         """損益計算書マスターをDataFrameとして取得する。"""
         query = AccountTitleMaster.query.filter_by(master_type='PL').all()
         df = pd.DataFrame([m.__dict__ for m in query])
-        df.drop(columns=['_sa_instance_state'], inplace=True)
-        df.set_index('name', inplace=True)
+        df.drop(columns=['_sa_instance_state'], inplace=True, errors='ignore')
+        if 'name' in df.columns:
+            df.set_index('name', inplace=True)
         return df
 
 def calculate_and_save_hash(base_dir):

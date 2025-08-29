@@ -1,6 +1,6 @@
 # tests/test_statement_of_accounts_skip.py
 from datetime import date
-from flask_login import login_user
+# from flask_login import login_user
 
 from app import db
 from app.company.models import User, Company, AccountingData, AccountTitleMaster
@@ -10,8 +10,9 @@ def login_as_first_user(client):
     app = client.application
     with app.app_context():
         user = db.session.get(User, 1)
-        with client.session_transaction():
-            login_user(user)
+        with client.session_transaction() as sess:
+            sess['_user_id'] = str(user.id)
+            sess['_fresh'] = True
 
 
 def setup_bs_master_for_notes_receivable(app):
