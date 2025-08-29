@@ -4,6 +4,7 @@ from flask_login import current_user
 from .navigation_builder import navigation_tree
 from app.navigation_completion import compute_completed
 from app.primitives.dates import get_company_period
+from app.progress.evaluator import SoAProgressEvaluator
 
 def compute_skipped_steps_for_company(company_id, accounting_data=None):
     """Compute skipped steps (SoA pages with source total == 0) for the given company.
@@ -153,7 +154,26 @@ def get_navigation_state(current_page_key, skipped_steps=None):
             completed_steps |= compute_completed(company.id, current_user.id)
     except Exception:
         pass
-    
+    # SoAページの完了状態を Evaluator で読み取り、表示上の完了に反映（読み取りのみ）
+    try:
+        company = getattr(current_user, 'company', None)
+        if company:
+            soa_children = []
+            for node in navigation_tree:
+                if node.key == 'statement_of_accounts_group':
+                    soa_children = node.children
+                    break
+            for child in soa_children:
+                page = (child.params or {}).get('page')
+                if page:
+                    try:
+                        if SoAProgressEvaluator.is_completed(company.id, page):
+                            completed_steps.add(child.key)
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
     nav_state = [
         node.to_dict(current_page_key, list(completed_steps), skipped_steps)
         for node in navigation_tree
