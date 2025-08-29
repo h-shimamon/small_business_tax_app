@@ -46,3 +46,28 @@ class SoAProgressEvaluator:
     def is_completed(company_id: int, page: str) -> bool:
         res = SoAProgressEvaluator.compute_difference(company_id, page)
         return res['difference'] == 0
+
+    @staticmethod
+    def recompute_company(company_id: int) -> dict[str, bool]:
+        """Evaluate completion for all SoA pages and return mapping {page_key: bool}.
+        Read-only. No state mutations here.
+        """
+        from app.navigation_builder import navigation_tree
+        results: dict[str, bool] = {}
+        try:
+            soa_children = []
+            for node in navigation_tree:
+                if node.key == 'statement_of_accounts_group':
+                    soa_children = node.children
+                    break
+            for child in soa_children:
+                page = (child.params or {}).get('page')
+                if not page:
+                    continue
+                try:
+                    results[child.key] = SoAProgressEvaluator.is_completed(company_id, page)
+                except Exception:
+                    results[child.key] = False
+        except Exception:
+            pass
+        return results
