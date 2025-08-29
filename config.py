@@ -5,6 +5,16 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
+    # ---- Legacy compatibility flags ----
+    import os as _os
+    COMPAT_LEGACY_ENABLED = _os.getenv('COMPAT_LEGACY_ENABLED', 'true').lower() == 'true'
+    COMPAT_DEADLINE = _os.getenv('COMPAT_DEADLINE', '2026-03-31')
+
+    # ---- SoA completion marking behavior ----
+    # GETでの自動完了マーク（互換維持のため既定True。将来的にFalseへ）
+    SOA_MARK_ON_GET = _os.getenv('SOA_MARK_ON_GET', 'true').lower() == 'true'
+    # POST成功時に完了マーク（既定True）
+    SOA_MARK_ON_POST = _os.getenv('SOA_MARK_ON_POST', 'true').lower() == 'true'
     """
     アプリケーションの基本設定クラス。
     環境変数から設定を読み込むことを推奨。
