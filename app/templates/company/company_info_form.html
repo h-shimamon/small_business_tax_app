@@ -18,6 +18,7 @@
             <fieldset>
                 <legend>法人情報</legend>
                 {{ render_field(form.corporate_number, placeholder='13桁の法人番号') }}
+{# TODO: 法人番号フィールドのblur時に /api/corp/resolve?number=XXXX を呼び、名称/住所候補を提示する（PR1b範囲外） #}
                 {{ render_field(form.company_name, placeholder='株式会社 Gemini') }}
                 {{ render_field(form.company_name_kana, placeholder='カブシキガイシャ ジェミニ') }}
             </fieldset>

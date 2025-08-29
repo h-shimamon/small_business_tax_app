@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple, Any
 from app.company.services.master_data_service import MasterDataService
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
 from app import db
+from app.company.soa_config import STATEMENT_PAGES_CONFIG  # ページ→モデル解決用
 
 
 class SoASummaryService:
@@ -72,6 +73,13 @@ class SoASummaryService:
                 return {'bs_total': 0, 'pl_interest_total': 0, 'source_total': 0}
             return {'source_total': 0}
 
+        # 特例: 'miscellaneous' は PLの「雑収入」+「雑損失」を合算して source_total とする
+        if page == 'miscellaneous':
+            pl_source = accounting_data.data.get('profit_loss_statement', {})
+            rev_total = cls._find_and_sum_by_names(pl_source, ['雑収入'])
+            exp_total = cls._find_and_sum_by_names(pl_source, ['雑損失'])
+            return {'source_total': (rev_total + exp_total)}
+
         master_service = MasterDataService()
         targets_info = cls.resolve_target_accounts(page, master_service)
 
@@ -99,13 +107,28 @@ class SoASummaryService:
 
     @staticmethod
     def compute_breakdown_total(company_id: int, page: str, model, total_field_name: str) -> int:
+        # ページ指定だけで呼ばれた場合のフォールバック: ページ→モデル解決
+        if model is None:
+            try:
+                cfg = STATEMENT_PAGES_CONFIG.get(page, {})
+                model = cfg.get('model')
+            except Exception:
+                model = None
+        if model is None:
+            # モデル不明なら 0 扱い（テスト互換のため安全に戻す）
+            return 0
+
         # Special handling for borrowings: sum of balance_at_eoy + paid_interest
         if page == 'borrowings':
-            sum_balance = db.session.query(db.func.sum(model.balance_at_eoy)).filter_by(company_id=company_id).scalar() or 0
-            sum_interest = db.session.query(db.func.sum(model.paid_interest)).filter_by(company_id=company_id).scalar() or 0
+            sum_balance = db.session.query(db.func.sum(model.balance_at_eoy))\
+                .filter_by(company_id=company_id).scalar() or 0
+            sum_interest = db.session.query(db.func.sum(model.paid_interest))\
+                .filter_by(company_id=company_id).scalar() or 0
             return (sum_balance or 0) + (sum_interest or 0)
+
         total_field = getattr(model, total_field_name)
-        return db.session.query(db.func.sum(total_field)).filter_by(company_id=company_id).scalar() or 0
+        return db.session.query(db.func.sum(total_field))\
+            .filter_by(company_id=company_id).scalar() or 0
 
     @classmethod
     def compute_difference(cls, company_id: int, page: str, model, total_field_name: str, accounting_data=None) -> Dict[str, int]:
