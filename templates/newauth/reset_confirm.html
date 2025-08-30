@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width: 520px;">
+    <h1 class="title is-4">新しいパスワードを設定</h1>
+    <div class="box">
+      <form method="post" action="">
+        {{ form.csrf_token }}
+        <input type="hidden" name="token" value="{{ token }}" />
+        <div class="field">
+          <label class="label">{{ form.password.label }}</label>
+          <div class="control">
+            {{ form.password(class_='input', placeholder='8文字以上') }}
+          </div>
+          {% if form.password.errors %}
+            <p class="help is-danger">{{ form.password.errors[0] }}</p>
+          {% endif %}
+        </div>
+        <div class="field">
+          <label class="label">{{ form.password2.label }}</label>
+          <div class="control">
+            {{ form.password2(class_='input', placeholder='確認のため再入力') }}
+          </div>
+          {% if form.password2.errors %}
+            <p class="help is-danger">{{ form.password2.errors[0] }}</p>
+          {% endif %}
+        </div>
+        <div class="field is-grouped is-justify-content-flex-end">
+          <div class="control">
+            <button type="submit" class="button is-primary">{{ form.submit.label.text }}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

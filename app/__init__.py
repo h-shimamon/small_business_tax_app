@@ -44,6 +44,16 @@ def create_app(test_config=None):
     from .company import company_bp
     app.register_blueprint(company_bp)
 
+    # --- Optional: new auth module (feature-flagged) ---
+    try:
+        flag = str(app.config.get('ENABLE_NEW_AUTH') or os.getenv('ENABLE_NEW_AUTH', '0')).lower()
+        if flag in ('1', 'true', 'yes', 'on'):
+            from .newauth import newauth_bp
+            app.register_blueprint(newauth_bp, url_prefix='/xauth')
+    except Exception:
+        # flag off or module not available; ignore silently to keep isolation
+        pass
+
     # ---- Legacy redirector blueprint (root-level compat) ----
     try:
         from app.compat.redirector import bp_redirector

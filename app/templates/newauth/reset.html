@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width: 520px;">
+    <h1 class="title is-4">パスワードをお忘れですか？</h1>
+    <p class="subtitle is-6">メールアドレスに再設定リンクを送信します。</p>
+    <div class="box">
+      <form method="post" action="">
+        {{ form.csrf_token }}
+        <div class="field">
+          <label class="label">{{ form.email.label }}</label>
+          <div class="control">
+            {{ form.email(class_='input', placeholder='you@example.com') }}
+          </div>
+          {% if form.email.errors %}
+            <p class="help is-danger">{{ form.email.errors[0] }}</p>
+          {% endif %}
+        </div>
+        <div class="field is-grouped is-justify-content-flex-end">
+          <div class="control">
+            <button type="submit" class="button is-primary">{{ form.submit.label.text }}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
