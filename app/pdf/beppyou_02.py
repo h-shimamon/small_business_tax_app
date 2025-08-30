@@ -101,12 +101,21 @@ def _format_number(n: Optional[int]) -> str:
 
 
 def _load_geometry(repo_root: str, year: str):
-    """Load optional geometry constants from JSON; return dict or {} on failure."""
+    """Load optional geometry constants from JSON; return dict or {} on failure.
+    Adds schema validation (rects/cols) with safe defaults; silently falls back on error.
+    """
     import json
     path = os.path.join(repo_root, f"resources/pdf_templates/beppyou_02/{year}_geometry.json")
     try:
         with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f) or {}
+            data = json.load(f) or {}
+        # Try strict validation + defaults (rects-mode supported); ignore validation errors to keep behavior
+        try:
+            from . import geom_loader as _geom
+            data = _geom.validate_and_apply_defaults(data)
+        except Exception:
+            pass
+        return data
     except Exception:
         return {}
 

@@ -25,7 +25,7 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
     - year: e.g., '2025'
     - repo_root: absolute repository root path
     - required: if True, raise GeometryError/FileNotFoundError when missing
-    - validate: if True, perform minimal key validation
+    - validate: if True, perform validation (strict schema first, then legacy minimal checks)
     """
     geom_path = os.path.join(repo_root, f"resources/pdf_templates/{template_key}/{year}_geometry.json")
     if not os.path.exists(geom_path):
@@ -34,14 +34,23 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
         return {}
     try:
         with open(geom_path, "r", encoding="utf-8") as f:
-            data = json.load(f) or {}
+            data: Dict[str, Any] = json.load(f) or {}
     except Exception as e:
         if required:
             raise GeometryError(f"Failed to parse geometry JSON: {geom_path}") from e
         return {}
 
     if validate:
-        _require_keys(data, ["cols"])
+        # Try strict schema validation + defaults (non-fatal; falls back to legacy checks on error)
+        try:
+            from . import geom_loader as _geom  # local import to avoid cycles
+            data = _geom.validate_and_apply_defaults(data)
+        except Exception:
+            # Keep legacy behavior if strict validation fails
+            pass
+
+        # Legacy minimal validation (preserved for backward compatibility)
+        _require_keys(data, ["cols"])  # this loader is for cols-based templates
         cols = data.get("cols", {})
         if not isinstance(cols, dict) or not cols:
             raise GeometryError("geometry cols must be a non-empty object")

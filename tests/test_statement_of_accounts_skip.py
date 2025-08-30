@@ -3,16 +3,8 @@ from datetime import date
 # from flask_login import login_user
 
 from app import db
-from app.company.models import User, Company, AccountingData, AccountTitleMaster
-
-
-def login_as_first_user(client):
-    app = client.application
-    with app.app_context():
-        user = db.session.get(User, 1)
-        with client.session_transaction() as sess:
-            sess['_user_id'] = str(user.id)
-            sess['_fresh'] = True
+from app.company.models import Company, AccountingData, AccountTitleMaster
+from tests.helpers.auth import login_as
 
 
 def setup_bs_master_for_notes_receivable(app):
@@ -32,7 +24,7 @@ def test_soa_redirects_when_current_page_skipped(client, init_database):
     フラッシュに skip カテゴリの文言が含まれる。
     """
     app = client.application
-    login_as_first_user(client)
+    login_as(client, 1)
     setup_bs_master_for_notes_receivable(app)
 
     with app.app_context():
@@ -71,7 +63,7 @@ def test_navigation_state_marks_skipped(client, init_database):
     from app.company.services.soa_summary_service import SoASummaryService
 
     app = client.application
-    login_as_first_user(client)
+    login_as(client, 1)
     setup_bs_master_for_notes_receivable(app)
 
     with app.app_context():

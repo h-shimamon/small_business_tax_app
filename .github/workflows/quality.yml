@@ -57,3 +57,111 @@ jobs:
               print('date-health: mismatch/only detected', file=sys.stderr)
               sys.exit(1)
           PY
+
+
+  pdf_geometry:
+    needs: precommit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Validate PDF geometries
+        run: |
+          PYTHONPATH=. python -m app.pdf.geom_loader --check-all
+
+
+  alembic_heads:
+    needs: precommit
+    runs-on: ubuntu-latest
+    env:
+      FLASK_APP: app:create_app
+      DATABASE_URL: sqlite:////tmp/ci.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install Flask Flask-Migrate Flask-SQLAlchemy
+      - name: Check Alembic heads (single head)
+        run: |
+          FLASK_APP=${FLASK_APP} flask db upgrade || true
+          COUNT=$(flask db heads | wc -l | tr -d ' ')
+          echo "heads_count=$COUNT"
+          if [ "$COUNT" != "1" ]; then
+            echo "Expected 1 head, got $COUNT" >&2
+            exit 1
+          fi
+
+
+  data_quality_report:
+    needs: precommit
+    runs-on: ubuntu-latest
+    env:
+      FLASK_APP: app:create_app
+      DATABASE_URL: sqlite:////tmp/ci.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install Flask Flask-Migrate Flask-SQLAlchemy
+      - name: Initialize database (SQLite)
+        run: |
+          python -c "import os; os.makedirs('/tmp', exist_ok=True)"
+          FLASK_APP=${FLASK_APP} flask db upgrade || true
+      - name: Report negative-value counts (non-fatal)
+        run: |
+          python - << 'PY'
+          from sqlalchemy import func
+          from app import db
+          from app.company import models as M
+
+          checks = [
+            ("deposit.balance", M.Deposit, "balance"),
+            ("notes_receivable.amount", M.NotesReceivable, "amount"),
+            ("accounts_receivable.balance_at_eoy", M.AccountsReceivable, "balance_at_eoy"),
+            ("temporary_payment.balance_at_eoy", M.TemporaryPayment, "balance_at_eoy"),
+            ("loans_receivable.balance_at_eoy", M.LoansReceivable, "balance_at_eoy"),
+            ("loans_receivable.received_interest", M.LoansReceivable, "received_interest"),
+            ("inventory.quantity", M.Inventory, "quantity"),
+            ("inventory.unit_price", M.Inventory, "unit_price"),
+            ("inventory.balance_at_eoy", M.Inventory, "balance_at_eoy"),
+            ("security.balance_at_eoy", M.Security, "balance_at_eoy"),
+            ("fixed_asset.balance_at_eoy", M.FixedAsset, "balance_at_eoy"),
+            ("notes_payable.amount", M.NotesPayable, "amount"),
+            ("accounts_payable.balance_at_eoy", M.AccountsPayable, "balance_at_eoy"),
+            ("temporary_receipt.balance_at_eoy", M.TemporaryReceipt, "balance_at_eoy"),
+            ("borrowing.balance_at_eoy", M.Borrowing, "balance_at_eoy"),
+            ("borrowing.paid_interest", M.Borrowing, "paid_interest"),
+            ("executive_compensation.total_compensation", M.ExecutiveCompensation, "total_compensation"),
+            ("land_rent.rent_paid", M.LandRent, "rent_paid"),
+            ("miscellaneous.amount", M.Miscellaneous, "amount"),
+          ]
+
+          print("data-quality: negative counts (non-fatal report)")
+          had_error = False
+          for label, model, colname in checks:
+            try:
+              col = getattr(model, colname)
+              cnt = db.session.query(func.count()).select_from(model).filter(col < 0).scalar() or 0
+              print(f" - {label}: {cnt}")
+            except Exception as e:
+              had_error = True
+              print(f" - {label}: error: {e}")
+          if had_error:
+            print("(note) some checks errored; report only, CI does not fail")
+          PY

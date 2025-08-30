@@ -1,50 +1,67 @@
 from __future__ import annotations
 
 """
-Dates primitives: thin, additive facade over date readers.
+Date utilities: fixed contract for parsing and company periods.
 
-Intent:
-- Provide a single, expressive entrypoint for callers (e.g., "period")
-- Keep UI/external I/F unchanged; usage is optional and non-breaking
+- parse_lenient: UI input tolerant parser. Returns date|None (empty -> None).
+- parse_strict: Storage/print strict parser. Accepts only YYYY-MM-DD, raises ValueError.
+- get_company_period: Unified accessor for a company's accounting period (start/end).
+- to_iso, company_closing_date: re-exported for convenience/compatibility.
+
+This module keeps existing behavior by delegating to models_utils.date_readers.
 """
 
+from dataclasses import dataclass
 from datetime import date
-from typing import NamedTuple, Optional, Any
+from typing import Optional
 
-from app.models_utils import date_readers as _readers
+from app.models_utils.date_readers import (
+    ensure_date,
+    to_iso,  # re-export
+    company_accounting_period_start,
+    company_accounting_period_end,
+    company_closing_date,  # re-export
+)
 
 
-class Period(NamedTuple):
+@dataclass(frozen=True)
+class Period:
     start: Optional[date]
     end: Optional[date]
 
 
-def get_company_period(company: Any) -> Period:
-    """Return (start, end) dates for a company using centralized readers.
-
-    - Prefers Date columns, falls back to String(10) parse
-    - Returns None for missing/invalid
-    """
-    return Period(
-        start=_readers.company_accounting_period_start(company),
-        end=_readers.company_accounting_period_end(company),
-    )
+def parse_lenient(value) -> Optional[date]:
+    """Lenient parser for UI inputs. Returns None for empty/invalid."""
+    return ensure_date(value)
 
 
-def company_closing_date(company: Any) -> Optional[date]:
-    """Date for company closing date with safe fallback to String(10)."""
-    return _readers.company_closing_date(company)
+def parse_strict(value) -> date:
+    """Strict parser for storage/printing. Only accepts YYYY-MM-DD; raises ValueError otherwise."""
+    if value is None or value == "":
+        raise ValueError("date is required")
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value))
+    except Exception as e:
+        raise ValueError(f"invalid date format: {value}") from e
 
 
-def to_iso(d: Optional[date]) -> Optional[str]:
-    """ISO string for a date or None."""
-    return d.isoformat() if isinstance(d, date) else None
+def get_company_period(company) -> Period:
+    """Return company's accounting period as Period(start,end). Safe for missing values."""
+    try:
+        start = company_accounting_period_start(company)
+        end = company_accounting_period_end(company)
+        return Period(start=start, end=end)
+    except Exception:
+        return Period(start=None, end=None)
 
 
 __all__ = [
-    "Period",
+    "parse_lenient",
+    "parse_strict",
     "get_company_period",
-    "company_closing_date",
     "to_iso",
+    "company_closing_date",
+    "Period",
 ]
-

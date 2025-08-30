@@ -7,13 +7,7 @@ from app import db
 from app.company.models import User, Company, AccountingData, AccountTitleMaster
 
 
-def login_as_first_user(client):
-    app = client.application
-    with app.app_context():
-        user = db.session.get(User, 1)
-        with client.session_transaction() as sess:
-            sess['_user_id'] = str(user.id)
-            sess['_fresh'] = True
+from tests.helpers.auth import login_as
 
 
 def setup_bs_master_for_two_pages(app):
@@ -38,7 +32,7 @@ def test_form_page_sidebar_marks_skipped_black_dot_by_class(client, init_databas
     赤丸指定のCSSは is-skipped を除外しているため、視覚的にも黒丸となる。
     """
     app = client.application
-    login_as_first_user(client)
+    login_as(client, 1)
     setup_bs_master_for_two_pages(app)
 
     with app.app_context():

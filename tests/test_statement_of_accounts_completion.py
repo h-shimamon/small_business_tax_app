@@ -3,16 +3,8 @@ from datetime import date
 # from flask_login import login_user
 
 from app import db
-from app.company.models import User, Company, AccountingData, AccountTitleMaster, Deposit
-
-
-def login_as_first_user(client):
-    app = client.application
-    with app.app_context():
-        user = db.session.get(User, 1)
-        with client.session_transaction() as sess:
-            sess['_user_id'] = str(user.id)
-            sess['_fresh'] = True
+from app.company.models import Company, AccountingData, AccountTitleMaster, Deposit
+from tests.helpers.auth import login_as
 
 
 def setup_bs_master_for_deposits(app):
@@ -31,7 +23,7 @@ def test_mark_and_unmark_completion_based_on_difference(client, init_database):
     差額=0 の時に完了マークされ、差額≠0 で未完了に戻ることを検証（セッションの wizard_completed_steps）。
     """
     app = client.application
-    login_as_first_user(client)
+    login_as(client, 1)
     setup_bs_master_for_deposits(app)
 
     with app.app_context():
@@ -70,4 +62,3 @@ def test_mark_and_unmark_completion_based_on_difference(client, init_database):
     assert resp2.status_code == 200
     with client.session_transaction() as sess:
         assert 'deposits' not in sess.get('wizard_completed_steps', [])
-

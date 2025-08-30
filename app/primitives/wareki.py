@@ -84,9 +84,43 @@ def numeric_parts(value: Any) -> Optional[Tuple[str, str, str]]:
     return (f"{wy:02d}", f"{m:02d}", f"{dd:02d}")
 
 
+def render(value: Any, style: str = "era_ymd") -> str:
+    """Render Japanese era date in common styles.
+
+    Styles:
+      - "era_ymd": e.g., "令和7年5月1日" (default)
+      - "era_with_spaces": e.g., "令和7　05　01" (full-width spaces, no 年/月/日)
+      - "yy_mm_dd": e.g., "07 05 01" (wareki numeric parts, no era)
+      - "era_year": e.g., "令和7" (era name + era year only)
+      - "era_name": e.g., "令和" (era name only)
+    Returns empty string when value cannot be rendered.
+    """
+    d = _to_date(value)
+    if d is None:
+        return ""
+    if style == "era_ymd":
+        return to_wareki(d)
+    if style == "era_with_spaces":
+        return with_spaces(d)
+    if style == "yy_mm_dd":
+        parts = numeric_parts(d)
+        return " ".join(parts) if parts else ""
+    if style == "era_year":
+        y, m, dd = d.year, d.month, d.day
+        for name, (ey, em, ed) in _ERAS:
+            if (y, m, dd) >= (ey, em, ed):
+                wy = y - ey + 1
+                return f"{name}{wy}"
+        return ""
+    if style == "era_name":
+        return era_name(d)
+    raise ValueError(f"unknown wareki render style: {style}")
+
+
 __all__ = [
     "to_wareki",
     "with_spaces",
     "era_name",
     "numeric_parts",
+    "render",
 ]
