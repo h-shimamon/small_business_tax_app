@@ -1,5 +1,5 @@
 # app/__init__.py
-import os
+import os, sys
 from flask import Flask, flash
 from .extensions import db, login_manager, migrate
 from .company.models import User
@@ -50,8 +50,8 @@ def create_app(test_config=None):
         if flag in ('1', 'true', 'yes', 'on'):
             from .newauth import newauth_bp
             app.register_blueprint(newauth_bp, url_prefix='/xauth')
-    except Exception:
-        # flag off or module not available; ignore silently to keep isolation
+    except Exception as e:
+        print("[newauth] register failed:", e, file=sys.stderr)
         pass
 
     # ---- Legacy redirector blueprint (root-level compat) ----

@@ -1,12 +1,11 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="section">
-  <div class="container" style="max-width: 520px;">
-    <h1 class="title is-4">確認メールを送信しました</h1>
-    <p class="subtitle is-6">メール内のリンクをクリックして認証を完了してください。</p>
-    <div class="box">
-      <p class="has-text-grey">メールが届かない場合は、迷惑メールフォルダをご確認ください。</p>
+{% extends 'newauth/_auth_base.html' %}
+{% block auth_content %}
+  <div class="auth-card card" style="max-width: 560px;">
+    <div class="card-body">
+      <div class="content-header" style="margin-bottom: 12px;">
+        <h1 class="content-title">確認メールを送信しました</h1>
+      </div>
+      <p class="has-text-grey">メール内のリンクをクリックして認証を完了してください。<br>届かない場合は迷惑メールフォルダをご確認ください。</p>
     </div>
   </div>
-</section>
 {% endblock %}

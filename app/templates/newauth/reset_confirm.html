@@ -1,37 +1,27 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="section">
-  <div class="container" style="max-width: 520px;">
-    <h1 class="title is-4">新しいパスワードを設定</h1>
-    <div class="box">
-      <form method="post" action="">
+{% extends 'newauth/_auth_base.html' %}
+{% block auth_content %}
+  {% import 'company/_form_helpers.html' as FH %}
+  <div class="auth-card card">
+    <div class="card-body">
+      <div class="content-header" style="margin-bottom: 12px;">
+        <h1 class="content-title">{{ title or '新しいパスワードを設定' }}</h1>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <div class="notification is-{{ 'danger' if category == 'danger' else ('success' if category == 'success' else 'info') }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      <form method="post">
         {{ form.csrf_token }}
         <input type="hidden" name="token" value="{{ token }}" />
-        <div class="field">
-          <label class="label">{{ form.password.label }}</label>
-          <div class="control">
-            {{ form.password(class_='input', placeholder='8文字以上') }}
-          </div>
-          {% if form.password.errors %}
-            <p class="help is-danger">{{ form.password.errors[0] }}</p>
-          {% endif %}
-        </div>
-        <div class="field">
-          <label class="label">{{ form.password2.label }}</label>
-          <div class="control">
-            {{ form.password2(class_='input', placeholder='確認のため再入力') }}
-          </div>
-          {% if form.password2.errors %}
-            <p class="help is-danger">{{ form.password2.errors[0] }}</p>
-          {% endif %}
-        </div>
-        <div class="field is-grouped is-justify-content-flex-end">
-          <div class="control">
-            <button type="submit" class="button is-primary">{{ form.submit.label.text }}</button>
-          </div>
+        {{ FH.render_field(form.password, placeholder='8文字以上') }}
+        {{ FH.render_field(form.password2, placeholder='確認のため再入力') }}
+        <div class="form-actions" style="text-align: right;">
+          <button type="submit" class="button-primary">{{ submit_label or form.submit.label.text }}</button>
         </div>
       </form>
     </div>
   </div>
-</section>
 {% endblock %}

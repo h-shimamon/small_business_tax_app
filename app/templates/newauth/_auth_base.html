@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block head %}{{ super() }}
+  <style>
+    /* newauth pages: isolate from main UI without touching base.html */
+    .sidebar { display: none !important; }
+    .global-nav .nav-item { visibility: hidden; }
+    /* Viewport-centered layout */
+    .auth-center { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 6vh 16px; }
+    .auth-card { width: 100%; max-width: 460px; }
+  </style>
+{% endblock %}
+{% block content %}
+  <div class="auth-center">
+    {% block auth_content %}{% endblock %}
+  </div>
+{% endblock %}

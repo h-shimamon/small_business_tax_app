@@ -11,6 +11,8 @@ WINDOW_SEC = 60.0
 LIMIT = 5
 RESET_WINDOW_SEC = 3600.0
 RESET_LIMIT = 3
+SIGNUP_WINDOW_SEC = 3600.0
+SIGNUP_LIMIT = 3
 
 
 def too_many_attempts(req: Request, email: str) -> bool:
@@ -35,3 +37,15 @@ def too_many_reset_requests(req: Request, email: str) -> bool:
     cnt += 1
     _store[key] = (win, cnt)
     return cnt > RESET_LIMIT
+
+
+def too_many_signup_requests(req: Request, email: str) -> bool:
+    ip = (req.headers.get("X-Forwarded-For", "") or req.remote_addr or "-").split(",")[0].strip()
+    key = (ip, (email or "").lower() + "::signup")
+    now = time.time()
+    win, cnt = _store.get(key, (now, 0))
+    if now - win > SIGNUP_WINDOW_SEC:
+        win, cnt = now, 0
+    cnt += 1
+    _store[key] = (win, cnt)
+    return cnt > SIGNUP_LIMIT

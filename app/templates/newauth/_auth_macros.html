@@ -1,0 +1,36 @@
+{# Newauth shared form macros (isolated; no impact to main app) #}
+{% macro field_row(field, placeholder='') -%}
+  <div class="field">
+    <label class="label">{{ field.label }}</label>
+    <div class="control">
+      {{ field(class_='input', placeholder=placeholder) }}
+    </div>
+    {% if field.errors %}
+      <p class="help is-danger">{{ field.errors[0] }}</p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{% macro submit_row(field) -%}
+  <div class="field is-grouped is-justify-content-flex-end">
+    <div class="control">
+      <button type="submit" class="button is-primary">{{ field.label.text }}</button>
+    </div>
+  </div>
+{%- endmacro %}
+
+{% macro auth_card(title) -%}
+  <div class="auth-center">
+    <div class="auth-card box">
+      <h1 class="title is-4" style="margin-bottom: 12px;">{{ title }}</h1>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <div class="notification is-{{ 'danger' if category == 'danger' else ('success' if category == 'success' else 'info') }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {{ caller() }}
+    </div>
+  </div>
+{%- endmacro %}
