@@ -94,6 +94,39 @@ class MasterDataService:
         last_version = MasterVersion.query.order_by(MasterVersion.id.desc()).first()
         return last_version.version_hash if last_version else None
 
+
+    def get_bs_master_df(self):
+        """貸借対照表マスターをDataFrameとして取得する。"""
+        try:
+            from flask import current_app as _app
+            if bool(_app.config.get('TESTING', False)):
+                query = AccountTitleMaster.query.filter_by(master_type='BS').all()
+                df = pd.DataFrame([m.__dict__ for m in query])
+                df.drop(columns=['_sa_instance_state'], inplace=True, errors='ignore')
+                if 'name' in df.columns:
+                    df.set_index('name', inplace=True)
+                return df
+        except Exception:
+            pass
+        version_hash = self._get_last_db_hash() or self._get_current_files_hash() or ''
+        return _load_master_df_cached('BS', version_hash)
+
+    def get_pl_master_df(self):
+        """損益計算書マスターをDataFrameとして取得する。"""
+        try:
+            from flask import current_app as _app
+            if bool(_app.config.get('TESTING', False)):
+                query = AccountTitleMaster.query.filter_by(master_type='PL').all()
+                df = pd.DataFrame([m.__dict__ for m in query])
+                df.drop(columns=['_sa_instance_state'], inplace=True, errors='ignore')
+                if 'name' in df.columns:
+                    df.set_index('name', inplace=True)
+                return df
+        except Exception:
+            pass
+        version_hash = self._get_last_db_hash() or self._get_current_files_hash() or ''
+        return _load_master_df_cached('PL', version_hash)
+
 @lru_cache(maxsize=8)
 def _load_master_df_cached(master_type: str, version_hash: str):
     """指定タイプのマスタをDataFrameで返す（プロセス内LRUキャッシュ）。
@@ -113,15 +146,6 @@ def clear_master_df_cache():
     except Exception:
         pass
 
-    def get_bs_master_df(self):
-        """貸借対照表マスターをDataFrameとして取得する。"""
-        version_hash = self._get_last_db_hash() or self._get_current_files_hash() or ''
-        return _load_master_df_cached('BS', version_hash)
-
-    def get_pl_master_df(self):
-        """損益計算書マスターをDataFrameとして取得する。"""
-        version_hash = self._get_last_db_hash() or self._get_current_files_hash() or ''
-        return _load_master_df_cached('PL', version_hash)
 
 def calculate_and_save_hash(base_dir):
     """

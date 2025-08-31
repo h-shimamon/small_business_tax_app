@@ -50,3 +50,4 @@ instance/
 # Temp outputs (generated PDFs and artifacts)
 temporary/**
 !temporary/.gitkeep
+nohup.out
