@@ -1,6 +1,6 @@
 {# app/templates/company/_form_helpers.html (UI改善版) #}
 
-{% macro render_field(field, placeholder=None, type=None, rows=None, id=None, class_="", readonly=False, container_class="") %}
+{% macro render_field(field, placeholder=None, type=None, rows=None, id=None, class_="", readonly=False, container_class="", autofocus=False, tabindex=None) %}
   {% set final_placeholder = placeholder if placeholder is not none else field.render_kw.get('placeholder') if field.render_kw else None %}
   {% set needs_date_ui = 'js-date' in class_ %}
   <div class="form-group {{ container_class }}" id="{{ field.name }}_group">
@@ -12,10 +12,10 @@
             <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 1 1 2 0v1zm12 6H5v10h14V8z"/>
           </svg>
         </button>
-        {{ field(class=("form-control js-date " ~ class_)|trim, placeholder=final_placeholder, rows=rows, id=id, readonly=readonly, **{'data-input': ''}) }}
+        {{ field(class=("form-control js-date " ~ class_)|trim, placeholder=final_placeholder, rows=rows, id=id, readonly=readonly, autofocus=autofocus, tabindex=tabindex, **{'data-input': ''}) }}
       </div>
     {% else %}
-      {{ field(class=("form-control " ~ class_)|trim, placeholder=final_placeholder, type=type, rows=rows, id=id, readonly=readonly) }}
+      {{ field(class=("form-control " ~ class_)|trim, placeholder=final_placeholder, type=type, rows=rows, id=id, readonly=readonly, autofocus=autofocus, tabindex=tabindex) }}
     {% endif %}
     {% if field.errors %}
       <div class="form-errors">

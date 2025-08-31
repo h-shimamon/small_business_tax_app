@@ -108,7 +108,7 @@ class MasterDataService:
                 return df
         except Exception:
             pass
-        version_hash = self._get_last_db_hash() or self._get_current_files_hash() or ''
+        version_hash = self._get_last_db_hash() or ''
         return _load_master_df_cached('BS', version_hash)
 
     def get_pl_master_df(self):
@@ -124,7 +124,7 @@ class MasterDataService:
                 return df
         except Exception:
             pass
-        version_hash = self._get_last_db_hash() or self._get_current_files_hash() or ''
+        version_hash = self._get_last_db_hash() or ''
         return _load_master_df_cached('PL', version_hash)
 
 @lru_cache(maxsize=8)

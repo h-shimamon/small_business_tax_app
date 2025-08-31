@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% from 'company/_form_helpers.html' import render_field, render_checkbox_field, render_toggle_switch %}
 
 {% block title %}基本情報{% endblock %}
@@ -17,7 +17,7 @@
         <div class="form-grid">
             <fieldset>
                 <legend>法人情報</legend>
-                {{ render_field(form.corporate_number, placeholder='13桁の法人番号') }}
+                {{ render_field(form.corporate_number, id='corporate_number', placeholder='13桁の法人番号', autofocus=True) }}
 {# TODO: 法人番号フィールドのblur時に /api/corp/resolve?number=XXXX を呼び、名称/住所候補を提示する（PR1b範囲外） #}
                 {{ render_field(form.company_name, placeholder='株式会社 Gemini') }}
                 {{ render_field(form.company_name_kana, placeholder='カブシキガイシャ ジェミニ') }}
@@ -107,4 +107,3 @@
     {{ super() }}
     <script src="{{ url_for('static', filename='js/address_autofill.js') }}"></script>
 {% endblock %}
-

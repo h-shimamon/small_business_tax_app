@@ -114,6 +114,17 @@ def statement_of_accounts(company):
         'pdf_year': _pdf_year or '2025',
     }
 
+    # Safe defaults to avoid template errors if summary computation fails
+    if 'generic_summary' not in locals():
+        pass
+    context.setdefault('generic_summary', {'bs_total': 0, 'breakdown_total': 0, 'difference': 0})
+    if page == 'deposits':
+        context.setdefault('deposit_summary', context['generic_summary'])
+    elif page == 'notes_receivable':
+        context.setdefault('notes_receivable_summary', context['generic_summary'])
+    elif page == 'accounts_receivable':
+        context.setdefault('accounts_receivable_summary', context['generic_summary'])
+
     # Optional: legacy GET-side marking (controlled by flag)
     try:
         if current_app.config.get('SOA_MARK_ON_GET', True):

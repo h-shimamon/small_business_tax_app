@@ -20,57 +20,60 @@ def register_commands(app):
     app.cli.add_command(seed_notes_receivable_command)
     app.cli.add_command(soa_recompute_command)
 
+    app.cli.add_command(dev_bootstrap_command)
+
 @click.command('init-db')
 @with_appcontext
 def init_db_command():
     """
-    データベースに初期データ（管理者ユーザーなど）を投入します。
-    テーブルは `flask db upgrade` で先に作成しておく必要があります。
+    初期データ（管理者ユーザーとサンプル会社）を安全に投入します。
+    - 既存データは削除せず、不足分のみ作成（冪等）。
+    - 事前に `flask db upgrade` を実行してください。
     """
     click.echo("データベースの初期データ投入を開始します...")
     try:
-        # 既存のadminユーザーを検索し、存在すれば削除
-        admin_user = User.query.filter_by(username='admin').first()
-        if admin_user:
-            db.session.delete(admin_user)
-            db.session.commit()
-            click.echo("既存の管理者ユーザーを削除しました。")
-
         from datetime import date
         from app.company.models import Company
 
-        # 管理者ユーザー作成
-        admin_user = User(username='admin')
-        admin_user.set_password('password')
-        db.session.add(admin_user)
-        db.session.commit()
-        click.echo("管理者ユーザーを作成しました。")
+        # 1) 管理者ユーザーの作成（存在しない場合のみ）
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            admin_user = User(username='admin', email='admin@example.com')
+            admin_user.set_password('password')
+            db.session.add(admin_user)
+            db.session.commit()
+            click.echo("管理者ユーザーを作成しました（admin/password）。")
+        else:
+            click.echo("管理者ユーザーは既に存在します。スキップします。")
 
-        # ダミーの会社情報を作成し、管理者ユーザーに紐付ける
-        dummy_company = Company(
-            corporate_number="1111111111111",
-            company_name="（ダミー）株式会社 Gemini",
-            company_name_kana="ダミー カブシキガイシャジェミニ",
-            zip_code="1066126",
-            prefecture="東京都",
-            city="港区",
-            address="六本木6-10-1 六本木ヒルズ森タワー",
-            phone_number="03-6384-9000",
-            establishment_date=date(2023, 1, 1),
-            user_id=admin_user.id
-        )
-        db.session.add(dummy_company)
-        db.session.commit()
-        click.echo("管理者ユーザー用のダミー会社情報を作成しました。")
+        # 2) サンプル会社の作成（adminに未紐付なら作成）
+        company = Company.query.filter_by(user_id=admin_user.id).first()
+        if not company:
+            company = Company(
+                user_id=admin_user.id,
+                corporate_number="1111111111111",
+                company_name="（ダミー）株式会社 Gemini",
+                company_name_kana="ダミー カブシキガイシャジェミニ",
+                zip_code="1066126",
+                prefecture="東京都",
+                city="港区",
+                address="六本木6-10-1 六本木ヒルズ森タワー",
+                phone_number="03-6384-9000",
+                establishment_date=date(2023, 1, 1),
+            )
+            db.session.add(company)
+            db.session.commit()
+            click.echo("管理者ユーザー用のダミー会社情報を作成しました。")
+        else:
+            click.echo("管理者ユーザーの会社情報は既に存在します。スキップします。")
 
-        # マスターデータの同期
+        # 3) マスターデータの同期確認（差分があれば更新）
         service = MasterDataService()
         service.check_and_sync()
         click.echo("マスターデータの同期を確認しました。")
         click.echo("初期データの投入が完了しました。")
     except Exception as e:
         click.echo(f'エラー: 初期データ投入中に問題が発生しました: {e}')
-        # エラーの詳細を出力
         import traceback
         traceback.print_exc()
 
@@ -221,6 +224,58 @@ def report_date_health_command(fmt):
         for title, m in sections:
             if m is not None:
                 click.echo(_row(title, m))
+
+
+@click.command('dev-bootstrap')
+@with_appcontext
+def dev_bootstrap_command():
+    """開発用の安全な初期化: admin/password とサンプル会社、マスター同期を冪等に実施。"""
+    click.echo("[dev-bootstrap] 開発用初期化を開始します…")
+    try:
+        from datetime import date
+        from app.company.models import Company
+
+        # admin作成（なければ）
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            admin_user = User(username='admin', email='admin@example.com')
+            admin_user.set_password('password')
+            db.session.add(admin_user)
+            db.session.commit()
+            click.echo("[dev-bootstrap] 管理者ユーザーを作成しました（admin/password）。")
+        else:
+            click.echo("[dev-bootstrap] 管理者ユーザーは既に存在します。")
+
+        # 会社作成（紐付け無ければ）
+        company = Company.query.filter_by(user_id=admin_user.id).first()
+        if not company:
+            company = Company(
+                user_id=admin_user.id,
+                corporate_number="1111111111111",
+                company_name="（ダミー）株式会社 Gemini",
+                company_name_kana="ダミー カブシキガイシャジェミニ",
+                zip_code="1066126",
+                prefecture="東京都",
+                city="港区",
+                address="六本木6-10-1 六本木ヒルズ森タワー",
+                phone_number="03-6384-9000",
+                establishment_date=date(2023, 1, 1),
+            )
+            db.session.add(company)
+            db.session.commit()
+            click.echo("[dev-bootstrap] サンプル会社を作成しました。")
+        else:
+            click.echo("[dev-bootstrap] サンプル会社は既に存在します。")
+
+        # マスター同期
+        service = MasterDataService()
+        service.check_and_sync()
+        click.echo("[dev-bootstrap] マスターデータの同期を確認しました。")
+        click.echo("[dev-bootstrap] 完了しました。")
+    except Exception as e:
+        click.echo(f"[dev-bootstrap] エラー: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 @click.command('seed-soa')

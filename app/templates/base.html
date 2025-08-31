@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -31,25 +32,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    <header class="global-header">
-        <nav class="global-nav">
-            <a href="#" class="nav-item">ホーム</a>
-            <a href="{{ url_for('company.info') }}" class="nav-item">基本情報登録</a>
-            <a href="{{ url_for('company.select_software') }}" class="nav-item">会計データ選択</a>
-            <a href="#" class="nav-item">固定資産台帳</a>
-            <a href="{{ url_for('company.statement_of_accounts') }}" class="nav-item">勘定科目内訳書</a>
-            <a href="#" class="nav-item">申告書データ</a>
-            <a href="#" class="nav-item">印刷</a>
-            <a href="#" class="nav-item">設定</a>
-        </nav>
-    </header>
-
-    <div class="app-container">
-        <aside class="sidebar">
-            {% include 'company/_wizard_sidebar.html' %}
-        </aside>
-
-        <main class="main-content">
+    <div class="skip-links">
+        <a href="#main-content">本文へ移動</a>
+        <a href="#sidebar">サイドバーへ移動</a>
+        <a href="#global-nav" id="skip-to-nav">ナビへ移動</a>
+    </div>
+        <div class="app-container">
+        <main class="main-content" id="main-content" tabindex="0">
              {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div class="flash-messages">
@@ -61,7 +50,25 @@
             {% endwith %}
             {% block content %}{# 各ページでこのブロックを上書きする #}{% endblock %}
         </main>
+
+        <aside class="sidebar" id="sidebar" tabindex="0">
+            {% include 'company/_wizard_sidebar.html' %}
+        </aside>
     </div>
+
+    {# 固定ヘッダー（DOM末尾に配置。CSSで上部固定） #}
+    <header class="global-header">
+        <nav class="global-nav" id="global-nav">
+            <a href="#" class="nav-item" tabindex="0">ホーム</a>
+            <a href="{{ url_for('company.info') }}" class="nav-item" tabindex="0">基本情報登録</a>
+            <a href="{{ url_for('company.select_software') }}" class="nav-item" tabindex="0">会計データ選択</a>
+            <a href="#" class="nav-item" tabindex="0">固定資産台帳</a>
+            <a href="{{ url_for('company.statement_of_accounts') }}" class="nav-item" tabindex="0">勘定科目内訳書</a>
+            <a href="#" class="nav-item" tabindex="0">申告書データ</a>
+            <a href="#" class="nav-item" tabindex="0">印刷</a>
+            <a href="#" class="nav-item" tabindex="0">設定</a>
+        </nav>
+    </header>
 
     {# スクリプト用のブロックを追加 #}
     {% block scripts %}
@@ -70,6 +77,7 @@
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
         <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>
+        
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 if (!window.flatpickr) return;

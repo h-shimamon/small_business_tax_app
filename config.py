@@ -68,3 +68,8 @@ class DevConfig(Config):
     """開発環境向けの設定。"""
     DEBUG = True
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
+    # 開発体験を優先（本番は ProductionConfig が強化設定）
+    WTF_CSRF_ENABLED = False
+    SESSION_COOKIE_SECURE = False
+    REMEMBER_COOKIE_SECURE = False
+    PREFERRED_URL_SCHEME = 'http'

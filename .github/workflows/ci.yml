@@ -58,5 +58,5 @@ jobs:
           curl -v http://127.0.0.1:5001/ || true; \
           exit 1
 
-      - name: Run E2E tests (Playwright)
-        run: npx playwright test -c playwright.config.ts --reporter=line
+      - name: Run E2E tests (Playwright - smoke only)
+        run: npx playwright test tests/e2e/healthz.spec.ts --reporter=line

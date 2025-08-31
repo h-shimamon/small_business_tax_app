@@ -11,3 +11,25 @@ body {
 * {
     box-sizing: border-box;
 }
+
+/* Skip links: hidden by default, visible on focus for accessibility */
+.skip-links {
+    position: relative;
+}
+.skip-links a {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    padding: 8px 12px;
+    background: #fff;
+    color: var(--text-primary);
+    text-decoration: none;
+    border: 2px solid var(--accent-color);
+    border-radius: 6px;
+}
+.skip-links a:focus {
+    position: fixed;
+    left: 12px;
+    top: 8px;
+    z-index: 10000;
+}

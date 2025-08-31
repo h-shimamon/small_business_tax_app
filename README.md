@@ -40,3 +40,9 @@ Replace the placeholder paths below with actual PNGs under `docs/images/`.
 - Reset confirm: ![Reset Confirm](docs/images/newauth_reset_confirm.png)
 
 Tip: run with `ENABLE_NEW_AUTH=1` (and `ENABLE_SIGNUP_EMAIL_FIRST=1`) on port 5002, then capture each page.
+
+
+## Keyboard focus (developer memo)
+- Initial cursor: use `render_field(..., autofocus=True)` on the first input of a page (no JS needed).
+- Tab order: kept by structure (Main → Sidebar → Nav). Do not change DOM order.
+- Skip links: provided in base; they appear only when focused (Tab once → Enter to jump).
