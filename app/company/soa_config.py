@@ -11,8 +11,19 @@ from app.company.forms import (
     AccountsPayableForm, TemporaryReceiptForm, BorrowingForm, ExecutiveCompensationForm,
     LandRentForm, MiscellaneousForm, MiscellaneousIncomeForm, MiscellaneousLossForm
 )
+from typing import TypedDict, Optional, Callable, Any, Dict
 
-STATEMENT_PAGES_CONFIG = {
+# Typed config for SoA pages (non-functional; for developer clarity)
+class StatementPageConfig(TypedDict, total=False):
+    model: Any
+    form: Any
+    title: str
+    total_field: str
+    template: str
+    query_filter: Callable[[Any], Any]
+
+
+STATEMENT_PAGES_CONFIG: Dict[str, StatementPageConfig] = {
     'deposits': {'model': Deposit, 'form': DepositForm, 'title': '預貯金等', 'total_field': 'balance', 'template': 'deposit_form.html'},
     'notes_receivable': {'model': NotesReceivable, 'form': NotesReceivableForm, 'title': '受取手形', 'total_field': 'amount', 'template': 'notes_receivable_form.html'},
     'accounts_receivable': {'model': AccountsReceivable, 'form': AccountsReceivableForm, 'title': '売掛金（未収入金）', 'total_field': 'balance_at_eoy', 'template': 'accounts_receivable_form.html'},

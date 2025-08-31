@@ -1,3 +1,4 @@
+# SSOT: フォーム定義は各 soa_* モジュールに集約。本モジュールは再エクスポートのみ。直接定義しないこと。
 from __future__ import annotations
 
 # 再エクスポートにより既存の import パス互換を維持

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Start Flask app
+        env:
+          FLASK_APP: run.py
+          APP_ENV: development
+          ENABLE_NEW_AUTH: '1'
+        run: |
+          nohup flask run --host 127.0.0.1 --port 5001 >/dev/null 2>&1 &
+
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do \
+            if curl -fsS http://127.0.0.1:5001/xauth/healthz >/dev/null; then \
+              echo "Server is up"; exit 0; \
+            fi; \
+            sleep 1; \
+          done; \
+          echo "Server did not start" >&2; \
+          curl -v http://127.0.0.1:5001/ || true; \
+          exit 1
+
+      - name: Run E2E tests (Playwright)
+        run: npx playwright test -c playwright.config.ts --reporter=line

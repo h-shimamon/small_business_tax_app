@@ -122,8 +122,8 @@ def statement_of_accounts(company):
                 mark_step_as_completed(page)
             else:
                 unmark_step_as_completed(page)
-    except Exception:
-        pass
+    except Exception as e:
+        current_app.logger.warning('SoA mark (GET) failed for page %s: %s', page, e)
 
     # Post-create success panel context (soft commonization)
     try:
@@ -391,8 +391,8 @@ def add_item(company, page_key):
                     mark_step_as_completed(page_key)
                 else:
                     unmark_step_as_completed(page_key)
-        except Exception:
-            pass
+        except Exception as e:
+            current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
         db.session.add(new_item)
         db.session.commit()
         flash(f"{config['title']}情報を登録しました。", 'success')
@@ -427,8 +427,8 @@ def edit_item(company, page_key, item_id):
                     mark_step_as_completed(page_key)
                 else:
                     unmark_step_as_completed(page_key)
-        except Exception:
-            pass
+        except Exception as e:
+            current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
         db.session.commit()
         flash(f"{config['title']}情報を更新しました。", 'success')
         return redirect(url_for('company.statement_of_accounts', page=page_key))
@@ -465,16 +465,16 @@ def delete_item(company, page_key, item_id):
     db.session.delete(item)
     db.session.commit()
     flash(f"{config['title']}情報を削除しました。", 'success')
-    return redirect(url_for('company.statement_of_accounts', page=page_key))
-    # Optional: POST-side completion marking after delete
+    # Optional: POST-side completion marking after delete (move before redirect)
     try:
         if current_app.config.get('SOA_MARK_ON_POST', True):
             if SoAProgressEvaluator.is_completed(company.id, page_key):
                 mark_step_as_completed(page_key)
             else:
                 unmark_step_as_completed(page_key)
-    except Exception:
-        pass
+    except Exception as e:
+        current_app.logger.warning('SoA mark (DELETE) failed for page %s: %s', page_key, e)
+    return redirect(url_for('company.statement_of_accounts', page=page_key))
 
 
 # 旧パス互換のための薄いエイリアスのみ追加（既存の /statement_of_accounts は重複させない）

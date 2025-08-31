@@ -7,6 +7,9 @@ from alembic import context
 
 # add your model's MetaData object here
 # for 'autogenerate' support
+# SSOT: Models are centralized in app.company.models.
+# If new models live elsewhere, re-export them from that module
+# or import them here to ensure Alembic autogenerate picks them up.
 from app.company import models
 
 # this is the Alembic Config object, which provides

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, TypedDict
 
 from app.company.services.master_data_service import MasterDataService
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
@@ -14,9 +14,7 @@ class SoASummaryService:
     differences, and skip decisions.
 
     Notes
-    - This service intentionally duplicates SUMMARY_PAGE_MAP and PL_PAGE_ACCOUNTS for now
-      to avoid circular imports. In a later step, these will be centralized in a
-      dedicated mappings module and imported here and by the controller.
+    - Mappings are centralized in app.company.soa_mappings and imported here and by the controller.
     - Public methods return primitive dicts/ints to keep controller context keys unchanged.
     """
 
@@ -58,7 +56,7 @@ class SoASummaryService:
             return {'type': 'PL', 'targets': targets}
 
     @classmethod
-    def compute_source_total(cls, company_id: int, page: str, accounting_data=None) -> Dict[str, int]:
+    def compute_source_total(cls, company_id: int, page: str, accounting_data=None) -> SourceTotalResult:
         from app.company.models import AccountingData  # local import to avoid cycles
 
         if accounting_data is None:
@@ -131,7 +129,7 @@ class SoASummaryService:
             .filter_by(company_id=company_id).scalar() or 0
 
     @classmethod
-    def compute_difference(cls, company_id: int, page: str, model, total_field_name: str, accounting_data=None) -> Dict[str, int]:
+    def compute_difference(cls, company_id: int, page: str, model, total_field_name: str, accounting_data=None) -> DifferenceResult:
         source = cls.compute_source_total(company_id, page, accounting_data=accounting_data)
         breakdown_total = cls.compute_breakdown_total(company_id, page, model, total_field_name)
         if page == 'borrowings':
@@ -171,3 +169,15 @@ class SoASummaryService:
         if page == 'borrowings':
             return (source.get('bs_total', 0) + source.get('pl_interest_total', 0))
         return source.get('source_total', 0)
+
+# TypedDicts to clarify returned shapes (non-functional)
+class SourceTotalResult(TypedDict, total=False):
+    source_total: int
+    bs_total: int
+    pl_interest_total: int
+
+class DifferenceResult(TypedDict, total=False):
+    bs_total: int
+    pl_interest_total: int
+    breakdown_total: int
+    difference: int

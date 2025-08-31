@@ -1,5 +1,10 @@
 # app/__init__.py
 import os, sys
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except Exception:
+    pass
 from flask import Flask, flash
 from .extensions import db, login_manager, migrate
 from .company.models import User
@@ -12,8 +17,14 @@ def create_app(test_config=None):
 
     # --- 設定の読み込み ---
     if test_config is None:
-        # デフォルト設定をconfig.pyから読み込む
-        app.config.from_object('config.Config')
+        # APP_ENV に応じて設定クラスを選択（既定: development）
+        env = (os.getenv('APP_ENV', 'development') or 'development').lower()
+        env_map = {
+            'development': 'config.DevConfig',
+            'testing': 'config.TestingConfig',
+            'production': 'config.ProductionConfig',
+        }
+        app.config.from_object(env_map.get(env, 'config.Config'))
     else:
         # テスト時など、引数で渡された設定を読み込む
         app.config.from_mapping(test_config)
@@ -23,6 +34,25 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
+    # Logging level setup (env-based)
+    try:
+        import logging as _logging
+        lvl = str(app.config.get('LOG_LEVEL', 'INFO')).upper()
+        level = getattr(_logging, lvl, _logging.INFO)
+        app.logger.setLevel(level)
+        _logging.getLogger('werkzeug').setLevel(level)
+    except Exception:
+        pass
+
+    # Production secret key safety check
+    try:
+        if (os.getenv('APP_ENV', 'development').lower() == 'production'):
+            sk = str(app.config.get('SECRET_KEY') or '')
+            if (not sk) or sk.startswith('a_default_dev_'):
+                app.logger.warning('SECRET_KEY is not securely set for production environment')
+    except Exception:
+        pass
+
 
     # --- 拡張機能の初期化 ---
     db.init_app(app)

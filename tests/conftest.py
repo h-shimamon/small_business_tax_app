@@ -4,6 +4,7 @@ import pytest
 from app import create_app, db
 from app.company.models import User, Company, Shareholder
 
+
 @pytest.fixture(scope='function')
 def app():
     """

@@ -36,7 +36,7 @@ def signup_page():
     form_email_first = False
     try:
         from flask import current_app as _app
-        flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST") or os.getenv("ENABLE_SIGNUP_EMAIL_FIRST", "0")).lower()
+        flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST")).lower()
         form_email_first = flag in ("1", "true", "yes", "on")
     except Exception:
         pass
@@ -172,7 +172,7 @@ def verify():
     email_first = False
     try:
         from flask import current_app as _app
-        flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST") or os.getenv("ENABLE_SIGNUP_EMAIL_FIRST", "0")).lower()
+        flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST")).lower()
         email_first = flag in ("1", "true", "yes", "on")
     except Exception:
         pass

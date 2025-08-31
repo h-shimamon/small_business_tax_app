@@ -55,3 +55,16 @@ class ProductionConfig(Config):
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True
     }
+    # Cookie/CSRF/HTTPS の強化（本番想定）
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    WTF_CSRF_ENABLED = True
+    PREFERRED_URL_SCHEME = 'https'
+
+
+class DevConfig(Config):
+    """開発環境向けの設定。"""
+    DEBUG = True
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
