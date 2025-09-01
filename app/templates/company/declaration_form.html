@@ -17,20 +17,12 @@
         {{ form.hidden_tag() }}
 
         <div class="form-grid">
-            <!-- 基本情報 -->
-            <fieldset>
-                <legend>基本情報</legend>
-                {{ render_field(form.accounting_period_start, class_='js-date') }}
-                {{ render_field(form.accounting_period_end, class_='js-date') }}
-                {{ render_radio_field(form.office_count) }}
-                {{ render_radio_field(form.declaration_type) }}
-                {{ render_radio_field(form.tax_system) }}
-            </fieldset>
+            
 
             <!-- 代表者 -->
             <fieldset>
                 <legend>代表者</legend>
-                {{ render_field(form.representative_name, placeholder='代表 太郎') }}
+                {{ render_field(form.representative_name, placeholder='代表 太郎', autofocus=True) }}
                 {{ render_field(form.representative_kana, placeholder='ダイヒョウ タロウ') }}
                 {{ render_field(form.representative_position, placeholder='代表取締役') }}
                 {{ render_field(form.representative_status, placeholder='現任') }}
@@ -38,6 +30,14 @@
                 {{ render_field(form.representative_prefecture, id='representative_prefecture', placeholder='東京都') }}
                 {{ render_field(form.representative_city, id='representative_city', placeholder='千代田区') }}
                 {{ render_field(form.representative_address, id='representative_address', placeholder='丸の内1-1-1') }}
+            </fieldset><!-- 基本情報 -->
+            <fieldset>
+                <legend>基本情報</legend>
+                {{ render_field(form.accounting_period_start, class_='js-date') }}
+                {{ render_field(form.accounting_period_end, class_='js-date') }}
+                {{ render_radio_field(form.office_count) }}
+                {{ render_radio_field(form.declaration_type) }}
+                {{ render_radio_field(form.tax_system) }}
             </fieldset>
 
             <!-- 経理責任者 -->

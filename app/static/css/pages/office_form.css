@@ -4,7 +4,11 @@
 .office-form-grid {
   display: grid; /* 再宣言しても既存のform-grid設定と整合 */
   grid-template-columns: 1fr 1fr;
-  grid-template-areas:
+  
+  /* Override vertical spacing to rely on .form-group margins only */
+  row-gap: 0;
+  column-gap: 30px;
+grid-template-areas:
     "office_name    employee_count"
     "zip_code       opening_date"
     "prefecture     closing_date"
@@ -23,4 +27,3 @@
 #city_group           { grid-area: city; }
 #address_group        { grid-area: address; }
 #phone_number_group   { grid-area: phone_number; }
-

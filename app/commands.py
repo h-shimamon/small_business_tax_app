@@ -19,6 +19,8 @@ def register_commands(app):
         app.cli.add_command(delete_seeded_command)
     app.cli.add_command(seed_notes_receivable_command)
     app.cli.add_command(soa_recompute_command)
+    app.cli.add_command(seed_main_shareholders_command)
+    app.cli.add_command(seed_related_shareholders_command)
 
     app.cli.add_command(dev_bootstrap_command)
 
@@ -229,11 +231,12 @@ def report_date_health_command(fmt):
 @click.command('dev-bootstrap')
 @with_appcontext
 def dev_bootstrap_command():
-    """開発用の安全な初期化: admin/password とサンプル会社、マスター同期を冪等に実施。"""
+    """開発用の安全な初期化: admin/password とサンプル会社、マスター同期を冪等に実施。
+    さらに 基本情報/申告情報/株主・社員/事業所 のダミーデータを必要に応じて投入します（UI変更なし）。"""
     click.echo("[dev-bootstrap] 開発用初期化を開始します…")
     try:
         from datetime import date
-        from app.company.models import Company
+        from app.company.models import Company, Shareholder, Office
 
         # admin作成（なければ）
         admin_user = User.query.filter_by(username='admin').first()
@@ -271,6 +274,95 @@ def dev_bootstrap_command():
         service = MasterDataService()
         service.check_and_sync()
         click.echo("[dev-bootstrap] マスターデータの同期を確認しました。")
+
+        # --- 基本情報/申告情報（Companyの項目）を安全に初期化（未設定のみ） ---
+        updated_company = False
+        if not (company.accounting_period_start or company.accounting_period_start_date):
+            company.accounting_period_start = '2025-04-01'
+            company.accounting_period_start_date = date(2025, 4, 1)
+            updated_company = True
+        if not (company.accounting_period_end or company.accounting_period_end_date):
+            company.accounting_period_end = '2026-03-31'
+            company.accounting_period_end_date = date(2026, 3, 31)
+            updated_company = True
+        if company.term_number is None:
+            company.term_number = 1
+            updated_company = True
+        if not (company.closing_date or company.closing_date_date):
+            company.closing_date = '2026-03-31'
+            company.closing_date_date = date(2026, 3, 31)
+            updated_company = True
+        if not company.declaration_type:
+            company.declaration_type = '確定'
+            updated_company = True
+        if not company.tax_system:
+            company.tax_system = '一般'
+            updated_company = True
+        if updated_company:
+            db.session.commit()
+            click.echo("[dev-bootstrap] 基本情報/申告情報を初期化しました。")
+        else:
+            click.echo("[dev-bootstrap] 基本情報/申告情報は既に設定済みです。")
+
+        # --- 株主/社員（主1＋関連1）を冪等投入（未登録時のみ） ---
+        try:
+            sh_count = Shareholder.query.filter_by(company_id=company.id).count()
+        except Exception:
+            sh_count = 0
+        if sh_count == 0:
+            main = Shareholder(
+                company_id=company.id,
+                last_name='山田',
+                entity_type='individual',
+                joined_date=date(2023, 1, 1),
+                zip_code='1066126',
+                prefecture_city='東京都港区',
+                address='六本木6-10-1',
+                shares_held=600,
+                voting_rights=600,
+            )
+            db.session.add(main)
+            db.session.flush()  # 子レコード用にIDを取得
+            child = Shareholder(
+                company_id=company.id,
+                parent_id=main.id,
+                last_name='山田 太郎',
+                entity_type='individual',
+                zip_code='1066126',
+                prefecture_city='東京都港区',
+                address='六本木6-10-1',
+                shares_held=400,
+                voting_rights=400,
+            )
+            db.session.add(child)
+            db.session.commit()
+            click.echo("[dev-bootstrap] 株主/社員情報を作成しました（主1＋関連1）。")
+        else:
+            click.echo("[dev-bootstrap] 株主/社員情報は既に存在します。")
+
+        # --- 事業所（Office）を冪等投入（未登録時のみ） ---
+        try:
+            off_count = Office.query.filter_by(company_id=company.id).count()
+        except Exception:
+            off_count = 0
+        if off_count == 0:
+            office = Office(
+                company_id=company.id,
+                name='本店',
+                zip_code='1066126',
+                prefecture='東京都',
+                municipality='港区',
+                address='六本木6-10-1',
+                phone_number='03-6384-9000',
+                opening_date=date(2023, 1, 1),
+                employee_count=10,
+            )
+            db.session.add(office)
+            db.session.commit()
+            click.echo("[dev-bootstrap] 事業所を1件作成しました。")
+        else:
+            click.echo("[dev-bootstrap] 事業所は既に存在します。")
+
         click.echo("[dev-bootstrap] 完了しました。")
     except Exception as e:
         click.echo(f"[dev-bootstrap] エラー: {e}")
@@ -428,3 +520,123 @@ def soa_recompute_command(company_id: int):
         click.echo(json.dumps(results, ensure_ascii=False, indent=2))
     except Exception as e:
         click.echo(f'エラー: 再評価中に問題が発生しました: {e}')
+
+
+@click.command('seed-main-shareholders')
+@with_appcontext
+@click.option('--company-id', type=int, default=None, help='対象会社ID（未指定時は単一会社がある場合それを使用）')
+@click.option('--count', type=int, default=2, show_default=True, help='追加する主たる株主の人数')
+@click.option('--prefix', type=str, default='', show_default=True, help='姓に付与する識別用プレフィクス')
+def seed_main_shareholders_command(company_id: int | None, count: int, prefix: str):
+    """主たる株主をダミーデータで追加します（parent_id=None）。"""
+    from datetime import date
+    import random
+    from app.company.models import Company, Shareholder
+
+    # 対象会社の決定
+    target_company = None
+    if company_id is not None:
+        target_company = Company.query.filter_by(id=company_id).first()
+        if not target_company:
+            click.echo(f"エラー: company_id={company_id} の会社が見つかりません。")
+            return
+    else:
+        companies = Company.query.all()
+        if len(companies) == 1:
+            target_company = companies[0]
+        elif len(companies) == 0:
+            click.echo('エラー: Company が存在しません。先に会社を作成してください。')
+            return
+        else:
+            click.echo('エラー: 複数の Company が存在します。--company-id で対象を指定してください。')
+            return
+
+    rng = random.Random(123)
+    created = 0
+    for i in range(count):
+        last_name = f"{prefix}ダミー主{i+1:02d}"
+        joined_year = 2020 + (i % 4)
+        sh = Shareholder(
+            company_id=target_company.id,
+            last_name=last_name,
+            entity_type='individual',
+            joined_date=date(joined_year, 1 + (i % 12), 1 + (i % 28)),
+            zip_code='1066126',
+            prefecture_city='東京都港区',
+            address='六本木6-10-1',
+            shares_held=300,
+            voting_rights=300,
+        )
+        db.session.add(sh)
+        created += 1
+
+    db.session.commit()
+    click.echo(f"主たる株主を {created} 名、Company(id={target_company.id}) に追加しました。")
+
+
+@click.command('seed-related-shareholders')
+@with_appcontext
+@click.option('--company-id', type=int, default=None, help='対象会社ID（未指定時は単一会社がある場合それを使用）')
+@click.option('--count', type=int, default=2, show_default=True, help='追加する特殊関係人の人数')
+@click.option('--parent', type=click.Choice(['auto', 'first', 'last'], case_sensitive=False), default='last', show_default=True, help='親となる主たる株主の選択方法')
+@click.option('--prefix', type=str, default='', show_default=True, help='姓に付与する識別用プレフィクス')
+def seed_related_shareholders_command(company_id: int | None, count: int, parent: str, prefix: str):
+    """特殊関係人（parent_idあり）をダミーデータで追加します。"""
+    from datetime import date
+    import random
+    from app.company.models import Company, Shareholder
+
+    # 対象会社の決定
+    target_company = None
+    if company_id is not None:
+        target_company = Company.query.filter_by(id=company_id).first()
+        if not target_company:
+            click.echo(f"エラー: company_id={company_id} の会社が見つかりません。")
+            return
+    else:
+        companies = Company.query.all()
+        if len(companies) == 1:
+            target_company = companies[0]
+        elif len(companies) == 0:
+            click.echo('エラー: Company が存在しません。先に会社を作成してください。')
+            return
+        else:
+            click.echo('エラー: 複数の Company が存在します。--company-id で対象を指定してください。')
+            return
+
+    mains = (Shareholder.query
+             .filter_by(company_id=target_company.id, parent_id=None)
+             .order_by(Shareholder.id.asc())
+             .all())
+    if not mains:
+        click.echo('エラー: 主たる株主が存在しません。先に seed-main-shareholders を実行してください。')
+        return
+
+    parent_opt = (parent or 'last').lower()
+    if parent_opt == 'first':
+        parent_main = mains[0]
+    elif parent_opt == 'auto':
+        parent_main = mains[-1] if len(mains) > 0 else mains[0]
+    else:
+        parent_main = mains[-1]
+
+    rng = random.Random(456)
+    created = 0
+    for i in range(count):
+        last_name = f"{prefix}ダミー関連{i+1:02d}"
+        rel = Shareholder(
+            company_id=target_company.id,
+            parent_id=parent_main.id,
+            last_name=last_name,
+            entity_type='individual',
+            zip_code='1066126',
+            prefecture_city='東京都港区',
+            address='六本木6-10-1',
+            shares_held=200,
+            voting_rights=200,
+        )
+        db.session.add(rel)
+        created += 1
+
+    db.session.commit()
+    click.echo(f"特殊関係人を {created} 名、親=Shareholder(id={parent_main.id}) に追加しました（Company id={target_company.id}）。")

@@ -61,7 +61,7 @@
         <div class="form-grid">
             <fieldset>
                 <legend>{{ '特殊関係人' if is_related else '株主' }}の情報</legend>
-                {{ render_field(form.last_name) }}
+                {{ render_field(form.last_name, autofocus=(not is_related and is_new)) }}
                 
                 {% if is_related %}
                     {{ render_field(form.relationship) }}

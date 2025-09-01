@@ -34,7 +34,7 @@
     {{ form.hidden_tag() }}
 
     {# タブ順（縦方向）に合わせてDOM順を定義し、CSSで配置 #}
-    {{ render_field(form.office_name, placeholder='本社') }}
+    {{ render_field(form.office_name, placeholder='本社', autofocus=(not office)) }}
     {{ render_field(form.zip_code, placeholder='1000001') }}
     {{ render_field(form.prefecture, placeholder='東京都') }}
     {{ render_field(form.city, placeholder='千代田区') }}
