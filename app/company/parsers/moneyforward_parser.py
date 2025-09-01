@@ -100,6 +100,70 @@ class MoneyForwardParser(BaseParser):
 
     def get_fixed_assets(self):
         """
-        固定資産データを取得する。（未実装）
+        固定資産データ（マネーフォワード形式）を解析して正規化したリストを返す。
+        返却形式: list[dict]
+        - acquisition_date: ISO文字列 (YYYY-MM-DD) または None
+        - asset_type, name, depreciation_method: str
+        - quantity_or_area: float | None
+        - useful_life: float | None
+        - period_this_year: str | None  # 本年度中の償却期間（表示用に生値を保持）
+        - opening_balance, planned_depreciation, special_depreciation, expense_amount, closing_balance, acquisition_cost: int
+        - depreciation_rate: float | None
+        - business_usage_ratio: float | None
+        - note1, note2: str | None
         """
-        raise NotImplementedError("このパーサーでは固定資産データの取得はまだ実装されていません。")
+        import pandas as pd
+
+        HEADER_KEYWORD = '取得日'
+        header_row = self._find_header_row(HEADER_KEYWORD) or self._find_header_row('種類')
+        if header_row is None:
+            raise Exception("固定資産ファイルのヘッダー行（'取得日' などを含む行）が見つかりませんでした。")
+
+        df = self._read_data(header_row=header_row)
+        # 必須/想定カラム
+        jp_cols = [
+            '取得日','種類','名前','数量/面積','取得価額','償却保証額','償却の基礎になる金額','減価償却方法','耐用年数',
+            '今期償却前残高','今期償却予定額','特別償却額','償却率','本年度中の償却期間','今期償却後残高','経費算入額','事業利用比率(%)','摘要1','摘要2'
+        ]
+        missing = [c for c in jp_cols if c not in df.columns]
+        if missing:
+            # 必須最小セットで再判定（画面表示に使うカラム）
+            min_set = ['取得日','種類','名前','数量/面積','取得価額','減価償却方法','耐用年数','本年度中の償却期間','今期償却前残高','今期償却予定額','特別償却額','経費算入額','今期償却後残高']
+            still_missing = [c for c in min_set if c not in df.columns]
+            if still_missing:
+                raise Exception(f"固定資産ファイルに必要な列が見つかりません: {still_missing}")
+            # 最小セットで進む（将来拡張のため列が有れば使う）
+
+        # 数値変換ヘルパ
+        def _num(series):
+            return pd.to_numeric(series, errors='coerce')
+
+        # 正規化用の安全コピー
+        s = lambda name: df[name] if name in df.columns else pd.Series([None]*len(df))
+        out = pd.DataFrame({
+            'acquisition_date': pd.to_datetime(s('取得日'), errors='coerce').dt.date.astype('string'),
+            'asset_type': s('種類').astype('string').str.strip(),
+            'name': s('名前').astype('string').str.strip(),
+            'quantity_or_area': _num(s('数量/面積')),
+            'acquisition_cost': _num(s('取得価額')).fillna(0).astype('Int64'),
+            'depreciation_method': s('減価償却方法').astype('string').str.strip(),
+            'useful_life': _num(s('耐用年数')),
+            'period_this_year': s('本年度中の償却期間').astype('string').str.strip(),
+            'opening_balance': _num(s('今期償却前残高')).fillna(0).astype('Int64'),
+            'planned_depreciation': _num(s('今期償却予定額')).fillna(0).astype('Int64'),
+            'special_depreciation': _num(s('特別償却額')).fillna(0).astype('Int64'),
+            'expense_amount': _num(s('経費算入額')).fillna(0).astype('Int64'),
+            'closing_balance': _num(s('今期償却後残高')).fillna(0).astype('Int64'),
+            'depreciation_rate': _num(s('償却率')),
+            'business_usage_ratio': _num(s('事業利用比率(%)')),
+            'note1': s('摘要1').astype('string'),
+            'note2': s('摘要2').astype('string'),
+        })
+
+        # 文字列Noneを本当のNoneへ（後段で扱いやすく）
+        out = out.replace({pd.NA: None, 'NaT': None, '': None})
+        # 日付はISO文字列に整形
+        if 'acquisition_date' in out.columns:
+            out['acquisition_date'] = out['acquisition_date'].apply(lambda d: None if d in (None, 'NaT') else str(d))
+
+        return out.to_dict(orient='records')

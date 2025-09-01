@@ -28,6 +28,15 @@ NAVIGATION_STRUCTURE_DATA = [
         ]
     },
     {
+        'key': 'fixed_assets_group',
+        'name': '固定資産台帳',
+        'node_type': 'menu',
+        'children': [
+            {'key': 'fixed_assets_ledger', 'name': '固定資産台帳', 'endpoint': 'company.fixed_assets_ledger'},
+            {'key': 'small_assets', 'name': '少額資産明細', 'endpoint': 'company.small_assets_list'},
+        ]
+    },
+    {
         'key': 'statement_of_accounts_group',
         'name': '勘定科目内訳書',
         'node_type': 'menu',

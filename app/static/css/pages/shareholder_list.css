@@ -217,3 +217,17 @@
     margin-top: 1rem;
     line-height: 1.6;
 }
+
+
+/* Hover lift like office cards */
+.accordion-item {
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.accordion-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+
+/* Keep background color unchanged on hover (no tint) */
+.accordion-item:hover { background-color: var(--bg-content); }

@@ -210,3 +210,7 @@ select.form-control {
   align-items: center;
 }
 .nr-date-picker .form-control { padding-left: 36px; }
+
+
+/* Utilities: form grid spacing */
+.form-grid--no-row-gap { row-gap: 0; }

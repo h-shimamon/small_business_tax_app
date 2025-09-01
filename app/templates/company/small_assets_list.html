@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from 'company/_layout_helpers.html' import render_page_header %}
+
+{% block title %}少額資産明細{% endblock %}
+
+{% block sidebar %}
+    {% include 'company/_wizard_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+{{ render_page_header(
+    title='少額資産明細',
+    subtitle='少額資産の明細を表示します（仕様確定後に機能追加予定）。',
+    button_href=url_for('company.upload_data', datatype='fixed_assets'),
+    button_text='固定資産データを再取込'
+) }}
+
+<div class="card">
+  <div class="empty-state">
+    <h2>少額資産の表示は準備中です</h2>
+    <p>固定資産データの閾値・抽出条件の確定後に提供します。</p>
+    <a href="{{ url_for('company.fixed_assets_ledger') }}" class="button-secondary">固定資産台帳に戻る</a>
+  </div>
+</div>
+{% endblock %}

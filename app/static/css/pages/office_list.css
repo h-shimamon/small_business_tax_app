@@ -1,0 +1,38 @@
+/* app/static/css/pages/office_list.css */
+
+/* Page-scoped override: show office list cards in a single wide column */
+body.page-office-list .card-grid {
+  grid-template-columns: 1fr;
+}
+
+/* Inside each office card: 3 columns, 2 lines each */
+body.page-office-list .office-card-body .office-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 24px;
+  row-gap: 6px;
+}
+body.page-office-list .office-card-body .og-line {
+  margin: 0 0 6px 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+body.page-office-list .office-card-body .og-primary {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+/* Actions: align like shareholder list */
+body.page-office-list .office-card-actions {
+  position: absolute; /* ensure override keeps absolute positioning */
+  top: 24px;  /* align with card padding top */
+  right: 24px; /* align with card padding right */
+  display: flex;
+  align-items: center; /* horizontal row */
+  gap: 10px; /* comfortable hit target spacing */
+}
+body.page-office-list .office-card-actions form { display: inline; }
+/* Subtle baseline nudge so icons align visually with first text line */
+body.page-office-list .office-card-actions .action-icon { transform: translateY(2px); }
+body.page-office-list .office-card-actions form { display: inline; }

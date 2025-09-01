@@ -92,6 +92,13 @@ def data_upload_wizard():
 def upload_data(datatype):
     """データタイプに応じたファイルアップロード処理"""
     config = DATA_TYPE_CONFIG.get(datatype)
+    # 任意: 前画面からの完了マーク指示（e.g., 残高試算表の確認）
+    try:
+        from_step = request.args.get('from_step')
+        if from_step:
+            mark_step_as_completed(from_step)
+    except Exception:
+        pass
     if not config:
         flash('無効なデータタイプです。', 'danger')
         return redirect(url_for('company.data_upload_wizard'))
@@ -172,6 +179,28 @@ def upload_data(datatype):
                 mark_step_as_completed(datatype)
                 flash('仕訳帳データが正常に取り込まれ、財務諸表が生成されました。', 'success')
                 return redirect(url_for('company.confirm_trial_balance'))
+
+            elif datatype == 'fixed_assets':
+                # マネーフォワード固定資産: パース結果をプレビューとしてセッションに保持
+                records = parsed_data if isinstance(parsed_data, list) else []
+                # JSONシリアライズ可能な素の型へ変換（numpy/pandasの型を除去）
+                def _to_builtin(val):
+                    try:
+                        if hasattr(val, 'item'):
+                            return val.item()
+                    except Exception:
+                        pass
+                    return val
+                cleaned = []
+                for row in records:
+                    try:
+                        cleaned.append({k: _to_builtin(v) for k, v in (row or {}).items()})
+                    except Exception:
+                        cleaned.append(row)
+                session['fixed_assets_preview'] = cleaned
+                mark_step_as_completed(datatype)
+                flash('固定資産データを読み込みました。内容を確認してください。', 'success')
+                return redirect(url_for('company.fixed_assets_ledger'))
 
         except Exception as e:
             flash(f"エラーが発生しました: {e}", 'danger')

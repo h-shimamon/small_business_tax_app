@@ -4,8 +4,11 @@
 
 {% block title %}事業所一覧{% endblock %}
 
+{% block body_class %}page-office-list{% endblock %}
+
 {% block head %}
     {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/office_list.css') }}">
 {% endblock %}
 
 {% block sidebar %}
@@ -25,46 +28,32 @@
     {% for office in offices %}
     <div class="office-card">
         <div class="office-card-actions">
-            <div class="action-menu">
-                <button class="action-menu-button" aria-label="アクションメニュー">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                    </svg>
-                </button>
-                <div class="action-menu-content">
-                    <a href="{{ url_for('company.edit_office', office_id=office.id) }}" class="action-menu-item">編集</a>
-                    <form action="{{ url_for('company.delete_office', office_id=office.id) }}" method="post" onsubmit="return confirm('本当にこの事業所を削除しますか？');">
-                        <button type="submit" class="action-menu-item delete">削除</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="office-card-header">
-            <h2 class="office-card-name">{{ office.name or '名称未設定' }}</h2>
-        </div>
+    <a href="{{ url_for('company.edit_office', office_id=office.id) }}" class="action-icon" title="編集">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+    </a>
+    <form action="{{ url_for('company.delete_office', office_id=office.id) }}" method="post" onsubmit="return confirm('本当にこの事業所を削除しますか？');">
+        <button type="submit" class="action-icon" title="削除">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </button>
+    </form>
+</div>
 
         <div class="office-card-body">
-            <div class="office-card-info">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.976 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.757.433.57.57 0 00.28.14l.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
-                <span>{{ office.prefecture or '' }}{{ office.municipality or '' }}{{ office.address or '住所未設定' }}</span>
-            </div>
-            <div class="office-card-info">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5h-1.528a13.5 13.5 0 01-11.472-11.472H2A1.5 1.5 0 012 3.5z" /></svg>
-                <span>{{ office.phone_number or '電話番号未設定' }}</span>
-            </div>
-            <div class="office-card-info">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 8.5v6.75c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V8.5h-11z" clip-rule="evenodd" /></svg>
-                <span>開設日: {{ office.opening_date.strftime('%Y年%m月%d日') if office.opening_date else '未設定' }}</span>
-            </div>
-            <div class="office-card-info">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 8.5v6.75c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V8.5h-11z" clip-rule="evenodd" /></svg>
-                <span>廃止日: {{ office.closing_date.strftime('%Y年%m月%d日') if office.closing_date else '未設定' }}</span>
-            </div>
-            <div class="office-card-info">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.095a1.23 1.23 0 00.41-1.412A9.99 9.99 0 0010 12.75a9.99 9.99 0 00-6.535 1.743z" /></svg>
-                <span>従業者数: {{ office.employee_count or '未設定' }} 名</span>
-            </div>
+    <div class="office-grid">
+        <div class="og-col">
+            <div class="og-line og-primary">{{ office.name or '名称未設定' }}</div>
+            <div class="og-line">{{ office.phone_number or '電話番号未設定' }}</div>
+        </div>
+        <div class="og-col">
+            <div class="og-line">{{ office.prefecture or '' }}{{ office.municipality or '' }}{{ office.address or '住所未設定' }}</div>
+            <div class="og-line">従業者数: {{ office.employee_count or '未設定' }} 名</div>
+        </div>
+        <div class="og-col">
+            <div class="og-line">開設日: {{ office.opening_date.strftime('%Y年%m月%d日') if office.opening_date else '未設定' }}</div>
+            <div class="og-line">廃止日: {{ office.closing_date.strftime('%Y年%m月%d日') if office.closing_date else '未設定' }}</div>
+        </div>
+    </div>
+</div>
         </div>
     </div>
     {% endfor %}

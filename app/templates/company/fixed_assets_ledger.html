@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from 'company/_layout_helpers.html' import render_page_header %}
+
+{% block title %}固定資産台帳{% endblock %}
+
+{% block sidebar %}
+    {% include 'company/_wizard_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+{{ render_page_header(
+    title='固定資産台帳',
+    subtitle='取り込んだ固定資産データのプレビューを表示します。',
+    button_href=url_for('company.upload_data', datatype='fixed_assets'),
+    button_text='再取込'
+) }}
+
+<div class="card">
+  {% if records and records|length > 0 %}
+  <div class="table-wrapper">
+    <table class="fixed-assets-table">
+      <thead>
+        <tr>
+          <th>種類</th>
+          <th>名前</th>
+          <th>数量/面積</th>
+          <th>取得日</th>
+          <th class="text-right">取得価額</th>
+          <th>減価償却方法</th>
+          <th>耐用年数</th>
+          <th>本年度中の償却期間</th>
+          <th class="text-right">今期償却前残高</th>
+          <th class="text-right">今期償却予定額</th>
+          <th class="text-right">特別償却額</th>
+          <th class="text-right">経費算入額</th>
+          <th class="text-right">今期償却後残高</th>
+          <th style="width:110px; text-align:right;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr x-data="{ open:false }">
+          <td class="text-center">{{ r.asset_type or '' }}</td>
+          <td class="text-center">{{ r.name or '' }}</td>
+          <td class="text-center">{% if r.quantity_or_area is not none %}{{ "{:,}".format(r.quantity_or_area) }}{% else %}{% endif %}</td>
+          <td class="text-center">{{ r.acquisition_date or '' }}</td>
+          <td class="text-right">{{ "{:,.0f}".format(r.acquisition_cost or 0) }}</td>
+          <td class="text-center">{{ r.depreciation_method or '' }}</td>
+          <td class="text-center">{{ r.useful_life or '' }}</td>
+          <td class="text-center">{{ r.period_this_year or '' }}</td>
+          <td class="text-right">{{ "{:,.0f}".format(r.opening_balance or 0) }}</td>
+          <td class="text-right">{{ "{:,.0f}".format(r.planned_depreciation or 0) }}</td>
+          <td class="text-right">{{ "{:,.0f}".format(r.special_depreciation or 0) }}</td>
+          <td class="text-right">{{ "{:,.0f}".format(r.expense_amount or 0) }}</td>
+          <td class="text-right">{{ "{:,.0f}".format(r.closing_balance or 0) }}</td>
+          <td class="text-right">
+            <div class="op-col">
+              <button type="button" class="action-icon" title="編集" @click="open=true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <form action="{{ url_for('company.delete_fixed_asset_preview', idx=loop.index0) }}" method="post" title="削除" onsubmit="return confirm('削除してよろしいですか？');">
+                <button type="submit" class="action-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+              </form>
+            </div>
+
+            <!-- Edit Modal -->
+            <div x-show="open" x-cloak class="modal-overlay">
+              <div class="modal">
+                <h3 class="modal-title">固定資産の編集</h3>
+                <form method="post" action="{{ url_for('company.edit_fixed_asset_preview', idx=loop.index0) }}" class="modal-form">
+                  <div class="modal-grid">
+                    <label>種類<input name="asset_type" class="form-control" value="{{ r.asset_type or '' }}"></label>
+                    <label>名前<input name="name" class="form-control" value="{{ r.name or '' }}"></label>
+                    <label>数量/面積<input name="quantity_or_area" class="form-control" value="{{ r.quantity_or_area or '' }}"></label>
+                    <label>取得日<input name="acquisition_date" class="form-control" value="{{ r.acquisition_date or '' }}"></label>
+                    <label>取得価額<input name="acquisition_cost" class="form-control" value="{{ "{:,.0f}".format(r.acquisition_cost or 0) }}"></label>
+                    <label>減価償却方法<input name="depreciation_method" class="form-control" value="{{ r.depreciation_method or '' }}"></label>
+                    <label>耐用年数<input name="useful_life" class="form-control" value="{{ r.useful_life or '' }}"></label>
+                    <label>本年度中の償却期間<input name="period_this_year" class="form-control" value="{{ r.period_this_year or '' }}"></label>
+                    <label>今期償却前残高<input name="opening_balance" class="form-control" value="{{ "{:,.0f}".format(r.opening_balance or 0) }}"></label>
+                    <label>今期償却予定額<input name="planned_depreciation" class="form-control" value="{{ "{:,.0f}".format(r.planned_depreciation or 0) }}"></label>
+                    <label>特別償却額<input name="special_depreciation" class="form-control" value="{{ "{:,.0f}".format(r.special_depreciation or 0) }}"></label>
+                    <label>経費算入額<input name="expense_amount" class="form-control" value="{{ "{:,.0f}".format(r.expense_amount or 0) }}"></label>
+                    <label>今期償却後残高<input name="closing_balance" class="form-control" value="{{ "{:,.0f}".format(r.closing_balance or 0) }}"></label>
+                  </div>
+                  <div class="form-actions" style="justify-content:flex-end;">
+                    <button type="button" class="button-secondary" @click="open=false">キャンセル</button>
+                    <button type="submit" class="button-primary">更新</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <h2>固定資産データがありません</h2>
+      <p>「再取込」から固定資産CSVをアップロードしてください。</p>
+      <a href="{{ url_for('company.upload_data', datatype='fixed_assets') }}" class="button-primary">再取込</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+  {{ super() if super }}
+  <style>
+    /* Page-scoped tweaks */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; z-index: 1000; }
+    .modal { background: #fff; border-radius: 12px; border: 1px solid var(--border-color); width: 880px; max-width: 95vw; padding: 20px; }
+    .modal-title { margin: 0 0 12px 0; font-size: 1.1rem; font-weight: 600; }
+    .modal-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+    .modal-grid label { display:flex; flex-direction:column; font-size: 0.9rem; color: var(--text-secondary); }
+    .modal-grid input.form-control { margin-top: 6px; }
+    .action-icon { width: 44px; height: 44px; }
+    .op-col { display:flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .op-col form { display: block; }
+    .text-left { text-align: left; }
+    .text-center { text-align: center; }
+      .fixed-assets-table thead th { text-align: center; }
+  </style>
+{% endblock %}
