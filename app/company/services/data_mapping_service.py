@@ -56,13 +56,50 @@ class DataMappingService:
             AccountTitleMaster.number
         ).all()
         master_choices = {master.name: master.id for master in master_accounts}
-        
+
+        # 軽量正規化（全角/半角スペース除去、前後空白トリム）
+        def _normalize(s: str) -> str:
+            try:
+                return str(s).strip().replace('　', '').replace(' ', '')
+            except Exception:
+                return str(s).strip()
+
+        # よく出る別表記のエイリアス（将来拡張可）
+        alias_map = {
+            '給料手当': '給料賃金',
+            '給与手当': '給料賃金',
+            '給料': '給料賃金',
+            '給与': '給料賃金',
+            # 例: 旅費交通費/通信費は同名だが、将来別表記が来た際の受け皿
+            '旅費交通費': '旅費交通費',
+            '通信費': '通信費',
+        }
+        alias_map_norm = {_normalize(k): v for k, v in alias_map.items()}
+
+        # マスター名の正規化インデックス
+        master_norm_to_name = {_normalize(name): name for name in master_choices.keys()}
+
         mapping_items = []
         for account in unmatched_accounts:
             suggested_master_id = None
-            best_match = process.extractOne(account, master_choices.keys())
-            if best_match and best_match[1] > 70:
-                suggested_master_id = master_choices[best_match[0]]
+            norm_acc = _normalize(account)
+
+            # 1) エイリアス優先
+            alias_target = alias_map_norm.get(norm_acc)
+            if alias_target and alias_target in master_choices:
+                suggested_master_id = master_choices[alias_target]
+            else:
+                # 2) そのままfuzzy（しきい値を少し緩める）
+                best_match = process.extractOne(account, master_choices.keys())
+                if best_match and best_match[1] > 65:
+                    suggested_master_id = master_choices[best_match[0]]
+                else:
+                    # 3) 正規化文字列でfuzzy（保険）
+                    best_norm = process.extractOne(norm_acc, list(master_norm_to_name.keys()))
+                    if best_norm and best_norm[1] > 70:
+                        target_name = master_norm_to_name[best_norm[0]]
+                        suggested_master_id = master_choices.get(target_name)
+
             mapping_items.append({
                 'original_name': account,
                 'suggested_master_id': suggested_master_id

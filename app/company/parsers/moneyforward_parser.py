@@ -1,6 +1,7 @@
 # app/company/parsers/moneyforward_parser.py
 import pandas as pd
 from .base_parser import BaseParser
+import re
 
 class MoneyForwardParser(BaseParser):
     """
@@ -88,11 +89,31 @@ class MoneyForwardParser(BaseParser):
 
         # --- 共通のデータクレンジング処理 ---
         df['date'] = pd.to_datetime(df['date'], errors='coerce')
-        df['debit_amount'] = pd.to_numeric(df['debit_amount'], errors='coerce').fillna(0)
-        df['credit_amount'] = pd.to_numeric(df['credit_amount'], errors='coerce').fillna(0)
+        # 金額のサニタイズ
+        def _sanitize_amount(series: pd.Series) -> pd.Series:
+            orig = series.astype(str).fillna('').str.strip()
+            # 括弧表記の検出
+            mask_paren = orig.str.startswith('(') & orig.str.endswith(')')
+            s = orig
+            # 記号・通貨・空白の除去と符号の正規化
+            s = s.str.replace('[,，]', '', regex=True)
+            s = s.str.replace('[ 　]', '', regex=True)
+            s = s.str.replace('円', '', regex=False)
+            s = s.str.replace('[﹣－−–—‐‑⁻]', '-', regex=True)
+            s = s.str.replace(r'^[▲△]\s*', '-', regex=True)
+            s = s.str.replace('(', '', regex=False).str.replace(')', '', regex=False)
+            s = s.where(~mask_paren, '-' + s)
+            return pd.to_numeric(s, errors='coerce').fillna(0)
+
+        df['debit_amount'] = _sanitize_amount(df['debit_amount'])
+        df['credit_amount'] = _sanitize_amount(df['credit_amount'])
         
-        df['debit_account'] = df['debit_account'].astype(str).str.strip()
-        df['credit_account'] = df['credit_account'].astype(str).str.strip()
+        # NaNを空にしてからstripし、'nan'文字列も除去
+        for _col in ['debit_account', 'credit_account']:
+            if _col in df.columns:
+                df[_col] = df[_col].where(df[_col].notna(), '')
+                df[_col] = df[_col].astype(str).str.strip()
+                df[_col] = df[_col].replace({'nan': ''})
 
         df.dropna(subset=['id', 'date'], inplace=True)
         

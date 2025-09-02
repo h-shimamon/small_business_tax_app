@@ -6,7 +6,7 @@ from app import db
 from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import AccountingData, UserAccountMapping
-from app.navigation import get_navigation_state, mark_step_as_completed
+from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
 from .services import (
     DataMappingService,
     FinancialStatementService,
@@ -155,6 +155,21 @@ def upload_data(datatype):
                 mapping_service = DataMappingService(current_user.id)
                 df_journals = mapping_service.apply_mappings_to_journals(parsed_data)
 
+                # 再検出: 未マッピングの勘定科目が残っていないか確認（借方/貸方の全科目）
+                try:
+                    acc_names = set()
+                    for col in ['借方勘定科目', '貸方勘定科目']:
+                        if col in df_journals.columns:
+                            acc_names.update([str(x).strip() for x in df_journals[col].dropna().unique().tolist() if str(x).strip()])
+                    unmatched_after = mapping_service.get_unmatched_accounts(list(acc_names))
+                    if unmatched_after:
+                        session['unmatched_accounts'] = unmatched_after
+                        flash('未マッピングの勘定科目があります。対応後に仕訳帳を再取込してください。', 'warning')
+                        return redirect(url_for('company.data_mapping'))
+                except Exception:
+                    # ここでの失敗は致命ではないため、続行（従来挙動）
+                    pass
+
                 # 財務諸表サービスを呼び出し
                 fs_service = FinancialStatementService(df_journals, start_date, end_date)
                 bs_data = fs_service.create_balance_sheet()
@@ -256,6 +271,9 @@ def data_mapping():
             mark_step_as_completed('chart_of_accounts')
             # マッピング更新により既存の財務データは無効化（再アップロード前提）
             on_mapping_saved(current_user.id)
+            # 次フローを journals からやり直すため、後続ステップ完了フラグを外す
+            unmark_step_as_completed('journals')
+            unmark_step_as_completed('fixed_assets')
         except Exception as e:
             flash(str(e), 'danger')
         finally:
