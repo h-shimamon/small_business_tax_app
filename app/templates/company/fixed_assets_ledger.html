@@ -23,12 +23,12 @@
         <tr>
           <th>種類</th>
           <th>名前</th>
-          <th>数量/面積</th>
-          <th>取得日</th>
+          <th class="col-qty">数量/面積</th>
+          <th class="col-date">取得日</th>
           <th class="text-right">取得価額</th>
-          <th>減価償却方法</th>
-          <th>耐用年数</th>
-          <th>本年度中の償却期間</th>
+          <th class="col-method">減価償却方法</th>
+          <th class="col-life">耐用年数</th>
+          <th class="col-period">本年度中の償却期間</th>
           <th class="text-right">今期償却前残高</th>
           <th class="text-right">今期償却予定額</th>
           <th class="text-right">特別償却額</th>
@@ -41,13 +41,13 @@
         {% for r in records %}
         <tr x-data="{ open:false }">
           <td class="text-center">{{ r.asset_type or '' }}</td>
-          <td class="text-center">{{ r.name or '' }}</td>
-          <td class="text-center">{% if r.quantity_or_area is not none %}{{ "{:,}".format(r.quantity_or_area) }}{% else %}{% endif %}</td>
-          <td class="text-center">{{ r.acquisition_date or '' }}</td>
+          <td class=\"text-center\">{{ r.name or '' }}</td>
+          <td class=\"text-center col-qty\" title=\"{{ r.quantity_or_area or '' }}\">{% if r.quantity_or_area is not none %}{{ "{:,}".format(r.quantity_or_area) }}{% else %}{% endif %}</td>
+          <td class=\"text-center col-date\" title=\"{{ r.acquisition_date or '' }}\">{{ r.acquisition_date or '' }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.acquisition_cost or 0) }}</td>
-          <td class="text-center">{{ r.depreciation_method or '' }}</td>
-          <td class="text-center">{{ r.useful_life or '' }}</td>
-          <td class="text-center">{{ r.period_this_year or '' }}</td>
+          <td class=\"text-center col-method\" title=\"{{ r.depreciation_method or '' }}\">{{ r.depreciation_method or '' }}</td>
+          <td class=\"text-center col-life\" title=\"{{ r.useful_life or '' }}\">{{ r.useful_life or '' }}</td>
+          <td class=\"text-center col-period\" title=\"{{ r.period_this_year or '' }}\">{{ r.period_this_year or '' }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.opening_balance or 0) }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.planned_depreciation or 0) }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.special_depreciation or 0) }}</td>
@@ -125,5 +125,19 @@
     .text-left { text-align: left; }
     .text-center { text-align: center; }
       .fixed-assets-table thead th { text-align: center; }
+    /* Narrow columns with readable truncation */
+    .fixed-assets-table th, .fixed-assets-table td { white-space: nowrap; }
+    .fixed-assets-table .col-qty { width: 64px; text-align: center; }
+    .fixed-assets-table .col-date { width: 110px; text-align: center; }
+    .fixed-assets-table .col-life { width: 56px; text-align: center; }
+    .fixed-assets-table .col-period { width: 64px; text-align: center; }    /* Force center alignment for specified columns */
+    .fixed-assets-table td:nth-child(1), /* 種類 */
+    .fixed-assets-table td:nth-child(2), /* 名前 */
+    .fixed-assets-table td:nth-child(3), /* 数量/面積 */
+    .fixed-assets-table td:nth-child(4), /* 取得日 */
+    .fixed-assets-table td:nth-child(6), /* 減価償却方法 */
+    .fixed-assets-table td:nth-child(7), /* 耐用年数 */
+    .fixed-assets-table td:nth-child(8)  /* 本年度中の償却期間 */
+    { text-align: center !important; }
   </style>
 {% endblock %}

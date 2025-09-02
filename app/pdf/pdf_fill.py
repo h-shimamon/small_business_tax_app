@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -116,10 +117,46 @@ def overlay_pdf(
     *,
     font_registrations: Optional[Dict[str, str]] = None,
 ) -> None:
+    """Overlay texts/grids on a base PDF.
+
+    Development-friendly: If base_pdf_path does not exist and it follows the
+    pattern resources/pdf_forms/<template>/<year>/source.pdf, fall back to the
+    latest available year or default/source.pdf under the same template dir.
+    """
+    # Resolve fallback for missing base PDF
+    used_base = base_pdf_path
+    if not os.path.exists(used_base):
+        # Try to infer template dir and search siblings
+        try:
+            src_name = os.path.basename(used_base)
+            year_dir = os.path.dirname(used_base)
+            template_dir = os.path.dirname(year_dir)
+            candidates: List[Tuple[int, str]] = []
+            if src_name == 'source.pdf' and os.path.isdir(template_dir):
+                for entry in os.listdir(template_dir):
+                    full = os.path.join(template_dir, entry, 'source.pdf')
+                    if os.path.exists(full):
+                        if entry.isdigit():
+                            try:
+                                candidates.append((int(entry), full))
+                            except Exception:
+                                pass
+                if candidates:
+                    candidates.sort(key=lambda t: t[0], reverse=True)
+                    used_base = candidates[0][1]
+                else:
+                    # default/source.pdf
+                    default_path = os.path.join(template_dir, 'default', 'source.pdf')
+                    if os.path.exists(default_path):
+                        used_base = default_path
+        except Exception:
+            pass
+    # If still missing, let pypdf raise a clear error
+
     pypdf, PdfReader, PdfWriter = _import_pypdf()
     canvas, pdfmetrics, TTFont = _import_reportlab()
 
-    reader = PdfReader(base_pdf_path)
+    reader = PdfReader(used_base)
     writer = PdfWriter()
 
     texts_by_page: Dict[int, List[TextSpec]] = {}
@@ -161,7 +198,7 @@ def overlay_pdf(
 
         for spec in texts_by_page.get(i, []):
             c.setFont(spec.font_name, spec.font_size)
-            if getattr(spec, "align", "left") == "right":
+            if getattr(spec, 'align', 'left') == 'right':
                 try:
                     c.drawRightString(spec.x, spec.y, spec.text)
                 except Exception:
@@ -171,8 +208,8 @@ def overlay_pdf(
 
         for gspec in grids_by_page.get(i, []):
             c.setFont(gspec.font_name, gspec.font_size)
-            digits: str = getattr(gspec, "digits", "")
-            is_negative: bool = getattr(gspec, "is_negative", False)
+            digits: str = getattr(gspec, 'digits', '')
+            is_negative: bool = getattr(gspec, 'is_negative', False)
 
             x_cursor = gspec.x0
             if gspec.rtl:
@@ -212,7 +249,7 @@ def overlay_pdf(
         blank.merge_page(overlay_page)
         writer.add_page(blank)
 
-    with open(output_pdf_path, "wb") as f:
+    with open(output_pdf_path, 'wb') as f:
         writer.write(f)
 
 

@@ -21,23 +21,53 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
     """
     Load geometry JSON for a given PDF template key and year.
 
-    - template_key: e.g., 'uchiwakesyo_yocyokin', 'uchiwakesyo_urikakekin'
-    - year: e.g., '2025'
-    - repo_root: absolute repository root path
-    - required: if True, raise GeometryError/FileNotFoundError when missing
-    - validate: if True, perform validation (strict schema first, then legacy minimal checks)
+    Fallback strategy when the exact year file is missing:
+    1) Try the latest available year file under the same template directory.
+    2) Try a default file named 'default_geometry.json'.
+    If none found and required=True, raise FileNotFoundError.
     """
-    geom_path = os.path.join(repo_root, f"resources/pdf_templates/{template_key}/{year}_geometry.json")
-    if not os.path.exists(geom_path):
+    base_dir = os.path.join(repo_root, f"resources/pdf_templates/{template_key}")
+    geom_path = os.path.join(base_dir, f"{year}_geometry.json")
+
+    used_path = None
+    if os.path.exists(geom_path):
+        used_path = geom_path
+    else:
+        # Fallback 1: pick the numerically latest year file in the directory
+        try:
+            candidates = []
+            if os.path.isdir(base_dir):
+                for fn in os.listdir(base_dir):
+                    if fn.endswith("_geometry.json") and fn[0:4].isdigit():
+                        try:
+                            y = int(fn[0:4])
+                            candidates.append((y, os.path.join(base_dir, fn)))
+                        except Exception:
+                            continue
+            if candidates:
+                candidates.sort(key=lambda t: t[0], reverse=True)
+                used_path = candidates[0][1]
+        except Exception:
+            # ignore and move to next fallback
+            used_path = None
+
+        # Fallback 2: default file
+        if used_path is None:
+            default_path = os.path.join(base_dir, "default_geometry.json")
+            if os.path.exists(default_path):
+                used_path = default_path
+
+    if used_path is None:
         if required:
             raise FileNotFoundError(f"Geometry file not found: {geom_path}")
         return {}
+
     try:
-        with open(geom_path, "r", encoding="utf-8") as f:
+        with open(used_path, "r", encoding="utf-8") as f:
             data: Dict[str, Any] = json.load(f) or {}
     except Exception as e:
         if required:
-            raise GeometryError(f"Failed to parse geometry JSON: {geom_path}") from e
+            raise GeometryError(f"Failed to parse geometry JSON: {used_path}") from e
         return {}
 
     if validate:
