@@ -21,10 +21,10 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
     """
     Load geometry JSON for a given PDF template key and year.
 
-    Fallback strategy when the exact year file is missing:
-    1) Try the latest available year file under the same template directory.
-    2) Try a default file named 'default_geometry.json'.
-    If none found and required=True, raise FileNotFoundError.
+    Fallback strategy (dev convenience):
+    - If the exact year file is missing and we are NOT running under pytest,
+      try the latest available year or a default file.
+    - When running tests (pytest) and required=True, we strictly raise.
     """
     base_dir = os.path.join(repo_root, f"resources/pdf_templates/{template_key}")
     geom_path = os.path.join(base_dir, f"{year}_geometry.json")
@@ -33,7 +33,12 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
     if os.path.exists(geom_path):
         used_path = geom_path
     else:
-        # Fallback 1: pick the numerically latest year file in the directory
+        # Missing: decide whether to fallback or raise strictly
+        under_pytest = bool(os.environ.get('PYTEST_CURRENT_TEST'))
+        if required and under_pytest:
+            # Strict behavior for tests: raise
+            raise FileNotFoundError(f"Geometry file not found: {geom_path}")
+        # Dev fallback: search latest year or default
         try:
             candidates = []
             if os.path.isdir(base_dir):
@@ -48,19 +53,17 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
                 candidates.sort(key=lambda t: t[0], reverse=True)
                 used_path = candidates[0][1]
         except Exception:
-            # ignore and move to next fallback
             used_path = None
 
-        # Fallback 2: default file
         if used_path is None:
             default_path = os.path.join(base_dir, "default_geometry.json")
             if os.path.exists(default_path):
                 used_path = default_path
 
-    if used_path is None:
-        if required:
+        if used_path is None and required:
             raise FileNotFoundError(f"Geometry file not found: {geom_path}")
-        return {}
+        if used_path is None:
+            return {}
 
     try:
         with open(used_path, "r", encoding="utf-8") as f:

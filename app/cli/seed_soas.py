@@ -229,6 +229,90 @@ REGISTRY.update({
     'loans_receivable': seed_loans_receivable,
 })
 
+# ----------------------
+# Additional SoA seeders (requested pages)
+# ----------------------
+from app.company.models import TemporaryReceipt, Borrowing, ExecutiveCompensation, LandRent
+
+def seed_temporary_receipts(ctx: SeedContext, count: int) -> int:
+    created = 0
+    acct_names = ['仮受金', '前受金', '預り金']
+    for i in range(count):
+        tr = TemporaryReceipt(
+            company_id=ctx.company.id,
+            account_name=ctx.rng.choice(acct_names),
+            partner_name=f"{ctx.prefix}受入先 {i+1:02d}".strip(),
+            balance_at_eoy=(i + 1) * 25000,
+            transaction_details=(f"{ctx.prefix}仮受 {i+1:02d}").strip(),
+        )
+        db.session.add(tr)
+        created += 1
+    db.session.commit()
+    return created
+
+def seed_borrowings(ctx: SeedContext, count: int) -> int:
+    created = 0
+    for i in range(count):
+        br = Borrowing(
+            company_id=ctx.company.id,
+            lender_name=f"{ctx.prefix}借入先 {i+1:02d}".strip(),
+            is_subsidiary=bool(ctx.rng.getrandbits(1)),
+            balance_at_eoy=(i + 1) * 120000,
+            interest_rate=round(0.5 + (i % 7) * 0.25, 2),
+            paid_interest=(i + 1) * 1500,
+            remarks=(f"{ctx.prefix}借入 {i+1:02d}").strip(),
+        )
+        db.session.add(br)
+        created += 1
+    db.session.commit()
+    return created
+
+def seed_executive_compensations(ctx: SeedContext, count: int) -> int:
+    created = 0
+    positions = ['代表取締役', '取締役', '監査役']
+    for i in range(count):
+        base = (i + 1) * 300000
+        other = ((i % 3) * 20000)
+        total = base + other
+        ec = ExecutiveCompensation(
+            company_id=ctx.company.id,
+            shareholder_name=f"{ctx.prefix}役員 {i+1:02d}".strip(),
+            relationship='役員',
+            position=ctx.rng.choice(positions),
+            base_salary=base,
+            other_allowances=other,
+            total_compensation=total,
+        )
+        db.session.add(ec)
+        created += 1
+    db.session.commit()
+    return created
+
+def seed_land_rents(ctx: SeedContext, count: int) -> int:
+    created = 0
+    acct_names = ['地代', '家賃']
+    for i in range(count):
+        lr = LandRent(
+            company_id=ctx.company.id,
+            account_name=ctx.rng.choice(acct_names),
+            lessor_name=f"{ctx.prefix}賃借先 {i+1:02d}".strip(),
+            property_details=f"{i+1:02d}号物件",
+            rent_paid=(i + 1) * 50000,
+            remarks=(f"{ctx.prefix}地代家賃 {i+1:02d}").strip(),
+        )
+        db.session.add(lr)
+        created += 1
+    db.session.commit()
+    return created
+
+# register the new seeders
+REGISTRY.update({
+    'temporary_receipts': seed_temporary_receipts,
+    'borrowings': seed_borrowings,
+    'executive_compensations': seed_executive_compensations,
+    'land_rents': seed_land_rents,
+})
+
 
 # ----------------------
 # Deleters (by prefix)
@@ -290,6 +374,32 @@ DELETE_REGISTRY = {
     'accounts_payable': _delete_query_accounts_payable,
     'loans_receivable': _delete_query_loans_receivable,
 }
+
+# Add delete queries for newly supported pages
+from sqlalchemy import or_
+
+def _delete_query_temporary_receipts(ctx: SeedContext, prefix: str):
+    q = TemporaryReceipt.query.filter_by(company_id=ctx.company.id)
+    return q.filter(or_(TemporaryReceipt.partner_name.startswith(prefix), TemporaryReceipt.transaction_details.startswith(prefix)))
+
+def _delete_query_borrowings(ctx: SeedContext, prefix: str):
+    q = Borrowing.query.filter_by(company_id=ctx.company.id)
+    return q.filter(or_(Borrowing.lender_name.startswith(prefix), Borrowing.remarks.startswith(prefix)))
+
+def _delete_query_executive_compensations(ctx: SeedContext, prefix: str):
+    q = ExecutiveCompensation.query.filter_by(company_id=ctx.company.id)
+    return q.filter(or_(ExecutiveCompensation.shareholder_name.startswith(prefix),))
+
+def _delete_query_land_rents(ctx: SeedContext, prefix: str):
+    q = LandRent.query.filter_by(company_id=ctx.company.id)
+    return q.filter(or_(LandRent.lessor_name.startswith(prefix), LandRent.remarks.startswith(prefix)))
+
+DELETE_REGISTRY.update({
+    'temporary_receipts': _delete_query_temporary_receipts,
+    'borrowings': _delete_query_borrowings,
+    'executive_compensations': _delete_query_executive_compensations,
+    'land_rents': _delete_query_land_rents,
+})
 
 
 def run_delete(page: str, company_id: Optional[int], prefix: str, dry_run: bool = True) -> Tuple[int, List[int]]:

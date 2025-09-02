@@ -156,6 +156,12 @@ def overlay_pdf(
     pypdf, PdfReader, PdfWriter = _import_pypdf()
     canvas, pdfmetrics, TTFont = _import_reportlab()
 
+    # Dev log: base PDF path
+    try:
+        if os.getenv('APP_ENV', 'development').lower() != 'production':
+            print(f"[pdf_fill] base_pdf used: {used_base}")
+    except Exception:
+        pass
     reader = PdfReader(used_base)
     writer = PdfWriter()
 
@@ -248,6 +254,18 @@ def overlay_pdf(
         blank.merge_page(base_page)
         blank.merge_page(overlay_page)
         writer.add_page(blank)
+
+    # Dev log: overlay counts
+    try:
+        if os.getenv('APP_ENV', 'development').lower() != 'production':
+            tcount = sum(len(v) for v in texts_by_page.values())
+            gcount = sum(len(v) for v in grids_by_page.values())
+            if tcount == 0 and gcount == 0:
+                print(f"[pdf_fill] warning: no overlay content (texts=0, grids=0) for base={used_base}")
+            else:
+                print(f"[pdf_fill] overlay counts: texts={tcount}, grids={gcount}")
+    except Exception:
+        pass
 
     with open(output_pdf_path, 'wb') as f:
         writer.write(f)

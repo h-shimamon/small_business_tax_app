@@ -41,7 +41,7 @@ DATA_TYPE_CONFIG = {
     }
 }
 
-FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals', 'fixed_assets']
+FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals']
 
 
 # --- ルート関数の定義 ---
@@ -196,26 +196,8 @@ def upload_data(datatype):
                 return redirect(url_for('company.confirm_trial_balance'))
 
             elif datatype == 'fixed_assets':
-                # マネーフォワード固定資産: パース結果をプレビューとしてセッションに保持
-                records = parsed_data if isinstance(parsed_data, list) else []
-                # JSONシリアライズ可能な素の型へ変換（numpy/pandasの型を除去）
-                def _to_builtin(val):
-                    try:
-                        if hasattr(val, 'item'):
-                            return val.item()
-                    except Exception:
-                        pass
-                    return val
-                cleaned = []
-                for row in records:
-                    try:
-                        cleaned.append({k: _to_builtin(v) for k, v in (row or {}).items()})
-                    except Exception:
-                        cleaned.append(row)
-                session['fixed_assets_preview'] = cleaned
-                mark_step_as_completed(datatype)
-                flash('固定資産データを読み込みました。内容を確認してください。', 'success')
-                return redirect(url_for('company.fixed_assets_ledger'))
+                # 互換: 固定資産は独立ページに移動
+                return redirect(url_for('company.fixed_assets_import'))
 
         except Exception as e:
             flash(f"エラーが発生しました: {e}", 'danger')
@@ -273,7 +255,6 @@ def data_mapping():
             on_mapping_saved(current_user.id)
             # 次フローを journals からやり直すため、後続ステップ完了フラグを外す
             unmark_step_as_completed('journals')
-            unmark_step_as_completed('fixed_assets')
         except Exception as e:
             flash(str(e), 'danger')
         finally:

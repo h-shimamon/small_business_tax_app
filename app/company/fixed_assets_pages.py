@@ -29,6 +29,42 @@ def small_assets_list():
     return render_template('company/small_assets_list.html', navigation_state=nav)
 
 
+@company_bp.route('/fixed-assets/import', methods=['GET', 'POST'])
+@login_required
+def fixed_assets_import():
+    from flask import request, flash, redirect, url_for, session, render_template
+    from app.company.forms import FileUploadForm
+    from app.company.parser_factory import ParserFactory
+    # 既定のソフト（セッションが無ければ MoneyForward 前提）
+    software = session.get('selected_software') or 'moneyforward'
+
+    form = FileUploadForm()
+    if form.validate_on_submit():
+        file = form.upload_file.data
+        if not file or not file.filename:
+            flash('ファイルが選択されていません。', 'danger')
+            return redirect(request.url)
+        try:
+            parser = ParserFactory.create_parser(software, file)
+            parsed = parser.get_fixed_assets()
+            # セッションにプレビューを保存
+            session['fixed_assets_preview'] = parsed if isinstance(parsed, list) else []
+            flash('固定資産データを読み込みました。台帳で内容を確認してください。', 'success')
+            return redirect(url_for('company.fixed_assets_ledger'))
+        except Exception as e:
+            flash(f'エラー: 固定資産データ取込中に問題が発生しました: {e}', 'danger')
+            return redirect(request.url)
+
+    # 画面表示（独立取込）
+    navigation_state = get_navigation_state('fixed_assets_import')
+    template_config = {
+        'title': '固定資産データのインポート',
+        'description': '固定資産台帳のデータをCSV/TXTで取り込みます。会計データ選択の進捗には影響しません。',
+        'step_name': '固定資産データ取込'
+    }
+    return render_template('company/upload_data.html', form=form, navigation_state=navigation_state, show_reset_link=False, **template_config)
+
+
 @company_bp.post('/fixed-assets/preview/delete/<int:idx>')
 @login_required
 def delete_fixed_asset_preview(idx: int):

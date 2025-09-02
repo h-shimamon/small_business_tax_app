@@ -85,8 +85,9 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
     )
 
     # Paging: 1ページあたり23明細行 + 24行目（合計）
-    rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS', 23))
-    sum_row_index = rows_per_page  # 24行目（index=23）
+    # 固定仕様: 明細は23行、24行目に総額を必ず印字（年や幾何に依存させない）
+    rows_per_page = 23
+    sum_row_index = 23  # 24行目（index=23）
 
     # Shared alignment: compute a common right edge for the balance column (geometry right edge minus small margin)
     vx0, vw0 = col('balance')

@@ -41,13 +41,13 @@
         {% for r in records %}
         <tr x-data="{ open:false }">
           <td class="text-center">{{ r.asset_type or '' }}</td>
-          <td class=\"text-center\">{{ r.name or '' }}</td>
-          <td class=\"text-center col-qty\" title=\"{{ r.quantity_or_area or '' }}\">{% if r.quantity_or_area is not none %}{{ "{:,}".format(r.quantity_or_area) }}{% else %}{% endif %}</td>
-          <td class=\"text-center col-date\" title=\"{{ r.acquisition_date or '' }}\">{{ r.acquisition_date or '' }}</td>
+          <td class="text-center">{{ r.name or '' }}</td>
+          <td class=\"text-center col-qty\" title=\"{{ r.quantity_or_area or '' }}\">{% if r.quantity_or_area is not none %}{{ "{:,}".format((r.quantity_or_area|int)) }}{% else %}{% endif %}</td>
+          <td class="text-center col-date" title="{{ r.acquisition_date or '' }}">{{ r.acquisition_date or '' }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.acquisition_cost or 0) }}</td>
-          <td class=\"text-center col-method\" title=\"{{ r.depreciation_method or '' }}\">{{ r.depreciation_method or '' }}</td>
-          <td class=\"text-center col-life\" title=\"{{ r.useful_life or '' }}\">{{ r.useful_life or '' }}</td>
-          <td class=\"text-center col-period\" title=\"{{ r.period_this_year or '' }}\">{{ r.period_this_year or '' }}</td>
+          <td class="text-center col-method" title="{{ r.depreciation_method or '' }}">{{ r.depreciation_method or '' }}</td>
+          <td class=\"text-center col-life\" title=\"{{ r.useful_life or '' }}\">{% if r.useful_life is not none %}{{ r.useful_life|int }}{% else %}{% endif %}</td>
+          <td class="text-center col-period" title="{{ r.period_this_year or '' }}">{{ r.period_this_year or '' }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.opening_balance or 0) }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.planned_depreciation or 0) }}</td>
           <td class="text-right">{{ "{:,.0f}".format(r.special_depreciation or 0) }}</td>

@@ -232,7 +232,8 @@ def deposits_pdf(company):
     from flask import current_app, send_file
     import os
     from datetime import datetime
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -253,7 +254,8 @@ def accounts_receivable_pdf(company):
     from flask import current_app, send_file
     import os
     from datetime import datetime
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -274,7 +276,8 @@ def temporary_payments_pdf(company):
     from flask import current_app, send_file
     import os
     from datetime import datetime
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -295,7 +298,8 @@ def notes_receivable_pdf(company):
     from flask import current_app, send_file
     import os
     from datetime import datetime
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -317,7 +321,8 @@ def notes_payable_pdf(company):
     import os
     from datetime import datetime
     from app.pdf.uchiwakesyo_shiharaitegata import generate_uchiwakesyo_shiharaitegata
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -339,7 +344,8 @@ def accounts_payable_pdf(company):
     import os
     from datetime import datetime
     from app.pdf.uchiwakesyo_kaikakekin import generate_uchiwakesyo_kaikakekin
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -360,7 +366,8 @@ def loans_receivable_pdf(company):
     from flask import current_app, send_file
     import os
     from datetime import datetime
-    year = request.args.get('year', '2025')
+    # Always print on the latest available template year (hint only)
+    year = '2099'
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
@@ -373,6 +380,29 @@ def loans_receivable_pdf(company):
         mimetype='application/pdf',
         as_attachment=False,
         download_name=f"uchiwakesyo_karibaraikin-kashitukekin_{year}.pdf"
+    )
+
+@company_bp.route('/statement/borrowings/pdf')
+@company_required
+def borrowings_pdf(company):
+    """借入金及び支払利子の内訳（上下二段）をPDFに出力（検証用）。"""
+    from flask import current_app, send_file
+    import os
+    from datetime import datetime
+    from app.pdf.borrowings_two_tier import generate_borrowings_two_tier
+    # Always print on the latest available template year (hint only)
+    year = '2099'
+    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
+    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
+    os.makedirs(filled_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S')
+    out_path = os.path.join(filled_dir, f"borrowings_two_tier_{company.id}_{ts}.pdf")
+    generate_borrowings_two_tier(company_id=company.id, year=year, output_path=out_path)
+    return send_file(
+        out_path,
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=f"borrowings_two_tier_{year}.pdf"
     )
 
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])

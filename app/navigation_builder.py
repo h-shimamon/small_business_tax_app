@@ -23,8 +23,7 @@ NAVIGATION_STRUCTURE_DATA = [
             {'key': 'chart_of_accounts', 'name': '勘定科目データ取込', 'endpoint': 'company.upload_data', 'params': {'datatype': 'chart_of_accounts'}},
             {'key': 'data_mapping', 'name': '勘定科目マッピング', 'endpoint': 'company.data_mapping'},
             {'key': 'journals', 'name': '仕訳帳データ取込', 'endpoint': 'company.upload_data', 'params': {'datatype': 'journals'}},
-            {'key': 'confirm_trial_balance', 'name': '残高試算表の確認', 'endpoint': 'company.confirm_trial_balance'},
-            {'key': 'fixed_assets', 'name': '固定資産データ取込', 'endpoint': 'company.upload_data', 'params': {'datatype': 'fixed_assets'}},
+            {'key': 'confirm_trial_balance', 'name': '残高試算表の確認', 'endpoint': 'company.confirm_trial_balance'}
         ]
     },
     {
@@ -32,6 +31,7 @@ NAVIGATION_STRUCTURE_DATA = [
         'name': '固定資産台帳',
         'node_type': 'menu',
         'children': [
+            {'key': 'fixed_assets_import', 'name': '固定資産データ取込', 'endpoint': 'company.fixed_assets_import'},
             {'key': 'fixed_assets_ledger', 'name': '固定資産台帳', 'endpoint': 'company.fixed_assets_ledger'},
             {'key': 'small_assets', 'name': '少額資産明細', 'endpoint': 'company.small_assets_list'},
         ]

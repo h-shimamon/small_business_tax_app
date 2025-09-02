@@ -19,7 +19,8 @@
   'temporary_payments': 'company.temporary_payments_pdf',
   'loans_receivable': 'company.loans_receivable_pdf',
   'notes_payable': 'company.notes_payable_pdf',
-  'accounts_payable': 'company.accounts_payable_pdf'
+  'accounts_payable': 'company.accounts_payable_pdf',
+  'borrowings': 'company.borrowings_pdf'
 } %}
 {% set PDF_LABELS = {
   'deposits': '預貯金等',
@@ -28,7 +29,8 @@
   'temporary_payments': '仮払金（前渡金）',
   'loans_receivable': '貸付金・受取利息',
   'notes_payable': '支払手形',
-  'accounts_payable': '買掛金'
+  'accounts_payable': '買掛金',
+  'borrowings': '借入金及び支払利子'
 } %}
 
   {% if page in PDF_ENDPOINTS %}
