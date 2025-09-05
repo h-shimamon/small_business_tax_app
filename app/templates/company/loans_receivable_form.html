@@ -10,13 +10,13 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='loans_receivable'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.registration_number) }}
-  {{ render_field(form.borrower_name) }}
-  {{ render_field(form.borrower_address) }}
-  {{ render_field(form.relationship) }}
-  {{ render_field(form.balance_at_eoy) }}
-  {{ render_field(form.received_interest) }}
-  {{ render_field(form.interest_rate) }}
-  {{ render_field(form.collateral_details) }}
+  {{ render_field(form.registration_number, autofocus=True, placeholder="例：1234567890123") }}
+  {{ render_field(form.borrower_name, placeholder="例：株式会社 〇〇商事") }}
+  {{ render_field(form.borrower_address, placeholder="例：東京都千代田区〇〇1-2-3") }}
+  {{ render_field(form.relationship, placeholder="例：代表者の親族会社") }}
+  {{ render_field(form.balance_at_eoy, placeholder="例：300000") }}
+  {{ render_field(form.received_interest, placeholder="例：15000") }}
+  {{ render_field(form.interest_rate, placeholder="例：2.0") }}
+  {{ render_field(form.collateral_details, placeholder="例：不動産（東京都港区…）") }}
 {% endcall %}
 {% endblock %}

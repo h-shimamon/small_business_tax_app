@@ -38,7 +38,7 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='notes_receivable'), cancel_label='キャンセル') %}
-  {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
+  {{ render_field(form.registration_number, autofocus=True, placeholder="例：1234567890123") }}
   {{ render_field(form.drawer, placeholder="例：株式会社 〇〇商事") }}
   {{ render_date_field(form.issue_date, placeholder="例：2025年04月01日") }}
   {{ render_date_field(form.due_date, placeholder="例：2025年05月31日") }}

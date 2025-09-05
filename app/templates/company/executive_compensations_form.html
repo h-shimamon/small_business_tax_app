@@ -10,11 +10,11 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='executive_compensations'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.shareholder_name) }}
-  {{ render_field(form.relationship) }}
-  {{ render_field(form.position) }}
-  {{ render_field(form.base_salary) }}
-  {{ render_field(form.other_allowances) }}
-  {{ render_field(form.total_compensation) }}
+  {{ render_field(form.shareholder_name, autofocus=True, placeholder="例：山田 太郎") }}
+  {{ render_field(form.relationship, placeholder="例：代表取締役") }}
+  {{ render_field(form.position, placeholder="例：代表取締役社長") }}
+  {{ render_field(form.base_salary, placeholder="例：500000") }}
+  {{ render_field(form.other_allowances, placeholder="例：役員賞与は無し") }}
+  {{ render_field(form.total_compensation, placeholder="例：600000") }}
 {% endcall %}
 {% endblock %}

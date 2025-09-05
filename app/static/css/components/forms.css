@@ -161,7 +161,7 @@ select.form-control {
 .form-grid-2-col {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0 24px; /* 縦のgapは0, 横のgapは24px */
+    gap: 0 1.5rem; /* row-gap=0, column-gap=1.5rem */
 }
 
 /* form-groupをグリッドのセルとして扱う */
@@ -171,14 +171,11 @@ select.form-control {
 
 /* .full-width クラスを持つ要素は2カラムをまたぐ */
 .form-grid-2-col .full-width {
-    grid-column: span 2;
+    grid-column: 1 / -1; /* 2カラムをまたいで全幅に */
 }
 
 /* 2カラムグリッドレイアウト */
-.form-grid-2col {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+$1gap: 0 1.5rem;
 }
 
 .form-grid-2col .full-width {

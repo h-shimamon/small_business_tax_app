@@ -10,9 +10,9 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='temporary_receipts'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.account_name) }}
-  {{ render_field(form.partner_name) }}
-  {{ render_field(form.balance_at_eoy) }}
-  {{ render_field(form.transaction_details, rows=3) }}
+  {{ render_field(form.account_name, autofocus=True, placeholder="例：預り金") }}
+  {{ render_field(form.partner_name, placeholder="例：株式会社 △△") }}
+  {{ render_field(form.balance_at_eoy, placeholder="例：100000") }}
+  {{ render_field(form.transaction_details, rows=3, placeholder="例：保証金の預り") }}
 {% endcall %}
 {% endblock %}

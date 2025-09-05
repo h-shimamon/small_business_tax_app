@@ -10,10 +10,10 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='land_rents'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.account_name) }}
-  {{ render_field(form.lessor_name) }}
-  {{ render_field(form.property_details) }}
-  {{ render_field(form.rent_paid) }}
-  {{ render_field(form.remarks) }}
+  {{ render_field(form.account_name, autofocus=True, placeholder="例：地代") }}
+  {{ render_field(form.lessor_name, placeholder="例：〇〇不動産") }}
+  {{ render_field(form.property_details, placeholder="例：東京都港区六本木6-10-1") }}
+  {{ render_field(form.rent_paid, placeholder="例：200000") }}
+  {{ render_field(form.remarks, placeholder="例：本店オフィス賃料") }}
 {% endcall %}
 {% endblock %}

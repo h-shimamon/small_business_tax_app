@@ -10,11 +10,11 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='borrowings'), cancel_label='キャンセル', form_attrs='novalidate') %}
-  {{ render_field(form.lender_name) }}
+  {{ render_field(form.lender_name, autofocus=True, placeholder="例：〇〇銀行") }}
   {{ render_checkbox_field(form.is_subsidiary) }}
-  {{ render_field(form.balance_at_eoy) }}
-  {{ render_field(form.interest_rate) }}
-  {{ render_field(form.paid_interest) }}
-  {{ render_field(form.remarks) }}
+  {{ render_field(form.balance_at_eoy, placeholder="例：5000000") }}
+  {{ render_field(form.interest_rate, placeholder="例：1.8") }}
+  {{ render_field(form.paid_interest, placeholder="例：120000") }}
+  {{ render_field(form.remarks, placeholder="例：設備投資のため") }}
 {% endcall %}
 {% endblock %}
