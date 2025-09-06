@@ -97,19 +97,21 @@ select.form-control {
     border-left: 1px solid var(--border-color);
 }
 
-.segmented-control label:first-child {
-    border-left: none;
-}
-
-.segmented-control input[type="radio"] {
-    display: none;
-}
-
+/* Highlight for selected radio segment */
 .segmented-control input[type="radio"]:checked + label {
     background-color: var(--accent-color);
     color: #fff;
     font-weight: 500;
 }
+
+
+.segmented-control input[type=\"radio\"] { position: absolute; opacity: 0; width: 0; height: 0; }
+.segmented-control input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.segmented-control input[type="checkbox"]:checked + label { background-color: var(--accent-color); color: #fff; font-weight: 500; }
+
+/* Fallback class for JS-synced state (for any input type) */
+.segmented-control label.is-checked { background-color: var(--accent-color); color: #fff; font-weight: 500; }
 
 /* --- New Toggle Switch Styles --- */
 .toggle-switch-container {

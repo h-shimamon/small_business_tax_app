@@ -47,4 +47,25 @@ def filings(company):
         'pdf_year': '2025',
     }
     # statement_of_accounts.html を流用（ボタン/サマリは差分0・items空の状態で安全に表示）
+    # 特例: 事業概況説明書１は専用テンプレートを表示（保存なしの入力UI）
+    if page == 'business_overview_1':
+        return render_template('company/filings/business_overview_1.html', **context)
     return render_template('company/statement_of_accounts.html', **context)
+
+
+@company_bp.get('/filings/preview')
+@company_required
+def filings_preview(company):
+    """事業概況説明書などのPDFプレビューを返す（読み取り専用）。
+    現状は business_overview_1 のみ固定パスを返却。
+    """
+    from flask import send_file
+    page = request.args.get('page', '')
+    if page == 'business_overview_1':
+        pdf_path = '/Users/shimamorihayato/Projects/small_business_tax_app/resources/pdf_forms/jigyogaikyo/2025/source.pdf'
+    else:
+        abort(404)
+    try:
+        return send_file(pdf_path, mimetype='application/pdf', as_attachment=False, download_name='business_overview_1_preview.pdf')
+    except Exception:
+        abort(404)

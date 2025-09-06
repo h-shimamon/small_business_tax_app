@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}事業概況説明書１{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filings_business_overview.css') }}">
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'company/_wizard_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<h1 class="content-title">事業概況説明書１</h1>
+<p class="content-subtitle">支店・子会社の状況（入力のみ・保存は未対応）</p>
+
+<div class="bo-split-pane">
+  <div class="bo-pane-left">
+    <div class="card">
+      <form method="get" novalidate>
+        <fieldset>
+          <legend>支店の状況</legend>
+          <div class="bo-grid">
+            <div class="form-group">
+              <label class="form-label">国内支店（国内に所在する支店等の総数）</label>
+              <input class="form-control" type="number" placeholder="例：3">
+            </div>
+            <div class="bo-empty" aria-hidden="true"></div>
+            <div class="form-group bo-col-1">
+              <label class="form-label">海外支店（海外に所在する支店等の総数）</label>
+              <input class="form-control" type="number" placeholder="例：1">
+            </div>
+            <div class="bo-empty" aria-hidden="true"></div>
+
+            <div class="form-group">
+              <label class="form-label">海外支店の所在地国１</label>
+              <input class="form-control" type="text" placeholder="例：米国カリフォルニア州…">
+            </div>
+            <div class="form-group">
+              <label class="form-label">所在地国１の従業員数</label>
+              <input class="form-control" type="number" placeholder="例：30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">海外支店の所在地国２</label>
+              <input class="form-control" type="text" placeholder="例：シンガポール">
+            </div>
+            <div class="form-group">
+              <label class="form-label">所在地国２の従業員数</label>
+              <input class="form-control" type="number" placeholder="例：20">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>子会社の状況</legend>
+          <div class="bo-grid">
+            <div class="form-group">
+              <label class="form-label">国内子会社の数</label>
+              <input class="form-control" type="number" placeholder="例：2">
+            </div>
+            <div class="bo-empty" aria-hidden="true"></div>
+
+<div class="form-group bo-col-1">
+              <label class="form-label">海外子会社の数</label>
+              <input class="form-control" type="number" placeholder="例：1">
+            </div>
+<div class="form-group">
+              <label class="form-label">うち出資割合が50％以上の海外子会社数</label>
+              <input class="form-control" type="number" placeholder="例：1">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">海外子会社１の名称</label>
+              <input class="form-control" type="text" placeholder="例：〇〇インターナショナル株式会社">
+            </div>
+            <div class="form-group">
+              <label class="form-label">海外子会社１の出資割合</label>
+              <input class="form-control" type="number" placeholder="例：60">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">海外子会社２の名称</label>
+              <input class="form-control" type="text" placeholder="例：△△テクノロジーズ株式会社">
+            </div>
+            <div class="form-group">
+              <label class="form-label">海外子会社２の出資割合</label>
+              <input class="form-control" type="number" placeholder="例：40">
+            </div>
+          </div>
+        </fieldset>
+
+<fieldset>
+          <legend>海外取引状況</legend>
+          <!-- Overseas Trade: row1 (2-col) -->
+<div class="bo-grid">
+  <div class="form-group bo-span-all" id="trade_type_group">
+  <label class="form-label">海外取引の種類</label>
+  <div class="segmented-control">
+        <input type="radio" name="trade_type" id="trade_type_import" value="import" style="display:none;"/>
+        <label for="trade_type_import">輸入</label>
+        <input type="radio" name="trade_type" id="trade_type_export" value="export" style="display:none;"/>
+        <label for="trade_type_export">輸出</label>
+        <input type="radio" name="trade_type" id="trade_type_both" value="both" style="display:none;"/>
+        <label for="trade_type_both">輸出入</label>
+        <input type="radio" name="trade_type" id="trade_type_none" value="none" style="display:none;"/>
+        <label for="trade_type_none">無</label>
+      </div>
+</div>
+</div>
+<!-- Overseas Trade: rows 2-3 (3-col) -->
+<div class="bo-grid bo-grid-3col" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));column-gap:24px">
+<div class="form-group">
+              <label class="form-label">輸出相手国</label>
+              <input class="form-control" type="text" placeholder="例：米国">
+            </div>
+<div class="form-group">
+              <label class="form-label">主な商品</label>
+              <input class="form-control" type="text" placeholder="例：電子機器">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">取引金額（百万円）</label>
+              <input class="form-control" type="number" placeholder="例：200">
+            </div>
+            <div class="form-group">
+              <label class="form-label">輸入相手国</label>
+              <input class="form-control" type="text" placeholder="例：中国">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">主な商品</label>
+              <input class="form-control" type="text" placeholder="例：電子部品">
+            </div>
+            <div class="form-group">
+              <label class="form-label">取引金額（百万円）</label>
+              <input class="form-control" type="number" placeholder="例：120">
+            </div>
+          </div>
+        
+  <!-- Overseas Trade: rows 4-6 (1-col) -->
+  <div class="bo-grid">
+    <div class="form-group bo-span-all" id="trade_type_other_row1">
+      <label class="form-label">輸出入以外の海外取引（複数選択可）</label>
+      <div class="segmented-control">
+        <input type="checkbox" name="trade_type_other" id="trade_other_fee" value="fee"/>
+        <label for="trade_other_fee">手数料</label>
+        <input type="checkbox" name="trade_type_other" id="trade_other_royalty" value="royalty"/>
+        <label for="trade_other_royalty">ロイヤルティー</label>
+        <input type="checkbox" name="trade_type_other" id="trade_other_services" value="services"/>
+        <label for="trade_other_services">役務の提供</label>
+      </div>
+    </div>
+    <div class="form-group bo-span-all" id="trade_type_other_row2">
+      <div class="segmented-control">
+        <input type="checkbox" name="trade_type_other" id="trade_other_securities" value="securities"/>
+        <label for="trade_other_securities">証券の売買</label>
+        <input type="checkbox" name="trade_type_other" id="trade_other_loan" value="loan"/>
+        <label for="trade_other_loan">金銭の貸借</label>
+        <input type="checkbox" name="trade_type_other" id="trade_other_realestate" value="realestate"/>
+        <label for="trade_other_realestate">不動産の売買</label>
+      </div>
+    </div>
+    <div class="form-group bo-span-all">
+      <label class="form-label">その他</label>
+      <input class="form-control" type="text" placeholder="輸出入以外の海外取引で上記に該当がない場合に入力してください"/>
+    </div>
+  </div>
+</fieldset>
+
+
+
+        </form>
+    </div>
+  </div><div class="bo-aside-spacer" aria-hidden="true"></div>
+
+
+  <aside class="bo-pane-right">
+    <div class="bo-preview-card">
+      <div class="bo-preview-box" style="padding:0;">
+        <iframe src="{{ url_for('company.filings_preview', page='business_overview_1') }}#toolbar=0&navpanes=0&view=FitH" title="PDFプレビュー" style="width:100%; height:100%; border:0; border-radius:8px; background:#fff;"></iframe>
+      </div>
+      <p class="bo-preview-note">PDFの実ファイルを表示中（読み取り専用）。入力との連動は今後の段階で実装します。</p>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+  {{ super() if super }}
+  <script>
+    (function(){
+      var radios = document.querySelectorAll('input[type="radio"][name="trade_type"]');
+      radios.forEach(function(el){
+        el.addEventListener('mousedown', function(){ this._wasChecked = this.checked; });
+        el.addEventListener('click', function(){ if (this._wasChecked) { this.checked = false; } });
+      });
+    })();
+    (function(){
+      var checks = document.querySelectorAll('input[type="checkbox"][name="trade_type_other"]');
+      function syncOne(el){
+        var lab = document.querySelector('label[for="'+el.id+'"]');
+        if(lab){ lab.classList.toggle('is-checked', el.checked); }
+      }
+      checks.forEach(function(el){
+        el.addEventListener('change', function(){ syncOne(el); });
+        syncOne(el);
+      });
+      var labels = document.querySelectorAll('label[for^="trade_other_"]');
+      labels.forEach(function(lab){
+        lab.addEventListener('click', function(e){
+          e.preventDefault();
+          var id = this.getAttribute('for');
+          var el = document.getElementById(id);
+          if(!el) return;
+          el.checked = !el.checked;
+          el.dispatchEvent(new Event('change', {bubbles:true}));
+        });
+      });
+    })();
+  </script>
+  
+  
+  
+  <script>
+    (function(){
+      var split = document.querySelector('.bo-split-pane');
+      var aside = document.querySelector('.bo-pane-right');
+      var left  = document.querySelector('.bo-pane-left');
+      var leftCard = document.querySelector('.bo-pane-left .card');
+      if(!split || !aside || !left || !leftCard) return;
+      var headerH = 56;
+      try {
+        var cssH = getComputedStyle(document.documentElement).getPropertyValue('--header-height');
+        if(cssH) { var n = parseInt(cssH, 10); if(!isNaN(n)) headerH = n; }
+      } catch(e){}
+      var topOffset = headerH + 16; // CSS stickyと整合
+      function computeLeft(w){
+        var rect = split.getBoundingClientRect();
+        return Math.round(rect.left + window.pageXOffset + split.clientWidth - w);
+      }
+      function tick(){
+        var w = aside.getBoundingClientRect().width;
+        var start = leftCard.getBoundingClientRect().top + window.pageYOffset; // 左カード開始位置
+        var sc = window.pageYOffset + topOffset; // 右を固定する開始しきい値
+        if(sc >= start){
+          aside.style.position = 'fixed';
+          aside.style.top = topOffset + 'px';
+          aside.style.width = w + 'px';
+          aside.style.left = computeLeft(w) + 'px';
+          left.style.paddingRight = (w + 24) + 'px';
+        } else {
+          // 固定解除（CSSのstickyに戻す）
+          aside.style.position = '';
+          aside.style.top = '';
+          aside.style.left = '';
+          aside.style.width = '';
+          left.style.paddingRight = '';
+        }
+      }
+      window.addEventListener('scroll', tick, {passive:true});
+      window.addEventListener('resize', tick);
+      tick();
+    })();
+  </script>
+{% endblock %}
