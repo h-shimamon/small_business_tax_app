@@ -62,6 +62,29 @@ NAVIGATION_STRUCTURE_DATA = [
     },
 ]
 
+# --- 申告書グループの追加（段階導入・リンク先は共通filingsエンドポイント） ---
+NAVIGATION_STRUCTURE_DATA += [
+    {
+        'key': 'filings_group',
+        'name': '申告書',
+        'node_type': 'menu',
+        'children': [
+            {'key': 'beppyo_15', 'name': '別表15', 'endpoint': 'company.filings', 'params': {'page': 'beppyo_15'}},
+            {'key': 'business_overview_1', 'name': '事業概況説明書１', 'endpoint': 'company.filings', 'params': {'page': 'business_overview_1'}},
+            {'key': 'business_overview_2', 'name': '事業概況説明書２', 'endpoint': 'company.filings', 'params': {'page': 'business_overview_2'}},
+            {'key': 'business_overview_3', 'name': '事業概況説明書３', 'endpoint': 'company.filings', 'params': {'page': 'business_overview_3'}},
+            {'key': 'tax_payment_status_beppyo_5_2', 'name': '法人税等の納付状況（別表５(2))', 'endpoint': 'company.filings', 'params': {'page': 'tax_payment_status_beppyo_5_2'}},
+            {'key': 'beppyo_7', 'name': '別表７', 'endpoint': 'company.filings', 'params': {'page': 'beppyo_7'}},
+            {'key': 'beppyo_4', 'name': '別表４', 'endpoint': 'company.filings', 'params': {'page': 'beppyo_4'}},
+            {'key': 'beppyo_5_1', 'name': '別表５(1)', 'endpoint': 'company.filings', 'params': {'page': 'beppyo_5_1'}},
+            {'key': 'appropriation_calc_beppyo_5_2', 'name': '納税充当金の計算（別表５(2))', 'endpoint': 'company.filings', 'params': {'page': 'appropriation_calc_beppyo_5_2'}},
+            {'key': 'local_tax_rates', 'name': '地方税税率登録', 'endpoint': 'company.filings', 'params': {'page': 'local_tax_rates'}},
+            {'key': 'journal_entries_cit', 'name': '法人税等に関する仕訳の表示', 'endpoint': 'company.filings', 'params': {'page': 'journal_entries_cit'}},
+            {'key': 'financial_statements', 'name': '決算書', 'endpoint': 'company.filings', 'params': {'page': 'financial_statements'}},
+        ]
+    }
+]
+
 def build_navigation_tree():
     """
     データ定義に基づき、NavigationNodeのツリーを構築して返す

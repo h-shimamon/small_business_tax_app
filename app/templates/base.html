@@ -62,7 +62,7 @@
             <a href="{{ url_for('company.select_software') }}" class="nav-item">会計データ選択</a>
             <a href="#" class="nav-item">固定資産台帳</a>
             <a href="{{ url_for('company.statement_of_accounts') }}" class="nav-item">勘定科目内訳書</a>
-            <a href="#" class="nav-item">申告書データ</a>
+            <a href="{{ url_for('company.filings', page='beppyo_15') }}" class="nav-item">申告書データ</a>
             <a href="#" class="nav-item">印刷</a>
             <a href="#" class="nav-item">設定</a>
         </nav>
