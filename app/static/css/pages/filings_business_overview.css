@@ -1,7 +1,9 @@
 /* filings_business_overview.css — Business Overview (1) page-specific styles */
 
 .bo-split-pane { display:flex; gap:24px; align-items:flex-start; }
-.bo-pane-left { flex: 1 1 60%; min-width: 480px; }
+$1
+/* Sticky preview pane (non-destructive: JS may override) */
+.bo-pane-right { position: static; top: auto; align-self: flex-start; width: clamp(460px, 40%, 600px); }
 
 /* Make inner card sticky instead (more robust) */
 
@@ -15,7 +17,12 @@
 .bo-preview-note { margin-top: 12px; color: var(--text-secondary); font-size: 0.85rem; }
 
 /* Two-column form grid with consistent spacing (matches global forms) */
-.bo-grid { display:grid; grid-template-columns: repeat(2, 1fr); column-gap: 24px; row-gap: 0; }
+$1
+/* Grid utilities */
+.bo-grid.bo-cols-1 { grid-template-columns: 1fr; }
+.bo-grid.bo-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bo-grid.bo-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bo-grid .form-group { min-width: 0; }
 /* 3-column variant for the duplicated subsidiary fieldset */
 .bo-grid.bo-grid-3col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 /* Ensure grid items can shrink for 3-col layout */
@@ -38,9 +45,5 @@
 /* Spacing for second row of other-trade radios */
 
 /* Keep PDF visible on this page (sticky aside, viewport height) */
-$1
+
 /* page-local spacer that defines the upper clamp for sticky aside */
-.bo-aside-spacer { height: 0; }
-.bo-preview-box { width: 100%; aspect-ratio: 8.5 / 11; border: 1px dashed var(--border-color); border-radius: 8px; background:
-  repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 24px);
-  display:flex; align-items:center; justify-content:center; color: var(--text-secondary); font-size: 0.95rem; }

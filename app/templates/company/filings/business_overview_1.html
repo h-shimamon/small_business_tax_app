@@ -109,7 +109,7 @@
 </div>
 </div>
 <!-- Overseas Trade: rows 2-3 (3-col) -->
-<div class="bo-grid bo-grid-3col" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));column-gap:24px">
+<div class="bo-grid bo-grid-3col bo-cols-3" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));column-gap:24px">
 <div class="form-group">
               <label class="form-label">輸出相手国</label>
               <input class="form-control" type="text" placeholder="例：米国">
@@ -228,37 +228,61 @@
       var left  = document.querySelector('.bo-pane-left');
       var leftCard = document.querySelector('.bo-pane-left .card');
       if(!split || !aside || !left || !leftCard) return;
+
       var headerH = 56;
       try {
         var cssH = getComputedStyle(document.documentElement).getPropertyValue('--header-height');
         if(cssH) { var n = parseInt(cssH, 10); if(!isNaN(n)) headerH = n; }
       } catch(e){}
-      var topOffset = headerH + 16; // CSS stickyと整合
-      function computeLeft(w){
-        var rect = split.getBoundingClientRect();
-        return Math.round(rect.left + window.pageXOffset + split.clientWidth - w);
+      var topOffset = headerH + 16;
+
+      var gutterBase = null;
+      var wasFixed = false;
+
+      function computeGutter(splitRect, asideRect){
+        return Math.round((splitRect.left + splitRect.width) - (asideRect.left + asideRect.width));
       }
+      function computeLeftForFixed(splitRect, asideWidth){
+        var pageX = window.pageXOffset || document.documentElement.scrollLeft || 0;
+        var gutter = (gutterBase == null ? 0 : gutterBase);
+        return Math.round(splitRect.left + pageX + split.clientWidth - asideWidth - gutter);
+      }
+
       function tick(){
-        var w = aside.getBoundingClientRect().width;
-        var start = leftCard.getBoundingClientRect().top + window.pageYOffset; // 左カード開始位置
-        var sc = window.pageYOffset + topOffset; // 右を固定する開始しきい値
+        var splitRect = split.getBoundingClientRect();
+        var asideRect = aside.getBoundingClientRect();
+        var w = asideRect.width;
+        var start = leftCard.getBoundingClientRect().top + window.pageYOffset;
+        var sc = window.pageYOffset + topOffset;
+
+        if(!wasFixed){
+          gutterBase = computeGutter(splitRect, asideRect);
+        }
         if(sc >= start){
           aside.style.position = 'fixed';
           aside.style.top = topOffset + 'px';
           aside.style.width = w + 'px';
-          aside.style.left = computeLeft(w) + 'px';
+          aside.style.left = computeLeftForFixed(splitRect, w) + 'px';
           left.style.paddingRight = (w + 24) + 'px';
+          wasFixed = true;
         } else {
-          // 固定解除（CSSのstickyに戻す）
           aside.style.position = '';
           aside.style.top = '';
           aside.style.left = '';
           aside.style.width = '';
           left.style.paddingRight = '';
+          wasFixed = false;
         }
       }
       window.addEventListener('scroll', tick, {passive:true});
-      window.addEventListener('resize', tick);
+      window.addEventListener('resize', function(){
+        var was = wasFixed;
+        aside.style.position = '';
+        aside.style.left = '';
+        wasFixed = false;
+        tick();
+        if(was){ tick(); }
+      });
       tick();
     })();
   </script>
