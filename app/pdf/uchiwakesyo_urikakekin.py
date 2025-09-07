@@ -87,7 +87,7 @@ def generate_uchiwakesyo_urikakekin(company_id: Optional[int], year: str = "2025
     # Shared alignment: compute common right edge for the balance column (geometry right edge minus small margin)
     vx0, vw0 = col('balance')
     right_margin = float(geom.get('margins', {}).get('right_margin', 0.0))
-    common_right = vx0 + vw0 - right_margin
+    _common_right = vx0 + vw0 - right_margin
 
     total_items = len(items)
     pages = (total_items + rows_per_page - 1) // rows_per_page if total_items > 0 else 1

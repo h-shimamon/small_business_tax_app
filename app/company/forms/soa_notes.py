@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField
+from wtforms import StringField, SubmitField
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, Optional
 

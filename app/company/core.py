@@ -44,7 +44,6 @@ def declaration(company):
     form, _ = service.populate_declaration_form()
 
     # 文字列→date変換の前に、共通プリミティブから安全に日付を取得（内部読み取りのみの変更）
-    from datetime import datetime
     period = get_company_period(company)
     if period.start:
         form.accounting_period_start.data = period.start

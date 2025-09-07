@@ -4,7 +4,7 @@ import re
 # from flask_login import login_user
 
 from app import db
-from app.company.models import User, Company, AccountingData, AccountTitleMaster
+from app.company.models import Company, AccountingData, AccountTitleMaster
 
 
 from tests.helpers.auth import login_as

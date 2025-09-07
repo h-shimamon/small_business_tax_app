@@ -90,7 +90,6 @@ def edit_fixed_asset_preview(idx: int):
     if not (0 <= idx < len(records)):
         flash('対象レコードが見つかりません。', 'warning')
         return redirect(url_for('company.fixed_assets_ledger'))
-    import math
     from flask import request
 
     def _to_int(name):

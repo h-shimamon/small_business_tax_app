@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from app.pdf.layout_utils import load_geometry, GeometryError
+from app.pdf.layout_utils import load_geometry
 
 
 def test_load_geometry_success(app):

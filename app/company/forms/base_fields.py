@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-from flask_wtf import FlaskForm  # keep WTForms imports grouped
 from wtforms import StringField, IntegerField
 from wtforms.validators import Optional as Opt, Length, NumberRange, Regexp, DataRequired
 

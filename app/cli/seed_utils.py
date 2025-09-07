@@ -5,7 +5,6 @@ from datetime import date, timedelta
 import random
 from typing import Optional, Tuple
 
-from app import db
 from app.company.models import Company
 
 

@@ -11,7 +11,7 @@ from app.company.forms import (
     AccountsPayableForm, TemporaryReceiptForm, BorrowingForm, ExecutiveCompensationForm,
     LandRentForm, MiscellaneousForm, MiscellaneousIncomeForm, MiscellaneousLossForm
 )
-from typing import TypedDict, Optional, Callable, Any, Dict
+from typing import TypedDict, Callable, Any, Dict
 
 # Typed config for SoA pages (non-functional; for developer clarity)
 class StatementPageConfig(TypedDict, total=False):

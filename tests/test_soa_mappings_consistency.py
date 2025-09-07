@@ -1,4 +1,3 @@
-import pytest
 
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS

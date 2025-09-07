@@ -22,7 +22,8 @@ if __name__ == '__main__':
         db.create_all()
         svc = MasterDataService()
         # warm-up
-        svc.get_bs_master_df(); svc.get_pl_master_df()
+        svc.get_bs_master_df()
+        svc.get_pl_master_df()
         # first (cold)
         clear_master_df_cache()
         bench_once('cold BS', svc.get_bs_master_df)

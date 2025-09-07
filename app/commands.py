@@ -551,7 +551,7 @@ def seed_main_shareholders_command(company_id: int | None, count: int, prefix: s
             click.echo('エラー: 複数の Company が存在します。--company-id で対象を指定してください。')
             return
 
-    rng = random.Random(123)
+    _rng = random.Random(123)
     created = 0
     for i in range(count):
         last_name = f"{prefix}ダミー主{i+1:02d}"
@@ -582,7 +582,6 @@ def seed_main_shareholders_command(company_id: int | None, count: int, prefix: s
 @click.option('--prefix', type=str, default='', show_default=True, help='姓に付与する識別用プレフィクス')
 def seed_related_shareholders_command(company_id: int | None, count: int, parent: str, prefix: str):
     """特殊関係人（parent_idあり）をダミーデータで追加します。"""
-    from datetime import date
     import random
     from app.company.models import Company, Shareholder
 
@@ -620,7 +619,7 @@ def seed_related_shareholders_command(company_id: int | None, count: int, parent
     else:
         parent_main = mains[-1]
 
-    rng = random.Random(456)
+    _rng = random.Random(456)
     created = 0
     for i in range(count):
         last_name = f"{prefix}ダミー関連{i+1:02d}"

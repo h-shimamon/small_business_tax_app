@@ -1,7 +1,7 @@
 # app/company/services/shareholder_service.py
 from flask import g, has_request_context
 from flask_login import current_user
-from sqlalchemy import func, or_
+from sqlalchemy import func
 from app import db
 from app.company.models import Shareholder, Company
 from app.company.forms import MainShareholderForm, RelatedShareholderForm

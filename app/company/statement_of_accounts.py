@@ -3,16 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, abort, cur
 from app.constants import FLASH_SKIP
 from app.company import company_bp
 from app.company.models import (
-    Deposit, NotesReceivable, AccountsReceivable, TemporaryPayment,
-    LoansReceivable, Inventory, Security, FixedAsset, NotesPayable,
-    AccountsPayable, TemporaryReceipt, Borrowing, ExecutiveCompensation,
-    LandRent, Miscellaneous, AccountingData
-)
-from app.company.forms import (
-    DepositForm, NotesReceivableForm, AccountsReceivableForm, TemporaryPaymentForm,
-    LoansReceivableForm, InventoryForm, SecurityForm, FixedAssetForm, NotesPayableForm,
-    AccountsPayableForm, TemporaryReceiptForm, BorrowingForm, ExecutiveCompensationForm,
-    LandRentForm, MiscellaneousForm
+    AccountingData
 )
 from app import db
 from app.navigation import (
@@ -22,10 +13,9 @@ from app.navigation import (
     compute_skipped_steps_for_company,
 )
 from .auth import company_required
-from app.company.services.master_data_service import MasterDataService
 from app.company.services.soa_summary_service import SoASummaryService
 from app.progress.evaluator import SoAProgressEvaluator
-from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
+from app.company.soa_mappings import SUMMARY_PAGE_MAP
 from app.company.soa_config import STATEMENT_PAGES_CONFIG
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
 from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin

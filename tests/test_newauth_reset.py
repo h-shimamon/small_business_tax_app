@@ -43,8 +43,11 @@ def test_reset_happy_path_and_login_with_new_password():
     with app.app_context():
         db.create_all()
         _ensure_tables()
-        u = User(username='demo', email='reset@example.com'); u.set_password('oldpassword'); u.is_email_verified=True
-        db.session.add(u); db.session.commit()
+        u = User(username='demo', email='reset@example.com')
+        u.set_password('oldpassword')
+        u.is_email_verified = True
+        db.session.add(u)
+        db.session.commit()
 
     # Request reset (response is always success page)
     r = client.post('/xauth/reset', data={'email': 'reset@example.com'})

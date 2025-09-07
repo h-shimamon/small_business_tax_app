@@ -52,7 +52,7 @@ def test_signup_creates_user_and_token_and_verify_allows_login():
         assert not bool(getattr(u, 'is_email_verified', False))
         row = db.session.execute(db.text("SELECT token_hash FROM signup_tokens WHERE user_id = :uid ORDER BY id DESC LIMIT 1"), {"uid": u.id}).mappings().first()
         assert row is not None
-        th = row['token_hash']
+        _th = row['token_hash']
         # compute a clear token that matches (impractical normally); instead we simulate by direct update to used_at via verify route
 
     # 3) simulate verify using a fresh token (we can't invert hash), insert a known token

@@ -1,4 +1,3 @@
-import pytest
 from app import create_app, db
 from app.company.models import User
 

@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 
 
 def login_as(client, user_id: int = 1) -> None:

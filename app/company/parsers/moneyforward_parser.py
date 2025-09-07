@@ -1,7 +1,6 @@
 # app/company/parsers/moneyforward_parser.py
 import pandas as pd
 from .base_parser import BaseParser
-import re
 
 class MoneyForwardParser(BaseParser):
     """
@@ -160,7 +159,8 @@ class MoneyForwardParser(BaseParser):
             return pd.to_numeric(series, errors='coerce')
 
         # 正規化用の安全コピー
-        s = lambda name: df[name] if name in df.columns else pd.Series([None]*len(df))
+        def s(name):
+            return df[name] if name in df.columns else pd.Series([None] * len(df))
         out = pd.DataFrame({
             'acquisition_date': pd.to_datetime(s('取得日'), errors='coerce').dt.date.astype('string'),
             'asset_type': s('種類').astype('string').str.strip(),

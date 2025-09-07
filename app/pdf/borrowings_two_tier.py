@@ -56,7 +56,7 @@ def generate_borrowings_two_tier(company_id: Optional[int], year: str = "2025", 
     geom = load_geometry("borrowings_two_tier", year, repo_root=repo_root, required=False, validate=False) or {}
 
     # 位置（無い場合は簡易デフォルト座標）
-    up = geom.get('upper_total', {'x': 430.0, 'y': 740.0, 'w': 100.0, 'size': 12.0})
+    _up = geom.get('upper_total', {'x': 430.0, 'y': 740.0, 'w': 100.0, 'size': 12.0})
     lo = geom.get('lower_total', {'x': 430.0, 'y': 360.0, 'w': 100.0, 'size': 12.0})
     right_margin = float(geom.get('margins', {}).get('right_margin', 0.0))
 

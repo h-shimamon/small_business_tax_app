@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField, IntegerField, FloatField, TextAreaField, HiddenField, BooleanField
-from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, Optional
 
 from .base_fields import CorporateNumberField, MoneyField, MemoField

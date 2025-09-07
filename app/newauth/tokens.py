@@ -5,7 +5,6 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Tuple
 
-from app import db
 
 
 def _now() -> datetime:

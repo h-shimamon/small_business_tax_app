@@ -228,7 +228,7 @@ def _place_ymd_triplet(page: int, x0: float, y0: float, w: float, h: float, date
     # Baseline centered vertically
     y = _baseline_center(y0 + h / 2.0, size)
     # Widths
-    w_yy = _string_width(yy, font, size)
+    _w_yy = _string_width(yy, font, size)
     w_mm = _string_width(mm, font, size)
     w_dd = _string_width(dd, font, size)
     # Positions
@@ -392,7 +392,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     box_douzoku = rects_overridden["BOX_DOUZOKU"]
     box_hi_douzoku = rects_overridden["BOX_HI_DOUZOKU"]
 
-    rect_period_start = rects_overridden["RECT_PERIOD_START"]
+    _rect_period_start = rects_overridden["RECT_PERIOD_START"]
     rect_period_end = rects_overridden["RECT_PERIOD_END"]
     rect_company_name = rects_overridden["RECT_COMPANY_NAME"]
     rect_start_era = rects_overridden["RECT_START_ERA"]
@@ -405,7 +405,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
     rectangles: List[Tuple[int, float, float, float, float]] = []
 
     for idx, row in enumerate(rows):
-        y_shift = STEP_Y * idx
+        _y_shift = STEP_Y * idx
         # Compute this row's center line (shared across columns)
         row_center = ROW1_CENTER - ROW_STEP * idx
 

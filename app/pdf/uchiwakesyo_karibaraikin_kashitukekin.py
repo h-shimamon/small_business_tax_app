@@ -85,7 +85,7 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
         .all()
     )
 
-    tp_rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS', 11))
+    _tp_rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS', 11))
     tp_data_rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS_DATA', 11))
     tp_total = len(tp_items)
     tp_pages = (tp_total + tp_data_rows_per_page - 1) // tp_data_rows_per_page if tp_total > 0 else 1
@@ -150,7 +150,7 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
     row_k = geom.get('row_kashitsuke', {})
     k_ROW1_CENTER = float(row_k.get('ROW1_CENTER', 400.0))
     k_ROW_STEP = float(row_k.get('ROW_STEP', 21.3))
-    k_rows_per_page = int(row_k.get('DETAIL_ROWS', 10))
+    _k_rows_per_page = int(row_k.get('DETAIL_ROWS', 10))
     k_data_rows_per_page = int(row_k.get('DETAIL_ROWS_DATA', 7))
 
     cols_k = geom.get('cols_kashitsuke', {})
@@ -237,11 +237,11 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
                 else:
                     rate_text = ''
 
-                parts = [t for t in [ri_text, rate_text, cd_val] if t]
+                _parts = [t for t in [ri_text, rate_text, cd_val] if t]
                 # Precise placement for remarks
                 # Optional geometry overrides (no-op if absent)
                 opts = geom.get('remarks_kashitsuke', {}) if isinstance(geom.get('remarks_kashitsuke', {}), dict) else {}
-                dx_interest = float(opts.get('interest_dx', -30.0))
+                _dx_interest = float(opts.get('interest_dx', -30.0))
                 dx_rate = float(opts.get('rate_dx', 1.0))
                 gap = float(opts.get('gap', 6.0))
                 interest_font_delta = float(opts.get('interest_font_delta', -2.0))
@@ -265,7 +265,7 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
                         return float(len(t)) * 6.0 * (rate_font / base_font)
 
                 # Rate and collateral laid out from remarks baseline
-                anchor_const = mx + dx_rate + 10.0 - 4.0
+                _anchor_const = mx + dx_rate + 10.0 - 4.0
                 rate_anchor_x = 498.0
                 if rate_text:
                     append_right(texts, page=p, x=rate_anchor_x, w=0.0, center_y=center_y, text=rate_text, font_name="NotoSansJP", font_size=rate_font, right_margin=0.0)

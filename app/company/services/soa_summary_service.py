@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Any, TypedDict
+from typing import Dict, List, Any, TypedDict
 
 from app.company.services.master_data_service import MasterDataService
 from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
