@@ -7,10 +7,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filings_business_overview.css') }}">
 {% endblock %}
 
-{% block sidebar %}
-    {% include 'company/_wizard_sidebar.html' %}
-{% endblock %}
-
 {% block content %}
 <h1 class="content-title">事業概況説明書１</h1>
 <p class="content-subtitle">支店・子会社の状況（入力のみ・保存は未対応）</p>
@@ -60,12 +56,11 @@
               <input class="form-control" type="number" placeholder="例：2">
             </div>
             <div class="bo-empty" aria-hidden="true"></div>
-
-<div class="form-group bo-col-1">
+            <div class="form-group bo-col-1">
               <label class="form-label">海外子会社の数</label>
               <input class="form-control" type="number" placeholder="例：1">
             </div>
-<div class="form-group">
+            <div class="form-group">
               <label class="form-label">うち出資割合が50％以上の海外子会社数</label>
               <input class="form-control" type="number" placeholder="例：1">
             </div>
@@ -90,35 +85,34 @@
           </div>
         </fieldset>
 
-<fieldset>
+        <fieldset>
           <legend>海外取引状況</legend>
           <!-- Overseas Trade: row1 (2-col) -->
-<div class="bo-grid">
-  <div class="form-group bo-span-all" id="trade_type_group">
-  <label class="form-label">海外取引の種類</label>
-  <div class="segmented-control">
-        <input type="radio" name="trade_type" id="trade_type_import" value="import" style="display:none;"/>
-        <label for="trade_type_import">輸入</label>
-        <input type="radio" name="trade_type" id="trade_type_export" value="export" style="display:none;"/>
-        <label for="trade_type_export">輸出</label>
-        <input type="radio" name="trade_type" id="trade_type_both" value="both" style="display:none;"/>
-        <label for="trade_type_both">輸出入</label>
-        <input type="radio" name="trade_type" id="trade_type_none" value="none" style="display:none;"/>
-        <label for="trade_type_none">無</label>
-      </div>
-</div>
-</div>
-<!-- Overseas Trade: rows 2-3 (3-col) -->
-<div class="bo-grid bo-grid-3col bo-cols-3" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));column-gap:24px">
-<div class="form-group">
+          <div class="bo-grid">
+            <div class="form-group bo-span-all" id="trade_type_group">
+              <label class="form-label">海外取引の種類</label>
+              <div class="segmented-control">
+                <input type="radio" name="trade_type" id="trade_type_import" value="import" style="display:none;"/>
+                <label for="trade_type_import">輸入</label>
+                <input type="radio" name="trade_type" id="trade_type_export" value="export" style="display:none;"/>
+                <label for="trade_type_export">輸出</label>
+                <input type="radio" name="trade_type" id="trade_type_both" value="both" style="display:none;"/>
+                <label for="trade_type_both">輸出入</label>
+                <input type="radio" name="trade_type" id="trade_type_none" value="none" style="display:none;"/>
+                <label for="trade_type_none">無</label>
+              </div>
+            </div>
+          </div>
+          <!-- Overseas Trade: rows 2-3 (3-col) -->
+          <div class="bo-grid bo-grid-3col bo-cols-3" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));column-gap:24px">
+            <div class="form-group">
               <label class="form-label">輸出相手国</label>
               <input class="form-control" type="text" placeholder="例：米国">
             </div>
-<div class="form-group">
+            <div class="form-group">
               <label class="form-label">主な商品</label>
               <input class="form-control" type="text" placeholder="例：電子機器">
             </div>
-
             <div class="form-group">
               <label class="form-label">取引金額（百万円）</label>
               <input class="form-control" type="number" placeholder="例：200">
@@ -127,7 +121,6 @@
               <label class="form-label">輸入相手国</label>
               <input class="form-control" type="text" placeholder="例：中国">
             </div>
-
             <div class="form-group">
               <label class="form-label">主な商品</label>
               <input class="form-control" type="text" placeholder="例：電子部品">
@@ -137,43 +130,40 @@
               <input class="form-control" type="number" placeholder="例：120">
             </div>
           </div>
-        
-  <!-- Overseas Trade: rows 4-6 (1-col) -->
-  <div class="bo-grid">
-    <div class="form-group bo-span-all" id="trade_type_other_row1">
-      <label class="form-label">輸出入以外の海外取引（複数選択可）</label>
-      <div class="segmented-control">
-        <input type="checkbox" name="trade_type_other" id="trade_other_fee" value="fee"/>
-        <label for="trade_other_fee">手数料</label>
-        <input type="checkbox" name="trade_type_other" id="trade_other_royalty" value="royalty"/>
-        <label for="trade_other_royalty">ロイヤルティー</label>
-        <input type="checkbox" name="trade_type_other" id="trade_other_services" value="services"/>
-        <label for="trade_other_services">役務の提供</label>
-      </div>
-    </div>
-    <div class="form-group bo-span-all" id="trade_type_other_row2">
-      <div class="segmented-control">
-        <input type="checkbox" name="trade_type_other" id="trade_other_securities" value="securities"/>
-        <label for="trade_other_securities">証券の売買</label>
-        <input type="checkbox" name="trade_type_other" id="trade_other_loan" value="loan"/>
-        <label for="trade_other_loan">金銭の貸借</label>
-        <input type="checkbox" name="trade_type_other" id="trade_other_realestate" value="realestate"/>
-        <label for="trade_other_realestate">不動産の売買</label>
-      </div>
-    </div>
-    <div class="form-group bo-span-all">
-      <label class="form-label">その他</label>
-      <input class="form-control" type="text" placeholder="輸出入以外の海外取引で上記に該当がない場合に入力してください"/>
+          <!-- Overseas Trade: rows 4-6 (1-col) -->
+          <div class="bo-grid">
+            <div class="form-group bo-span-all" id="trade_type_other_row1">
+              <label class="form-label">輸出入以外の海外取引（複数選択可）</label>
+              <div class="segmented-control">
+                <input type="checkbox" name="trade_type_other" id="trade_other_securities" value="securities"/>
+                <label for="trade_other_securities">証券の売買</label>
+                <input type="checkbox" name="trade_type_other" id="trade_other_loan" value="loan"/>
+                <label for="trade_other_loan">金銭の貸借</label>
+                <input type="checkbox" name="trade_type_other" id="trade_other_realestate" value="realestate"/>
+                <label for="trade_other_realestate">不動産の売買</label>
+              </div>
+            </div>
+            <div class="form-group bo-span-all" id="trade_type_other_row2">
+              <div class="segmented-control">
+                <input type="checkbox" name="trade_type_other" id="trade_other_fee" value="fee"/>
+                <label for="trade_other_fee">手数料</label>
+                <input type="checkbox" name="trade_type_other" id="trade_other_royalty" value="royalty"/>
+                <label for="trade_other_royalty">ロイヤルティー</label>
+                <input type="checkbox" name="trade_type_other" id="trade_other_services" value="services"/>
+                <label for="trade_other_services">役務の提供</label>
+              </div>
+            </div>
+            <div class="form-group bo-span-all">
+              <label class="form-label">その他</label>
+              <input class="form-control" type="text" placeholder="輸出入以外の海外取引で上記に該当がない場合に入力してください"/>
+            </div>
+          </div>
+        </fieldset>
+      </form>
     </div>
   </div>
-</fieldset>
 
-
-
-        </form>
-    </div>
-  </div><div class="bo-aside-spacer" aria-hidden="true"></div>
-
+  <div class="bo-aside-spacer" aria-hidden="true"></div>
 
   <aside class="bo-pane-right">
     <div class="bo-preview-card">
@@ -185,6 +175,7 @@
   </aside>
 </div>
 {% endblock %}
+
 {% block scripts %}
   {{ super() if super }}
   <script>
@@ -218,9 +209,6 @@
       });
     })();
   </script>
-  
-  
-  
   <script>
     (function(){
       var split = document.querySelector('.bo-split-pane');
