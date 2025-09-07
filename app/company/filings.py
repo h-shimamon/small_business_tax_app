@@ -62,7 +62,9 @@ def filings_preview(company):
     from flask import send_file
     page = request.args.get('page', '')
     if page == 'business_overview_1':
-        pdf_path = '/Users/shimamorihayato/Projects/small_business_tax_app/resources/pdf_forms/jigyogaikyo/2025/source.pdf'
+        import os as _os  # local import to build path relative to repo
+        repo_root = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), '..', '..'))
+        pdf_path = _os.path.join(repo_root, 'resources', 'pdf_forms', 'jigyogaikyo', '2025', 'source.pdf')
     else:
         abort(404)
     try:
