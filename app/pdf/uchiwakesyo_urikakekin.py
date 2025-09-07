@@ -9,7 +9,6 @@ from flask_login import current_user
 from app import db
 from app.company.models import Company, AccountsReceivable
 
-from reportlab.pdfbase import pdfmetrics
 from .pdf_fill import overlay_pdf, TextSpec
 from .layout_utils import (
     load_geometry,

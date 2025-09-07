@@ -1,11 +1,12 @@
 # app/__init__.py
-import os, sys
+import os
+import sys
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
 except Exception:
     pass
-from flask import Flask, flash
+from flask import Flask
 from .extensions import db, login_manager, migrate
 from .company.models import User
 

@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, Response, request, redirect, url_for, flash
-import os
 import secrets
 
 from flask_login import login_user, logout_user

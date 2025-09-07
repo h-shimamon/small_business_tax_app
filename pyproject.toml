@@ -3,7 +3,6 @@ extend-exclude = [
     "migrations",
 ]
 
-# Keep config minimal to avoid noise; enable core Pyflakes/pycodestyle checks.
+[tool.ruff.lint]
 select = ["E", "F"]
-ignore = []
-
+ignore = ["E501"]
