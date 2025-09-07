@@ -1,5 +1,4 @@
 from typing import Optional, List
-from typing import Optional, List
 import os
 
 from flask import has_request_context, current_app, request

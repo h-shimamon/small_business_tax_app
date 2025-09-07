@@ -370,6 +370,7 @@ def dev_bootstrap_command():
         traceback.print_exc()
 
 
+
 @click.command('seed-soa')
 @with_appcontext
 @click.option('--page', required=True, help='対象ページキー（例: notes_receivable）')
@@ -388,7 +389,7 @@ def seed_soa_command(page: str, company_id: int | None, count: int, prefix: str)
     except KeyError as e:
         click.echo(str(e))
     except Exception as e:
-        click.echo(f"エラー: ダミーデータ投入中に問題が発生しました: {e}")
+        click.echo(f'エラー: ダミーデータ投入中に問題が発生しました: {e}')
 
 
 @click.command('delete-seeded')
@@ -417,28 +418,6 @@ def delete_seeded_command(page: str, company_id: int, prefix: str, execute: bool
             click.echo("--execute を付けると削除を実行します（dev/staging専用）")
     except Exception as e:
         click.echo(f"エラー: {e}")
-
-
-@click.command('seed-soa')
-@with_appcontext
-@click.option('--page', required=True, help='対象ページキー（例: notes_receivable）')
-@click.option('--company-id', type=int, default=None, help='対象会社ID（未指定時は単一会社がある場合それを使用）')
-@click.option('--count', type=int, default=23, show_default=True, help='生成件数')
-@click.option('--prefix', type=str, default='', show_default=True, help='名称/摘要に付与する識別用プレフィクス')
-def seed_soa_command(page: str, company_id: int | None, count: int, prefix: str):
-    """汎用 勘定科目内訳（SoA）ダミーデータ投入CLI。
-
-    例: flask seed-soa --page notes_receivable --count 23
-    """
-    try:
-        from app.cli.seed_soas import run_seed
-        created = run_seed(page=page, company_id=company_id, count=count, prefix=prefix)
-        click.echo(f"page='{page}' に {created} 件投入しました。")
-    except KeyError as e:
-        click.echo(str(e))
-    except Exception as e:
-        click.echo(f"エラー: ダミーデータ投入中に問題が発生しました: {e}")
-
 
 @click.command('seed-notes-receivable')
 @with_appcontext

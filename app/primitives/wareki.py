@@ -7,10 +7,10 @@ Accepts date|str|None and normalizes via ensure_date() so callers can
 pass whichever they currently have without changing UI/outputs.
 """
 
-from datetime import date, datetime
-from typing import Optional, Tuple, Any
+from datetime import date, datetime  # noqa: E402
+from typing import Optional, Tuple, Any  # noqa: E402
 
-from app.models_utils.date_readers import ensure_date
+from app.models_utils.date_readers import ensure_date  # noqa: E402
 
 
 _ERAS = [

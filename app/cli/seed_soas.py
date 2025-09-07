@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Callable, Dict, Optional, Tuple, List
 
 from app import db
-from app.company.models import (
+from app.company.models import (  # noqa: E402
     NotesReceivable,
     Deposit,
     AccountsReceivable,
@@ -232,7 +232,7 @@ REGISTRY.update({
 # ----------------------
 # Additional SoA seeders (requested pages)
 # ----------------------
-from app.company.models import TemporaryReceipt, Borrowing, ExecutiveCompensation, LandRent
+from app.company.models import TemporaryReceipt, Borrowing, ExecutiveCompensation, LandRent  # noqa: E402
 
 def seed_temporary_receipts(ctx: SeedContext, count: int) -> int:
     created = 0
@@ -376,7 +376,7 @@ DELETE_REGISTRY = {
 }
 
 # Add delete queries for newly supported pages
-from sqlalchemy import or_
+from sqlalchemy import or_  # noqa: E402
 
 def _delete_query_temporary_receipts(ctx: SeedContext, prefix: str):
     q = TemporaryReceipt.query.filter_by(company_id=ctx.company.id)

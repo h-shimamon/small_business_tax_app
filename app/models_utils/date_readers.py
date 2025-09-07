@@ -10,8 +10,8 @@ columns when needed. UI/behavior is unaffected; usage is opt-in from
 internal services and generators.
 """
 
-import datetime as _dt
-from typing import Optional
+import datetime as _dt  # noqa: E402
+from typing import Optional  # noqa: E402
 
 
 def _to_date(value) -> Optional[_dt.date]:

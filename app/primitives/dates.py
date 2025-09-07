@@ -11,11 +11,11 @@ Date utilities: fixed contract for parsing and company periods.
 This module keeps existing behavior by delegating to models_utils.date_readers.
 """
 
-from dataclasses import dataclass
-from datetime import date
-from typing import Optional
+from dataclasses import dataclass  # noqa: E402
+from datetime import date  # noqa: E402
+from typing import Optional  # noqa: E402
 
-from app.models_utils.date_readers import (
+from app.models_utils.date_readers import (  # noqa: E402
     ensure_date,
     to_iso,  # re-export
     company_accounting_period_start,

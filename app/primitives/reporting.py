@@ -7,8 +7,8 @@ This mirrors the CLI calculations so tests/CI can reuse the logic.
 Additive-only; existing CLI continues to work independently.
 """
 
-from datetime import date
-from typing import Any, Dict, List, Optional
+from datetime import date  # noqa: E402
+from typing import Any, Dict, List, Optional  # noqa: E402
 
 
 def _safe_parse_iso(text: Optional[str]) -> Optional[date]:

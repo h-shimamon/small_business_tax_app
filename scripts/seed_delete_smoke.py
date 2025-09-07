@@ -5,11 +5,11 @@ Smoke test for seed-soa and delete-seeded helpers using an in-memory DB.
 Does not touch real files or the running app DB.
 """
 
-from datetime import date
+from datetime import date  # noqa: E402
 
-from app import create_app, db
-from app.company.models import User, Company
-from app.cli.seed_soas import run_seed, run_delete
+from app import create_app, db  # noqa: E402
+from app.company.models import User, Company  # noqa: E402
+from app.cli.seed_soas import run_seed, run_delete  # noqa: E402
 
 
 def setup_in_memory_app():

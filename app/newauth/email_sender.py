@@ -5,9 +5,9 @@ Email sending abstraction for newauth.
 - Provide a minimal, replaceable interface.
 - Default sender is a no-op logger (safe for dev/CI).
 """
-import logging
-from dataclasses import dataclass
-from typing import Protocol, Optional
+import logging  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+from typing import Protocol, Optional  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
