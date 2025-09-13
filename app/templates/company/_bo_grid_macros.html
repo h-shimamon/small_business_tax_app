@@ -1,0 +1,42 @@
+{#
+  Business Overview/Grid macros (scoped for filings pages)
+  - 独立ファイルに定義し、必要ページのみ `{% import %}` で読み込む前提
+  - 既存のCSSユーティリティ(.bo-grid, .bo-cols-*)を使用し、マークアップを安定化
+  - 既存UIと同一クラス/構造を出力（他画面への影響なし）
+#}
+
+{%- macro grid(cols=2, klass='') -%}
+  <div class="bo-grid bo-cols-{{ cols }} {{ klass }}">
+    {{ caller() }}
+  </div>
+{%- endmacro -%}
+
+{%- macro field(label=None, type='text', placeholder='', classes='') -%}
+  <div class="form-group {{ classes }}">
+    {%- if label is not none and label|trim != '' -%}
+      <label class="form-label">{{ label }}</label>
+    {%- endif -%}
+    <input class="form-control" type="{{ type }}" placeholder="{{ placeholder }}"{% if type == 'number' %} min="0"{% endif %}>
+  </div>
+{%- endmacro -%}
+
+{%- macro spacer() -%}
+  <div class="bo-empty" aria-hidden="true"></div>
+{%- endmacro -%}
+
+{%- macro segmented(label, name, type='radio', options=[], span_all=False, container_id=None, id_prefix=None) -%}
+  <div class="form-group {{ 'bo-span-all' if span_all }}"{% if container_id %} id="{{ container_id }}"{% endif %}>
+    <label class="form-label">{{ label }}</label>
+    <div class="segmented-control">
+      {%- for value, text in options -%}
+        {%- set input_id = (id_prefix or name) ~ '_' ~ value -%}
+        {%- if type == 'radio' -%}
+          <input type="radio" name="{{ name }}" id="{{ input_id }}" value="{{ value }}" style="display:none;"/>
+        {%- else -%}
+          <input type="checkbox" name="{{ name }}" id="{{ input_id }}" value="{{ value }}"/>
+        {%- endif -%}
+        <label for="{{ input_id }}">{{ text }}</label>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endmacro -%}

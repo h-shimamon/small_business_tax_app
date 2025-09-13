@@ -47,3 +47,31 @@
 
 /* Spacer to define upper clamp for aside */
 .bo-aside-spacer { height: 0; }
+
+/* 6-column variant (page-scoped) */
+.bo-grid.bo-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+
+
+/* Cell-level centering utility (page-scoped) */
+
+/* Make framed text fill cell width */
+.bo-cell-center .bo-input-frame { justify-self: stretch; }
+
+
+
+
+/* Input-like frame with white background (page-scoped) */
+.bo-input-frame {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+/* Centering adjustments for headings and total */
+.bo-cell-center .bo-input-frame { text-align: center; }
+$1 text-align: center; background-color: #fff; }

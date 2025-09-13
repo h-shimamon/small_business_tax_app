@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "export_country_1", "x_pct": 22.0, "y_pct": 24.84, "font_unit": "pt", "font_size": 13.0, "page_idx": 1 },
+    { "id": "import_goods_1",   "x_pct": 40.0, "y_pct": 24.84, "font_unit": "pt", "font_size": 12.0, "page_idx": 1, "dx_pt": 0.0, "dy_pt": 0.0 },
+
+    { "id": "export_country_1", "x_pct": 22.0, "y_pct": 24.84, "font_unit": "pt", "font_size": 13.0, "page_idx": 2 },
+    { "id": "import_goods_1",   "x_pct": 40.0, "y_pct": 24.84, "font_unit": "pt", "font_size": 12.0, "page_idx": 2, "dx_pt": 0.0, "dy_pt": 0.0 }
+  ]
+}
