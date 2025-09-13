@@ -86,13 +86,16 @@
   padding-bottom: var(--control-padding-y);
   min-height: var(--control-height);
 }
-.bo-pane-left .segmented-control label {
-  line-height: var(--control-line-height);
-  padding-top: var(--control-padding-y);
-  padding-bottom: var(--control-padding-y);
-  min-height: var(--control-height);
-}
+
+/* Adjust for segmented container borders to match text input height */
+.bo-pane-left .segmented-control label { min-height: calc(var(--control-height) - 2px); }
+
 /* Reset ad-hoc height override for audit input */
 .bo-pane-left input.form-control[name="bo1.audit.checksheet_name"] { height: auto; }
 /* Ensure OS 'other' helper default hidden */
-.bo-os-other-field { display: none; }
+
+/* Force segmented container to exact control height and stretch labels to match inputs */
+.bo-pane-left .segmented-control { height: var(--control-height); }
+$1
+/* Fine-tune: passbook manager input +1pt for visual alignment */
+.bo-pane-left input.form-control[name="bo1.accounting.passbook_manager"] { min-height: calc(var(--control-height) + 1pt); }
