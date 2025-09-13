@@ -11,12 +11,12 @@
   </div>
 {%- endmacro -%}
 
-{%- macro field(label=None, type='text', placeholder='', classes='') -%}
+{%- macro field(label=None, type='text', placeholder='', classes='', name=None, id=None) -%}
   <div class="form-group {{ classes }}">
     {%- if label is not none and label|trim != '' -%}
       <label class="form-label">{{ label }}</label>
     {%- endif -%}
-    <input class="form-control" type="{{ type }}" placeholder="{{ placeholder }}"{% if type == 'number' %} min="0"{% endif %}>
+    <input class="form-control" type="{{ type }}" placeholder="{{ placeholder }}"{%- if name %} name="{{ name }}"{%- endif %}{%- if id or name %} id="{{ id or name|replace('.', '_') }}"{%- endif %}{% if type == 'number' %} min="0"{% endif %}>
   </div>
 {%- endmacro -%}
 
@@ -38,5 +38,19 @@
         <label for="{{ input_id }}">{{ text }}</label>
       {%- endfor -%}
     </div>
+  </div>
+{%- endmacro -%}
+
+{%- macro select(label=None, options=[], name=None, classes='', placeholder='選択') -%}
+  <div class="form-group {{ classes }}">
+    {%- if label is not none and label|trim != '' -%}
+      <label class="form-label">{{ label }}</label>
+    {%- endif -%}
+    <select class="form-control"{%- if name %} name="{{ name }}" id="{{ name|replace('.', '_') }}"{%- endif %}>
+      <option value="" selected>{{ placeholder }}</option>
+      {%- for value, text in options -%}
+        <option value="{{ value }}">{{ text }}</option>
+      {%- endfor -%}
+    </select>
   </div>
 {%- endmacro -%}

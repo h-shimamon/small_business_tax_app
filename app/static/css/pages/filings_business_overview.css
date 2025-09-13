@@ -68,6 +68,10 @@
 .bo-align-with-label { padding-top: calc(0.875rem * 1.5 + 0.5rem); }
 
 
+
+/* PC OS 'その他' 補助入力: デフォルト非表示 */
+.bo-os-other-field { display: none; }
+.bo-os-other-field.is-visible { display: block; }
 /* Centering adjustments for headings and total */
 .bo-cell-center .bo-input-frame { display:flex; align-items:center; justify-content:center; text-align:center; }
 .bo-input-frame.js-total { display:grid; place-items:center; text-align:center; }

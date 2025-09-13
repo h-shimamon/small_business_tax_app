@@ -1,5 +1,14 @@
 {% extends 'base.html' %}
 {% import 'company/_bo_grid_macros.html' as bo %}
+{# Options constants for this page only (to avoid duplication) #}
+{% set OPTIONS_STAFF_ROLES = [
+  ('nonexec','非常勤役員'), ('worker','工員'), ('clerk','事務員'), ('engineer','技術者'),
+  ('sales','販売員'), ('labor','労務者'), ('cook','料理人'), ('hostess','ホステス'), ('other','その他')
+] %}
+{% set OPTIONS_PC_OS = [('win','Windows'), ('mac','Mac'), ('linux','Linux'), ('other','その他')] %}
+{% set OPTIONS_PC_USAGE = [('payroll','給与管理'), ('inventory','在庫・販売管理'), ('production','生産管理'), ('accounting','財務管理')] %}
+{% set OPTIONS_ECOMMERCE = [('sales','有・売上'), ('purchase','有・仕入'), ('expense','有・経費'), ('none','無')] %}
+{% set OPTIONS_DATA_STORAGE = [('cloud','クラウド'), ('external','外部記録媒体'), ('server','PCサーバ')] %}
 
 {% block title %}事業概況説明書１{% endblock %}
 
@@ -91,73 +100,21 @@
             <div class="form-group bo-cell-center">
               <div class="bo-input-frame" role="text" aria-readonly="true">常勤役員</div>
             </div>
-            <div class="form-group">
-              <select class="form-control">
-                <option value="" selected>選択</option>
-                <option>非常勤役員</option>
-                <option>工員</option>
-                <option>事務員</option>
-                <option>技術者</option>
-                <option>販売員</option>
-                <option>労務者</option>
-                <option>料理人</option>
-                <option>ホステス</option>
-                <option>その他</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <select class="form-control">
-                <option value="" selected>選択</option>
-                <option>非常勤役員</option>
-                <option>工員</option>
-                <option>事務員</option>
-                <option>技術者</option>
-                <option>販売員</option>
-                <option>労務者</option>
-                <option>料理人</option>
-                <option>ホステス</option>
-                <option>その他</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <select class="form-control">
-                <option value="" selected>選択</option>
-                <option>非常勤役員</option>
-                <option>工員</option>
-                <option>事務員</option>
-                <option>技術者</option>
-                <option>販売員</option>
-                <option>労務者</option>
-                <option>料理人</option>
-                <option>ホステス</option>
-                <option>その他</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <select class="form-control">
-                <option value="" selected>選択</option>
-                <option>非常勤役員</option>
-                <option>工員</option>
-                <option>事務員</option>
-                <option>技術者</option>
-                <option>販売員</option>
-                <option>労務者</option>
-                <option>料理人</option>
-                <option>ホステス</option>
-                <option>その他</option>
-              </select>
-            </div>
+            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role2') }}
+            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role3') }}
+            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role4') }}
+            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role5') }}
             <div class="form-group bo-cell-center">
               <div class="bo-input-frame" role="text" aria-readonly="true">合計</div>
             </div>
           {% endcall %}
 
           {% call bo.grid(6, 'bo-cols-6 js-workers-count') %}
-            {{ bo.field(type='number', placeholder='例：10') }}
-            {{ bo.field(type='number', placeholder='例：5') }}
-            {{ bo.field(type='number', placeholder='例：8') }}
-            {{ bo.field(type='number', placeholder='例：2') }}
-            {{ bo.field(type='number', placeholder='例：1') }}
+            {{ bo.field(type='number', placeholder='例：10', name='bo1.staff.count1') }}
+            {{ bo.field(type='number', placeholder='例：5',  name='bo1.staff.count2') }}
+            {{ bo.field(type='number', placeholder='例：8',  name='bo1.staff.count3') }}
+            {{ bo.field(type='number', placeholder='例：2',  name='bo1.staff.count4') }}
+            {{ bo.field(type='number', placeholder='例：1',  name='bo1.staff.count5') }}
             <div class="form-group bo-cell-center">
               <div class="bo-input-frame js-total" role="text" aria-live="polite" style="text-align:center;">0</div>
             </div>
@@ -165,8 +122,8 @@
 
           {# 合計の内訳（2カラム） #}
           {% call bo.grid(2) %}
-            {{ bo.field('合計のうち代表者家族数', type='number', placeholder='例：1') }}
-            {{ bo.field('合計のうちアルバイト数', type='number', placeholder='例：3') }}
+            {{ bo.field('合計のうち代表者家族数', type='number', placeholder='例：1', name='bo1.staff.family_count') }}
+            {{ bo.field('合計のうちアルバイト数', type='number', placeholder='例：3', name='bo1.staff.part_time_count') }}
           {% endcall %}
 
           {# 賃金の決め方（ラジオ） #}
@@ -194,8 +151,18 @@
 
           {% call bo.grid(2) %}
             {{ bo.segmented('PCのOS', 'pc_os', 'checkbox',
-              options=[('win','Windows'), ('mac','Mac'), ('linux','Linux'), ('other','その他')],
+              options=OPTIONS_PC_OS,
               span_all=True, container_id='pc_os', id_prefix='pc_os') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.field(None, type='text', placeholder='OS名を入力', classes='bo-span-all bo-os-other-field', name='bo1.pc.os_other') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('PCの利用形態', 'pc_usage', 'checkbox',
+              options=OPTIONS_PC_USAGE,
+              span_all=True, container_id='pc_usage', id_prefix='pc_usage') }}
           {% endcall %}
 
           {% call bo.grid(2) %}
@@ -205,13 +172,13 @@
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.field('会計ソフト名', type='text', placeholder='例：弥生会計、freee など') }}
-            {{ bo.field('メールソフト名', type='text', placeholder='例：Outlook、Gmail など') }}
+            {{ bo.field('会計ソフト名', type='text', placeholder='例：弥生会計、freee など', name='bo1.pc.accounting_software') }}
+            {{ bo.field('メールソフト名', type='text', placeholder='例：Outlook、Gmail など', name='bo1.pc.mail_software') }}
           {% endcall %}
 
           {% call bo.grid(2) %}
             {{ bo.segmented('データの保存先', 'data_storage', 'checkbox',
-              options=[('cloud','クラウド'), ('external','外部記録媒体'), ('server','PCサーバ')],
+              options=OPTIONS_DATA_STORAGE,
               span_all=True, container_id='data_storage', id_prefix='data_storage') }}
           {% endcall %}        </fieldset>
 
@@ -220,7 +187,7 @@
 
           {% call bo.grid(2) %}
             {{ bo.segmented('電子商取引（インターネット取引）', 'ecommerce', 'checkbox',
-              options=[('sales','有・売上'), ('purchase','有・仕入'), ('expense','有・経費'), ('none','無')],
+              options=OPTIONS_ECOMMERCE,
               span_all=True, container_id='ecommerce', id_prefix='ecommerce') }}
           {% endcall %}
 
@@ -242,14 +209,14 @@
           <legend>経理の状況</legend>
 
           {% call bo.grid(2) %}
-            {{ bo.field('現金管理者', type='text', placeholder='氏名等') }}
+            {{ bo.field('現金管理者', type='text', placeholder='氏名等', name='bo1.accounting.cash_manager') }}
             {{ bo.segmented('代表者との関係', 'cash_manager_relation', 'radio',
               options=[('relative','親族'), ('other','他人')],
               span_all=False, container_id='cash_manager_relation', id_prefix='cash_mgr_rel') }}
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.field('通帳管理者', type='text', placeholder='氏名等') }}
+            {{ bo.field('通帳管理者', type='text', placeholder='氏名等', name='bo1.accounting.passbook_manager') }}
             {{ bo.segmented('代表者との関係', 'passbook_manager_relation', 'radio',
               options=[('relative','親族'), ('other','他人')],
               span_all=False, container_id='passbook_manager_relation', id_prefix='passbook_mgr_rel') }}
@@ -271,14 +238,14 @@
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.field('消費税の当期課税売上高（千円）', type='number', placeholder='例：12345', classes='bo-span-all') }}
+            {{ bo.field('消費税の当期課税売上高（千円）', type='number', placeholder='例：12345', classes='bo-span-all', name='bo1.tax.vat_taxable_sales_thousand') }}
           {% endcall %}
 
           {% call bo.grid(2) %}
             {{ bo.segmented('社内監査実施の有無', 'internal_audit', 'radio',
               options=[('yes','有'), ('no','無')],
               span_all=False, container_id='internal_audit', id_prefix='internal_audit') }}
-            <div class="form-group"><label class="form-label" aria-hidden="true" style="visibility:hidden">社内監査実施の有無</label><input class="form-control" type="text" placeholder='社内監査のチェックシート名称'></div>
+            <div class="form-group"><label class="form-label" aria-hidden="true" style="visibility:hidden">社内監査実施の有無</label><input class="form-control" type="text" name='bo1.audit.checksheet_name' placeholder='社内監査のチェックシート名称'></div>
           {% endcall %}
         </fieldset>
 
@@ -432,6 +399,16 @@
       }
       nums.forEach(function(el){ if(el !== total){ el.addEventListener('input', recalc); }});
       recalc();
+    })();
+  </script>
+  <script>
+    (function(){
+      var other = document.getElementById('pc_os_other');
+      var wrap = document.querySelector('.bo-os-other-field');
+      if(!other || !wrap) return;
+      function sync(){ wrap.classList.toggle('is-visible', !!other.checked); }
+      other.addEventListener('change', sync);
+      sync();
     })();
   </script>
 {% endblock %}
