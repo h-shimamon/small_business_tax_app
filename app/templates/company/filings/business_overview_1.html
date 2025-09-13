@@ -368,11 +368,16 @@
     (function(){
       var container = document.querySelector('.js-workers-count');
       if(!container) return;
-      var nums = Array.prototype.slice.call(container.querySelectorAll('input.form-control[type="number"]'));
-      if(nums.length < 2) return;
-      var totalInput = container.querySelector('input.js-total');
-      var totalDisplay = container.querySelector('.js-total');
-      var total = totalInput || totalDisplay || nums[nums.length - 1];
+      var srcSel = container.getAttribute('data-total-source') || 'input.form-control[type="number"]';
+      var tgtSel = container.getAttribute('data-total-target') || '.js-total';
+      var nums = Array.prototype.slice.call(container.querySelectorAll(srcSel));
+      if(nums.length < 1) return;
+      var total = container.querySelector(tgtSel);
+      if(!total){
+        var totalInput = container.querySelector('input.js-total');
+        var totalDisplay = container.querySelector('.js-total');
+        total = totalInput || totalDisplay || nums[nums.length - 1];
+      }
       if(!total) return;
       if(total.tagName === 'INPUT'){
         total.readOnly = true;
@@ -391,10 +396,11 @@
           if(el === total) continue;
           sum += toNumber(el);
         }
+        var s = String(sum);
         if(total.tagName === 'INPUT'){
-          if(String(sum) !== total.value){ total.value = String(sum); }
+          if(s !== total.value){ total.value = s; }
         } else {
-          total.textContent = String(sum);
+          if(s !== total.textContent){ total.textContent = s; }
         }
       }
       nums.forEach(function(el){ if(el !== total){ el.addEventListener('input', recalc); }});

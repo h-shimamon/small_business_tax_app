@@ -1,6 +1,6 @@
 
 .bo-split-pane { display:flex; gap:24px; align-items:flex-start; }
-.bo-pane-left { flex: 1 1 60%; min-width: 480px; }
+.bo-pane-left { flex: 1 1 60%; min-width: 480px; --control-line-height: 1.25; --control-padding-y: 11px; --control-height: 44px; }
 /* Sticky preview pane (non-destructive: JS may override) */
 .bo-pane-right { position: static; top: auto; align-self: flex-start; width: clamp(460px, 40%, 600px); }
 
@@ -67,11 +67,32 @@
 /* Align input without label to match labeled controls */
 .bo-align-with-label { padding-top: calc(0.875rem * 1.5 + 0.5rem); }
 
+/* Match text input height to segmented-control (radio) ~ 41px */
+.bo-pane-left input.form-control[name="bo1.audit.checksheet_name"] {
+  height: 41px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
 
-
-/* PC OS 'その他' 補助入力: デフォルト非表示 */
-.bo-os-other-field { display: none; }
 .bo-os-other-field.is-visible { display: block; }
 /* Centering adjustments for headings and total */
 .bo-cell-center .bo-input-frame { display:flex; align-items:center; justify-content:center; text-align:center; }
 .bo-input-frame.js-total { display:grid; place-items:center; text-align:center; }
+
+/* Page-scoped control height unification (target ~44px) */
+.bo-pane-left .form-control {
+  line-height: var(--control-line-height);
+  padding-top: var(--control-padding-y);
+  padding-bottom: var(--control-padding-y);
+  min-height: var(--control-height);
+}
+.bo-pane-left .segmented-control label {
+  line-height: var(--control-line-height);
+  padding-top: var(--control-padding-y);
+  padding-bottom: var(--control-padding-y);
+  min-height: var(--control-height);
+}
+/* Reset ad-hoc height override for audit input */
+.bo-pane-left input.form-control[name="bo1.audit.checksheet_name"] { height: auto; }
+/* Ensure OS 'other' helper default hidden */
+.bo-os-other-field { display: none; }
