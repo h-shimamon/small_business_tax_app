@@ -53,7 +53,8 @@
 
 
 
-/* Cell-level centering utility (page-scoped) */
+
+.bo-cell-center { display:grid; place-items:center; text-align:center; }
 
 /* Make framed text fill cell width */
 .bo-cell-center .bo-input-frame { justify-self: stretch; }
@@ -61,17 +62,12 @@
 
 
 
-/* Input-like frame with white background (page-scoped) */
-.bo-input-frame {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 16px;
-  background-color: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-}
+
+
+/* Align input without label to match labeled controls */
+.bo-align-with-label { padding-top: calc(0.875rem * 1.5 + 0.5rem); }
+
 
 /* Centering adjustments for headings and total */
-.bo-cell-center .bo-input-frame { text-align: center; }
-$1 text-align: center; background-color: #fff; }
+.bo-cell-center .bo-input-frame { display:flex; align-items:center; justify-content:center; text-align:center; }
+.bo-input-frame.js-total { display:grid; place-items:center; text-align:center; }

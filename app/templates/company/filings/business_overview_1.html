@@ -158,7 +158,7 @@
             {{ bo.field(type='number', placeholder='例：8') }}
             {{ bo.field(type='number', placeholder='例：2') }}
             {{ bo.field(type='number', placeholder='例：1') }}
-            <div class="form-group">
+            <div class="form-group bo-cell-center">
               <div class="bo-input-frame js-total" role="text" aria-live="polite" style="text-align:center;">0</div>
             </div>
           {% endcall %}
@@ -181,6 +181,104 @@
             {{ bo.segmented('社宅・寮の有無', 'company_housing', 'radio',
               options=[('yes','有'), ('no','無')],
               span_all=True, container_id='company_housing_group', id_prefix='company_housing') }}
+          {% endcall %}        </fieldset>
+
+        <fieldset>
+          <legend>PC利用状況</legend>
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('PC利用の有無', 'pc_usage_exists', 'radio',
+              options=[('yes','有'), ('no','無')],
+              span_all=True, container_id='pc_usage_exists', id_prefix='pc_usage_exists') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('PCのOS', 'pc_os', 'checkbox',
+              options=[('win','Windows'), ('mac','Mac'), ('linux','Linux'), ('other','その他')],
+              span_all=True, container_id='pc_os', id_prefix='pc_os') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('会計ソフトの利用等', 'accounting_software_usage', 'radio',
+              options=[('yes','有'), ('no','無')],
+              span_all=True, container_id='accounting_software_usage', id_prefix='accounting_software_usage') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.field('会計ソフト名', type='text', placeholder='例：弥生会計、freee など') }}
+            {{ bo.field('メールソフト名', type='text', placeholder='例：Outlook、Gmail など') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('データの保存先', 'data_storage', 'checkbox',
+              options=[('cloud','クラウド'), ('external','外部記録媒体'), ('server','PCサーバ')],
+              span_all=True, container_id='data_storage', id_prefix='data_storage') }}
+          {% endcall %}        </fieldset>
+
+        <fieldset>
+          <legend>販売形態</legend>
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('電子商取引（インターネット取引）', 'ecommerce', 'checkbox',
+              options=[('sales','有・売上'), ('purchase','有・仕入'), ('expense','有・経費'), ('none','無')],
+              span_all=True, container_id='ecommerce', id_prefix='ecommerce') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('販売チャネル', 'sales_channel', 'radio',
+              options=[('own','自社HP'), ('others','他社HP')],
+              span_all=True, container_id='sales_channel', id_prefix='sales_channel') }}
+          {% endcall %}        </fieldset>
+
+        <fieldset>
+          <legend>株主又は株式所有異動</legend>
+          {% call bo.grid(2) %}
+            {{ bo.segmented('株主又は株式所有異動の有無', 'shareholder_change', 'radio',
+              options=[('yes','有'), ('no','無')],
+              span_all=True, container_id='shareholder_change', id_prefix='shareholder_change') }}
+          {% endcall %}        </fieldset>
+
+        <fieldset>
+          <legend>経理の状況</legend>
+
+          {% call bo.grid(2) %}
+            {{ bo.field('現金管理者', type='text', placeholder='氏名等') }}
+            {{ bo.segmented('代表者との関係', 'cash_manager_relation', 'radio',
+              options=[('relative','親族'), ('other','他人')],
+              span_all=False, container_id='cash_manager_relation', id_prefix='cash_mgr_rel') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.field('通帳管理者', type='text', placeholder='氏名等') }}
+            {{ bo.segmented('代表者との関係', 'passbook_manager_relation', 'radio',
+              options=[('relative','親族'), ('other','他人')],
+              span_all=False, container_id='passbook_manager_relation', id_prefix='passbook_mgr_rel') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('試算表の作成状況', 'trial_balance_status', 'radio',
+              options=[('monthly','毎月'), ('roughly_monthly','おおむね月ごと'), ('year_end','決算時のみ')],
+              span_all=True, container_id='trial_balance_status', id_prefix='trial_balance_status') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('源泉徴収対象所得', 'withholding_income', 'checkbox',
+              options=[('salary','給与'), ('fee','報酬・料金'), ('interest','利子等')],
+              span_all=True, container_id='withholding_income_row1', id_prefix='withholding_income') }}
+            {{ bo.segmented('', 'withholding_income', 'checkbox',
+              options=[('dividend','配当'), ('nonresident','非居住者'), ('retirement','退職')],
+              span_all=True, container_id='withholding_income_row2', id_prefix='withholding_income') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.field('消費税の当期課税売上高（千円）', type='number', placeholder='例：12345', classes='bo-span-all') }}
+          {% endcall %}
+
+          {% call bo.grid(2) %}
+            {{ bo.segmented('社内監査実施の有無', 'internal_audit', 'radio',
+              options=[('yes','有'), ('no','無')],
+              span_all=False, container_id='internal_audit', id_prefix='internal_audit') }}
+            <div class="form-group"><label class="form-label" aria-hidden="true" style="visibility:hidden">社内監査実施の有無</label><input class="form-control" type="text" placeholder='社内監査のチェックシート名称'></div>
           {% endcall %}
         </fieldset>
 
