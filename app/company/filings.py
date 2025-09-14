@@ -1,42 +1,21 @@
 # app/company/filings.py
 from __future__ import annotations
 
-from flask import render_template, request, abort
+from flask import render_template, request, abort, url_for, current_app
 
 from app.company import company_bp
 from .auth import company_required
 from app.navigation import get_navigation_state
+from app.company.filings_registry import get_title, get_template, get_preview_pdf
 
-# 申告書ページのタイトル定義（仮置き）。
-TITLE_MAP = {
-    'beppyo_2': '別表2',
-    'beppyo_16_2': '別表16(2)',
-    'beppyo_15': '別表15',
-    'tax_payment_status_beppyo_5_2': '法人税等の納付状況（別表５(2))',
-    'beppyo_7': '別表７',
-    'beppyo_4': '別表４',
-    'beppyo_5_1': '別表５(1)',
-    'appropriation_calc_beppyo_5_2': '納税充当金の計算（別表５(2))',
-    'local_tax_rates': '地方税税率登録',
-    'business_overview_1': '事業概況説明書１',
-    'business_overview_2': '事業概況説明書２',
-    'business_overview_3': '事業概況説明書３',
-    'journal_entries_cit': '法人税等に関する仕訳の表示',
-    'financial_statements': '決算書',
-}
 
-@company_bp.route('/filings')
-@company_required
-def filings(company):
-    """申告書グループの各ページ（仮置き）。
-    内訳書ビューのレイアウトを流用し、空リストを表示するだけのプレースホルダ。
-    """
-    page = request.args.get('page', 'beppyo_2')
-    title = TITLE_MAP.get(page)
+def _build_filings_context(page: str):
+    title = get_title(page)
     if not title:
-        abort(404)
-
-    context = {
+        return None
+    has_preview = bool(get_preview_pdf(page))
+    preview_src = url_for('company.filings_preview', page=page) if has_preview else None
+    return {
         'page': page,
         'page_title': title,
         'items': [],
@@ -45,29 +24,52 @@ def filings(company):
         'soa_next_url': None,
         'soa_next_name': None,
         'pdf_year': '2025',
+        'has_preview': has_preview,
+        'preview_src': preview_src,
     }
-    # statement_of_accounts.html を流用（ボタン/サマリは差分0・items空の状態で安全に表示）
-    # 特例: 事業概況説明書１は専用テンプレートを表示（保存なしの入力UI）
-    if page == 'business_overview_1':
-        return render_template('company/filings/business_overview_1.html', **context)
+
+
+@company_bp.route('/filings')
+@company_required
+def filings(company):
+    """申告書グループの各ページ。
+    テンプレート/タイトルは登録表から参照し、専用テンプレートがなければ
+    既存の statement_of_accounts.html をフォールバックとして使用する。
+    UI構造やコンテキストの形は従来どおり維持する。
+    """
+    page = request.args.get('page', 'beppyo_2')
+    context = _build_filings_context(page)
+    if not context:
+        abort(404)
+    template_path = get_template(page)
+    if template_path:
+        return render_template(template_path, **context)
     return render_template('company/statement_of_accounts.html', **context)
 
 
 @company_bp.get('/filings/preview')
 @company_required
 def filings_preview(company):
-    """事業概況説明書などのPDFプレビューを返す（読み取り専用）。
-    現状は business_overview_1 のみ固定パスを返却。
+    """登録表に基づくPDFプレビュー（読み取り専用）。
+    対応エントリが無い場合は 404。
     """
     from flask import send_file
-    page = request.args.get('page', '')
-    if page == 'business_overview_1':
-        import os as _os  # local import to build path relative to repo
-        repo_root = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), '..', '..'))
-        pdf_path = _os.path.join(repo_root, 'resources', 'pdf_forms', 'jigyogaikyo', '2025', 'source.pdf')
-    else:
+    import os as _os
+
+    page = request.args.get('page', '').strip()
+    pdf_rel = get_preview_pdf(page)
+    if not pdf_rel:
         abort(404)
+
     try:
-        return send_file(pdf_path, mimetype='application/pdf', as_attachment=False, download_name='business_overview_1_preview.pdf')
+        # Resolve from project root (one level above app root)
+        base_dir = _os.path.abspath(_os.path.join(current_app.root_path, '..'))
+        pdf_path = _os.path.join(base_dir, *pdf_rel.split('/'))
+        return send_file(
+            pdf_path,
+            mimetype='application/pdf',
+            as_attachment=False,
+            download_name=f'{page}_preview.pdf',
+        )
     except Exception:
         abort(404)

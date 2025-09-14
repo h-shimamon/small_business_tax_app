@@ -51,35 +51,15 @@
 /* 6-column variant (page-scoped) */
 .bo-grid.bo-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 
-
-
-
+/* Center utilities */
 .bo-cell-center { display:grid; place-items:center; text-align:center; }
-
 /* Make framed text fill cell width */
 .bo-cell-center .bo-input-frame { justify-self: stretch; }
-
-
-
-
-
+/* Total cell */
+.bo-input-frame.js-total { display:grid; place-items:center; text-align:center; }
 
 /* Align input without label to match labeled controls */
 .bo-align-with-label { padding-top: calc(0.875rem * 1.5 + 0.5rem); }
-
-/* Match text input height to segmented-control (radio) ~ 41px */
-.bo-pane-left input.form-control[name="bo1.audit.checksheet_name"] {
-  height: 41px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-.bo-os-other-field.is-visible { display: block; }
-/* Centering adjustments for headings and total */
-.bo-cell-center .bo-input-frame { display:flex; align-items:center; justify-content:center; text-align:center; }
-.bo-input-frame.js-total { display:grid; place-items:center; text-align:center; }
-
-
 
 /* Workers roles row: tighten vertical spacing to 0.5rem */
 .bo-grid.bo-workers-roles { row-gap: .5rem !important; }
@@ -87,8 +67,6 @@
 .bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
 /* Ensure spacing between roles grid and the following grid */
 .bo-grid.bo-workers-roles + .bo-grid { margin-top: .5rem; }
-.bo-grid.bo-workers-roles .form-group { margin-bottom: 0; }
-.bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
 
 /* Withholding income block: 0.5rem vertical spacing between rows */
 .bo-grid.bo-withholding { row-gap: .5rem !important; }
@@ -104,21 +82,16 @@
 .bo-trade-other-input.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
 .bo-trade-other-field { display: none; }
 .bo-trade-other-field.is-visible { display: block; }
-.bo-grid.bo-trade-other .form-group { margin-bottom: 0; }
-.bo-grid.bo-withholding .form-group { margin-bottom: 0; }
-/* Ensure spacing after the withholding block before the next grid */
-.bo-grid.bo-withholding + .bo-grid { margin-top: 1.5rem; }
-.bo-grid.bo-withholding .form-group { margin-bottom: 0; }
-.bo-grid.bo-workers-roles .form-group { margin-bottom: 0; }
-.bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
-
 
 /* Adjust for segmented container borders to match text input height */
 .bo-pane-left .segmented-control label { min-height: calc(var(--control-height) - 2px); }
+/* Force segmented container to exact control height */
+.bo-pane-left .segmented-control { height: var(--control-height); }
 
-/* Reset ad-hoc height override for audit input */
+/* Reset ad-hoc height override for audit input (use default control height) */
 .bo-pane-left input.form-control[name="bo1.audit.checksheet_name"] { height: auto; }
-/* Ensure OS 'other' helper default hidden */
+
+/* OS 'other' helper */
 .bo-os-other-field { display: none; }
 .bo-os-other-field.is-visible { display: block; }
 /* Grid-level toggle for spacing between radio and helper input */
@@ -132,18 +105,6 @@
 /* Ensure inputs fill the available width under helper grids */
 .bo-os-other-grid.is-on .form-control,
 .bo-trade-other-input.is-on .form-control { width: 100%; }
-
-.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
-.bo-os-other-grid.is-on .bo-span-all { grid-column: 1 / -1; }
-/* Remove bottom margin on the PC OS segmented group so spacing is controlled only by the helper grid */
-#pc_os { margin-bottom: 0; }
-.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
-.bo-os-other-grid.is-on .bo-span-all { grid-column: 1 / -1; }
-.bo-os-other-field.is-visible { display: block; margin-top: .5rem; }
-
-
-/* Force segmented container to exact control height and stretch labels to match inputs */
-.bo-pane-left .segmented-control { height: var(--control-height); }
 
 /* Fine-tune: passbook manager input +1pt for visual alignment */
 .bo-pane-left input.form-control[name="bo1.accounting.passbook_manager"] { min-height: calc(var(--control-height) + 1pt); }

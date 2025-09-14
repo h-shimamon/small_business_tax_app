@@ -33,6 +33,11 @@
 ---
 
 ## 3. ルーティング/プレビュー
+追記(2025-09-14): 下記の通り仕様を更新しました。
+- 画面: `GET /filings?page=<page>` → 登録表(REGISTRY)からタイトル/テンプレートを解決。`business_overview_1` は専用テンプレ登録済み。未登録は共通テンプレにフォールバック。
+- プレビュー: `GET /filings/preview?page=<page>` → 登録表の `preview_pdf` を相対パスで解決。未登録は404。`business_overview_1` は `resources/pdf_forms/jigyogaikyo/2025/source.pdf`。
+- 実装: `app/company/filings_registry.py` を追加し、`app/company/filings.py` は同登録表を参照（UI変更なし）。
+
 - 画面: `GET /filings?page=business_overview_1`
   - business_overview_1 のみ専用テンプレを返す。それ以外は仮置きの一覧テンプレを使う。
 - PDFプレビュー: `GET /filings/preview?page=business_overview_1`
@@ -42,6 +47,13 @@
 ---
 
 ## 4. 変更ファイル一覧
+追記(2025-09-14): 以下を最小差分で更新/追加しました（UI変更なし）。
+- 更新: `app/company/filings.py`（登録表参照化、PDFパス基準を `current_app.root_path/..` に統一）
+- 追加: `app/company/filings_registry.py`（タイトル/テンプレ/プレビューの単一情報源）
+- 更新: `app/templates/company/filings/business_overview_1.html`（インラインJS撤去、外部JS読込に置換）
+- 追加: `app/static/js/pages/filings_business_overview.js`（従来の挙動を外部化、`defer` 読込）
+- 更新: `app/static/css/pages/filings_business_overview.css`（重複/相反指定を統合。見た目同等）
+
 新規
 - app/company/filings.py（ルート: `/filings`, `/filings/preview`）
 - app/templates/company/filings/business_overview_1.html（事業概況①専用画面）

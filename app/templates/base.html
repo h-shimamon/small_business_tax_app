@@ -11,6 +11,8 @@
         <!-- Base CSS -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/base/base.css') }}">
+        <!-- Design Tokens -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/foundation/tokens.css') }}">
 
         <!-- Components -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/components/layout.css') }}">
@@ -36,7 +38,7 @@
         <a href="#main-content">メインへ移動</a>
     </div>
         <div class="app-container">
-        <main class="main-content" id="main-content" tabindex="0">
+        <main class="main-content ui-ctrl-44" id="main-content" tabindex="0">
              {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div class="flash-messages">
@@ -74,9 +76,11 @@
         <script src="https://unpkg.com/alpinejs@3.14.1" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
-        <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>
-        
-        <script>
+        <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>$1<script defer src="{{ url_for('static', filename='js/ui/segmented.js') }}"></script>
+$1<script defer src="{{ url_for('static', filename='js/ui/radios_toggle.js') }}"></script>
+$1<script defer src="{{ url_for('static', filename='js/ui/totalizer.js') }}"></script>
+$1<script defer src="{{ url_for('static', filename='js/ui/sticky_aside.js') }}"></script>
+$1<script>
             document.addEventListener('DOMContentLoaded', function() {
                 if (!window.flatpickr) return;
                 var opts = {

@@ -233,3 +233,30 @@ $1gap: 0 1.5rem;
 
 /* Utilities: form grid spacing */
 .form-grid--no-row-gap { row-gap: 0; }
+
+
+/* --- Opt-in standard form sizing (tokens-based) --- */
+.form-control--std {
+  line-height: var(--control-line-height);
+  padding-top: var(--control-padding-y);
+  padding-bottom: var(--control-padding-y);
+  min-height: var(--control-height);
+}
+
+.segmented--std { height: var(--control-height); }
+.segmented--std label {
+  line-height: var(--control-line-height);
+  padding-top: var(--control-padding-y);
+  padding-bottom: var(--control-padding-y);
+  min-height: calc(var(--control-height) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Opt-in standardized legend spacing --- */
+.legend--std { margin-bottom: var(--legend-mb); }
+
+
+/* Global legend spacing standardization (tokens-based) */
+fieldset > legend { margin-bottom: var(--legend-mb); }

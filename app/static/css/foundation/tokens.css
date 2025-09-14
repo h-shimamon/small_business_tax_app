@@ -1,0 +1,14 @@
+/* app/static/css/foundation/tokens.css */
+:root {
+  /* Controls: unify input/select/segmented heights */
+  --control-height: 44px;
+  --control-line-height: 1.25;
+  --control-padding-y: 11px;
+
+  /* Vertical rhythm */
+  --row-gap-tight: 0.5rem;   /* dense rows (e.g., role headers) */
+  --row-gap-base: 1.5rem;    /* default spacing between rows/blocks */
+
+  /* Fieldset/legend spacing */
+  --legend-mb: 0.75rem;      /* space below legend headings */
+}

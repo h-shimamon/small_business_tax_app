@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% import 'company/_bo_grid_macros.html' as bo %}
+{% import 'ui/_form_macros.html' as ui %}
 {# Options constants for this page only (to avoid duplication) #}
 {% set OPTIONS_STAFF_ROLES = [
   ('nonexec','非常勤役員'), ('worker','工員'), ('clerk','事務員'), ('engineer','技術者'),
@@ -26,7 +27,7 @@
     <div class="card">
       <form method="get" novalidate>
         <fieldset>
-          <legend>支店の状況</legend>
+          <legend class="legend--std">支店の状況</legend>
           {% call bo.grid(2) %}
             {{ bo.field('国内支店（国内に所在する支店等の総数）', type='number', placeholder='例：3', name='bo1.branches.domestic_count') }}
             {{ bo.spacer() }}
@@ -41,7 +42,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>子会社の状況</legend>
+          <legend class="legend--std">子会社の状況</legend>
           {% call bo.grid(2) %}
             {{ bo.field('国内子会社の数', type='number', placeholder='例：2', name='bo1.subsidiaries.domestic_count') }}
             {{ bo.spacer() }}
@@ -57,12 +58,12 @@
         </fieldset>
 
         <fieldset>
-          <legend>海外取引状況</legend>
+          <legend class="legend--std">海外取引状況</legend>
           <!-- Overseas Trade: row1 (radio, span all) -->
           {% call bo.grid(2) %}
-            {{ bo.segmented('海外取引の種類', 'trade_type', 'radio',
+            {{ ui.segmented('海外取引の種類', 'trade_type', 'radio',
               options=[('import','輸入'), ('export','輸出'), ('both','輸出入'), ('none','無')],
-              span_all=True, container_id='trade_type_group') }}
+              span_all=True, container_id='trade_type_group', std=True) }}
           {% endcall %}
 
           <!-- Overseas Trade: rows 2-3 (3-col) -->
@@ -78,13 +79,13 @@
 
           <!-- Overseas Trade: rows 4-6 (checkbox + text, span all) -->
           {% call bo.grid(2, 'bo-trade-other') %}
-            {{ bo.segmented('輸出入以外の海外取引（複数選択可）', 'trade_type_other', 'checkbox',
+            {{ ui.segmented('輸出入以外の海外取引（複数選択可）', 'trade_type_other', 'checkbox',
               options=[('securities','証券の売買'), ('loan','金銭の貸借'), ('realestate','不動産の売買')],
-              span_all=True, container_id='trade_type_other_row1', id_prefix='trade_other') }}
+              span_all=True, container_id='trade_type_other_row1', id_prefix='trade_other', std=True) }}
 
-            {{ bo.segmented('', 'trade_type_other', 'checkbox',
+            {{ ui.segmented('', 'trade_type_other', 'checkbox',
               options=[('fee','手数料'), ('royalty','ロイヤルティー'), ('services','役務の提供'), ('other','その他')],
-              span_all=True, container_id='trade_type_other_row2', id_prefix='trade_other') }}
+              span_all=True, container_id='trade_type_other_row2', id_prefix='trade_other', std=True) }}
 
           {% call bo.grid(2, 'bo-trade-other-input') %}
             {{ bo.field(None, type='text', placeholder='その他の内容を入力', classes='bo-span-all bo-trade-other-field', name='bo1.trade.other_detail') }}
@@ -92,7 +93,7 @@
           {% endcall %}        </fieldset>
 
         <fieldset>
-          <legend>期末従事員等の状況</legend>
+          <legend class="legend--std">期末従事員等の状況</legend>
 
           {# 職種（6カラム・名称は後で指示） #}
           {% call bo.grid(6, 'bo-cols-6 bo-workers-roles') %}
@@ -128,31 +129,31 @@
 
           {# 賃金の決め方（ラジオ） #}
           {% call bo.grid(2) %}
-            {{ bo.segmented('賃金の定め方', 'wage_policy', 'radio',
+            {{ ui.segmented('賃金の定め方', 'wage_policy', 'radio',
               options=[('A','A固定給'), ('B','B歩合給'), ('AB','AB併用')],
-              span_all=True, container_id='wage_policy_group', id_prefix='wage_policy') }}
+              span_all=True, container_id='wage_policy_group', id_prefix='wage_policy', std=True) }}
           {% endcall %}
 
           {# 社宅の有無（ラジオ） #}
           {% call bo.grid(2) %}
-            {{ bo.segmented('社宅・寮の有無', 'company_housing', 'radio',
+            {{ ui.segmented('社宅・寮の有無', 'company_housing', 'radio',
               options=[('yes','有'), ('no','無')],
-              span_all=True, container_id='company_housing_group', id_prefix='company_housing') }}
+              span_all=True, container_id='company_housing_group', id_prefix='company_housing', std=True) }}
           {% endcall %}        </fieldset>
 
         <fieldset>
-          <legend>PC利用状況</legend>
+          <legend class="legend--std">PC利用状況</legend>
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('PC利用の有無', 'pc_usage_exists', 'radio',
+            {{ ui.segmented('PC利用の有無', 'pc_usage_exists', 'radio',
               options=[('yes','有'), ('no','無')],
-              span_all=True, container_id='pc_usage_exists', id_prefix='pc_usage_exists') }}
+              span_all=True, container_id='pc_usage_exists', id_prefix='pc_usage_exists', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('PCのOS', 'pc_os', 'checkbox',
+            {{ ui.segmented('PCのOS', 'pc_os', 'checkbox',
               options=OPTIONS_PC_OS,
-              span_all=True, container_id='pc_os', id_prefix='pc_os') }}
+              span_all=True, container_id='pc_os', id_prefix='pc_os', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2, 'bo-os-other-grid') %}
@@ -160,15 +161,15 @@
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('PCの利用形態', 'pc_usage', 'checkbox',
+            {{ ui.segmented('PCの利用形態', 'pc_usage', 'checkbox',
               options=OPTIONS_PC_USAGE,
-              span_all=True, container_id='pc_usage', id_prefix='pc_usage') }}
+              span_all=True, container_id='pc_usage', id_prefix='pc_usage', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('会計ソフトの利用等', 'accounting_software_usage', 'radio',
+            {{ ui.segmented('会計ソフトの利用等', 'accounting_software_usage', 'radio',
               options=[('yes','有'), ('no','無')],
-              span_all=True, container_id='accounting_software_usage', id_prefix='accounting_software_usage') }}
+              span_all=True, container_id='accounting_software_usage', id_prefix='accounting_software_usage', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
@@ -177,64 +178,64 @@
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('データの保存先', 'data_storage', 'checkbox',
+            {{ ui.segmented('データの保存先', 'data_storage', 'checkbox',
               options=OPTIONS_DATA_STORAGE,
-              span_all=True, container_id='data_storage', id_prefix='data_storage') }}
+              span_all=True, container_id='data_storage', id_prefix='data_storage', std=True) }}
           {% endcall %}        </fieldset>
 
         <fieldset>
-          <legend>販売形態</legend>
+          <legend class="legend--std">販売形態</legend>
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('電子商取引（インターネット取引）', 'ecommerce', 'checkbox',
+            {{ ui.segmented('電子商取引（インターネット取引）', 'ecommerce', 'checkbox',
               options=OPTIONS_ECOMMERCE,
-              span_all=True, container_id='ecommerce', id_prefix='ecommerce') }}
+              span_all=True, container_id='ecommerce', id_prefix='ecommerce', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('販売チャネル', 'sales_channel', 'radio',
+            {{ ui.segmented('販売チャネル', 'sales_channel', 'radio',
               options=[('own','自社HP'), ('others','他社HP')],
-              span_all=True, container_id='sales_channel', id_prefix='sales_channel') }}
+              span_all=True, container_id='sales_channel', id_prefix='sales_channel', std=True) }}
           {% endcall %}        </fieldset>
 
         <fieldset>
-          <legend>株主又は株式所有異動</legend>
+          <legend class="legend--std">株主又は株式所有異動</legend>
           {% call bo.grid(2) %}
-            {{ bo.segmented('株主又は株式所有異動の有無', 'shareholder_change', 'radio',
+            {{ ui.segmented('株主又は株式所有異動の有無', 'shareholder_change', 'radio',
               options=[('yes','有'), ('no','無')],
-              span_all=True, container_id='shareholder_change', id_prefix='shareholder_change') }}
+              span_all=True, container_id='shareholder_change', id_prefix='shareholder_change', std=True) }}
           {% endcall %}        </fieldset>
 
         <fieldset>
-          <legend>経理の状況</legend>
+          <legend class="legend--std">経理の状況</legend>
 
           {% call bo.grid(2) %}
-            {{ bo.field('現金管理者', type='text', placeholder='氏名等', name='bo1.accounting.cash_manager') }}
-            {{ bo.segmented('代表者との関係', 'cash_manager_relation', 'radio',
+            {{ ui.field('現金管理者', type='text', placeholder='氏名等', name='bo1.accounting.cash_manager', std=True) }}
+            {{ ui.segmented('代表者との関係', 'cash_manager_relation', 'radio',
               options=[('relative','親族'), ('other','他人')],
-              span_all=False, container_id='cash_manager_relation', id_prefix='cash_mgr_rel') }}
+              span_all=False, container_id='cash_manager_relation', id_prefix='cash_mgr_rel', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.field('通帳管理者', type='text', placeholder='氏名等', name='bo1.accounting.passbook_manager') }}
-            {{ bo.segmented('代表者との関係', 'passbook_manager_relation', 'radio',
+            {{ ui.field('通帳管理者', type='text', placeholder='氏名等', name='bo1.accounting.passbook_manager', std=True) }}
+            {{ ui.segmented('代表者との関係', 'passbook_manager_relation', 'radio',
               options=[('relative','親族'), ('other','他人')],
-              span_all=False, container_id='passbook_manager_relation', id_prefix='passbook_mgr_rel') }}
+              span_all=False, container_id='passbook_manager_relation', id_prefix='passbook_mgr_rel', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('試算表の作成状況', 'trial_balance_status', 'radio',
+            {{ ui.segmented('試算表の作成状況', 'trial_balance_status', 'radio',
               options=[('monthly','毎月'), ('roughly_monthly','おおむね月ごと'), ('year_end','決算時のみ')],
-              span_all=True, container_id='trial_balance_status', id_prefix='trial_balance_status') }}
+              span_all=True, container_id='trial_balance_status', id_prefix='trial_balance_status', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2, 'bo-withholding') %}
-            {{ bo.segmented('源泉徴収対象所得', 'withholding_income', 'checkbox',
+            {{ ui.segmented('源泉徴収対象所得', 'withholding_income', 'checkbox',
               options=[('salary','給与'), ('fee','報酬・料金'), ('interest','利子等')],
-              span_all=True, container_id='withholding_income_row1', id_prefix='withholding_income') }}
-            {{ bo.segmented('', 'withholding_income', 'checkbox',
+              span_all=True, container_id='withholding_income_row1', id_prefix='withholding_income', std=True) }}
+            {{ ui.segmented('', 'withholding_income', 'checkbox',
               options=[('dividend','配当'), ('nonresident','非居住者'), ('retirement','退職')],
-              span_all=True, container_id='withholding_income_row2', id_prefix='withholding_income') }}
+              span_all=True, container_id='withholding_income_row2', id_prefix='withholding_income', std=True) }}
           {% endcall %}
 
           {% call bo.grid(2) %}
@@ -242,18 +243,18 @@
           {% endcall %}
 
           {% call bo.grid(2) %}
-            {{ bo.segmented('社内監査実施の有無', 'internal_audit', 'radio',
+            {{ ui.segmented('社内監査実施の有無', 'internal_audit', 'radio',
               options=[('yes','有'), ('no','無')],
-              span_all=False, container_id='internal_audit', id_prefix='internal_audit') }}
+              span_all=False, container_id='internal_audit', id_prefix='internal_audit', std=True) }}
             <div class="form-group"><label class="form-label" aria-hidden="true" style="visibility:hidden">社内監査実施の有無</label><input class="form-control" type="text" name='bo1.audit.checksheet_name' placeholder='社内監査のチェックシート名称'></div>
           {% endcall %}        </fieldset>
 
         <fieldset>
-          <legend>役員又は役員報酬額の異動</legend>
+          <legend class="legend--std">役員又は役員報酬額の異動</legend>
           {% call bo.grid(2) %}
-            {{ bo.segmented('役員又は役員報酬額の異動の有無', 'officer_change', 'radio',
+            {{ ui.segmented('役員又は役員報酬額の異動の有無', 'officer_change', 'radio',
               options=[('yes','有'), ('no','無')],
-              span_all=True, container_id='officer_change', id_prefix='officer_change') }}
+              span_all=True, container_id='officer_change', id_prefix='officer_change', std=True) }}
           {% endcall %}
         </fieldset>
 
@@ -266,7 +267,7 @@
   <aside class="bo-pane-right">
     <div class="bo-preview-card">
       <div class="bo-preview-box" style="padding:0;">
-        <iframe src="{{ url_for('company.filings_preview', page='business_overview_1') }}#toolbar=0&navpanes=0&view=FitH" title="PDFプレビュー" style="width:100%; height:100%; border:0; border-radius:8px; background:#fff;"></iframe>
+        {% if has_preview and preview_src %}<iframe src="{{ preview_src }}#toolbar=0&navpanes=0&view=FitH" title="PDFプレビュー" style="width:100%; height:100%; border:0; border-radius:8px; background:#fff;"></iframe>{% else %}<div class="bo-preview-box">プレビューは未対応です</div>{% endif %}
       </div>
       <p class="bo-preview-note">PDFの実ファイルを表示中（読み取り専用）。入力との連動は今後の段階で実装します。</p>
     </div>
@@ -276,173 +277,5 @@
 
 {% block scripts %}
   {{ super() if super }}
-  <script>
-    (function(){
-      var radios = document.querySelectorAll('input[type="radio"][name="trade_type"]');
-      radios.forEach(function(el){
-        el.addEventListener('mousedown', function(){ this._wasChecked = this.checked; });
-        el.addEventListener('click', function(){ if (this._wasChecked) { this.checked = false; } });
-      });
-    })();
-    (function(){
-      var checks = document.querySelectorAll('input[type="checkbox"][name="trade_type_other"]');
-      function syncOne(el){
-        var lab = document.querySelector('label[for="'+el.id+'"]');
-        if(lab){ lab.classList.toggle('is-checked', el.checked); }
-      }
-      checks.forEach(function(el){
-        el.addEventListener('change', function(){ syncOne(el); });
-        syncOne(el);
-      });
-      var labels = document.querySelectorAll('label[for^="trade_other_"]');
-      labels.forEach(function(lab){
-        lab.addEventListener('click', function(e){
-          e.preventDefault();
-          var id = this.getAttribute('for');
-          var el = document.getElementById(id);
-          if(!el) return;
-          el.checked = !el.checked;
-          el.dispatchEvent(new Event('change', {bubbles:true}));
-        });
-      });
-    })();
-  </script>
-  <script>
-    (function(){
-      var split = document.querySelector('.bo-split-pane');
-      var aside = document.querySelector('.bo-pane-right');
-      var left  = document.querySelector('.bo-pane-left');
-      var leftCard = document.querySelector('.bo-pane-left .card');
-      if(!split || !aside || !left || !leftCard) return;
-
-      var headerH = 56;
-      try {
-        var cssH = getComputedStyle(document.documentElement).getPropertyValue('--header-height');
-        if(cssH) { var n = parseInt(cssH, 10); if(!isNaN(n)) headerH = n; }
-      } catch(e){}
-      var topOffset = headerH + 16;
-
-      var gutterBase = null;
-      var wasFixed = false;
-
-      function computeGutter(splitRect, asideRect){
-        return Math.round((splitRect.left + splitRect.width) - (asideRect.left + asideRect.width));
-      }
-      function computeLeftForFixed(splitRect, asideWidth){
-        var pageX = window.pageXOffset || document.documentElement.scrollLeft || 0;
-        var gutter = (gutterBase == null ? 0 : gutterBase);
-        return Math.round(splitRect.left + pageX + split.clientWidth - asideWidth - gutter);
-      }
-
-      function tick(){
-        var splitRect = split.getBoundingClientRect();
-        var asideRect = aside.getBoundingClientRect();
-        var w = asideRect.width;
-        var start = leftCard.getBoundingClientRect().top + window.pageYOffset;
-        var sc = window.pageYOffset + topOffset;
-
-        if(!wasFixed){
-          gutterBase = computeGutter(splitRect, asideRect);
-        }
-        if(sc >= start){
-          aside.style.position = 'fixed';
-          aside.style.top = topOffset + 'px';
-          aside.style.width = w + 'px';
-          aside.style.left = computeLeftForFixed(splitRect, w) + 'px';
-          left.style.paddingRight = (w + 24) + 'px';
-          wasFixed = true;
-        } else {
-          aside.style.position = '';
-          aside.style.top = '';
-          aside.style.left = '';
-          aside.style.width = '';
-          left.style.paddingRight = '';
-          wasFixed = false;
-        }
-      }
-      window.addEventListener('scroll', tick, {passive:true});
-      window.addEventListener('resize', function(){
-        var was = wasFixed;
-        aside.style.position = '';
-        aside.style.left = '';
-        wasFixed = false;
-        tick();
-        if(was){ tick(); }
-      });
-      tick();
-    })();
-  </script>
-  <script>
-    (function(){
-      var container = document.querySelector('.js-workers-count');
-      if(!container) return;
-      var srcSel = container.getAttribute('data-total-source') || 'input.form-control[type="number"]';
-      var tgtSel = container.getAttribute('data-total-target') || '.js-total';
-      var nums = Array.prototype.slice.call(container.querySelectorAll(srcSel));
-      if(nums.length < 1) return;
-      var total = container.querySelector(tgtSel);
-      if(!total){
-        var totalInput = container.querySelector('input.js-total');
-        var totalDisplay = container.querySelector('.js-total');
-        total = totalInput || totalDisplay || nums[nums.length - 1];
-      }
-      if(!total) return;
-      if(total.tagName === 'INPUT'){
-        total.readOnly = true;
-        total.setAttribute('aria-readonly', 'true');
-      }
-      function toNumber(el){
-        var v = (el.value || '').replace(/,/g,'').trim();
-        if(v === '') return 0;
-        var n = Number(v);
-        return isFinite(n) ? n : 0;
-      }
-      function recalc(){
-        var sum = 0;
-        for(var i=0;i<nums.length;i++){
-          var el = nums[i];
-          if(el === total) continue;
-          sum += toNumber(el);
-        }
-        var s = String(sum);
-        if(total.tagName === 'INPUT'){
-          if(s !== total.value){ total.value = s; }
-        } else {
-          if(s !== total.textContent){ total.textContent = s; }
-        }
-      }
-      nums.forEach(function(el){ if(el !== total){ el.addEventListener('input', recalc); }});
-      recalc();
-    })();
-  </script>
-  <script>
-    (function(){
-      var other = document.getElementById('pc_os_other');
-      var wrap = document.querySelector('.bo-os-other-field');
-      var grid = document.querySelector('.bo-os-other-grid');
-      if(!other) return;
-      function sync(){
-        var on = !!other.checked;
-        if(wrap) wrap.classList.toggle('is-visible', on);
-        if(grid) grid.classList.toggle('is-on', on);
-      }
-      other.addEventListener('change', sync);
-      sync();
-    })();
-  </script>
-  <script>
-    (function(){
-      var other = document.getElementById('trade_other_other');
-      var wrap = document.querySelector('.bo-trade-other-field');
-      var grid = document.querySelector('.bo-trade-other-input');
-      if(!other) return;
-      function sync(){
-        var on = !!other.checked;
-        if(wrap) wrap.classList.toggle('is-visible', on);
-        if(grid) grid.classList.toggle('is-on', on);
-      }
-      other.addEventListener('change', sync);
-      sync();
-    })();
-  </script>
+  <script defer src="{{ url_for('static', filename='js/pages/filings_business_overview.js') }}"></script>
 {% endblock %}

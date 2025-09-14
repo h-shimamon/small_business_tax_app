@@ -30,7 +30,7 @@
 {% macro render_radio_field(field) %}
 <div class="form-group" id="{{ field.name }}_group">
     {{ field.label(class="form-label") }}
-    <div class="segmented-control">
+    <div class="segmented-control segmented--std">
         {% for subfield in field %}
             {{ subfield(style="display:none;") }}
             {{ subfield.label }}
