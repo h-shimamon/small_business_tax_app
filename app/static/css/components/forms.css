@@ -49,6 +49,26 @@ select.form-control {
     background-size: 16px 12px;
 }
 
+/* Opt-in unified control height (44px) via utility class */
+.ui-ctrl-44 { --control-line-height: 1.25; --control-padding-y: 11px; --control-height: 44px; }
+.ui-ctrl-44 .form-control {
+  line-height: var(--control-line-height);
+  padding-top: var(--control-padding-y);
+  padding-bottom: var(--control-padding-y);
+  min-height: var(--control-height);
+}
+.ui-ctrl-44 .segmented-control { height: var(--control-height); }
+.ui-ctrl-44 .segmented-control label {
+  line-height: var(--control-line-height);
+  padding-top: var(--control-padding-y);
+  padding-bottom: var(--control-padding-y);
+  height: 100%;
+  min-height: calc(var(--control-height) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* チェックボックス */
 .form-group-checkbox {
     display: flex;

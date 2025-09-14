@@ -37,7 +37,7 @@
 {# メインコンテンツ部分を定義 #}
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='deposits'), cancel_label='戻る') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='deposits'), cancel_label='戻る', form_attrs='class="ui-ctrl-44"') %}
   <div class="form-grid-2col">
       {{ render_field(form.financial_institution, autofocus=True, placeholder="例：〇〇銀行") }}
       {{ render_field(form.branch_name, placeholder="例：本店") }}

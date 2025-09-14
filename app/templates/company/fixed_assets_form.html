@@ -9,7 +9,7 @@
 
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='fixed_assets'), cancel_label='キャンセル', form_attrs='novalidate') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='fixed_assets'), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
   {{ render_field(form.asset_type) }}
   {{ render_field(form.location) }}
   {{ render_field(form.area) }}

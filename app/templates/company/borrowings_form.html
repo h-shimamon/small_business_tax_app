@@ -9,7 +9,7 @@
 
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='borrowings'), cancel_label='キャンセル', form_attrs='novalidate') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='borrowings'), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
   {{ render_field(form.lender_name, autofocus=True, placeholder="例：〇〇銀行") }}
   {{ render_checkbox_field(form.is_subsidiary) }}
   {{ render_field(form.balance_at_eoy, placeholder="例：5000000") }}

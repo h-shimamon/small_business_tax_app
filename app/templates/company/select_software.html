@@ -16,7 +16,7 @@
 <p class="content-subtitle">データのインポートを開始する前に、ご利用の会計ソフトを1つ選択してください。</p>
 
 <div class="card">
-    <form method="POST" novalidate x-data="{ selectedSoftware: '{{ form.accounting_software.data if form.accounting_software.data else '' }}' }">
+    <form method=\"POST\" novalidate class=\"ui-ctrl-44\" x-data="{ selectedSoftware: '{{ form.accounting_software.data if form.accounting_software.data else '' }}' }">
         {{ form.hidden_tag() }}
 
         <div class="software-grid">

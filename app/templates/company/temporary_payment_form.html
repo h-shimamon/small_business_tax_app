@@ -33,7 +33,7 @@
 {# メインコンテンツ部分を定義 #}
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='temporary_payments'), cancel_label='キャンセル') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='temporary_payments'), cancel_label='キャンセル', form_attrs='class="ui-ctrl-44"') %}
   {{ render_field(form.account_name, autofocus=True) }}
   {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
   {{ render_field(form.partner_name, placeholder="例：株式会社 □□") }}

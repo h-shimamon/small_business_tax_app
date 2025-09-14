@@ -13,7 +13,7 @@
 <p class="content-subtitle">申告の対象となる事業年度の情報を入力し、保存してください。</p>
 
 <div class="card">
-    <form action="{{ url_for('company.declaration') }}" method="post" novalidate>
+    <form action=\"{{ url_for('company.declaration') }}\" method=\"post\" novalidate class=\"ui-ctrl-44\">
         {{ form.hidden_tag() }}
 
         <div class="form-grid">

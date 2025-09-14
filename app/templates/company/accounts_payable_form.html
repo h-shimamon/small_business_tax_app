@@ -9,7 +9,7 @@
 
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='accounts_payable'), cancel_label='キャンセル', form_attrs='novalidate') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='accounts_payable'), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
   {{ render_field(form.registration_number, autofocus=True, placeholder="例：1234567890123") }}
   {{ render_field(form.partner_name, placeholder="例：株式会社〇〇商事（または氏名）") }}
   {{ render_field(form.partner_address, placeholder="例：東京都千代田区丸の内…") }}

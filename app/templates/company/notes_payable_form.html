@@ -9,7 +9,7 @@
 
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='notes_payable'), cancel_label='キャンセル', form_attrs='novalidate') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='notes_payable'), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
   {{ render_field(form.registration_number, autofocus=True, placeholder="例：1234567890123") }}
   {{ render_field(form.payee, placeholder="例：株式会社〇〇商事") }}
   {{ render_date_field(form.issue_date, placeholder="例：2025-04-01") }}
