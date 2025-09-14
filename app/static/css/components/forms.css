@@ -196,9 +196,6 @@ select.form-control {
     grid-column: 1 / -1; /* 2カラムをまたいで全幅に */
 }
 
-/* 2カラムグリッドレイアウト */
-$1gap: 0 1.5rem;
-}
 
 .form-grid-2col .full-width {
     grid-column: 1 / -1; /* 2カラムをまたいで全幅に */

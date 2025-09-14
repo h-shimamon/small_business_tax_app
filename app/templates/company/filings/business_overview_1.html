@@ -1,15 +1,12 @@
 {% extends 'base.html' %}
 {% import 'company/_bo_grid_macros.html' as bo %}
-{% import 'ui/_form_macros.html' as ui %}
-{# Options constants for this page only (to avoid duplication) #}
-{% set OPTIONS_STAFF_ROLES = [
-  ('nonexec','非常勤役員'), ('worker','工員'), ('clerk','事務員'), ('engineer','技術者'),
-  ('sales','販売員'), ('labor','労務者'), ('cook','料理人'), ('hostess','ホステス'), ('other','その他')
-] %}
-{% set OPTIONS_PC_OS = [('win','Windows'), ('mac','Mac'), ('linux','Linux'), ('other','その他')] %}
-{% set OPTIONS_PC_USAGE = [('payroll','給与管理'), ('inventory','在庫・販売管理'), ('production','生産管理'), ('accounting','財務管理')] %}
-{% set OPTIONS_ECOMMERCE = [('sales','有・売上'), ('purchase','有・仕入'), ('expense','有・経費'), ('none','無')] %}
-{% set OPTIONS_DATA_STORAGE = [('cloud','クラウド'), ('external','外部記録媒体'), ('server','PCサーバ')] %}
+$1
+{% from '_components/preview_aside.html' import preview_aside %}
+
+{% set ui_options.pc_os = [('win','Windows'), ('mac','Mac'), ('linux','Linux'), ('other','その他')] %}
+{% set ui_options.pc_usage = [('payroll','給与管理'), ('inventory','在庫・販売管理'), ('production','生産管理'), ('accounting','財務管理')] %}
+{% set ui_options.ecommerce = [('sales','有・売上'), ('purchase','有・仕入'), ('expense','有・経費'), ('none','無')] %}
+{% set ui_options.data_storage = [('cloud','クラウド'), ('external','外部記録媒体'), ('server','PCサーバ')] %}
 
 {% block title %}事業概況説明書１{% endblock %}
 
@@ -101,10 +98,10 @@
             <div class="form-group bo-cell-center">
               <div class="bo-input-frame" role="text" aria-readonly="true">常勤役員</div>
             </div>
-            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role2') }}
-            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role3') }}
-            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role4') }}
-            {{ bo.select(None, OPTIONS_STAFF_ROLES, name='bo1.staff.role5') }}
+            {{ bo.select(None, ui_options.staff_roles, name='bo1.staff.role2') }}
+            {{ bo.select(None, ui_options.staff_roles, name='bo1.staff.role3') }}
+            {{ bo.select(None, ui_options.staff_roles, name='bo1.staff.role4') }}
+            {{ bo.select(None, ui_options.staff_roles, name='bo1.staff.role5') }}
             <div class="form-group bo-cell-center">
               <div class="bo-input-frame" role="text" aria-readonly="true">合計</div>
             </div>
@@ -152,7 +149,7 @@
 
           {% call bo.grid(2) %}
             {{ ui.segmented('PCのOS', 'pc_os', 'checkbox',
-              options=OPTIONS_PC_OS,
+              options=ui_options.pc_os,
               span_all=True, container_id='pc_os', id_prefix='pc_os', std=True) }}
           {% endcall %}
 
@@ -162,7 +159,7 @@
 
           {% call bo.grid(2) %}
             {{ ui.segmented('PCの利用形態', 'pc_usage', 'checkbox',
-              options=OPTIONS_PC_USAGE,
+              options=ui_options.pc_usage,
               span_all=True, container_id='pc_usage', id_prefix='pc_usage', std=True) }}
           {% endcall %}
 
@@ -179,7 +176,7 @@
 
           {% call bo.grid(2) %}
             {{ ui.segmented('データの保存先', 'data_storage', 'checkbox',
-              options=OPTIONS_DATA_STORAGE,
+              options=ui_options.data_storage,
               span_all=True, container_id='data_storage', id_prefix='data_storage', std=True) }}
           {% endcall %}        </fieldset>
 
@@ -188,7 +185,7 @@
 
           {% call bo.grid(2) %}
             {{ ui.segmented('電子商取引（インターネット取引）', 'ecommerce', 'checkbox',
-              options=OPTIONS_ECOMMERCE,
+              options=ui_options.ecommerce,
               span_all=True, container_id='ecommerce', id_prefix='ecommerce', std=True) }}
           {% endcall %}
 
@@ -264,14 +261,7 @@
 
   <div class="bo-aside-spacer" aria-hidden="true"></div>
 
-  <aside class="bo-pane-right">
-    <div class="bo-preview-card">
-      <div class="bo-preview-box" style="padding:0;">
-        {% if has_preview and preview_src %}<iframe src="{{ preview_src }}#toolbar=0&navpanes=0&view=FitH" title="PDFプレビュー" style="width:100%; height:100%; border:0; border-radius:8px; background:#fff;"></iframe>{% else %}<div class="bo-preview-box">プレビューは未対応です</div>{% endif %}
-      </div>
-      <p class="bo-preview-note">PDFの実ファイルを表示中（読み取り専用）。入力との連動は今後の段階で実装します。</p>
-    </div>
-  </aside>
+  {{ preview_aside(preview_src, has_preview, 'PDFの実ファイルを表示中（読み取り専用）。入力との連動は今後の段階で実装します。') }}
 </div>
 {% endblock %}
 

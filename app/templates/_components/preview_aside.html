@@ -1,0 +1,15 @@
+{# app/templates/_components/preview_aside.html #}
+{% macro preview_aside(preview_src=None, has_preview=False, note='', extra_class='') %}
+<aside class="bo-pane-right {{ extra_class }}">
+  <div class="bo-preview-card">
+    <div class="bo-preview-box" style="padding:0;">
+      {% if has_preview and preview_src %}
+        <iframe src="{{ preview_src }}#toolbar=0&navpanes=0&view=FitH" title="PDFプレビュー" style="width:100%; height:100%; border:0; border-radius:8px; background:#fff;"></iframe>
+      {% else %}
+        <div class="bo-preview-box">プレビューは未対応です</div>
+      {% endif %}
+    </div>
+    {% if note %}<p class="bo-preview-note">{{ note }}</p>{% endif %}
+  </div>
+</aside>
+{% endmacro %}

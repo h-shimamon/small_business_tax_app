@@ -16,6 +16,13 @@ def create_app(test_config=None):
     """
     app = Flask(__name__, instance_relative_config=True)
 
+    # Initialize typed settings and register to app extensions (DI root)
+    try:
+        from .config.schema import AppSettings
+        app.extensions.setdefault('settings', AppSettings())
+    except Exception:
+        pass
+
     # --- 設定の読み込み ---
     if test_config is None:
         # APP_ENV に応じて設定クラスを選択（既定: development）
