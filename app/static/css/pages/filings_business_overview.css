@@ -95,6 +95,19 @@
 .bo-grid.bo-withholding .form-group { margin-bottom: 0; }
 /* Ensure spacing after the withholding block before the next grid */
 .bo-grid.bo-withholding + .bo-grid { margin-top: 1.5rem; }
+
+/* Trade "other" block: 0.5rem vertical spacing between rows */
+.bo-grid.bo-trade-other { row-gap: .5rem !important; }
+.bo-grid.bo-trade-other .form-group { margin-bottom: 0; }
+/* Dynamic helper for 'other' in trade block */
+.bo-trade-other-input { display: none; }
+.bo-trade-other-input.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
+.bo-trade-other-field { display: none; }
+.bo-trade-other-field.is-visible { display: block; }
+.bo-grid.bo-trade-other .form-group { margin-bottom: 0; }
+.bo-grid.bo-withholding .form-group { margin-bottom: 0; }
+/* Ensure spacing after the withholding block before the next grid */
+.bo-grid.bo-withholding + .bo-grid { margin-top: 1.5rem; }
 .bo-grid.bo-withholding .form-group { margin-bottom: 0; }
 .bo-grid.bo-workers-roles .form-group { margin-bottom: 0; }
 .bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
@@ -110,15 +123,22 @@
 .bo-os-other-field.is-visible { display: block; }
 /* Grid-level toggle for spacing between radio and helper input */
 .bo-os-other-grid { display: none; }
-.bo-os-other-grid.is-on { display: block; margin-top: .5rem; }
+.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
+.bo-os-other-grid.is-on .bo-span-all { grid-column: 1 / -1; }
 /* When helper grid is hidden, restore spacing before the next grid */
 .bo-os-other-grid:not(.is-on) + .bo-grid { margin-top: 1.5rem; }
 /* Remove bottom margin on the PC OS segmented group so spacing is controlled only by the helper grid */
 #pc_os { margin-bottom: 0; }
-.bo-os-other-grid.is-on { display: block; margin-top: .5rem; }
+/* Ensure inputs fill the available width under helper grids */
+.bo-os-other-grid.is-on .form-control,
+.bo-trade-other-input.is-on .form-control { width: 100%; }
+
+.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
+.bo-os-other-grid.is-on .bo-span-all { grid-column: 1 / -1; }
 /* Remove bottom margin on the PC OS segmented group so spacing is controlled only by the helper grid */
 #pc_os { margin-bottom: 0; }
-.bo-os-other-grid.is-on { display: block; margin-top: .5rem; }
+.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
+.bo-os-other-grid.is-on .bo-span-all { grid-column: 1 / -1; }
 .bo-os-other-field.is-visible { display: block; margin-top: .5rem; }
 
 

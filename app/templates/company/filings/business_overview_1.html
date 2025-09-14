@@ -77,16 +77,18 @@
           {% endcall %}
 
           <!-- Overseas Trade: rows 4-6 (checkbox + text, span all) -->
-          {% call bo.grid(2) %}
+          {% call bo.grid(2, 'bo-trade-other') %}
             {{ bo.segmented('輸出入以外の海外取引（複数選択可）', 'trade_type_other', 'checkbox',
               options=[('securities','証券の売買'), ('loan','金銭の貸借'), ('realestate','不動産の売買')],
               span_all=True, container_id='trade_type_other_row1', id_prefix='trade_other') }}
 
             {{ bo.segmented('', 'trade_type_other', 'checkbox',
-              options=[('fee','手数料'), ('royalty','ロイヤルティー'), ('services','役務の提供')],
+              options=[('fee','手数料'), ('royalty','ロイヤルティー'), ('services','役務の提供'), ('other','その他')],
               span_all=True, container_id='trade_type_other_row2', id_prefix='trade_other') }}
 
-            {{ bo.field('その他', type='text', placeholder='輸出入以外の海外取引で上記に該当がない場合に入力してください', classes='bo-span-all', name='bo1.trade.other_text') }}
+          {% call bo.grid(2, 'bo-trade-other-input') %}
+            {{ bo.field(None, type='text', placeholder='その他の内容を入力', classes='bo-span-all bo-trade-other-field', name='bo1.trade.other_detail') }}
+          {% endcall %}
           {% endcall %}        </fieldset>
 
         <fieldset>
@@ -244,6 +246,14 @@
               options=[('yes','有'), ('no','無')],
               span_all=False, container_id='internal_audit', id_prefix='internal_audit') }}
             <div class="form-group"><label class="form-label" aria-hidden="true" style="visibility:hidden">社内監査実施の有無</label><input class="form-control" type="text" name='bo1.audit.checksheet_name' placeholder='社内監査のチェックシート名称'></div>
+          {% endcall %}        </fieldset>
+
+        <fieldset>
+          <legend>役員又は役員報酬額の異動</legend>
+          {% call bo.grid(2) %}
+            {{ bo.segmented('役員又は役員報酬額の異動の有無', 'officer_change', 'radio',
+              options=[('yes','有'), ('no','無')],
+              span_all=True, container_id='officer_change', id_prefix='officer_change') }}
           {% endcall %}
         </fieldset>
 
@@ -410,6 +420,21 @@
       var other = document.getElementById('pc_os_other');
       var wrap = document.querySelector('.bo-os-other-field');
       var grid = document.querySelector('.bo-os-other-grid');
+      if(!other) return;
+      function sync(){
+        var on = !!other.checked;
+        if(wrap) wrap.classList.toggle('is-visible', on);
+        if(grid) grid.classList.toggle('is-on', on);
+      }
+      other.addEventListener('change', sync);
+      sync();
+    })();
+  </script>
+  <script>
+    (function(){
+      var other = document.getElementById('trade_other_other');
+      var wrap = document.querySelector('.bo-trade-other-field');
+      var grid = document.querySelector('.bo-trade-other-input');
       if(!other) return;
       function sync(){
         var on = !!other.checked;
