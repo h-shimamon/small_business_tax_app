@@ -57,10 +57,10 @@ def get_ui_options(profile: str = "default") -> UIOptions:
     """Return UI options for the given profile.
     Currently a single profile; hook for future variants.
     """
-    return UIOptions(
-        staff_roles=STAFF_ROLES,
-        pc_os=PC_OS,
-        pc_usage=PC_USAGE,
-        ecommerce=ECOMMERCE,
-        data_storage=DATA_STORAGE,
-    )
+    return {
+        'staff_roles': STAFF_ROLES,
+        'pc_os': PC_OS,
+        'pc_usage': PC_USAGE,
+        'ecommerce': ECOMMERCE,
+        'data_storage': DATA_STORAGE,
+    }

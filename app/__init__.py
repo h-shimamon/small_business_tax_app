@@ -16,10 +16,29 @@ def create_app(test_config=None):
     """
     app = Flask(__name__, instance_relative_config=True)
 
+    # Register Jinja template globals unconditionally (robust for tests and inline rendering)
+    from .constants.ui_options import get_ui_options  # type: ignore
+    # function global
+    app.add_template_global(get_ui_options, name='get_ui_options')
+    app.jinja_env.globals['get_ui_options'] = get_ui_options
+    # data global (profile from env if settings unavailable)
+    profile = os.getenv('APP_UI_PROFILE', 'default')
+    app.add_template_global(get_ui_options(profile), name='ui_options')
+    app.jinja_env.globals['ui_options'] = get_ui_options(profile)
+
     # Initialize typed settings and register to app extensions (DI root)
     try:
         from .config.schema import AppSettings
         app.extensions.setdefault('settings', AppSettings())
+    except Exception:
+        pass
+    except Exception:
+        pass
+
+    # Attach app-level UI context/globals early
+    try:
+        from .ui.context import attach_app_ui_context  # type: ignore
+        attach_app_ui_context(app)
     except Exception:
         pass
 
@@ -82,6 +101,20 @@ def create_app(test_config=None):
     from .company import company_bp
     app.register_blueprint(company_bp)
 
+    # Global context: inject ui_options for all templates (fallback)
+    try:
+        from .ui.context import build_ui_context  # type: ignore
+        @app.context_processor
+        def _inject_ui_options_app():  # type: ignore
+            settings = None
+            try:
+                settings = app.extensions.get('settings')  # type: ignore
+            except Exception:
+                pass
+            return build_ui_context(settings)
+    except Exception:
+        pass
+
     # --- Optional: new auth module (feature-flagged) ---
     try:
         flag = str(app.config.get('ENABLE_NEW_AUTH') or os.getenv('ENABLE_NEW_AUTH', '0')).lower()
@@ -116,5 +149,23 @@ def create_app(test_config=None):
     # --- CLIコマンドの登録 ---
     from . import commands
     commands.register_commands(app)
+
+    # Ensure Jinja globals are present regardless of context processor behavior
+    try:
+        from .constants.ui_options import get_ui_options  # type: ignore
+        app.jinja_env.globals['get_ui_options'] = get_ui_options
+        try:
+            profile = getattr(app.extensions.get('settings'), 'UI_PROFILE', 'default')  # type: ignore
+        except Exception:
+            profile = 'default'
+        app.jinja_env.globals.setdefault('ui_options', get_ui_options(profile))
+        # Also register as Flask template globals (robust for render_template_string)
+        try:
+            app.add_template_global(get_ui_options, name='get_ui_options')
+            app.add_template_global(get_ui_options(profile), name='ui_options')
+        except Exception:
+            pass
+    except Exception:
+        pass
 
     return app
