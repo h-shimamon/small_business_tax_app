@@ -31,7 +31,7 @@
       {%- for value, text in options -%}
         {%- set input_id = (id_prefix or name) ~ '_' ~ value -%}
         {%- if type == 'radio' -%}
-          <input type="radio" name="{{ name }}" id="{{ input_id }}" value="{{ value }}"/>
+          <input type="radio" name="{{ name }}" id="{{ input_id }}" value="{{ value }}" style="display:none;"/>
         {%- else -%}
           <input type="checkbox" name="{{ name }}" id="{{ input_id }}" value="{{ value }}"/>
         {%- endif -%}

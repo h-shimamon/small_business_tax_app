@@ -63,13 +63,14 @@ def filings_preview(company):
 
     try:
         # Resolve from project root (one level above app root)
-        base_dir = _os.path.abspath(_os.path.join(current_app.root_path, '..'))
-        pdf_path = _os.path.join(base_dir, *pdf_rel.split('/'))
+        repo_root = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), '..', '..'))
+        pdf_path = _os.path.join(repo_root, *pdf_rel.split('/'))
+        if not _os.path.exists(pdf_path):
+            abort(404)
         return send_file(
             pdf_path,
             mimetype='application/pdf',
             as_attachment=False,
-            download_name=f'{page}_preview.pdf',
         )
     except Exception:
         abort(404)
