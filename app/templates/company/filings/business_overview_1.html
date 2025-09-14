@@ -93,7 +93,7 @@
           <legend>期末従事員等の状況</legend>
 
           {# 職種（6カラム・名称は後で指示） #}
-          {% call bo.grid(6, 'bo-cols-6') %}
+          {% call bo.grid(6, 'bo-cols-6 bo-workers-roles') %}
             <div class="form-group bo-span-all"><label class="form-label">期末従事員の状況</label></div>
             <div class="form-group bo-cell-center">
               <div class="bo-input-frame" role="text" aria-readonly="true">常勤役員</div>
@@ -153,7 +153,7 @@
               span_all=True, container_id='pc_os', id_prefix='pc_os') }}
           {% endcall %}
 
-          {% call bo.grid(2) %}
+          {% call bo.grid(2, 'bo-os-other-grid') %}
             {{ bo.field(None, type='text', placeholder='OS名を入力', classes='bo-span-all bo-os-other-field', name='bo1.pc.os_other') }}
           {% endcall %}
 
@@ -226,7 +226,7 @@
               span_all=True, container_id='trial_balance_status', id_prefix='trial_balance_status') }}
           {% endcall %}
 
-          {% call bo.grid(2) %}
+          {% call bo.grid(2, 'bo-withholding') %}
             {{ bo.segmented('源泉徴収対象所得', 'withholding_income', 'checkbox',
               options=[('salary','給与'), ('fee','報酬・料金'), ('interest','利子等')],
               span_all=True, container_id='withholding_income_row1', id_prefix='withholding_income') }}
@@ -409,8 +409,13 @@
     (function(){
       var other = document.getElementById('pc_os_other');
       var wrap = document.querySelector('.bo-os-other-field');
-      if(!other || !wrap) return;
-      function sync(){ wrap.classList.toggle('is-visible', !!other.checked); }
+      var grid = document.querySelector('.bo-os-other-grid');
+      if(!other) return;
+      function sync(){
+        var on = !!other.checked;
+        if(wrap) wrap.classList.toggle('is-visible', on);
+        if(grid) grid.classList.toggle('is-on', on);
+      }
       other.addEventListener('change', sync);
       sync();
     })();

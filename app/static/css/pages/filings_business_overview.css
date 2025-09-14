@@ -79,13 +79,26 @@
 .bo-cell-center .bo-input-frame { display:flex; align-items:center; justify-content:center; text-align:center; }
 .bo-input-frame.js-total { display:grid; place-items:center; text-align:center; }
 
-/* Page-scoped control height unification (target ~44px) */
-.bo-pane-left .form-control {
-  line-height: var(--control-line-height);
-  padding-top: var(--control-padding-y);
-  padding-bottom: var(--control-padding-y);
-  min-height: var(--control-height);
-}
+
+
+/* Workers roles row: tighten vertical spacing to 0.5rem */
+.bo-grid.bo-workers-roles { row-gap: .5rem !important; }
+.bo-grid.bo-workers-roles .form-group { margin-bottom: 0; }
+.bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
+/* Ensure spacing between roles grid and the following grid */
+.bo-grid.bo-workers-roles + .bo-grid { margin-top: .5rem; }
+.bo-grid.bo-workers-roles .form-group { margin-bottom: 0; }
+.bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
+
+/* Withholding income block: 0.5rem vertical spacing between rows */
+.bo-grid.bo-withholding { row-gap: .5rem !important; }
+.bo-grid.bo-withholding .form-group { margin-bottom: 0; }
+/* Ensure spacing after the withholding block before the next grid */
+.bo-grid.bo-withholding + .bo-grid { margin-top: 1.5rem; }
+.bo-grid.bo-withholding .form-group { margin-bottom: 0; }
+.bo-grid.bo-workers-roles .form-group { margin-bottom: 0; }
+.bo-grid.bo-workers-roles > .form-group.bo-span-all:first-child .form-label { margin-bottom: .5rem; }
+
 
 /* Adjust for segmented container borders to match text input height */
 .bo-pane-left .segmented-control label { min-height: calc(var(--control-height) - 2px); }
@@ -93,9 +106,24 @@
 /* Reset ad-hoc height override for audit input */
 .bo-pane-left input.form-control[name="bo1.audit.checksheet_name"] { height: auto; }
 /* Ensure OS 'other' helper default hidden */
+.bo-os-other-field { display: none; }
+.bo-os-other-field.is-visible { display: block; }
+/* Grid-level toggle for spacing between radio and helper input */
+.bo-os-other-grid { display: none; }
+.bo-os-other-grid.is-on { display: block; margin-top: .5rem; }
+/* When helper grid is hidden, restore spacing before the next grid */
+.bo-os-other-grid:not(.is-on) + .bo-grid { margin-top: 1.5rem; }
+/* Remove bottom margin on the PC OS segmented group so spacing is controlled only by the helper grid */
+#pc_os { margin-bottom: 0; }
+.bo-os-other-grid.is-on { display: block; margin-top: .5rem; }
+/* Remove bottom margin on the PC OS segmented group so spacing is controlled only by the helper grid */
+#pc_os { margin-bottom: 0; }
+.bo-os-other-grid.is-on { display: block; margin-top: .5rem; }
+.bo-os-other-field.is-visible { display: block; margin-top: .5rem; }
+
 
 /* Force segmented container to exact control height and stretch labels to match inputs */
 .bo-pane-left .segmented-control { height: var(--control-height); }
-$1
+
 /* Fine-tune: passbook manager input +1pt for visual alignment */
 .bo-pane-left input.form-control[name="bo1.accounting.passbook_manager"] { min-height: calc(var(--control-height) + 1pt); }
