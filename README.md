@@ -28,21 +28,8 @@ The new user management module is isolated under `/xauth/*` and disabled by defa
 
 See `docs/newauth_guide.md` for details (dev notes, token testing, and safety).
 
-## Screenshots (newauth)
+$1
 
-Replace the placeholder paths below with actual PNGs under `docs/images/`.
-
-- Login: ![Login](docs/images/newauth_login.png)
-- Signup (email + password): ![Signup](docs/images/newauth_signup_legacy.png)
-- Signup (email-first): ![Signup Email First](docs/images/newauth_signup_email_first.png)
-- Verify → Set Password: ![Verify-Set](docs/images/newauth_verify_set_password.png)
-- Reset request: ![Reset Request](docs/images/newauth_reset_request.png)
-- Reset confirm: ![Reset Confirm](docs/images/newauth_reset_confirm.png)
-
-Tip: run with `ENABLE_NEW_AUTH=1` (and `ENABLE_SIGNUP_EMAIL_FIRST=1`) on port 5002, then capture each page.
-
-
-## Keyboard focus (developer memo)
-- Initial cursor: use `render_field(..., autofocus=True)` on the first input of a page (no JS needed).
-- Tab order: kept by structure (Main → Sidebar → Nav). Do not change DOM order.
-- Skip links: provided in base; they appear only when focused (Tab once → Enter to jump).
+## CSP (scripts)
+- Inline初期化を撤去済みのため、unsafe-inlineは不要です。
+- 推奨例: `Content-Security-Policy: script-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';`

@@ -16,35 +16,19 @@ def create_app(test_config=None):
     """
     app = Flask(__name__, instance_relative_config=True)
 
-    # Register Jinja template globals unconditionally (robust for tests and inline rendering)
-    from .constants.ui_options import get_ui_options  # type: ignore
-    # function global
-    app.add_template_global(get_ui_options, name='get_ui_options')
-    app.jinja_env.globals['get_ui_options'] = get_ui_options
-    # data global (profile from env if settings unavailable)
-    profile = os.getenv('APP_UI_PROFILE', 'default')
-    app.add_template_global(get_ui_options(profile), name='ui_options')
-    app.jinja_env.globals['ui_options'] = get_ui_options(profile)
-
-    # Initialize typed settings and register to app extensions (DI root)
+    # --- Jinja テンプレートグローバルの確実な登録（テスト/inline描画でも有効） ---
     try:
-        from .config.schema import AppSettings
-        app.extensions.setdefault('settings', AppSettings())
-    except Exception:
-        pass
-    except Exception:
-        pass
-
-    # Attach app-level UI context/globals early
-    try:
-        from .ui.context import attach_app_ui_context  # type: ignore
-        attach_app_ui_context(app)
+        from .constants.ui_options import get_ui_options  # type: ignore
+        # 関数をグローバル関数として公開
+        app.add_template_global(get_ui_options, name='get_ui_options')
+        # データも既定プロファイルで公開（settings未初期化でも参照可能）
+        profile = os.getenv('APP_UI_PROFILE', 'default')
+        app.add_template_global(get_ui_options(profile), name='ui_options')
     except Exception:
         pass
 
-    # --- 設定の読み込み ---
+    # --- 設定の読み込み/初期化 ---
     if test_config is None:
-        # APP_ENV に応じて設定クラスを選択（既定: development）
         env = (os.getenv('APP_ENV', 'development') or 'development').lower()
         env_map = {
             'development': 'config.DevConfig',
@@ -53,7 +37,6 @@ def create_app(test_config=None):
         }
         app.config.from_object(env_map.get(env, 'config.Config'))
     else:
-        # テスト時など、引数で渡された設定を読み込む
         app.config.from_mapping(test_config)
 
     # インスタンスフォルダがなければ作成
@@ -61,6 +44,21 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
+
+    # 型付き設定を app.extensions に登録（DIの根）
+    try:
+        from .config.schema import AppSettings
+        app.extensions.setdefault('settings', AppSettings())
+    except Exception:
+        pass
+
+    # app レベルで ui_options を context に注入（堅牢化）
+    try:
+        from .ui.context import attach_app_ui_context  # type: ignore
+        attach_app_ui_context(app)
+    except Exception:
+        pass
+
     # Logging level setup (env-based)
     try:
         import logging as _logging
@@ -80,17 +78,15 @@ def create_app(test_config=None):
     except Exception:
         pass
 
-
     # --- 拡張機能の初期化 ---
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'company.login' # ログインが必要なページのビュー
+    login_manager.login_view = 'company.login'
 
     # --- ユーザーローダーの定義 ---
     @login_manager.user_loader
     def load_user(user_id):
-        # Userモデルのインポートをここで行うことで循環参照を回避
         return db.session.get(User, int(user_id))
 
     # --- Jinja2フィルターの登録 ---
@@ -100,20 +96,6 @@ def create_app(test_config=None):
     # --- ブループリントの登録 ---
     from .company import company_bp
     app.register_blueprint(company_bp)
-
-    # Global context: inject ui_options for all templates (fallback)
-    try:
-        from .ui.context import build_ui_context  # type: ignore
-        @app.context_processor
-        def _inject_ui_options_app():  # type: ignore
-            settings = None
-            try:
-                settings = app.extensions.get('settings')  # type: ignore
-            except Exception:
-                pass
-            return build_ui_context(settings)
-    except Exception:
-        pass
 
     # --- Optional: new auth module (feature-flagged) ---
     try:
@@ -132,40 +114,19 @@ def create_app(test_config=None):
     except Exception:
         pass
 
-    # ---- Legacy aliases moved to compat.redirector ----
-    # --- HoujinBangou integration (dev stub; read-only API) ---
+    # --- 外部APIスタブ等（失敗しても起動は続ける） ---
     try:
         from app.integrations.houjinbangou.stub_client import StubHojinClient
         from app.services.corporate_number_service import CorporateNumberService
         from app.api.corporate_number import create_blueprint as create_corp_api
-
         hojin_client = StubHojinClient()
         corp_service = CorporateNumberService(hojin_client)
         app.register_blueprint(create_corp_api(corp_service))
     except Exception:
-        # 連携失敗は起動を阻害しない
         pass
 
     # --- CLIコマンドの登録 ---
     from . import commands
     commands.register_commands(app)
-
-    # Ensure Jinja globals are present regardless of context processor behavior
-    try:
-        from .constants.ui_options import get_ui_options  # type: ignore
-        app.jinja_env.globals['get_ui_options'] = get_ui_options
-        try:
-            profile = getattr(app.extensions.get('settings'), 'UI_PROFILE', 'default')  # type: ignore
-        except Exception:
-            profile = 'default'
-        app.jinja_env.globals.setdefault('ui_options', get_ui_options(profile))
-        # Also register as Flask template globals (robust for render_template_string)
-        try:
-            app.add_template_global(get_ui_options, name='get_ui_options')
-            app.add_template_global(get_ui_options(profile), name='ui_options')
-        except Exception:
-            pass
-    except Exception:
-        pass
 
     return app

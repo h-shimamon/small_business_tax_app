@@ -10,12 +10,6 @@ company_bp = Blueprint(
     url_prefix='/company'
 )
 
-# Inject UI context (ui_options) into templates via app_context_processor
-try:
-    from app.ui.context import attach_company_ui_context  # lazy import
-    attach_company_ui_context(company_bp)
-except Exception:
-    pass
 
 # このブループリントに関連するビューとモデルをインポートします。
 # これにより、アプリケーションファクトリ(create_app)がビューの詳細を知る必要がなくなり、

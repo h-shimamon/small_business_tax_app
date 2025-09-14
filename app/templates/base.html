@@ -76,23 +76,12 @@
         <script src="https://unpkg.com/alpinejs@3.14.1" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
-        <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>$1<script defer src="{{ url_for('static', filename='js/ui/segmented.js') }}"></script>
-$1<script defer src="{{ url_for('static', filename='js/ui/radios_toggle.js') }}"></script>
-$1<script defer src="{{ url_for('static', filename='js/ui/totalizer.js') }}"></script>
-$1<script defer src="{{ url_for('static', filename='js/ui/sticky_aside.js') }}"></script>
-$1<script defer src="{{ url_for('static', filename='js/date_picker_init.js') }}"></script>
-        <style>
-            /* Small spacing for the injected year select when year-first order is used */
-            .flatpickr-current-month .dp-year-select {
-                margin-right: 6px;
-                height: 28px;
-                font-size: 14px;
-                font-family: inherit;
-                color: inherit;
-                background: transparent;
-                border: none;
-            }
-        </style>
+        <script src="{{ url_for('static', filename='js/date_picker_enhancer.js') }}"></script>
+        <script defer src="{{ url_for('static', filename='js/ui/segmented.js') }}"></script>
+        <script defer src="{{ url_for('static', filename='js/ui/radios_toggle.js') }}"></script>
+        <script defer src="{{ url_for('static', filename='js/ui/totalizer.js') }}"></script>
+        <script defer src="{{ url_for('static', filename='js/ui/sticky_aside.js') }}"></script>
+        <script defer src="{{ url_for('static', filename='js/date_picker_init.js') }}"></script>
     {% endblock %}
 </body>
 </html>

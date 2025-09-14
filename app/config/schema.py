@@ -17,6 +17,7 @@ try:
 
         LOCALE: str = "ja_JP"
         UI_PROFILE: str = "default"
+        UI_OPTIONS_VERSION: str = "v1"
         # Feature flags (generic), e.g., {"enable_ui_options_di": true}
         FEATURE_FLAGS: Dict[str, bool] = Field(default_factory=dict)
         # Dedicated flag for UI options DI path (can be toggled if needed)
@@ -30,5 +31,6 @@ except Exception:
     class AppSettings:  # type: ignore
         LOCALE: str = os.getenv("APP_LOCALE", "ja_JP")
         UI_PROFILE: str = os.getenv("APP_UI_PROFILE", "default")
+        UI_OPTIONS_VERSION: str = os.getenv("APP_UI_OPTIONS_VERSION", "v1")
         FEATURE_FLAGS: Dict[str, bool] = field(default_factory=dict)
         ENABLE_UI_OPTIONS_DI: bool = os.getenv("APP_ENABLE_UI_OPTIONS_DI", "1").lower() in ("1", "true", "yes", "on")

@@ -1,13 +1,6 @@
 {% extends 'base.html' %}
 {% import 'company/_bo_grid_macros.html' as bo %}
 {% import 'ui/_form_macros.html' as ui %}
-{% if ui_options is not defined %}{% set ui_options = {
-  'staff_roles': [('nonexec','非常勤役員'),('worker','工員'),('clerk','事務員'),('engineer','技術者'),('sales','販売員'),('labor','労務者'),('cook','料理人'),('hostess','ホステス'),('other','その他')],
-  'pc_os': [('win','Windows'),('mac','Mac'),('linux','Linux'),('other','その他')],
-  'pc_usage': [('payroll','給与管理'),('inventory','在庫・販売管理'),('production','生産管理'),('accounting','財務管理')],
-  'ecommerce': [('sales','有・売上'),('purchase','有・仕入'),('expense','有・経費'),('none','無')],
-  'data_storage': [('cloud','クラウド'),('external','外部記録媒体'),('server','PCサーバ')]
-} %}{% endif %}
 {% from '_components/preview_aside.html' import preview_aside %}
 
 
@@ -117,7 +110,7 @@
             {{ bo.field(type='number', placeholder='例：2',  name='bo1.staff.count4') }}
             {{ bo.field(type='number', placeholder='例：1',  name='bo1.staff.count5') }}
             <div class="form-group bo-cell-center">
-              <div class="bo-input-frame js-total" role="text" aria-live="polite" style="text-align:center;">0</div>
+              <div class="bo-input-frame js-total" role="text" aria-live="polite">0</div>
             </div>
           {% endcall %}
 

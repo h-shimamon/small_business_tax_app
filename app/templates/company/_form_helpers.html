@@ -32,7 +32,7 @@
     {{ field.label(class="form-label") }}
     <div class="segmented-control segmented--std">
         {% for subfield in field %}
-            {{ subfield(style="display:none;") }}
+            {{ subfield() }}
             {{ subfield.label }}
         {% endfor %}
     </div>

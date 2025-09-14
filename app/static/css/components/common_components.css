@@ -53,3 +53,15 @@
     width: 18px; 
     height: 18px; 
 }
+
+
+/* flatpickr: year select (moved from inline style in base.html) */
+.flatpickr-current-month .dp-year-select {
+    margin-right: 6px;
+    height: 28px;
+    font-size: 14px;
+    font-family: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+}
