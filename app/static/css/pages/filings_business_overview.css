@@ -96,7 +96,7 @@
 .bo-os-other-field.is-visible { display: block; }
 /* Grid-level toggle for spacing between radio and helper input */
 .bo-os-other-grid { display: none; }
-.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: .5rem; }
+.bo-os-other-grid.is-on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 24px; margin-top: 1rem; }
 .bo-os-other-grid.is-on .bo-span-all { grid-column: 1 / -1; }
 /* When helper grid is hidden, restore spacing before the next grid */
 .bo-os-other-grid:not(.is-on) + .bo-grid { margin-top: 1.5rem; }
