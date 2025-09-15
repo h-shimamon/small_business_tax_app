@@ -44,18 +44,43 @@ class MoneyForwardParser(BaseParser):
     def get_chart_of_accounts(self):
         """
         マネーフォワード形式のファイルから勘定科目一覧を取得する。
+        1) 勘定科目CSV（ヘッダーに『勘定科目』）なら、その列を返す。
+        2) 見つからない場合は、仕訳CSVとみなし、借方/貸方の勘定科目列から一意な名称を抽出する（フォールバック）。
         """
         header_row = self._find_header_row(self.CHART_OF_ACCOUNTS_HEADER_KEYWORD)
-        if header_row is None:
-            # 勘定科目ファイルはヘッダーが必須と判断
-            raise Exception(f"勘定科目ファイルのヘッダー行（'{self.CHART_OF_ACCOUNTS_HEADER_KEYWORD}'を含む行）が見つかりませんでした。")
+        if header_row is not None:
+            df = self._read_data(header_row=header_row)
+            if self.CHART_OF_ACCOUNTS_HEADER_KEYWORD not in df.columns:
+                raise Exception(f"列 '{self.CHART_OF_ACCOUNTS_HEADER_KEYWORD}' が見つかりません。")
+            return df[self.CHART_OF_ACCOUNTS_HEADER_KEYWORD].dropna().astype(str).str.strip().unique().tolist()
 
-        df = self._read_data(header_row=header_row)
-        
-        if self.CHART_OF_ACCOUNTS_HEADER_KEYWORD not in df.columns:
-            raise Exception(f"列 '{self.CHART_OF_ACCOUNTS_HEADER_KEYWORD}' が見つかりません。")
-            
-        return df[self.CHART_OF_ACCOUNTS_HEADER_KEYWORD].dropna().astype(str).str.strip().unique().tolist()
+        # フォールバック: 仕訳CSVから勘定科目名を抽出
+        j_header_row = self._find_header_row(self.JOURNALS_HEADER_KEYWORD)
+        try:
+            if j_header_row is not None:
+                jdf = self._read_data(header_row=j_header_row, usecols=self.JOURNALS_COL_NAMES.values())
+                jdf.rename(columns={v: k for k, v in self.JOURNALS_COL_NAMES.items()}, inplace=True)
+            else:
+                jdf = self._read_data(header_row=None, usecols=self.JOURNALS_COL_INDICES.values())
+                jdf.columns = self.JOURNALS_COL_INDICES.keys()
+        except Exception as e:
+            raise Exception(f"勘定科目の抽出に失敗しました（仕訳CSVの解釈）: {e}")
+
+        names = []
+        for col in ['debit_account', 'credit_account']:
+            if col in jdf.columns:
+                s = jdf[col].astype(str).str.strip()
+                names.extend([x for x in s if x and x.lower() != 'nan'])
+        # 一意な順序保持
+        seen = set()
+        unique_names = []
+        for n in names:
+            if n not in seen:
+                seen.add(n)
+                unique_names.append(n)
+        if not unique_names:
+            raise Exception('勘定科目を抽出できませんでした。ファイル形式をご確認ください。')
+        return unique_names
 
     def get_journals(self):
         """

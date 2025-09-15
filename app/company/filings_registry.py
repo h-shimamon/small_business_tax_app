@@ -32,7 +32,7 @@ REGISTRY: Dict[str, FilingPage] = {
         'template': 'company/filings/business_overview_1.html',
         'preview_pdf': 'resources/pdf_forms/jigyogaikyo/2025/source.pdf',
     },
-    'business_overview_2': {'title': '事業概況説明書２'},
+    'business_overview_2': {'title': '事業概況説明書２', 'template': 'company/filings/business_overview_2.html', 'preview_pdf': 'resources/pdf_forms/jigyogaikyo/2025/source.pdf'},
     'business_overview_3': {'title': '事業概況説明書３'},
     'journal_entries_cit': {'title': '法人税等に関する仕訳の表示'},
     'financial_statements': {'title': '決算書'},

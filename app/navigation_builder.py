@@ -20,9 +20,8 @@ NAVIGATION_STRUCTURE_DATA = [
         'node_type': 'wizard',
         'children': [
             {'key': 'select_software', 'name': '会計ソフト選択', 'endpoint': 'company.select_software'},
-            {'key': 'chart_of_accounts', 'name': '勘定科目データ取込', 'endpoint': 'company.upload_data', 'params': {'datatype': 'chart_of_accounts'}},
-            {'key': 'data_mapping', 'name': '勘定科目マッピング', 'endpoint': 'company.data_mapping'},
             {'key': 'journals', 'name': '仕訳帳データ取込', 'endpoint': 'company.upload_data', 'params': {'datatype': 'journals'}},
+            {'key': 'data_mapping', 'name': '勘定科目マッピング', 'endpoint': 'company.data_mapping'},
             {'key': 'confirm_trial_balance', 'name': '残高試算表の確認', 'endpoint': 'company.confirm_trial_balance'}
         ]
     },

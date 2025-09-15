@@ -15,6 +15,22 @@ def _build_filings_context(page: str):
         return None
     has_preview = bool(get_preview_pdf(page))
     preview_src = url_for('company.filings_preview', page=page) if has_preview else None
+
+    # Try to fetch latest accounting data for B/S if available
+    bs_data = None
+    try:
+        from flask_login import current_user
+        from app.company.models import AccountingData
+        if getattr(current_user, 'is_authenticated', False) and getattr(current_user, 'company', None):
+            accounting_data = AccountingData.query.filter_by(
+                company_id=current_user.company.id
+            ).order_by(AccountingData.created_at.desc()).first()
+            if accounting_data and accounting_data.data:
+                bs_data = accounting_data.data.get('balance_sheet', {})
+    except Exception:
+        # Fail closed: do not break filings page if data is missing
+        bs_data = None
+
     return {
         'page': page,
         'page_title': title,
@@ -26,6 +42,7 @@ def _build_filings_context(page: str):
         'pdf_year': '2025',
         'has_preview': has_preview,
         'preview_src': preview_src,
+        'bs_data': bs_data,
     }
 
 

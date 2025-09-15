@@ -41,7 +41,7 @@ DATA_TYPE_CONFIG = {
     }
 }
 
-FILE_UPLOAD_STEPS = ['chart_of_accounts', 'journals']
+FILE_UPLOAD_STEPS = ['journals']
 
 
 # --- ルート関数の定義 ---
@@ -107,22 +107,90 @@ def upload_data(datatype):
     if 'select_software' not in completed_steps:
         return redirect(url_for('company.select_software'))
     
-    current_step_index = FILE_UPLOAD_STEPS.index(datatype)
+    current_step_index = FILE_UPLOAD_STEPS.index(datatype) if datatype in FILE_UPLOAD_STEPS else 0
     for i in range(current_step_index):
         if FILE_UPLOAD_STEPS[i] not in completed_steps:
             flash('前のステップを先に完了してください。', 'warning')
             return redirect(url_for('company.data_upload_wizard'))
 
     form = FileUploadForm()
-    if form.validate_on_submit():
+    if request.method == 'POST':
         file = form.upload_file.data
         if not file or not file.filename:
             flash('ファイルが選択されていません。', 'danger')
             return redirect(request.url)
 
+        # 拡張子とサイズの検証（CSV/TXT、<=20MB）
+        try:
+            import os
+            allowed_exts = {'.csv', '.txt'}
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext not in allowed_exts:
+                flash('CSVまたはTXTファイルのみアップロードできます。', 'danger')
+                return redirect(request.url)
+            max_bytes = 20 * 1024 * 1024
+            size = getattr(file, 'content_length', None)
+            if size is None:
+                try:
+                    pos = file.stream.tell()
+                    file.stream.seek(0, os.SEEK_END)
+                    size = file.stream.tell()
+                    file.stream.seek(0)
+                except Exception:
+                    size = None
+            if size is not None and size > max_bytes:
+                flash('ファイルサイズが大きすぎます。（上限20MB）', 'danger')
+                return redirect(request.url)
+        except Exception:
+            # 検証中の例外はブロックせず続行
+            pass
+
         software = session.get('selected_software')
         try:
             parser = ParserFactory.create_parser(software, file)
+            # Save raw uploaded journals file for later reuse (C-plan staging)
+            try:
+                import os, uuid
+                from flask import current_app as _app
+                upload_dir = os.path.join(_app.instance_path, 'uploads')
+                os.makedirs(upload_dir, exist_ok=True)
+                # TTL cleanup: remove files older than 7 days in uploads
+                try:
+                    import time
+                    _now = time.time()
+                    _ttl = 7 * 24 * 3600
+                    for _fn in os.listdir(upload_dir):
+                        _fp = os.path.join(upload_dir, _fn)
+                        try:
+                            if os.path.isfile(_fp) and (_now - os.path.getmtime(_fp)) > _ttl:
+                                os.remove(_fp)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+                _suffix = ''
+                try:
+                    import os as _os
+                    _orig = getattr(file, 'filename', '') or ''
+                    _suffix = _os.path.splitext(_orig)[1].lower()
+                except Exception:
+                    _suffix = ''
+                _name = f"journals_{uuid.uuid4().hex}{_suffix}"
+                _path = os.path.join(upload_dir, _name)
+                _raw = getattr(parser, 'file_content_bytes', None)
+                if _raw is None:
+                    try:
+                        file.stream.seek(0)
+                        _raw = file.read()
+                        file.stream.seek(0)
+                    except Exception:
+                        _raw = b''
+                with open(_path, 'wb') as _f:
+                    _f.write(_raw or b'')
+                session['uploaded_journals_path'] = _path
+                session['uploaded_journals_name'] = getattr(file, 'filename', '')
+            except Exception:
+                pass
             parser_method = getattr(parser, config['parser_method'])
             parsed_data = parser_method()
 
@@ -250,15 +318,64 @@ def data_mapping():
         try:
             mapping_service.save_mappings(request.form, software_name)
             flash('マッピング情報を保存しました。', 'success')
-            mark_step_as_completed('chart_of_accounts')
-            # マッピング更新により既存の財務データは無効化（再アップロード前提）
+            # C案: 既存の会計データは無効化し、その場で再計算して確認ページへ
             on_mapping_saved(current_user.id)
-            # 次フローを journals からやり直すため、後続ステップ完了フラグを外す
-            unmark_step_as_completed('journals')
+            try:
+                # 再計算: 一時保存済みの仕訳ファイルがあれば再パース→FS生成
+                j_path = session.get('uploaded_journals_path')
+                if j_path:
+                    from werkzeug.datastructures import FileStorage
+                    import io, os
+                    # FileStorage互換のラッパでパーサを再利用
+                    with open(j_path, 'rb') as jf:
+                        content = jf.read()
+                    fs = FileStorage(stream=io.BytesIO(content), filename=session.get('uploaded_journals_name') or 'journals.csv')
+                    parser = ParserFactory.create_parser(software_name, fs)
+                    parsed = parser.get_journals()
+                    # 期間取得
+                    from app.primitives.dates import get_company_period
+                    company = current_user.company
+                    period = get_company_period(company)
+                    start_date, end_date = period.start, period.end
+                    # マッピング適用→FS生成
+                    df_journals = mapping_service.apply_mappings_to_journals(parsed)
+                    from .services import FinancialStatementService
+                    fs_service = FinancialStatementService(df_journals, start_date, end_date)
+                    bs_data = fs_service.create_balance_sheet()
+                    pl_data = fs_service.create_profit_loss_statement()
+                    # 永続化
+                    from app.company.models import AccountingData
+                    from app import db as _db
+                    AccountingData.query.filter_by(company_id=company.id).delete()
+                    ad = AccountingData(company_id=company.id, period_start=start_date, period_end=end_date, data={'balance_sheet': bs_data, 'profit_loss_statement': pl_data})
+                    _db.session.add(ad)
+                    _db.session.commit()
+                    # journalsステップは完了扱いにしてよい
+                    mark_step_as_completed('journals')
+                    # 一時ファイルは再計算成功時に削除してセッションもクリア
+                    try:
+                        if j_path and os.path.isfile(j_path):
+                            os.remove(j_path)
+                        session.pop('uploaded_journals_path', None)
+                        session.pop('uploaded_journals_name', None)
+                    except Exception:
+                        pass
+            except Exception as _e:
+                # 再計算に失敗してもフローは維持。次画面でメッセージを出すためflashのみ。
+                flash(f'再計算に失敗しました: {_e}', 'warning')
         except Exception as e:
             flash(str(e), 'danger')
         finally:
             session.pop('unmatched_accounts', None)
+        # 再計算が成功し、最新の会計データが存在する場合は確認ページへ
+        try:
+            from app.company.models import AccountingData as __AD
+            __ad = (__AD.query.filter_by(company_id=current_user.company.id)
+                              .order_by(__AD.created_at.desc()).first())
+            if __ad is not None:
+                return redirect(url_for('company.confirm_trial_balance'))
+        except Exception:
+            pass
         return redirect(url_for('company.data_upload_wizard'))
 
     unmatched_accounts = session.get('unmatched_accounts', [])
@@ -307,7 +424,7 @@ def reset_account_mappings_execution():
     except Exception as e:
         db.session.rollback()
         flash(f'リセット処理中にエラーが発生しました: {e}', 'danger')
-    return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
+    return redirect(url_for('company.data_upload_wizard'))
 
 @import_bp.route('/manage_mappings', methods=['GET'])
 @login_required
@@ -336,8 +453,8 @@ def delete_mapping(mapping_id):
         # マッピング削除後の整合性維持: 既存の会計データがあれば破棄し、勘定科目データ取込から再スタート
         if on_mapping_deleted(current_user.id):
             session['wizard_completed_steps'] = ['select_software']
-            flash('既存の会計データを破棄しました。勘定科目データ取込から再スタートしてください。', 'info')
-            return redirect(url_for('company.upload_data', datatype='chart_of_accounts'))
+            flash('既存の会計データを破棄しました。必要に応じて仕訳帳データを再取込してください。', 'info')
+            return redirect(url_for('company.manage_mappings'))
     except Exception as e:
         db.session.rollback()
         flash(f'削除中にエラーが発生しました: {e}', 'danger')
