@@ -62,7 +62,134 @@
         </div>
       </section>
     </div>
-    {% endif %}
+    
+    {# ダイジェスト版（連動中）: 残高試算表の一部科目のみを表示 #}
+    {%- macro fmt_blank(val) -%}
+      {%- set v = (val | default(0)) -%}
+      {%- if v is string -%}
+        {%- set _ = namespace()%}
+        {# 文字列なら数値に変換を試みる（非数は0扱い） #}
+        {%- set v = (v | replace(',', '') | float | default(0)) -%}
+      {%- endif -%}
+      {%- if (v | default(0)) == 0 -%}{%- else -%}{{ "{:,.0f}".format(v | default(0)) }}{%- endif -%}
+    {%- endmacro -%}
+    {%- macro sum_from_bs(major, names) -%}
+      {%- set ns = namespace(total=0) -%}
+      {%- set major_obj = bs_data.get(major, {}) -%}
+      {%- for middle, obj in major_obj.items() if middle != 'total' -%}
+        {%- for item in obj.get('items', []) -%}
+          {%- if item.name in names -%}
+            {%- set ns.total = ns.total + (item.amount or 0) -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ ns.total }}
+    {%- endmacro -%}
+    {%- set assets_total = bs_data.get('資産', {}).get('total', 0) -%}
+    {%- set liabilities_total = bs_data.get('負債', {}).get('total', 0) -%}
+    {%- set equity_total = bs_data.get('純資産', {}).get('total', 0) -%}
+    {%- set other_borrowings_base = (sum_from_bs('負債', ['短期借入金','長期借入金']) | float) -%}
+    {%- set personal_loans_q = request.args.get('bo2.bs.personal_loans') -%}
+    {%- set personal_loans_val = (personal_loans_q.replace(',', '') | float) if personal_loans_q else 0 -%}
+    {%- set other_borrowings_initial = other_borrowings_base - personal_loans_val -%}
+
+    <div class="card" style="margin-top: 16px;">
+      <section class="statement-section">
+        <div class="bs-container">
+          <!-- 左カラム: 資産の部（ダイジェスト） -->
+          <div class="bs-column">
+            <div class="table-responsive">
+              <table class="table table-bordered statement-table">
+                <tbody>
+                  <tr class="total-row major-total">
+                    <td>資産の部合計</td>
+                    <td class="amount">{{ fmt_blank(assets_total) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">現金預金</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['現金及び預金'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">受取手形</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['受取手形'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">売掛金</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['売掛金'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">棚卸資産（未成工事支出金）</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['商品','製品','半製品','原材料','仕掛品','貯蔵品','未成工事支出金'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">貸付金</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['貸付金','短期貸付金','長期貸付金'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">建物</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['建物'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">機械装置</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['機械装置'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">車両・船舶</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['車両運搬具','船舶'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">土地</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['土地'])) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 右カラム: 負債・純資産（ダイジェスト） -->
+          <div class="bs-column">
+            <div class="table-responsive">
+              <table class="table table-bordered statement-table">
+                <tbody>
+                  <tr class="total-row major-total">
+                    <td>負債の部合計</td>
+                    <td class="amount">{{ fmt_blank(liabilities_total) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">支払手形</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('負債', ['支払手形'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">買掛金</td>
+                    <td class="amount">{{ fmt_blank(sum_from_bs('負債', ['買掛金'])) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">個人借入金</td>
+                    <td class="amount"></td>
+                  </tr>
+                  <tr>
+                    <td class="account-name">その他の借入金</td>
+                    <td class="amount"><span id=\"digest-other-borrowings\" data-base=\"{{ other_borrowings_base }}\" style=\"display:inline-block; width:100%; text-align:right;\">{{ fmt_blank(other_borrowings_initial) }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="table-responsive total-table-wrapper" style="margin-top: 1.5rem;">
+              <table class="table table-bordered statement-table">
+                <tbody>
+                  <tr class="total-row major-total">
+                    <td>純資産の部合計</td>
+                    <td class="amount">{{ fmt_blank(equity_total) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+{% endif %}
 <div class="card">
       <form method="get" novalidate>
         <fieldset>
@@ -134,4 +261,21 @@
 
 {% block scripts %}
   {{ super() if super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var span = document.getElementById('digest-other-borrowings');
+      if (!span) return;
+      var base = parseFloat(span.dataset.base || '0') || 0;
+      var input = document.querySelector('input[name="bo2.bs.personal_loans"]');
+      function format(v){ v = Math.round(v); return v === 0 ? '' : v.toLocaleString('ja-JP'); }
+      function update(){
+        var raw = input ? (input.value || '') : '';
+        raw = raw.replace(/,/g,'').replace(/，/g,'').replace(/ /g,'').trim();
+        var personal = parseFloat(raw) || 0;
+        span.textContent = format(base - personal);
+      }
+      update();
+      if (input) input.addEventListener('input', update);
+    });
+  </script>
 {% endblock %}

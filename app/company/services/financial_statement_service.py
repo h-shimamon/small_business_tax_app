@@ -145,61 +145,50 @@ class FinancialStatementService:
     def _build_statement_structure(self, balances, master_df, is_bs=False):
         """
         勘定科目の残高とマスターデータから、ソートとグルーピング済みの財務諸表データ構造を構築する。
-        - B/S(is_bs=True) の場合は明細行を「決算書名」で集約・表示する。
-        - P/L の場合は従来どおり勘定科目名で表示する。
+        - B/S(is_bs=True) と P/L(is_bs=False) の両方で、明細行は「決算書名」で集約・表示する。
+        - 並び順は同一の決算書名グループに属する科目の No. 最小値を用いる。
         """
         from collections import defaultdict as _dd
         import math as _math
         structure = _dd(lambda: _dd(lambda: {'items': [], 'total': 0}))
         sign_inversion_majors = {'負債', '純資産'} if is_bs else set()
 
-        if is_bs:
-            # B/S: 勘定科目名ではなく「決算書名」に集約
-            # (major, middle, statement_name) -> raw_amount（符号未反転）
-            grouped = {}
-            for acc, amount in balances.items():
-                if acc in master_df.index:
-                    major = master_df.loc[acc, 'major_category']
-                    middle = master_df.loc[acc, 'middle_category']
-                    stmt_name = master_df.loc[acc, 'statement_name']
-                    if pd.isna(stmt_name) or not str(stmt_name).strip():
-                        stmt_name = acc  # フォールバック
-                    key = (major, middle, str(stmt_name))
-                    grouped[key] = grouped.get(key, 0) + amount
+        # 共通: 「決算書名」に集約
+        grouped = {}
+        for acc, amount in balances.items():
+            if acc in master_df.index:
+                major = master_df.loc[acc, 'major_category']
+                middle = master_df.loc[acc, 'middle_category']
+                stmt_name = master_df.loc[acc, 'statement_name'] if 'statement_name' in master_df.columns else None
+                if pd.isna(stmt_name) or not str(stmt_name).strip():
+                    stmt_name = acc  # フォールバック
+                key = (major, middle, str(stmt_name))
+                grouped[key] = grouped.get(key, 0) + amount
 
-            # 決算書名ごとの表示順（No.の最小値）を計算
+        # 決算書名ごとの表示順（No.の最小値）
+        stmt_order = {}
+        try:
+            for acc in master_df.index:
+                major = master_df.at[acc, 'major_category']
+                middle = master_df.at[acc, 'middle_category']
+                sname = master_df.at[acc, 'statement_name'] if 'statement_name' in master_df.columns else None
+                if pd.isna(sname) or not str(sname).strip():
+                    sname = acc
+                key = (major, middle, str(sname))
+                num = master_df.at[acc, 'number']
+                try:
+                    n = int(num)
+                except Exception:
+                    continue
+                if key not in stmt_order or n < stmt_order[key]:
+                    stmt_order[key] = n
+        except Exception:
             stmt_order = {}
-            try:
-                for acc in master_df.index:
-                    major = master_df.at[acc, 'major_category']
-                    middle = master_df.at[acc, 'middle_category']
-                    sname = master_df.at[acc, 'statement_name']
-                    if pd.isna(sname) or not str(sname).strip():
-                        sname = acc
-                    key = (major, middle, str(sname))
-                    num = master_df.at[acc, 'number']
-                    try:
-                        n = int(num)
-                    except Exception:
-                        continue
-                    if key not in stmt_order or n < stmt_order[key]:
-                        stmt_order[key] = n
-            except Exception:
-                stmt_order = {}
 
-            # 構造へ流し込み（この段階で符号反転を適用）
-            for (major, middle, sname), amt in grouped.items():
-                display_amount = -amt if major in sign_inversion_majors else amt
-                structure[major][middle]['items'].append({'name': sname, 'amount': display_amount})
-
-        else:
-            # P/L: 従来どおり勘定科目名で表示
-            for acc, amount in balances.items():
-                if acc in master_df.index:
-                    major = master_df.loc[acc, 'major_category']
-                    middle = master_df.loc[acc, 'middle_category']
-                    display_amount = -amount if major in sign_inversion_majors else amount
-                    structure[major][middle]['items'].append({'name': acc, 'amount': display_amount})
+        # 構造へ流し込み（B/Sは負債・純資産のみ符号反転）
+        for (major, middle, sname), amt in grouped.items():
+            display_amount = -amt if (is_bs and (major in sign_inversion_majors)) else amt
+            structure[major][middle]['items'].append({'name': sname, 'amount': display_amount})
 
         # ここからは共通: メジャー/ミドル/明細の並びと小計・合計の算出
         final_structure = {}
@@ -218,18 +207,13 @@ class FinancialStatementService:
 
             sorted_major_content = {}
             for middle, data in sorted_middles:
-                # 明細の並び順
-                if is_bs:
-                    # 決算書名ベース: 事前計算した順序を使用。無ければ大きな値で末尾へ。
-                    def _order_fn(x):
-                        try:
-                            return stmt_order.get((major, middle, x['name']), _math.inf)
-                        except Exception:
-                            return _math.inf
-                    data['items'].sort(key=_order_fn)
-                else:
-                    # 勘定科目名ベース: その勘定科目のNo.
-                    data['items'].sort(key=lambda x: master_df.loc[x['name'], 'number'] if x['name'] in master_df.index else _math.inf)
+                # 明細の並び順（決算書名グループのNo.最小でソート）
+                def _order_fn(x):
+                    try:
+                        return stmt_order.get((major, middle, x['name']), _math.inf)
+                    except Exception:
+                        return _math.inf
+                data['items'].sort(key=_order_fn)
 
                 middle_total = sum(item['amount'] for item in data['items'])
                 data['total'] = middle_total
