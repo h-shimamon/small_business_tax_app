@@ -21,7 +21,7 @@
         <p class="content-subtitle">登録された{{ page_title }}の情報を確認・編集します。</p>
     </div>
     <div class="header-actions">
-        {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url) }}
+        {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url, empty_state_config, cta_config) }}
         {{ render_pdf_button_if_available(page, pdf_year) }}
     </div>
 </div>
@@ -54,7 +54,7 @@
 <div class="card-grid">
     {% if items %}        {% include 'company/_cards/' + page + '_card.html' %}
     {% else %}
-        {{ empty_state(page_title, page) }}
+        {{ empty_state(page_title, page, empty_state_config) }}
     {% endif %}
 </div>
 {% endblock %}

@@ -1,6 +1,9 @@
 
-from app.company.soa_config import STATEMENT_PAGES_CONFIG
-from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
+from app.services.soa_registry import (
+    PL_PAGE_ACCOUNTS,
+    STATEMENT_PAGES_CONFIG,
+    SUMMARY_PAGE_MAP,
+)
 
 
 def test_all_config_pages_exist_in_summary_map():

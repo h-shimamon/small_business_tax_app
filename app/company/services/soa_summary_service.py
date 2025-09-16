@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Dict, List, Any, TypedDict
 
 from app.company.services.master_data_service import MasterDataService
-from app.company.soa_mappings import SUMMARY_PAGE_MAP, PL_PAGE_ACCOUNTS
+from app.services.soa_registry import PL_PAGE_ACCOUNTS, SUMMARY_PAGE_MAP
 from app import db
-from app.company.soa_config import STATEMENT_PAGES_CONFIG  # ページ→モデル解決用
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG  # ページ→モデル解決用
 
 
 class SoASummaryService:
@@ -14,11 +14,11 @@ class SoASummaryService:
     differences, and skip decisions.
 
     Notes
-    - Mappings are centralized in app.company.soa_mappings and imported here and by the controller.
+    - Mappings are centralized in app.services.soa_registry and imported here and by the controller.
     - Public methods return primitive dicts/ints to keep controller context keys unchanged.
     """
 
-    # mappings are imported from app.company.soa_mappings
+    # mappings are imported from app.services.soa_registry
 
     @staticmethod
     def _find_and_sum_by_names(data_dict: Dict[str, Any], names: List[str]) -> int:

@@ -1,9 +1,12 @@
 # app/company/services/statement_of_accounts_service.py
-from app.company.soa_config import STATEMENT_PAGES_CONFIG
+from typing import Any, Iterable, List, Optional, Tuple
+
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 from app import db
+from .protocols import StatementOfAccountsServiceProtocol
 
 
-class StatementOfAccountsService:
+class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
     """
     勘定科目内訳明細書に関連するデータ操作を処理するサービスクラス。
     """
@@ -44,37 +47,65 @@ class StatementOfAccountsService:
         query = self._build_query(model, config)
         return query.all()
 
-    def get_item_by_id(self, data_type, item_id):
+    def get_item_by_id(self, data_type, item_id) -> Optional[Any]:
         """
-        指定されたIDのアイテムを取得する。
+        指定されたIDのアイテムを取得する（会社スコープでフィルタ）。
         """
         model, _ = self._get_model(data_type)
         if not model:
             return None
-        return model.query.get(item_id)
+        return db.session.query(model).filter_by(id=item_id, company_id=self.company_id).first()
 
-    def add_or_update_item(self, form, data_type, item_id=None):
-        """
-        アイテムを追加または更新する。
-        """
+    def create_item(self, data_type, form) -> Tuple[bool, Optional[Any], Optional[str]]:
         model, _ = self._get_model(data_type)
         if not model:
-            return False, "無効なデータタイプです。"
+            return False, None, "無効なデータタイプです。"
 
-        item = self.get_item_by_id(data_type, item_id) if item_id else model(company_id=self.company_id)
-        if not item:
-            return False, "指定されたアイテムが見つかりません。"
-
+        item = model(company_id=self.company_id)
         form.populate_obj(item)
         try:
             db.session.add(item)
             db.session.commit()
-            return True, "保存しました。"
-        except Exception as e:
+            return True, item, None
+        except Exception as exc:
             db.session.rollback()
-            return False, f"保存中にエラーが発生しました: {e}"
+            return False, None, f"保存中にエラーが発生しました: {exc}"
 
-    def delete_item(self, data_type, item_id):
+
+
+    def update_item(self, data_type, item, form) -> Tuple[bool, Optional[Any], Optional[str]]:
+        model, _ = self._get_model(data_type)
+        if not model:
+            return False, None, "無効なデータタイプです。"
+        if not item:
+            return False, None, "指定されたアイテムが見つかりません。"
+
+        form.populate_obj(item)
+        try:
+            db.session.commit()
+            return True, item, None
+        except Exception as exc:
+            db.session.rollback()
+            return False, None, f"更新中にエラーが発生しました: {exc}"
+
+    def list_items(self, data_type) -> List[Any]:
+        items = self.get_data_by_type(data_type)
+        return items or []
+
+    def calculate_total(self, data_type, items=None) -> int:
+        config = STATEMENT_PAGES_CONFIG.get(data_type, {})
+        total_field = config.get('total_field', 'balance')
+        target_items = items if items is not None else self.list_items(data_type)
+        total = 0
+        for item in target_items:
+            try:
+                value = getattr(item, total_field, 0) or 0
+            except Exception:
+                value = 0
+            total += value
+        return total
+
+    def delete_item(self, data_type, item_id) -> Tuple[bool, Optional[str]]:
         """
 
         指定されたIDのアイテムを削除する。
@@ -85,7 +116,7 @@ class StatementOfAccountsService:
         try:
             db.session.delete(item)
             db.session.commit()
-            return True, "削除しました。"
+            return True, None
         except Exception as e:
             db.session.rollback()
             return False, f"削除中にエラーが発生しました: {e}"

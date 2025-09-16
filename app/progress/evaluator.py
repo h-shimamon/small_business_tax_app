@@ -20,7 +20,7 @@ class SoAProgressEvaluator:
         """
         # Lazy imports to avoid cycles and keep import cost low for tests
         from app.company.services.soa_summary_service import SoASummaryService
-        from app.company.soa_config import STATEMENT_PAGES_CONFIG
+        from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 
         cfg = STATEMENT_PAGES_CONFIG.get(page) or {}
         model = cfg.get('model')

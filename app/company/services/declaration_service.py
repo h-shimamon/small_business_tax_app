@@ -1,7 +1,7 @@
 # app/company/services/declaration_service.py
 from app.company.forms import DeclarationForm
 from app.company.models import Company
-from app.company.soa_config import STATEMENT_PAGES_CONFIG
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 from app.company.services.statement_of_accounts_service import StatementOfAccountsService
 from app import db
 

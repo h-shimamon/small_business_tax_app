@@ -5,7 +5,6 @@ from app.company import company_bp
 from app.company.models import (
     AccountingData
 )
-from app import db
 from app.navigation import (
     get_navigation_state,
     mark_step_as_completed,
@@ -14,19 +13,19 @@ from app.navigation import (
 )
 from .auth import company_required
 from app.company.services.soa_summary_service import SoASummaryService
+from app.company.services.statement_of_accounts_service import StatementOfAccountsService
+from app.company.services.protocols import StatementOfAccountsServiceProtocol
+from app.services.app_registry import get_default_pdf_year, get_post_create_cta, get_empty_state
 from app.progress.evaluator import SoAProgressEvaluator
-from app.company.soa_mappings import SUMMARY_PAGE_MAP
-from app.company.soa_config import STATEMENT_PAGES_CONFIG
+from app.services.soa_registry import SUMMARY_PAGE_MAP, STATEMENT_PAGES_CONFIG
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
 from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
 from app.pdf.uchiwakesyo_uketoritegata import generate_uchiwakesyo_uketoritegata
 from app.pdf.uchiwakesyo_karibaraikin_kashitukekin import generate_uchiwakesyo_karibaraikin_kashitukekin
 from app.models_utils.date_readers import ensure_date
 
-# mappings are centralized in app.company.soa_mappings
+# mappings are centralized in app.services.soa_registry
 
-
-"""STATEMENT_PAGES_CONFIG moved to app.company.soa_config and imported above."""
 
 @company_bp.route('/statement_of_accounts')
 @company_required
@@ -73,35 +72,32 @@ def statement_of_accounts(company):
                     return redirect(url_for('company.statement_of_accounts', page=(nxt.params or {}).get('page')))
             # wrap-around to 申告書データ は保留のため遷移しない
 
-    # Build base query and allow optional page-specific filter from config
-    query = db.session.query(config['model']).filter_by(company_id=company.id)
-    try:
-        qf = config.get('query_filter')
-    except Exception:
-        qf = None
-    if callable(qf):
-        try:
-            query = qf(query)
-        except Exception:
-            pass
-    items = query.all()
-    total = sum(getattr(item, config['total_field'], 0) for item in items)
+    soa_service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company.id)
+    items = soa_service.list_items(page)
+    total = soa_service.calculate_total(page, items)
     
     # Provide pdf_year for template-level PDF button rendering (fallback to accounting period or default)
     try:
         _pdf_year = (accounting_data.period_end.year if accounting_data and accounting_data.period_end else None)
     except Exception:
         _pdf_year = None
+    empty_state_cfg = get_empty_state(page)
     context = {
         'page': page,
         'page_title': config['title'],
         'items': items,
         'total': total,
         'navigation_state': get_navigation_state(page, skipped_steps=skipped_steps),
+        'cta_config': get_post_create_cta(page),
         'deposit_summary': None,
         'soa_next_url': None,
         'soa_next_name': None,
-        'pdf_year': _pdf_year or '2025',
+        'pdf_year': _pdf_year or get_default_pdf_year(),
+        'empty_state_config': {
+            'headline': empty_state_cfg['headline'].format(title=config['title']),
+            'description': empty_state_cfg.get('description'),
+            'action_label': (empty_state_cfg.get('action_label') or '').format(title=config['title']),
+        },
     }
 
     # Safe defaults to avoid template errors if summary computation fails
@@ -131,15 +127,22 @@ def statement_of_accounts(company):
         created_flag = request.args.get('created')
         created_id = request.args.get('created_id')
         if created_flag:
-            # Default CTAs: continue adding and back to list
-            ctas = [
-                {'label': f'続けて{config["title"]}を登録', 'href': url_for('company.add_item', page_key=page), 'class': 'button-primary'},
-                {'label': '一覧へ戻る', 'href': url_for('company.statement_of_accounts', page=page), 'class': 'button-secondary'},
-            ]
+            cta_cfg = get_post_create_cta(page)
             context['post_create'] = {
                 'title': f'{config["title"]}を登録しました',
                 'desc': None,
-                'ctas': ctas,
+                'ctas': [
+                    {
+                        'label': cta_cfg.add_label.format(title=config['title']),
+                        'href': url_for('company.add_item', page_key=page),
+                        'class': cta_cfg.add_class,
+                    },
+                    {
+                        'label': cta_cfg.back_label,
+                        'href': url_for('company.statement_of_accounts', page=page),
+                        'class': cta_cfg.back_class,
+                    },
+                ],
                 'created_id': created_id,
             }
     except Exception:
@@ -402,6 +405,7 @@ def add_item(company, page_key):
     config = STATEMENT_PAGES_CONFIG.get(page_key)
     if not config:
         abort(404)
+    soa_service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company.id)
     form = config['form'](request.form)
     # ページに応じて初期値を与える（雑収入/雑損失の科目固定）
     try:
@@ -413,21 +417,19 @@ def add_item(company, page_key):
     except Exception:
         pass
     if form.validate_on_submit():
-        new_item = config['model'](company_id=company.id)
-        form.populate_obj(new_item)
-        # Optional: POST-side completion marking
-        try:
-            if current_app.config.get('SOA_MARK_ON_POST', True):
-                if SoAProgressEvaluator.is_completed(company.id, page_key):
-                    mark_step_as_completed(page_key)
-                else:
-                    unmark_step_as_completed(page_key)
-        except Exception as e:
-            current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
-        db.session.add(new_item)
-        db.session.commit()
-        flash(f"{config['title']}情報を登録しました。", 'success')
-        return redirect(url_for('company.statement_of_accounts', page=page_key, created=1, created_id=new_item.id))
+        success, created_item, error = soa_service.create_item(page_key, form)
+        if success:
+            try:
+                if current_app.config.get('SOA_MARK_ON_POST', True):
+                    if SoAProgressEvaluator.is_completed(company.id, page_key):
+                        mark_step_as_completed(page_key)
+                    else:
+                        unmark_step_as_completed(page_key)
+            except Exception as e:
+                current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
+            flash(f"{config['title']}情報を登録しました。", 'success')
+            return redirect(url_for('company.statement_of_accounts', page=page_key, created=1, created_id=getattr(created_item, 'id', None)))
+        flash(error or '登録に失敗しました。', 'error')
     # Compute skipped steps for sidebar consistency (same logic as main SoA view)
     # Pre-fetch latest AccountingData once then compute skipped steps via helper
     accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
@@ -448,22 +450,25 @@ def edit_item(company, page_key, item_id):
     config = STATEMENT_PAGES_CONFIG.get(page_key)
     if not config:
         abort(404)
-    item = db.session.query(config['model']).filter_by(id=item_id, company_id=company.id).first_or_404()
+    soa_service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company.id)
+    item = soa_service.get_item_by_id(page_key, item_id)
+    if item is None:
+        abort(404)
     form = config['form'](request.form, obj=item)
     if form.validate_on_submit():
-        form.populate_obj(item)
-        # Optional: POST-side completion marking
-        try:
-            if current_app.config.get('SOA_MARK_ON_POST', True):
-                if SoAProgressEvaluator.is_completed(company.id, page_key):
-                    mark_step_as_completed(page_key)
-                else:
-                    unmark_step_as_completed(page_key)
-        except Exception as e:
-            current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
-        db.session.commit()
-        flash(f"{config['title']}情報を更新しました。", 'success')
-        return redirect(url_for('company.statement_of_accounts', page=page_key))
+        success, updated_item, error = soa_service.update_item(page_key, item, form)
+        if success:
+            try:
+                if current_app.config.get('SOA_MARK_ON_POST', True):
+                    if SoAProgressEvaluator.is_completed(company.id, page_key):
+                        mark_step_as_completed(page_key)
+                    else:
+                        unmark_step_as_completed(page_key)
+            except Exception as e:
+                current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
+            flash(f"{config['title']}情報を更新しました。", 'success')
+            return redirect(url_for('company.statement_of_accounts', page=page_key))
+        flash(error or '更新に失敗しました。', 'error')
     if request.method == 'GET':
         form = config['form'](obj=item)
         # Ensure date fields are date objects for templates
@@ -494,19 +499,24 @@ def delete_item(company, page_key, item_id):
     config = STATEMENT_PAGES_CONFIG.get(page_key)
     if not config:
         abort(404)
-    item = db.session.query(config['model']).filter_by(id=item_id, company_id=company.id).first_or_404()
-    db.session.delete(item)
-    db.session.commit()
-    flash(f"{config['title']}情報を削除しました。", 'success')
-    # Optional: POST-side completion marking after delete (move before redirect)
-    try:
-        if current_app.config.get('SOA_MARK_ON_POST', True):
-            if SoAProgressEvaluator.is_completed(company.id, page_key):
-                mark_step_as_completed(page_key)
-            else:
-                unmark_step_as_completed(page_key)
-    except Exception as e:
-        current_app.logger.warning('SoA mark (DELETE) failed for page %s: %s', page_key, e)
+    soa_service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company.id)
+    item = soa_service.get_item_by_id(page_key, item_id)
+    if item is None:
+        abort(404)
+    success, message = soa_service.delete_item(page_key, item_id)
+    if success:
+        flash(message or f"{config['title']}情報を削除しました。", 'success')
+        # Optional: POST-side completion marking after delete (move before redirect)
+        try:
+            if current_app.config.get('SOA_MARK_ON_POST', True):
+                if SoAProgressEvaluator.is_completed(company.id, page_key):
+                    mark_step_as_completed(page_key)
+                else:
+                    unmark_step_as_completed(page_key)
+        except Exception as e:
+            current_app.logger.warning('SoA mark (DELETE) failed for page %s: %s', page_key, e)
+        return redirect(url_for('company.statement_of_accounts', page=page_key))
+    flash(message or '削除に失敗しました。', 'error')
     return redirect(url_for('company.statement_of_accounts', page=page_key))
 
 

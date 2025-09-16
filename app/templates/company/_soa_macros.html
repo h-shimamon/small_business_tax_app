@@ -42,21 +42,24 @@
   </ul>
 {%- endmacro %}
 
-{% macro header_actions(page, difference, next_url) -%}
+{% macro header_actions(page, difference, next_url, empty_state, cta_config) -%}
   {% if difference is not none and (difference | default(0)) == 0 and next_url %}
     <a href="{{ next_url }}" class="button-primary">次の内訳へ</a>
   {% else %}
-    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
+    <a href="{{ url_for('company.add_item', page_key=page) }}" class="{{ cta_config.header_class }}">{{ cta_config.header_label }}</a>
   {% endif %}
 {%- endmacro %}
 
-{% macro empty_state(page_title, page) -%}
+{% macro empty_state(page_title, page, empty_state) -%}
   <div class="empty-state-card">
-    <h2>まだ{{ page_title }}が登録されていません</h2>
-    <p>右上の「＋ 新規登録」ボタンから最初の情報を登録してください。</p>
-    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
+    <h2>{{ empty_state.headline or ('まだ' ~ page_title ~ 'が登録されていません') }}</h2>
+    {% if empty_state.description %}
+      <p>{{ empty_state.description }}</p>
+    {% endif %}
+    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">{{ empty_state.action_label or ('最初の' ~ page_title ~ 'を登録する') }}</a>
   </div>
 {%- endmacro %}
+
 
 {# Generic summary card (three rows) with difference highlighting #}
 {% macro summary_generic(label, bs_total, breakdown_total, difference) -%}
