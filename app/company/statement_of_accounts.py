@@ -437,7 +437,8 @@ def add_item(company, page_key):
         form_template,
         form=form,
         form_title=f"{config['title']}の新規登録",
-        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps)
+        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps),
+        form_fields=config.get('form_fields', []),
     )
 
 @company_bp.route('/statement/<string:page_key>/edit/<int:item_id>', methods=['GET', 'POST'])
@@ -482,7 +483,8 @@ def edit_item(company, page_key, item_id):
         form_template,
         form=form,
         form_title=f"{config['title']}の編集",
-        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps)
+        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps),
+        form_fields=config.get('form_fields', []),
     )
 
 @company_bp.route('/statement/<string:page_key>/delete/<int:item_id>', methods=['POST'])

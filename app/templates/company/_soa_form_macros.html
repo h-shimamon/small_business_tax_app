@@ -1,0 +1,38 @@
+{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
+
+{% macro render_soa_form(form, fields) -%}
+  {% if fields is defined and fields %}
+    {% set fields_list = fields %}
+  {% else %}
+    {% set fields_list = [] %}
+  {% endif %}
+  <div class="form-grid-2col">
+    {% for meta in fields_list %}
+      {% if meta is mapping %}
+        {% set field_name = meta['name'] %}
+        {% set placeholder = meta.get('placeholder') %}
+        {% set input_type = meta.get('type') %}
+        {% set class_name = meta.get('class') %}
+        {% set rows = meta.get('rows') %}
+        {% set autofocus = meta.get('autofocus', False) %}
+        {% set render_type = meta.get('render') %}
+      {% else %}
+        {% set field_name = meta %}
+        {% set placeholder = None %}
+        {% set input_type = None %}
+        {% set class_name = '' %}
+        {% set rows = None %}
+        {% set autofocus = False %}
+        {% set render_type = None %}
+      {% endif %}
+      {% set field = form._fields.get(field_name) %}
+      {% if field %}
+        {% if render_type == 'checkbox' %}
+          {{ render_checkbox_field(field) }}
+        {% else %}
+          {{ render_field(field, placeholder=placeholder, type=input_type, class_=class_name or '', rows=rows, autofocus=autofocus) }}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+{%- endmacro %}

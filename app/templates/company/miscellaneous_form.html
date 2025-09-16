@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% from 'company/_form_helpers.html' import render_field %}
+{% from 'company/_soa_macros.html' import render_soa_sidebar %}
 
 {% block title %}{{ form_title }}{% endblock %}
 
 {% block sidebar %}
-    {# ... sidebar content from statement_of_accounts.html ... #}
+    {{ render_soa_sidebar(request.view_args.get('page_key', 'miscellaneous'), navigation_state) }}
 {% endblock %}
 
 {% from 'company/_form_macros.html' import soa_form_card %}

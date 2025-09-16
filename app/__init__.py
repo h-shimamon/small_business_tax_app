@@ -90,8 +90,9 @@ def create_app(test_config=None):
         return db.session.get(User, int(user_id))
 
     # --- Jinja2フィルターの登録 ---
-    from .utils import format_currency
+    from .utils import format_currency, format_number
     app.jinja_env.filters['format_currency'] = format_currency
+    app.jinja_env.filters['format_number'] = format_number
 
     # --- ブループリントの登録 ---
     from .company import company_bp

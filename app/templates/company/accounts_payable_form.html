@@ -1,19 +1,16 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field, render_checkbox_field %}
+{% from 'company/_soa_macros.html' import render_soa_sidebar %}
+{% from 'company/_soa_form_macros.html' import render_soa_form %}
 
 {% block title %}{{ form_title }}{% endblock %}
 
 {% block sidebar %}
-    {% include 'company/_wizard_sidebar.html' %}
+    {{ render_soa_sidebar('accounts_payable', navigation_state) }}
 {% endblock %}
 
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='accounts_payable'), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
-  {{ render_field(form.registration_number, autofocus=True, placeholder="例：1234567890123") }}
-  {{ render_field(form.partner_name, placeholder="例：株式会社〇〇商事（または氏名）") }}
-  {{ render_field(form.partner_address, placeholder="例：東京都千代田区丸の内…") }}
-  {{ render_field(form.balance_at_eoy, type="number", placeholder="例：1000000") }}
-  {{ render_field(form.remarks, placeholder="例：仕入代金") }}
+  {{ render_soa_form(form, form_fields) }}
 {% endcall %}
 {% endblock %}

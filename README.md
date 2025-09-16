@@ -33,3 +33,6 @@ $1
 ## CSP (scripts)
 - Inline初期化を撤去済みのため、unsafe-inlineは不要です。
 - 推奨例: `Content-Security-Policy: script-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';`
+
+## Documentation
+- SoAフォーム設定の詳細は `docs/soa_form_fields.md` を参照してください。
