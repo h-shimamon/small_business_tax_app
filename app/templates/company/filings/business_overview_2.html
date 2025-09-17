@@ -26,13 +26,20 @@
     {% set equity = bs_data.get('純資産', {}) %}
     {% set equity_order = ['株主資本', '評価・換算差額等', '新株予約権'] %}
     {# ダイジェスト版（連動中）: 残高試算表の一部科目のみを表示 #}
-    {%- macro fmt_blank(val) -%}
-      {%- set v = (val | default(0)) -%}
-      {%- if v is string -%}
-        {%- set v = (v | replace(',', '') | float | default(0)) -%}
-      {%- endif -%}
-      {{ "{:,.0f}".format(v | default(0)) }}
-    {%- endmacro -%}
+    {%- macro compute_thousands(val) -%}
+  {%- set num = 0 -%}
+  {%- if val is not none -%}
+    {%- set v = val | float -%}
+    {%- if v >= 1000 or v <= -1000 -%}
+      {%- set num = ((v / 1000) | int) -%}
+    {%- endif -%}
+  {%- endif -%}
+  {{ num }}
+{%- endmacro -%}
+{%- macro prefill_thousands(val) -%}
+  {%- set num = compute_thousands(val) | int -%}
+  {{ "{:,.0f}".format(num) }}
+{%- endmacro -%}
     {%- macro sum_from_bs(major, names) -%}
       {%- set ns = namespace(total=0) -%}
       {%- set major_obj = bs_data.get(major, {}) -%}
@@ -44,10 +51,6 @@
         {%- endfor -%}
       {%- endfor -%}
       {{ ns.total }}
-    {%- endmacro -%}
-    {%- macro pl_display(val) -%}
-      {%- set v = val if val is not none else 0 -%}
-      {{ "{:,.0f}".format(v) }}
     {%- endmacro -%}
 
     {%- set assets_total = bs_data.get('資産', {}).get('total', 0) -%}
@@ -176,98 +179,100 @@
     {% set pl_special_loss = pl_items.get('特別損失', {}).get('total', 0) or 0 %}
     {% set pl_pre_tax = pl_profit.get('税引前当期純利益', {}).get('total', 0) or 0 %}
 
-    <div class="card" style="margin-top: 16px;">
+    <div class="card">
       <section class="statement-section">
-        <div class="bs-container">
+        <fieldset>
+          <legend>主要科目の内訳（単位：千円）</legend>
+          <div class="bs-container">
           <div class="bs-column bs-column-pl">
             <div class="table-responsive">
               <table class="table table-bordered statement-table">
                 <tbody>
                   <tr class="total-row major-total">
                     <td>売上高</td>
-                    <td class="amount">{{ pl_display(pl_sales_total) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.sales" value="{{ prefill_thousands(pl_sales_total) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td>上記のうち兼業売上高</td>
-                    <td class="amount">{{ pl_display(pl_secondary_sales) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.secondary_sales" value="{{ prefill_thousands(pl_secondary_sales) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr class="total-row major-total">
                     <td>売上原価</td>
-                    <td class="amount">{{ pl_display(pl_cogs_total) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.cogs" value="{{ prefill_thousands(pl_cogs_total) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr class="middle-header">
                     <td colspan="2">売上原価のうち</td>
                   </tr>
                   <tr>
                     <td class="indent-1">期首棚卸高</td>
-                    <td class="amount">{{ pl_display(pl_begin_inventory) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.begin_inventory" value="{{ prefill_thousands(pl_begin_inventory) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">原材料費</td>
-                    <td class="amount">{{ pl_display(pl_raw_materials) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.raw_materials" value="{{ prefill_thousands(pl_raw_materials) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">労務費</td>
-                    <td class="amount">{{ pl_display(pl_labor) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.labor" value="{{ prefill_thousands(pl_labor) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">外注費</td>
-                    <td class="amount">{{ pl_display(pl_outsourcing) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.outsourcing" value="{{ prefill_thousands(pl_outsourcing) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">期末棚卸高</td>
-                    <td class="amount">{{ pl_display(pl_end_inventory) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.end_inventory" value="{{ prefill_thousands(pl_end_inventory) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">減価償却費</td>
-                    <td class="amount">{{ pl_display(pl_cogs_depr) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.cogs_depreciation" value="{{ prefill_thousands(pl_cogs_depr) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">地代家賃</td>
-                    <td class="amount">{{ pl_display(pl_cogs_rent) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.cogs_rent" value="{{ prefill_thousands(pl_cogs_rent) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr class="total-row major-total">
                     <td>売上総利益</td>
-                    <td class="amount">{{ pl_display(pl_gross_profit) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.gross_profit" value="{{ prefill_thousands(pl_gross_profit) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr class="middle-header">
                     <td colspan="2">販管費のうち</td>
                   </tr>
                   <tr>
                     <td class="indent-1">役員報酬</td>
-                    <td class="amount">{{ pl_display(pl_exec_pay) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.exec_pay" value="{{ prefill_thousands(pl_exec_pay) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">従業員給与</td>
-                    <td class="amount">{{ pl_display(pl_employee_pay) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.employee_pay" value="{{ prefill_thousands(pl_employee_pay) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">交際費</td>
-                    <td class="amount">{{ pl_display(pl_entertainment) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.entertainment" value="{{ prefill_thousands(pl_entertainment) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">減価償却費</td>
-                    <td class="amount">{{ pl_display(pl_sga_depr) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.sga_depreciation" value="{{ prefill_thousands(pl_sga_depr) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="indent-1">地代家賃</td>
-                    <td class="amount">{{ pl_display(pl_sga_rent) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.sga_rent" value="{{ prefill_thousands(pl_sga_rent) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr class="total-row major-total">
                     <td>営業損益</td>
-                    <td class="amount">{{ pl_display(pl_operating_income) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.operating_income" value="{{ prefill_thousands(pl_operating_income) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td>特別利益</td>
-                    <td class="amount">{{ pl_display(pl_special_income) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.special_income" value="{{ prefill_thousands(pl_special_income) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td>特別損失</td>
-                    <td class="amount">{{ pl_display(pl_special_loss) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.special_loss" value="{{ prefill_thousands(pl_special_loss) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr class="total-row major-total">
                     <td>税引前当期損益</td>
-                    <td class="amount">{{ pl_display(pl_pre_tax) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.pl.pre_tax" value="{{ prefill_thousands(pl_pre_tax) }}" class="form-control digest-input"></td>
                   </tr>
                 </tbody>
               </table>
@@ -279,43 +284,43 @@
                 <tbody>
                   <tr class="total-row major-total">
                     <td>資産の部合計</td>
-                    <td class="amount">{{ fmt_blank(assets_total) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.total_assets" value="{{ prefill_thousands(assets_total) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">現金預金</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['現金及び預金'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.cash" value="{{ prefill_thousands(sum_from_bs('資産', ['現金及び預金'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">受取手形</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['受取手形'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.notes_receivable" value="{{ prefill_thousands(sum_from_bs('資産', ['受取手形'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">売掛金</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['売掛金'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.accounts_receivable" value="{{ prefill_thousands(sum_from_bs('資産', ['売掛金'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">棚卸資産（未成工事支出金）</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['商品','製品','半製品','原材料','仕掛品','貯蔵品','未成工事支出金'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.inventory" value="{{ prefill_thousands(sum_from_bs('資産', ['商品','製品','半製品','原材料','仕掛品','貯蔵品','未成工事支出金'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">貸付金</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['貸付金','短期貸付金','長期貸付金'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.loans" value="{{ prefill_thousands(sum_from_bs('資産', ['貸付金','短期貸付金','長期貸付金'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">建物</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['建物'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.buildings" value="{{ prefill_thousands(sum_from_bs('資産', ['建物'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">機械装置</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['機械装置'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.machinery" value="{{ prefill_thousands(sum_from_bs('資産', ['機械装置'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">車両・船舶</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['車両運搬具','船舶'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.vehicles" value="{{ prefill_thousands(sum_from_bs('資産', ['車両運搬具','船舶'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">土地</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('資産', ['土地'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.land" value="{{ prefill_thousands(sum_from_bs('資産', ['土地'])) }}" class="form-control digest-input"></td>
                   </tr>
                 </tbody>
               </table>
@@ -325,23 +330,23 @@
                 <tbody>
                   <tr class="total-row major-total">
                     <td>負債の部合計</td>
-                    <td class="amount">{{ fmt_blank(liabilities_total) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.total_liabilities" value="{{ prefill_thousands(liabilities_total) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">支払手形</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('負債', ['支払手形'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.notes_payable" value="{{ prefill_thousands(sum_from_bs('負債', ['支払手形'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">買掛金</td>
-                    <td class="amount">{{ fmt_blank(sum_from_bs('負債', ['買掛金'])) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.accounts_payable" value="{{ prefill_thousands(sum_from_bs('負債', ['買掛金'])) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
-                    <td class="account-name">個人借入金</td>
-                    <td class="amount"></td>
+            <td class="account-name">個人借入金</td>
+            <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.personal_loans" value="{{ prefill_thousands(personal_loans_val) }}" class="form-control digest-input"></td>
                   </tr>
                   <tr>
                     <td class="account-name">その他の借入金</td>
-                    <td class="amount"><span id="digest-other-borrowings" data-base="{{ other_borrowings_base }}" style="display:inline-block; width:100%; text-align:right;">{{ fmt_blank(other_borrowings_initial) }}</span></td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.other_borrowings" value="{{ prefill_thousands(other_borrowings_initial) }}" class="form-control digest-input" id="digest-other-borrowings" data-base="{{ compute_thousands(other_borrowings_base) }}"></td>
                   </tr>
                 </tbody>
               </table>
@@ -351,13 +356,14 @@
                 <tbody>
                   <tr class="total-row major-total">
                     <td>純資産の部合計</td>
-                    <td class="amount">{{ fmt_blank(equity_total) }}</td>
+                    <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.total_equity" value="{{ prefill_thousands(equity_total) }}" class="form-control digest-input"></td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
+        </fieldset>
       </section>
     </div>
     {% endif %}
@@ -424,29 +430,12 @@
     </div>
   </div>
 
-  <div class="bo-aside-spacer" aria-hidden="true"></div>
-
+    <div class="bo-aside-spacer" aria-hidden="true"></div>
   {{ preview_aside(preview_src, has_preview, 'PDFの実ファイルを表示中（読み取り専用）。入力との連動は今後の段階で実装します。') }}
 </div>
 {% endblock %}
 
 {% block scripts %}
   {{ super() if super }}
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var span = document.getElementById('digest-other-borrowings');
-      if (!span) return;
-      var base = parseFloat(span.dataset.base || '0') || 0;
-      var input = document.querySelector('input[name="bo2.bs.personal_loans"]');
-      function format(v){ v = Math.round(v); return v === 0 ? '' : v.toLocaleString('ja-JP'); }
-      function update(){
-        var raw = input ? (input.value || '') : '';
-        raw = raw.replace(/,/g,'').replace(/，/g,'').replace(/ /g,'').trim();
-        var personal = parseFloat(raw) || 0;
-        span.textContent = format(base - personal);
-      }
-      update();
-      if (input) input.addEventListener('input', update);
-    });
-  </script>
+  <script defer src="{{ url_for('static', filename='js/pages/filings_business_overview.js') }}"></script>
 {% endblock %}

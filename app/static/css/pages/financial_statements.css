@@ -32,6 +32,9 @@
     margin-bottom: 2.5rem;
 }
 
+.digest-input {
+    text-align: right;
+}
 /* 2カラムレイアウト用のコンテナ */
 .bs-container {
     display: flex;
