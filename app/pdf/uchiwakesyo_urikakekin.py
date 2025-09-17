@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import List, Tuple, Optional
-import os
 
 from flask import has_request_context, request, current_app
 from flask_login import current_user
@@ -11,13 +10,12 @@ from app.company.models import Company, AccountsReceivable
 
 from .pdf_fill import overlay_pdf, TextSpec
 from .layout_utils import (
-    load_geometry,
+    prepare_pdf_assets,
     baseline0_from_center,
     center_from_baseline,
     append_left,
     append_right,
 )
-from .fonts import default_font_map, ensure_font_registered
 from app.utils import format_number
 
 
@@ -37,19 +35,14 @@ def generate_uchiwakesyo_urikakekin(company_id: Optional[int], year: str = "2025
         company = Company.query.filter_by(user_id=current_user.id).first_or_404()
         company_id = company.id
 
-    # Resolve paths
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    base_pdf = os.path.join(repo_root, f"resources/pdf_forms/uchiwakesyo_urikakekin/{year}/source.pdf")
-    font_map = default_font_map(repo_root)
-
-    # Ensure font is registered before measuring string widths for right alignment
-    try:
-        ensure_font_registered("NotoSansJP", font_map["NotoSansJP"])  # best-effort
-    except Exception:
-        pass
-
-    # Optional geometry override
-    geom = load_geometry("uchiwakesyo_urikakekin", year, repo_root=repo_root, required=True, validate=True)
+    assets = prepare_pdf_assets(
+        form_subdir="uchiwakesyo_urikakekin",
+        geometry_key="uchiwakesyo_urikakekin",
+        year=year,
+    )
+    base_pdf = assets.base_pdf
+    font_map = assets.font_map
+    geom = assets.geometry
 
     # Row layout
     ROW1_CENTER = float(geom.get('row', {}).get('ROW1_CENTER', 760.0))

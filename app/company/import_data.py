@@ -242,6 +242,7 @@ def upload_data(datatype):
                 fs_service = FinancialStatementService(df_journals, start_date, end_date)
                 bs_data = fs_service.create_balance_sheet()
                 pl_data = fs_service.create_profit_loss_statement()
+                soa_breakdowns = fs_service.get_soa_breakdowns()
 
                 # 既存の会計データを削除
                 AccountingData.query.filter_by(company_id=company.id).delete()
@@ -253,7 +254,8 @@ def upload_data(datatype):
                     period_end=end_date,
                     data={
                         'balance_sheet': bs_data,
-                        'profit_loss_statement': pl_data
+                        'profit_loss_statement': pl_data,
+                        'soa_breakdowns': soa_breakdowns
                     }
                 )
                 db.session.add(accounting_data)
@@ -343,11 +345,12 @@ def data_mapping():
                     fs_service = FinancialStatementService(df_journals, start_date, end_date)
                     bs_data = fs_service.create_balance_sheet()
                     pl_data = fs_service.create_profit_loss_statement()
+                    soa_breakdowns = fs_service.get_soa_breakdowns()
                     # 永続化
                     from app.company.models import AccountingData
                     from app import db as _db
                     AccountingData.query.filter_by(company_id=company.id).delete()
-                    ad = AccountingData(company_id=company.id, period_start=start_date, period_end=end_date, data={'balance_sheet': bs_data, 'profit_loss_statement': pl_data})
+                    ad = AccountingData(company_id=company.id, period_start=start_date, period_end=end_date, data={'balance_sheet': bs_data, 'profit_loss_statement': pl_data, 'soa_breakdowns': soa_breakdowns})
                     _db.session.add(ad)
                     _db.session.commit()
                     # journalsステップは完了扱いにしてよい

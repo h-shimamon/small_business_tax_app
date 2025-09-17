@@ -21,6 +21,7 @@ def _build_filings_context(page: str):
     preview_src = url_for('company.filings_preview', page=page) if has_preview else None
 
     bs_data = None
+    pl_data = None
     try:
         from flask_login import current_user
         from app.company.models import AccountingData
@@ -32,9 +33,12 @@ def _build_filings_context(page: str):
                 .first()
             )
             if accounting_data and accounting_data.data:
-                bs_data = accounting_data.data.get('balance_sheet', {})
+                payload = accounting_data.data if isinstance(accounting_data.data, dict) else {}
+                bs_data = payload.get('balance_sheet', {})
+                pl_data = payload.get('profit_loss_statement', {})
     except Exception:
         bs_data = None
+        pl_data = None
 
     empty_cfg = get_empty_state(page)
     return {
@@ -49,6 +53,7 @@ def _build_filings_context(page: str):
         'has_preview': has_preview,
         'preview_src': preview_src,
         'bs_data': bs_data,
+        'pl_data': pl_data,
         'cta_config': get_post_create_cta(page),
         'empty_state_config': {
             'headline': empty_cfg['headline'].format(title=title),

@@ -1,0 +1,204 @@
+{# app/templates/company/_pl_overview_blocks.html #}
+{% if pl_data %}
+{%- macro pl_format(value) -%}
+    {%- set v = value if value is not none else 0 -%}
+    {{ "{:,.0f}".format(v) }}
+{%- endmacro -%}
+
+{%- set pl_items = pl_data.get('損益', {}) -%}
+{%- set profit_calc = pl_data.get('利益計算', {}) -%}
+
+<div class="card" style="margin-top: 16px;">
+    <section class="statement-section">
+        <div class="table-responsive">
+            <table class="table table-bordered statement-table">
+                <tbody>
+                    <tr class="total-row major-total">
+                        <td>売上高</td>
+                        <td class="amount">{{ pl_format(-(pl_items.get('売上高', {}).get('total', 0) or 0)) }}</td>
+                    </tr>
+                    {% with category = pl_items.get('売上原価', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>売上原価</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(item.amount) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">売上原価合計</td>
+                            <td class="amount">{{ pl_format(category.total) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    <tr class="total-row major-total profit-row">
+                        <td>売上総利益</td>
+                        <td class="amount">{{ pl_format(profit_calc.get('売上総利益', {}).get('total', 0) or 0) }}</td>
+                    </tr>
+
+                    {% with category = pl_items.get('販売費及び一般管理費', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>販売費及び一般管理費</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(item.amount) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">販売費及び一般管理費合計</td>
+                            <td class="amount">{{ pl_format(category.total) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    <tr class="total-row major-total profit-row">
+                        <td>営業利益</td>
+                        <td class="amount">{{ pl_format(profit_calc.get('営業利益', {}).get('total', 0) or 0) }}</td>
+                    </tr>
+
+                    {% with category = pl_items.get('営業外収益', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>営業外収益</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(-(item.amount or 0)) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">営業外収益合計</td>
+                            <td class="amount">{{ pl_format(-(category.total or 0)) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    {% with category = pl_items.get('営業外費用', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>営業外費用</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(item.amount) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">営業外費用合計</td>
+                            <td class="amount">{{ pl_format(category.total) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    <tr class="total-row major-total profit-row">
+                        <td>経常利益</td>
+                        <td class="amount">{{ pl_format(profit_calc.get('経常利益', {}).get('total', 0) or 0) }}</td>
+                    </tr>
+
+                    {% with category = pl_items.get('特別利益', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>特別利益</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(-(item.amount or 0)) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">特別利益合計</td>
+                            <td class="amount">{{ pl_format(-(category.total or 0)) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    {% with category = pl_items.get('特別損失', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>特別損失</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(item.amount) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">特別損失合計</td>
+                            <td class="amount">{{ pl_format(category.total) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    <tr class="total-row major-total profit-row">
+                        <td>税引前当期純利益</td>
+                        <td class="amount">{{ pl_format(profit_calc.get('税引前当期純利益', {}).get('total', 0) or 0) }}</td>
+                    </tr>
+
+                    {% with category = pl_items.get('法人税等', {'items': [], 'total': 0}) %}
+                        <tr class="middle-header">
+                            <td colspan="2">
+                                <details class="pl-sec pl-sec--chevron" {% if False %}open{% endif %}>
+                                    <summary>法人税等</summary>
+                                    <table class="table table-bordered statement-table"><tbody>
+                                        {% for item in category['items'] %}
+                                            <tr>
+                                                <td class="account-name indent-1">{{ item.name }}</td>
+                                                <td class="amount">{{ pl_format(item.amount) }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody></table>
+                                </details>
+                            </td>
+                        </tr>
+                        <tr class="total-row middle-total">
+                            <td class="indent-1">法人税等合計</td>
+                            <td class="amount">{{ pl_format(category.total) }}</td>
+                        </tr>
+                    {% endwith %}
+
+                    <tr class="total-row major-total profit-row">
+                        <td>当期純利益</td>
+                        <td class="amount">{{ pl_format(profit_calc.get('当期純利益', {}).get('total', 0) or 0) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+{% endif %}

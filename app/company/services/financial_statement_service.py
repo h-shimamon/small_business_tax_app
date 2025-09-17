@@ -21,6 +21,7 @@ class FinancialStatementService:
         self.end_date = datetime.combine(end_date, datetime.max.time())
         self.bs_master = master_data_service.get_bs_master_df()
         self.pl_master = master_data_service.get_pl_master_df()
+        self._soa_breakdowns = {}
         
         # 期首と期中の取引を分離
         opening_df, mid_year_df = self._separate_transactions(self.journals_df)
@@ -78,22 +79,40 @@ class FinancialStatementService:
             
         return {k: v for k, v in balances.items() if v != 0}
 
-    def get_total_by_breakdown_document(self, document_name):
-        """指定された内訳書名に該当する勘定科目の合計残高を計算する。"""
+    def _combined_balances(self):
         all_balances = defaultdict(int, self.opening_balances)
         for acc, amount in self.mid_year_balances.items():
             all_balances[acc] += amount
+        return all_balances
 
-        target_accounts = self.bs_master[self.bs_master['breakdown_document'] == document_name].index.tolist()
-        total = sum(all_balances.get(acc, 0) for acc in target_accounts)
-        return total
+    def _compute_breakdown_totals(self, balances):
+        breakdowns = {}
+        if self.bs_master is None or self.bs_master.empty:
+            return breakdowns
+        for acc, amount in balances.items():
+            if acc not in self.bs_master.index:
+                continue
+            doc = self.bs_master.at[acc, 'breakdown_document'] if 'breakdown_document' in self.bs_master.columns else None
+            if not isinstance(doc, str) or not doc.strip():
+                continue
+            breakdowns[doc] = breakdowns.get(doc, 0) + amount
+        return breakdowns
+
+    def get_total_by_breakdown_document(self, document_name):
+        """指定された内訳書名に該当する勘定科目の合計残高を計算する。"""
+        if document_name is None:
+            return 0
+        if self._soa_breakdowns:
+            return self._soa_breakdowns.get(document_name, 0)
+        balances = self._combined_balances()
+        breakdowns = self._compute_breakdown_totals(balances)
+        return breakdowns.get(document_name, 0)
 
     def create_balance_sheet(self):
         """貸借対照表を生成する。"""
-        all_balances = defaultdict(int, self.opening_balances)
-        for acc, amount in self.mid_year_balances.items():
-            all_balances[acc] += amount
-        
+        all_balances = self._combined_balances()
+        self._soa_breakdowns = self._compute_breakdown_totals(all_balances)
+
         _, net_income = self._create_profit_and_loss_statement_data(all_balances)
 
         final_bs_balances = {acc: amount for acc, amount in all_balances.items() if acc in self.bs_master.index}
@@ -104,12 +123,12 @@ class FinancialStatementService:
 
     def create_profit_loss_statement(self):
         """損益計算書を生成する。"""
-        all_balances = defaultdict(int, self.opening_balances)
-        for acc, amount in self.mid_year_balances.items():
-            all_balances[acc] += amount
-            
+        all_balances = self._combined_balances()
         pl_structure, _ = self._create_profit_and_loss_statement_data(all_balances)
         return pl_structure
+
+    def get_soa_breakdowns(self):
+        return dict(self._soa_breakdowns)
 
     def _create_profit_and_loss_statement_data(self, all_balances):
         """損益計算書のデータ構造を生成し、当期純利益を返す。"""

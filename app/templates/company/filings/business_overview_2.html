@@ -11,67 +11,27 @@
 {% endblock %}
 
 {% block content %}
+{% from "company/_layout_helpers.html" import render_statement_table %}
 <h1 class="content-title">事業概況説明書２</h1>
 <p class="content-subtitle">主要科目の内訳（単位：千円）</p>
 
 <div class="bo-split-pane">
   <div class="bo-pane-left">
     
-    {% from "company/_layout_helpers.html" import render_statement_table %}
-    {% if bs_data %}
-    <div class="card">
-      <section class="statement-section">
-        <div class="bs-container">
-          <div class="bs-column">
-            {% set assets = bs_data.get('資産', {}) %}
-            {% set asset_order = ['流動資産', '固定資産', '繰延資産'] %}
-            {{ render_statement_table('資産の部', assets, order=asset_order) }}
-            <div class="table-responsive total-table-wrapper">
-              <table class="table table-bordered statement-table">
-                <tbody>
-                  <tr class="total-row major-total">
-                    <td>資産合計</td>
-                    <td class="amount">{{ "{:,.0f}".format(assets.get('total', 0)) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="bs-column">
-            {% set liabilities = bs_data.get('負債', {}) %}
-            {% set liability_order = ['流動負債', '固定負債'] %}
-            {{ render_statement_table('負債の部', liabilities, order=liability_order) }}
-
-            <div style="margin-top: 2rem;">
-              {% set equity = bs_data.get('純資産', {}) %}
-              {% set equity_order = ['株主資本', '評価・換算差額等', '新株予約権'] %}
-              {{ render_statement_table('純資産の部', equity, order=equity_order) }}
-            </div>
-
-            <div class="table-responsive total-table-wrapper">
-              <table class="table table-bordered statement-table">
-                <tbody>
-                  <tr class="total-row major-total">
-                    <td>負債・純資産合計</td>
-                    <td class="amount">{{ "{:,.0f}".format(liabilities.get('total', 0) + equity.get('total', 0)) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-    
+        {% if bs_data %}
+    {% set assets = bs_data.get('資産', {}) %}
+    {% set asset_order = ['流動資産', '固定資産', '繰延資産'] %}
+    {% set liabilities = bs_data.get('負債', {}) %}
+    {% set liability_order = ['流動負債', '固定負債'] %}
+    {% set equity = bs_data.get('純資産', {}) %}
+    {% set equity_order = ['株主資本', '評価・換算差額等', '新株予約権'] %}
     {# ダイジェスト版（連動中）: 残高試算表の一部科目のみを表示 #}
     {%- macro fmt_blank(val) -%}
       {%- set v = (val | default(0)) -%}
       {%- if v is string -%}
-        {%- set _ = namespace()%}
-        {# 文字列なら数値に変換を試みる（非数は0扱い） #}
         {%- set v = (v | replace(',', '') | float | default(0)) -%}
       {%- endif -%}
-      {%- if (v | default(0)) == 0 -%}{%- else -%}{{ "{:,.0f}".format(v | default(0)) }}{%- endif -%}
+      {{ "{:,.0f}".format(v | default(0)) }}
     {%- endmacro -%}
     {%- macro sum_from_bs(major, names) -%}
       {%- set ns = namespace(total=0) -%}
@@ -85,6 +45,11 @@
       {%- endfor -%}
       {{ ns.total }}
     {%- endmacro -%}
+    {%- macro pl_display(val) -%}
+      {%- set v = val if val is not none else 0 -%}
+      {{ "{:,.0f}".format(v) }}
+    {%- endmacro -%}
+
     {%- set assets_total = bs_data.get('資産', {}).get('total', 0) -%}
     {%- set liabilities_total = bs_data.get('負債', {}).get('total', 0) -%}
     {%- set equity_total = bs_data.get('純資産', {}).get('total', 0) -%}
@@ -93,10 +58,221 @@
     {%- set personal_loans_val = (personal_loans_q.replace(',', '') | float) if personal_loans_q else 0 -%}
     {%- set other_borrowings_initial = other_borrowings_base - personal_loans_val -%}
 
+    {%- set pl_items = (pl_data or {}).get('損益', {}) -%}
+    {%- set pl_profit = (pl_data or {}).get('利益計算', {}) -%}
+    {% set revenue_items = pl_items.get('売上高', {}).get('items', []) %}
+    {% set cogs_items = pl_items.get('売上原価', {}).get('items', []) %}
+    {% set sga_items = pl_items.get('販売費及び一般管理費', {}).get('items', []) %}
+
+    {% set pl_sales_total = -(pl_items.get('売上高', {}).get('total', 0) or 0) %}
+    {% set ns_secondary = namespace(total=0) %}
+    {% for item in revenue_items %}
+      {% if item.name == '兼業事業売上高' %}
+        {% set ns_secondary.total = ns_secondary.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_secondary_sales = -(ns_secondary.total) %}
+
+    {% set pl_cogs_total = pl_items.get('売上原価', {}).get('total', 0) or 0 %}
+    {% set ns_begin = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name in ['期首商品棚卸高','期首製品棚卸高','期首未成工事支出金'] %}
+        {% set ns_begin.total = ns_begin.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_begin_inventory = ns_begin.total %}
+
+    {% set ns_raw = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name in ['当期製品製造原価','仕入高'] %}
+        {% set ns_raw.total = ns_raw.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_raw_materials = ns_raw.total %}
+
+    {% set ns_labor = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name in ['労務費'] %}
+        {% set ns_labor.total = ns_labor.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_labor = ns_labor.total %}
+
+    {% set ns_out = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name in ['外注費','業務委託料'] %}
+        {% set ns_out.total = ns_out.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_outsourcing = ns_out.total %}
+
+    {% set ns_end = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name in ['期末商品棚卸高','期末製品棚卸高','期末未成工事支出金'] %}
+        {% set ns_end.total = ns_end.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_end_inventory = ns_end.total %}
+
+    {% set ns_cogs_depr = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name == '減価償却費' %}
+        {% set ns_cogs_depr.total = ns_cogs_depr.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_cogs_depr = ns_cogs_depr.total %}
+
+    {% set ns_cogs_rent = namespace(total=0) %}
+    {% for item in cogs_items %}
+      {% if item.name == '地代家賃' %}
+        {% set ns_cogs_rent.total = ns_cogs_rent.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_cogs_rent = ns_cogs_rent.total %}
+
+    {% set ns_exec = namespace(total=0) %}
+    {% for item in sga_items %}
+      {% if item.name == '役員報酬' %}
+        {% set ns_exec.total = ns_exec.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_exec_pay = ns_exec.total %}
+
+    {% set ns_emp = namespace(total=0) %}
+    {% for item in sga_items %}
+      {% if item.name in ['給料賃金','従業員給料','給与手当','賞与','雑給'] %}
+        {% set ns_emp.total = ns_emp.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_employee_pay = ns_emp.total %}
+
+    {% set ns_ent = namespace(total=0) %}
+    {% for item in sga_items %}
+      {% if item.name in ['交際費','接待交際費'] %}
+        {% set ns_ent.total = ns_ent.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_entertainment = ns_ent.total %}
+
+    {% set ns_sga_depr = namespace(total=0) %}
+    {% for item in sga_items %}
+      {% if item.name == '減価償却費' %}
+        {% set ns_sga_depr.total = ns_sga_depr.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_sga_depr = ns_sga_depr.total %}
+
+    {% set ns_sga_rent = namespace(total=0) %}
+    {% for item in sga_items %}
+      {% if item.name == '地代家賃' %}
+        {% set ns_sga_rent.total = ns_sga_rent.total + (item.amount or 0) %}
+      {% endif %}
+    {% endfor %}
+    {% set pl_sga_rent = ns_sga_rent.total %}
+
+    {% set pl_gross_profit = pl_profit.get('売上総利益', {}).get('total', 0) or 0 %}
+    {% set pl_operating_income = pl_profit.get('営業利益', {}).get('total', 0) or 0 %}
+    {% set pl_special_income = -(pl_items.get('特別利益', {}).get('total', 0) or 0) %}
+    {% set pl_special_loss = pl_items.get('特別損失', {}).get('total', 0) or 0 %}
+    {% set pl_pre_tax = pl_profit.get('税引前当期純利益', {}).get('total', 0) or 0 %}
+
     <div class="card" style="margin-top: 16px;">
       <section class="statement-section">
         <div class="bs-container">
-          <!-- 左カラム: 資産の部（ダイジェスト） -->
+          <div class="bs-column bs-column-pl">
+            <div class="table-responsive">
+              <table class="table table-bordered statement-table">
+                <tbody>
+                  <tr class="total-row major-total">
+                    <td>売上高</td>
+                    <td class="amount">{{ pl_display(pl_sales_total) }}</td>
+                  </tr>
+                  <tr>
+                    <td>上記のうち兼業売上高</td>
+                    <td class="amount">{{ pl_display(pl_secondary_sales) }}</td>
+                  </tr>
+                  <tr class="total-row major-total">
+                    <td>売上原価</td>
+                    <td class="amount">{{ pl_display(pl_cogs_total) }}</td>
+                  </tr>
+                  <tr class="middle-header">
+                    <td colspan="2">売上原価のうち</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">期首棚卸高</td>
+                    <td class="amount">{{ pl_display(pl_begin_inventory) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">原材料費</td>
+                    <td class="amount">{{ pl_display(pl_raw_materials) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">労務費</td>
+                    <td class="amount">{{ pl_display(pl_labor) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">外注費</td>
+                    <td class="amount">{{ pl_display(pl_outsourcing) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">期末棚卸高</td>
+                    <td class="amount">{{ pl_display(pl_end_inventory) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">減価償却費</td>
+                    <td class="amount">{{ pl_display(pl_cogs_depr) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">地代家賃</td>
+                    <td class="amount">{{ pl_display(pl_cogs_rent) }}</td>
+                  </tr>
+                  <tr class="total-row major-total">
+                    <td>売上総利益</td>
+                    <td class="amount">{{ pl_display(pl_gross_profit) }}</td>
+                  </tr>
+                  <tr class="middle-header">
+                    <td colspan="2">販管費のうち</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">役員報酬</td>
+                    <td class="amount">{{ pl_display(pl_exec_pay) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">従業員給与</td>
+                    <td class="amount">{{ pl_display(pl_employee_pay) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">交際費</td>
+                    <td class="amount">{{ pl_display(pl_entertainment) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">減価償却費</td>
+                    <td class="amount">{{ pl_display(pl_sga_depr) }}</td>
+                  </tr>
+                  <tr>
+                    <td class="indent-1">地代家賃</td>
+                    <td class="amount">{{ pl_display(pl_sga_rent) }}</td>
+                  </tr>
+                  <tr class="total-row major-total">
+                    <td>営業損益</td>
+                    <td class="amount">{{ pl_display(pl_operating_income) }}</td>
+                  </tr>
+                  <tr>
+                    <td>特別利益</td>
+                    <td class="amount">{{ pl_display(pl_special_income) }}</td>
+                  </tr>
+                  <tr>
+                    <td>特別損失</td>
+                    <td class="amount">{{ pl_display(pl_special_loss) }}</td>
+                  </tr>
+                  <tr class="total-row major-total">
+                    <td>税引前当期損益</td>
+                    <td class="amount">{{ pl_display(pl_pre_tax) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div class="bs-column">
             <div class="table-responsive">
               <table class="table table-bordered statement-table">
@@ -144,11 +320,7 @@
                 </tbody>
               </table>
             </div>
-          </div>
-
-          <!-- 右カラム: 負債・純資産（ダイジェスト） -->
-          <div class="bs-column">
-            <div class="table-responsive">
+            <div class="table-responsive" style="margin-top: 1.5rem;">
               <table class="table table-bordered statement-table">
                 <tbody>
                   <tr class="total-row major-total">
@@ -169,12 +341,11 @@
                   </tr>
                   <tr>
                     <td class="account-name">その他の借入金</td>
-                    <td class="amount"><span id=\"digest-other-borrowings\" data-base=\"{{ other_borrowings_base }}\" style=\"display:inline-block; width:100%; text-align:right;\">{{ fmt_blank(other_borrowings_initial) }}</span></td>
+                    <td class="amount"><span id="digest-other-borrowings" data-base="{{ other_borrowings_base }}" style="display:inline-block; width:100%; text-align:right;">{{ fmt_blank(other_borrowings_initial) }}</span></td>
                   </tr>
                 </tbody>
               </table>
             </div>
-
             <div class="table-responsive total-table-wrapper" style="margin-top: 1.5rem;">
               <table class="table table-bordered statement-table">
                 <tbody>
@@ -189,7 +360,7 @@
         </div>
       </section>
     </div>
-{% endif %}
+    {% endif %}
 <div class="card">
       <form method="get" novalidate>
         <fieldset>

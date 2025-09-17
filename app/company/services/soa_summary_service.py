@@ -71,6 +71,16 @@ class SoASummaryService:
                 return {'bs_total': 0, 'pl_interest_total': 0, 'source_total': 0}
             return {'source_total': 0}
 
+        soa_breakdowns = {}
+        try:
+            data_payload = accounting_data.data or {}
+            if isinstance(data_payload, dict):
+                candidate = data_payload.get('soa_breakdowns')
+                if isinstance(candidate, dict):
+                    soa_breakdowns = candidate
+        except Exception:
+            soa_breakdowns = {}
+
         # 特例: 'miscellaneous' は PLの「雑収入」+「雑損失」を合算して source_total とする
         if page == 'miscellaneous':
             pl_source = accounting_data.data.get('profit_loss_statement', {})
@@ -85,6 +95,10 @@ class SoASummaryService:
             bs_source = accounting_data.data.get('balance_sheet', {})
             pl_source = accounting_data.data.get('profit_loss_statement', {})
             bs_total = cls._find_and_sum_by_names(bs_source, targets_info.get('bs_targets', []))
+            if soa_breakdowns:
+                breakdown_name = SUMMARY_PAGE_MAP.get(page, (None, None))[1]
+                if breakdown_name:
+                    bs_total = soa_breakdowns.get(breakdown_name, bs_total)
             pl_interest_total = cls._find_and_sum_by_names(pl_source, targets_info.get('pl_targets', []))
             return {
                 'bs_total': bs_total,
@@ -93,6 +107,9 @@ class SoASummaryService:
             }
 
         if targets_info.get('type') == 'BS':
+            breakdown_name = SUMMARY_PAGE_MAP.get(page, (None, None))[1]
+            if breakdown_name and soa_breakdowns and breakdown_name in soa_breakdowns:
+                return {'source_total': soa_breakdowns[breakdown_name]}
             source = accounting_data.data.get('balance_sheet', {})
             total = cls._find_and_sum_by_names(source, targets_info.get('targets', []))
             return {'source_total': total}
