@@ -286,7 +286,10 @@
                     <td>資産の部合計</td>
                     <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.total_assets" value="{{ prefill_thousands(assets_total) }}" class="form-control digest-input"></td>
                   </tr>
-                  <tr>
+                                    <tr class="middle-header">
+                    <td colspan="2">資産のうち</td>
+                  </tr>
+<tr>
                     <td class="account-name">現金預金</td>
                     <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.cash" value="{{ prefill_thousands(sum_from_bs('資産', ['現金及び預金'])) }}" class="form-control digest-input"></td>
                   </tr>
@@ -332,7 +335,10 @@
                     <td>負債の部合計</td>
                     <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.total_liabilities" value="{{ prefill_thousands(liabilities_total) }}" class="form-control digest-input"></td>
                   </tr>
-                  <tr>
+                                    <tr class="middle-header">
+                    <td colspan="2">負債のうち</td>
+                  </tr>
+<tr>
                     <td class="account-name">支払手形</td>
                     <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.bs.notes_payable" value="{{ prefill_thousands(sum_from_bs('負債', ['支払手形'])) }}" class="form-control digest-input"></td>
                   </tr>
@@ -364,70 +370,44 @@
           </div>
         </div>
         </fieldset>
+    </section>
+    </div>
+    <div class="card">
+      <section class="statement-section">
+        <fieldset>
+          <legend>代表者に対する報酬等の金額（単位：千円）</legend>
+          <div class="table-responsive">
+            <table class="table table-bordered statement-table">
+              <tbody>
+                                <tr>
+                  <td class="account-name">報酬</td>
+                  <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.rep.reward" value="{{ request.args.get('bo2.digest.rep.reward', '') }}" class="form-control digest-input"></td>
+                  <td class="account-name">貸付金</td>
+                  <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.rep.loans" value="{{ request.args.get('bo2.digest.rep.loans', '') }}" class="form-control digest-input"></td>
+                </tr>
+                <tr>
+                  <td class="account-name">仮払金</td>
+                  <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.rep.temporary_payments" value="{{ request.args.get('bo2.digest.rep.temporary_payments', '') }}" class="form-control digest-input"></td>
+                  <td class="account-name">借入金</td>
+                  <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.rep.borrowings" value="{{ request.args.get('bo2.digest.rep.borrowings', '') }}" class="form-control digest-input"></td>
+                </tr>
+                <tr>
+                  <td class="account-name">仮受金</td>
+                  <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.rep.temporary_receipts" value="{{ request.args.get('bo2.digest.rep.temporary_receipts', '') }}" class="form-control digest-input"></td>
+                  <td class="account-name">賃借料</td>
+                  <td class="amount"><input type="text" inputmode="numeric" name="bo2.digest.rep.rent" value="{{ request.args.get('bo2.digest.rep.rent', '') }}" class="form-control digest-input"></td>
+                </tr>
+                <tr>
+                  <td class="account-name">支払利息</td>
+                  <td class="amount" colspan="3"><input type="text" inputmode="numeric" name="bo2.digest.rep.interest" value="{{ request.args.get('bo2.digest.rep.interest', '') }}" class="form-control digest-input"></td>
+                </tr>
+</tbody>
+            </table>
+          </div>
+        </fieldset>
       </section>
     </div>
     {% endif %}
-<div class="card">
-      <form method="get" novalidate>
-        <fieldset>
-          <legend>主要科目（損益・貸借）</legend>
-          {% call bo.grid(2) %}
-            {# 左列（損益） #}
-            {{ bo.field('売上高', type='number', placeholder='例：5280', name='bo2.pl.sales') }}
-            {# 右列（資産の部 合計） #}
-            {{ bo.field('資産の部合計', type='number', placeholder='', name='bo2.bs.total_assets') }}
-
-            {{ bo.field('上記のうち営業売上高', type='number', placeholder='', name='bo2.pl.operating_sales') }}
-            {{ bo.field('現金預金', type='number', placeholder='', name='bo2.bs.cash') }}
-
-            {# 売上原価のうち #}
-            <div class="form-group bo-span-all"><label class="form-label">売上原価のうち</label></div>
-            {{ bo.field('受取手形', type='number', placeholder='', name='bo2.bs.notes_receivable') }}
-            {{ bo.field('期首棚卸高', type='number', placeholder='', name='bo2.pl.cogs.begin_inventory') }}
-            {{ bo.field('売掛金', type='number', placeholder='例：660', name='bo2.bs.accounts_receivable') }}
-            {{ bo.field('期末棚卸高', type='number', placeholder='', name='bo2.pl.cogs.end_inventory') }}
-            {{ bo.field('棚卸資産（未成工事支出金）', type='number', placeholder='', name='bo2.bs.inventory') }}
-            {{ bo.field('原材料費', type='number', placeholder='', name='bo2.pl.cogs.materials') }}
-            {{ bo.field('貸付金', type='number', placeholder='', name='bo2.bs.loans_receivable') }}
-            {{ bo.field('労務費', type='number', placeholder='', name='bo2.pl.cogs.labor') }}
-            {{ bo.field('建物', type='number', placeholder='', name='bo2.bs.buildings') }}
-            {{ bo.field('外注費', type='number', placeholder='', name='bo2.pl.cogs.outsourcing') }}
-            {{ bo.field('機械装置', type='number', placeholder='', name='bo2.bs.machinery') }}
-            {{ bo.field('減価償却費', type='number', placeholder='', name='bo2.pl.cogs.depreciation') }}
-            {{ bo.field('車両・船舶', type='number', placeholder='例：587', name='bo2.bs.vehicles') }}
-            {{ bo.field('地代家賃', type='number', placeholder='', name='bo2.pl.cogs.rent') }}
-            {{ bo.field('土地', type='number', placeholder='', name='bo2.bs.land') }}
-
-            {{ bo.field('売上総利益', type='number', placeholder='例：5280', name='bo2.pl.gross_profit') }}
-            {{ bo.field('負債の部合計', type='number', placeholder='', name='bo2.bs.total_liabilities') }}
-
-            {{ bo.field('役員報酬', type='number', placeholder='例：960', name='bo2.pl.executive_comp') }}
-            {{ bo.field('支払手形', type='number', placeholder='', name='bo2.bs.notes_payable') }}
-
-            {{ bo.field('従業員給料', type='number', placeholder='例：225', name='bo2.pl.employee_salary') }}
-            {{ bo.field('買掛金', type='number', placeholder='', name='bo2.bs.accounts_payable') }}
-
-            {{ bo.field('交際費', type='number', placeholder='例：242', name='bo2.pl.entertainment') }}
-            {{ bo.field('個人借入金', type='number', placeholder='例：37', name='bo2.bs.personal_loans') }}
-
-            {{ bo.field('減価償却費（販管費）', type='number', placeholder='例：549', name='bo2.pl.sga.depreciation') }}
-            {{ bo.field('その他の借入金', type='number', placeholder='例：4000', name='bo2.bs.other_borrowings') }}
-
-            {{ bo.field('地代家賃（販管費）', type='number', placeholder='例：672', name='bo2.pl.sga.rent') }}
-            {{ bo.field('純資産の部合計', type='number', placeholder='例：7290', name='bo2.bs.total_net_assets') }}
-
-            {{ bo.field('営業損益', type='number', placeholder='例：816', name='bo2.pl.operating_income') }}
-            {{ bo.spacer() }}
-            {{ bo.field('特別利益', type='number', placeholder='', name='bo2.pl.extraordinary_income') }}
-            {{ bo.spacer() }}
-            {{ bo.field('特別損失', type='number', placeholder='', name='bo2.pl.extraordinary_loss') }}
-            {{ bo.spacer() }}
-            {{ bo.field('税引前当期損益', type='number', placeholder='例：1856', name='bo2.pl.pre_tax_income') }}
-            {{ bo.spacer() }}
-          {% endcall %}
-        </fieldset>
-      </form>
-    </div>
   </div>
 
     <div class="bo-aside-spacer" aria-hidden="true"></div>
