@@ -28,11 +28,11 @@ DEFAULT_RATE_VALUES = {
     'enterprise_tax_rate_o8m': Decimal('7.0'),
     'local_special_tax_rate': Decimal('37.0'),
     'prefectural_corporate_tax_rate': Decimal('1.0'),
-    'municipal_corporate_tax_rate': Decimal('8.4'),
+    'municipal_corporate_tax_rate': Decimal('6.0'),
 }
 
 DEFAULT_AMOUNT_VALUES = {
-    'prefectural_equalization_amount': 21000,
+    'prefectural_equalization_amount': 20000,
     'municipal_equalization_amount': 50000,
 }
 

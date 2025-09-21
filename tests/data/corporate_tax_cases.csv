@@ -1,0 +1,3 @@
+case_id,pre_tax_income,fiscal_start_date,fiscal_end_date,months_in_period,months_truncated,expected_corporate_tax,expected_local_corporate_tax,expected_local_tax,expected_total_tax,expected_payment_rate,expected_effective_rate
+standard_year,12000000,20240401,20250331,12,12,2128000,219100,1342900,3470900,28.9%,26.9%
+half_year,4000000,20220401,20220930,6,6,600000,61800,390800,990800,24.8%,23.3%

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, date
+from decimal import Decimal, InvalidOperation
 from typing import Optional, Tuple
 
 from dateutil.relativedelta import relativedelta
@@ -17,6 +18,24 @@ from app.company.services.corporate_tax_service import CorporateTaxCalculationSe
 
 filings_service: FilingsServiceProtocol = FilingsService()
 corporate_tax_service = CorporateTaxCalculationService()
+
+
+@company_bp.app_template_filter('format_number')
+def format_number(value):
+    if value in (None, ''):
+        return ''
+    text = str(value)
+    stripped = text.replace(',', '').strip()
+    if not stripped:
+        return ''
+    try:
+        number = Decimal(stripped)
+    except (InvalidOperation, TypeError):
+        return text
+    if number == number.to_integral():
+        return f"{int(number):,}"
+    formatted = format(number, ',f').rstrip('0').rstrip('.')
+    return formatted
 
 
 def _parse_compact_date(value: Optional[str]) -> Optional[date]:

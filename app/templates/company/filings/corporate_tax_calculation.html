@@ -25,11 +25,11 @@
         <tbody>
           <tr>
             <th scope="row">期首日（YYYYMMDD）</th>
-            <td class="tax-cell-input">{% if allow_manual %}<input type="text" class="tax-input" name="inputs_fiscal_start_date" value="{{ inputs.get('fiscal_start_date', '') }}">{% else %}{{ inputs.get('fiscal_start_date', '') }}{% endif %}</td>
+            <td class="tax-cell-input">{% if allow_manual %}<input type="text" class="tax-input tax-input-date" name="inputs_fiscal_start_date" value="{{ inputs.get('fiscal_start_date', '') }}">{% else %}{{ inputs.get('fiscal_start_date', '') }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">期末日（YYYYMMDD）</th>
-            <td class="tax-cell-input">{% if allow_manual %}<input type="text" class="tax-input" name="inputs_fiscal_end_date" value="{{ inputs.get('fiscal_end_date', '') }}">{% else %}{{ inputs.get('fiscal_end_date', '') }}{% endif %}</td>
+            <td class="tax-cell-input">{% if allow_manual %}<input type="text" class="tax-input tax-input-date" name="inputs_fiscal_end_date" value="{{ inputs.get('fiscal_end_date', '') }}">{% else %}{{ inputs.get('fiscal_end_date', '') }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">期首〜期末日までの月数（1か月未満切り上げ）</th>
@@ -41,7 +41,7 @@
           </tr>
           <tr>
             <th scope="row">税引前当期純利益</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="inputs_pre_tax_income" value="{{ inputs.get('pre_tax_income', '') }}">{% else %}{{ inputs.get('pre_tax_income', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="inputs_pre_tax_income" value="{{ inputs.get('pre_tax_income', '') | format_number }}">{% else %}{{ inputs.get('pre_tax_income', '') }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">法人税　所得800万円以下税率</th>
@@ -77,7 +77,7 @@
           </tr>
           <tr>
             <th scope="row">都道府県民税　均等割年額</th>
-            <td>{% if allow_manual %}<input type="text" class="tax-input" name="inputs_prefectural_equalization_amount" value="{{ inputs.get('prefectural_equalization_amount', '') }}">{% else %}{{ inputs.get('prefectural_equalization_amount', '') }}{% endif %}</td>
+            <td>{% if allow_manual %}<input type="text" class="tax-input" name="inputs_prefectural_equalization_amount" value="{{ inputs.get('prefectural_equalization_amount', '') | format_number }}">{% else %}{{ inputs.get('prefectural_equalization_amount', '') }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">市町村民税　法人税割の税率</th>
@@ -85,7 +85,7 @@
           </tr>
           <tr>
             <th scope="row">市町村民税　均等割年額</th>
-            <td>{% if allow_manual %}<input type="text" class="tax-input" name="inputs_municipal_equalization_amount" value="{{ inputs.get('municipal_equalization_amount', '') }}">{% else %}{{ inputs.get('municipal_equalization_amount', '') }}{% endif %}</td>
+            <td>{% if allow_manual %}<input type="text" class="tax-input" name="inputs_municipal_equalization_amount" value="{{ inputs.get('municipal_equalization_amount', '') | format_number }}">{% else %}{{ inputs.get('municipal_equalization_amount', '') }}{% endif %}</td>
           </tr>
         </tbody>
       </table>
@@ -97,11 +97,11 @@
         <tbody>
           <tr class="tax-row-total">
             <th scope="row">法人税(国)</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_corporate_tax" value="{{ results.get('corporate_tax', '') }}">{% else %}{{ results.get('corporate_tax', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_corporate_tax" value="{{ results.get('corporate_tax', '') | format_number }}">{% else %}{{ results.get('corporate_tax', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <th scope="row">地方法人税</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_local_corporate_tax" value="{{ results.get('local_corporate_tax', '') }}">{% else %}{{ results.get('local_corporate_tax', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_local_corporate_tax" value="{{ results.get('local_corporate_tax', '') | format_number }}">{% else %}{{ results.get('local_corporate_tax', '') | format_number }}{% endif %}</td>
           </tr>
         </tbody>
       </table>
@@ -110,31 +110,31 @@
         <tbody>
           <tr>
             <th scope="row">事業税　所得割</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_enterprise_tax_amount" value="{{ results.get('enterprise_tax_amount', '') }}">{% else %}{{ results.get('enterprise_tax_amount', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_enterprise_tax_amount" value="{{ results.get('enterprise_tax_amount', '') | format_number }}">{% else %}{{ results.get('enterprise_tax_amount', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">地方法人特別税</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_local_special_tax" value="{{ results.get('local_special_tax', '') }}">{% else %}{{ results.get('local_special_tax', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_local_special_tax" value="{{ results.get('local_special_tax', '') | format_number }}">{% else %}{{ results.get('local_special_tax', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <th scope="row">事業税・地方法人特別税合計</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_enterprise_tax_total" value="{{ results.get('enterprise_tax_total', '') }}">{% else %}{{ results.get('enterprise_tax_total', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_enterprise_tax_total" value="{{ results.get('enterprise_tax_total', '') | format_number }}">{% else %}{{ results.get('enterprise_tax_total', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">都道府県民税　法人税割</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_pref_corporate_tax" value="{{ results.get('pref_corporate_tax', '') }}">{% else %}{{ results.get('pref_corporate_tax', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_pref_corporate_tax" value="{{ results.get('pref_corporate_tax', '') | format_number }}">{% else %}{{ results.get('pref_corporate_tax', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">都道府県民税　均等割　年額</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_pref_equalization_amount" value="{{ results.get('pref_equalization_amount', '') }}">{% else %}{{ results.get('pref_equalization_amount', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_pref_equalization_amount" value="{{ results.get('pref_equalization_amount', '') | format_number }}">{% else %}{{ results.get('pref_equalization_amount', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <th scope="row">都道府県民税合計</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_pref_tax_total" value="{{ results.get('pref_tax_total', '') }}">{% else %}{{ results.get('pref_tax_total', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_pref_tax_total" value="{{ results.get('pref_tax_total', '') | format_number }}">{% else %}{{ results.get('pref_tax_total', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-grand-total">
             <th scope="row">事業税・都道府県民税合計</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_enterprise_pref_total" value="{{ results.get('enterprise_pref_total', '') }}">{% else %}{{ results.get('enterprise_pref_total', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_enterprise_pref_total" value="{{ results.get('enterprise_pref_total', '') | format_number }}">{% else %}{{ results.get('enterprise_pref_total', '') | format_number }}{% endif %}</td>
           </tr>
         </tbody>
       </table>
@@ -143,15 +143,15 @@
         <tbody>
           <tr>
             <th scope="row">市町村民税　法人税割</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_municipal_corporate_tax" value="{{ results.get('municipal_corporate_tax', '') }}">{% else %}{{ results.get('municipal_corporate_tax', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_municipal_corporate_tax" value="{{ results.get('municipal_corporate_tax', '') | format_number }}">{% else %}{{ results.get('municipal_corporate_tax', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">市町村民税　均等割　年額</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_municipal_equalization_amount" value="{{ results.get('municipal_equalization_amount', '') }}">{% else %}{{ results.get('municipal_equalization_amount', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_municipal_equalization_amount" value="{{ results.get('municipal_equalization_amount', '') | format_number }}">{% else %}{{ results.get('municipal_equalization_amount', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <th scope="row">市町村民税合計</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_municipal_tax_total" value="{{ results.get('municipal_tax_total', '') }}">{% else %}{{ results.get('municipal_tax_total', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_municipal_tax_total" value="{{ results.get('municipal_tax_total', '') | format_number }}">{% else %}{{ results.get('municipal_tax_total', '') | format_number }}{% endif %}</td>
           </tr>
         </tbody>
       </table>
@@ -160,7 +160,7 @@
         <tbody>
           <tr class="tax-row-grand-total">
             <th scope="row">法人税合計</th>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_total_tax" value="{{ results.get('total_tax', '') }}">{% else %}{{ results.get('total_tax', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="results_total_tax" value="{{ results.get('total_tax', '') | format_number }}">{% else %}{{ results.get('total_tax', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <th scope="row">支払税率</th>
@@ -186,19 +186,19 @@
         <tbody>
           <tr>
             <td>800万円以下 所得</td>
-            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_income_u800" value="{{ breakdown.get('income_u800', '') }}">{% else %}{{ breakdown.get('income_u800', '') }}{% endif %}</td>
+            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_income_u800" value="{{ breakdown.get('income_u800', '') | format_number }}">{% else %}{{ breakdown.get('income_u800', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>800万円超 所得</td>
-            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_income_o800" value="{{ breakdown.get('income_o800', '') }}">{% else %}{{ breakdown.get('income_o800', '') }}{% endif %}</td>
+            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_income_o800" value="{{ breakdown.get('income_o800', '') | format_number }}">{% else %}{{ breakdown.get('income_o800', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
-            <td>15%税率 法人税</td>
-            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_corporate_tax_low_rate" value="{{ breakdown.get('corporate_tax_low_rate', '') }}">{% else %}{{ breakdown.get('corporate_tax_low_rate', '') }}{% endif %}</td>
+            <td>800万円以下 法人税</td>
+            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_corporate_tax_low_rate" value="{{ breakdown.get('corporate_tax_low_rate', '') | format_number }}">{% else %}{{ breakdown.get('corporate_tax_low_rate', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
-            <td>23.2%税率 法人税</td>
-            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_corporate_tax_high_rate" value="{{ breakdown.get('corporate_tax_high_rate', '') }}">{% else %}{{ breakdown.get('corporate_tax_high_rate', '') }}{% endif %}</td>
+            <td>800万円超 法人税</td>
+            <td>{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_corporate_tax_high_rate" value="{{ breakdown.get('corporate_tax_high_rate', '') | format_number }}">{% else %}{{ breakdown.get('corporate_tax_high_rate', '') | format_number }}{% endif %}</td>
           </tr>
         </tbody>
       </table>
@@ -213,47 +213,47 @@
         <tbody>
           <tr>
             <td>事業税課税標準</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_base" value="{{ breakdown.get('enterprise_tax_base', '') }}">{% else %}{{ breakdown.get('enterprise_tax_base', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_base" value="{{ breakdown.get('enterprise_tax_base', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_tax_base', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>所得400万以下の枠の所得</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_income_u4m" value="{{ breakdown.get('enterprise_income_u4m', '') }}">{% else %}{{ breakdown.get('enterprise_income_u4m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_income_u4m" value="{{ breakdown.get('enterprise_income_u4m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_income_u4m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>所得400万以下の枠の課税標準</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_base_u4m" value="{{ breakdown.get('enterprise_base_u4m', '') }}">{% else %}{{ breakdown.get('enterprise_base_u4m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_base_u4m" value="{{ breakdown.get('enterprise_base_u4m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_base_u4m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>所得400万超800万以下枠の所得</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_income_4m_8m" value="{{ breakdown.get('enterprise_income_4m_8m', '') }}">{% else %}{{ breakdown.get('enterprise_income_4m_8m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_income_4m_8m" value="{{ breakdown.get('enterprise_income_4m_8m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_income_4m_8m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>所得400万超800万円以下の枠の課税標準</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_base_4m_8m" value="{{ breakdown.get('enterprise_base_4m_8m', '') }}">{% else %}{{ breakdown.get('enterprise_base_4m_8m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_base_4m_8m" value="{{ breakdown.get('enterprise_base_4m_8m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_base_4m_8m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>所得800万円超の枠の所得</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_income_o8m" value="{{ breakdown.get('enterprise_income_o8m', '') }}">{% else %}{{ breakdown.get('enterprise_income_o8m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_income_o8m" value="{{ breakdown.get('enterprise_income_o8m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_income_o8m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr>
             <td>800万円超の枠の課税標準</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_base_o8m" value="{{ breakdown.get('enterprise_base_o8m', '') }}">{% else %}{{ breakdown.get('enterprise_base_o8m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_base_o8m" value="{{ breakdown.get('enterprise_base_o8m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_base_o8m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <td>所得400万円以下税額</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_u4m" value="{{ breakdown.get('enterprise_tax_u4m', '') }}">{% else %}{{ breakdown.get('enterprise_tax_u4m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_u4m" value="{{ breakdown.get('enterprise_tax_u4m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_tax_u4m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <td>所得400万円超800万円以下税額</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_4m_8m" value="{{ breakdown.get('enterprise_tax_4m_8m', '') }}">{% else %}{{ breakdown.get('enterprise_tax_4m_8m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_4m_8m" value="{{ breakdown.get('enterprise_tax_4m_8m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_tax_4m_8m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-total">
             <td>所得800万円超税額</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_o8m" value="{{ breakdown.get('enterprise_tax_o8m', '') }}">{% else %}{{ breakdown.get('enterprise_tax_o8m', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_enterprise_tax_o8m" value="{{ breakdown.get('enterprise_tax_o8m', '') | format_number }}">{% else %}{{ breakdown.get('enterprise_tax_o8m', '') | format_number }}{% endif %}</td>
           </tr>
           <tr class="tax-row-grand-total">
             <td>都道府県民税・市町村民税課税標準</td>
-            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_pref_tax_base" value="{{ breakdown.get('pref_tax_base', '') }}">{% else %}{{ breakdown.get('pref_tax_base', '') }}{% endif %}</td>
+            <td class="tax-cell-highlight">{% if allow_manual %}<input type="text" class="tax-input" name="breakdown_pref_tax_base" value="{{ breakdown.get('pref_tax_base', '') | format_number }}">{% else %}{{ breakdown.get('pref_tax_base', '') | format_number }}{% endif %}</td>
           </tr>
         </tbody>
       </table>

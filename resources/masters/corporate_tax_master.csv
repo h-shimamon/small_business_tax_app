@@ -1,0 +1,2 @@
+fiscal_start_date,fiscal_end_date,months_standard,months_truncated,corporate_tax_rate_u8m,corporate_tax_rate_o8m,local_corporate_tax_rate,enterprise_tax_rate_u4m,enterprise_tax_rate_4m_8m,enterprise_tax_rate_o8m,local_special_tax_rate,prefectural_corporate_tax_rate,prefectural_equalization_amount,municipal_corporate_tax_rate,municipal_equalization_amount
+2024-04-01,2025-03-31,12,12,15.00,23.20,10.30,3.50,5.30,7.00,43.20,1.00,20000,6.00,50000

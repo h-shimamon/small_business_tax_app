@@ -47,23 +47,23 @@
 }
 
 .tax-cell-input {
-  background: #fff8f2;
-  font-weight: 600;
+  background: #ffffff;
+  font-weight: 400;
 }
 
 .tax-cell-highlight {
-  background: #f2fbff;
-  font-weight: 700;
+  background: #ffffff;
+  font-weight: 400;
 }
 
 .tax-row-total td {
-  background: #f9fafc;
-  font-weight: 600;
+  background: #ffffff;
+  font-weight: 400;
 }
 
 .tax-row-grand-total td {
-  background: #e4f3ff;
-  font-weight: 700;
+  background: #ffffff;
+  font-weight: 500;
 }
 
 .tax-card-results .tax-table + .tax-card-subtitle {
@@ -84,6 +84,12 @@
   font-size: 0.95rem;
   box-sizing: border-box;
   background: inherit;
+  text-align: right;
+  font-weight: 400;
+}
+
+.tax-input-date {
+  text-align: left;
 }
 
 .tax-cell-highlight .tax-input {
