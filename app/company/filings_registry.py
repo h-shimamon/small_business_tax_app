@@ -22,6 +22,7 @@ REGISTRY: Dict[str, FilingPage] = {
     'beppyo_15': {'title': '別表15'},
     'tax_payment_status_beppyo_5_2': {'title': '法人税等の納付状況（別表５(2))'},
     'beppyo_7': {'title': '別表７'},
+    'corporate_tax_calculation': {'title': '法人税の計算', 'template': 'company/filings/corporate_tax_calculation.html'},
     'beppyo_4': {'title': '別表４'},
     'beppyo_5_1': {'title': '別表５(1)'},
     'appropriation_calc_beppyo_5_2': {'title': '納税充当金の計算（別表５(2))'},

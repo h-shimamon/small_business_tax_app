@@ -178,7 +178,16 @@ def get_navigation_state(current_page_key, skipped_steps=None):
         node.to_dict(current_page_key, list(completed_steps), skipped_steps)
         for node in navigation_tree
     ]
-    
+
+    is_admin = bool(getattr(current_user, 'is_admin', False))
+    if not is_admin:
+        for parent in nav_state:
+            if parent.get('key') == 'filings_group':
+                parent['children'] = [
+                    child for child in parent.get('children', [])
+                    if child.get('key') != 'corporate_tax_calc'
+                ]
+
     return nav_state
 
 def mark_step_as_completed(step_key):

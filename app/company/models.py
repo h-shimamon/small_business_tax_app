@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
     is_email_verified = db.Column(db.Boolean, nullable=False, server_default=db.text('0'))
+    is_admin = db.Column(db.Boolean, nullable=False, server_default=db.text('0'))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -412,3 +413,38 @@ class AccountingData(db.Model):
     data = db.Column(db.JSON, nullable=False) # 財務諸表本体
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+
+class CorporateTaxMaster(db.Model):
+    __tablename__ = 'corporate_tax_master'
+
+    id = db.Column(db.Integer, primary_key=True)
+    fiscal_start_date = db.Column(db.Date, nullable=False)
+    fiscal_end_date = db.Column(db.Date, nullable=False)
+    months_standard = db.Column(db.Integer, nullable=False)
+    months_truncated = db.Column(db.Integer, nullable=False)
+
+    corporate_tax_rate_u8m = db.Column(db.Numeric(5, 2), nullable=False)
+    corporate_tax_rate_o8m = db.Column(db.Numeric(5, 2), nullable=False)
+    local_corporate_tax_rate = db.Column(db.Numeric(5, 2), nullable=False)
+
+    enterprise_tax_rate_u4m = db.Column(db.Numeric(5, 2), nullable=False)
+    enterprise_tax_rate_4m_8m = db.Column(db.Numeric(5, 2), nullable=False)
+    enterprise_tax_rate_o8m = db.Column(db.Numeric(5, 2), nullable=False)
+
+    local_special_tax_rate = db.Column(db.Numeric(5, 2), nullable=False)
+    prefectural_corporate_tax_rate = db.Column(db.Numeric(5, 2), nullable=False)
+    prefectural_equalization_amount = db.Column(db.Integer, nullable=False)
+    municipal_corporate_tax_rate = db.Column(db.Numeric(5, 2), nullable=False)
+    municipal_equalization_amount = db.Column(db.Integer, nullable=False)
+
+    created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    updated_at = db.Column(
+        db.DateTime,
+        server_default=db.func.current_timestamp(),
+        onupdate=db.func.current_timestamp(),
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('fiscal_start_date', name='ux_corporate_tax_master_fiscal_start'),
+    )

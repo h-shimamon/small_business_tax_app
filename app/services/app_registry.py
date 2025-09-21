@@ -118,6 +118,7 @@ NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
             {"key": "business_overview_3", "name": "事業概況説明書３", "endpoint": "company.filings", "params": {"page": "business_overview_3"}},
             {"key": "tax_payment_status_beppyo_5_2", "name": "法人税等の納付状況（別表５(2))", "endpoint": "company.filings", "params": {"page": "tax_payment_status_beppyo_5_2"}},
             {"key": "beppyo_7", "name": "別表７", "endpoint": "company.filings", "params": {"page": "beppyo_7"}},
+                        {"key": "corporate_tax_calc", "name": "法人税の計算", "endpoint": "company.filings", "params": {"page": "corporate_tax_calculation"}},
             {"key": "beppyo_4", "name": "別表４", "endpoint": "company.filings", "params": {"page": "beppyo_4"}},
             {"key": "beppyo_5_1", "name": "別表５(1)", "endpoint": "company.filings", "params": {"page": "beppyo_5_1"}},
             {"key": "appropriation_calc_beppyo_5_2", "name": "納税充当金の計算（別表５(2))", "endpoint": "company.filings", "params": {"page": "appropriation_calc_beppyo_5_2"}},
