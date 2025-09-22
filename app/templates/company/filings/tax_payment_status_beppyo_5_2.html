@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}法人税等の納付状況（別表５(2)){% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/corporate_tax_calculation.css') }}">
+  <style>
+    .tax-payment-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tax-payment-card {
+      grid-column: 1 / -1;
+    }
+    .tax-payment-table-wrapper {
+      overflow-x: auto;
+    }
+    .tax-payment-table {
+      min-width: 1100px;
+    }
+    .tax-payment-category {
+      text-align: center;
+      vertical-align: middle;
+      font-weight: 600;
+      background: #f7f8fb;
+      min-width: 160px;
+      white-space: normal;
+    }
+    .tax-payment-subcategory {
+      white-space: nowrap;
+      text-align: left;
+      min-width: 140px;
+    }
+    .tax-payment-single .tax-payment-category {
+      text-align: left;
+      padding-left: 1.5rem;
+    }
+    .tax-payment-note-category {
+      text-align: left;
+      padding-left: 1.5rem;
+    }
+    .tax-payment-note-row td {
+      background: #fdfdfd;
+    }
+    .tax-payment-note-text {
+      font-size: 0.9rem;
+      color: #4f5a6b;
+      margin-top: 0.2rem;
+      line-height: 1.4;
+    }
+    .tax-payment-note-sub {
+      font-size: 0.95rem;
+      margin-top: 0.1rem;
+      display: block;
+    }
+    .tax-input-note {
+      text-align: left;
+    }
+
+  </style>
+{% endblock %}
+
+{% block content %}
+{% set inputs = inputs if inputs is defined else {} %}
+{% set tax_fields = [
+  ('opening_balance', '期首未納税額'),
+  ('current_tax', '当期発生税額'),
+  ('payment_from_reserve', '納税充当金納付'),
+  ('payment_from_expense', '損金経理納付'),
+  ('closing_balance', '期末未納税額')
+] %}
+{% set grouped_categories = [
+  {
+    'category': '法人税',
+    'rows': [
+      {'label': '前期以前分', 'key': 'corporate_tax_prior_prior'},
+      {'label': '前期分', 'key': 'corporate_tax_prior'},
+      {'label': '当期中間分', 'key': 'corporate_tax_current_interim'}
+    ]
+  },
+  {
+    'category': '道府県民税',
+    'rows': [
+      {'label': '前期以前分', 'key': 'prefectural_tax_prior_prior'},
+      {'label': '前期分', 'key': 'prefectural_tax_prior'},
+      {'label': '当期中間分', 'key': 'prefectural_tax_current_interim'}
+    ]
+  },
+  {
+    'category': '市町村民税',
+    'rows': [
+      {'label': '前期以前分', 'key': 'municipal_tax_prior_prior'},
+      {'label': '前期分', 'key': 'municipal_tax_prior'},
+      {'label': '当期中間分', 'key': 'municipal_tax_current_interim'}
+    ]
+  },
+  {
+    'category': '事業税',
+    'rows': [
+      {'label': '前期以前分', 'key': 'enterprise_tax_prior_prior'},
+      {'label': '前期分', 'key': 'enterprise_tax_prior'},
+      {'label': '当期中間分', 'key': 'enterprise_tax_current_interim'}
+    ]
+  }
+] %}
+{% set single_category_rows = [
+  {'label': '加算税（国税）・加算金（地方税）', 'key': 'additional_tax'},
+  {'label': '延滞税（国税）', 'key': 'delinquent_tax_national'},
+  {'label': '延滞金（地方税）（延納除く）', 'key': 'delinquent_tax_local'},
+  {'label': '過怠税（当期分）', 'key': 'penalty_tax'},
+  {'label': '預金や配当から天引される所得税', 'key': 'withheld_income_tax', 'note': '（損金に算入される所得税）'}
+] %}
+{% set note_rows = [
+  {'label': '（その他租税公課）', 'sub_label': '損金算入のもの', 'key': 'other_taxes_deductible'},
+  {'label': '（その他租税公課）', 'sub_label': '損金不算入のもの', 'key': 'other_taxes_non_deductible'}
+] %}
+
+<h1 class="content-title">法人税等の納付状況（別表５(2))の内訳</h1>
+<p class="content-subtitle">法人税等の納付状況を把握するための入力欄です。</p>
+
+<form method="post" class="tax-calculation-form">
+  <div class="tax-calculation-grid tax-payment-grid">
+    <section class="card tax-card tax-card-inputs tax-payment-card">
+      <h2 class="tax-card-title">入力内容</h2>
+      <div class="tax-payment-table-wrapper">
+        <table class="tax-table tax-payment-table">
+          <thead>
+            <tr>
+              <th scope="col" colspan="2" rowspan="2">税目</th>
+              <th scope="col" rowspan="2">{{ tax_fields[0][1] }}</th>
+              <th scope="col" rowspan="2">{{ tax_fields[1][1] }}</th>
+              <th scope="col" colspan="2">納付の経理をどのように行ったか</th>
+              <th scope="col" rowspan="2">{{ tax_fields[4][1] }}</th>
+            </tr>
+            <tr>
+              <th scope="col">{{ tax_fields[2][1] }}</th>
+              <th scope="col">{{ tax_fields[3][1] }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for group in grouped_categories %}
+              {% for row in group.rows %}
+              <tr>
+                {% if loop.first %}
+                  <th scope="rowgroup" class="tax-payment-category" rowspan="{{ group.rows | length }}">{{ group.category }}</th>
+                {% endif %}
+                <th scope="row" class="tax-payment-subcategory">{{ row.label }}</th>
+                {% for field_key, _ in tax_fields %}
+                <td><input type="text" class="tax-input" name="inputs_{{ row.key }}_{{ field_key }}" value="{{ inputs.get(row.key ~ '_' ~ field_key, '') }}"></td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            {% endfor %}
+
+            {% for row in single_category_rows %}
+            <tr class="tax-payment-single">
+              <th scope="row" class="tax-payment-category" colspan="2">
+                {{ row.label }}
+                {% if row.note %}<div class="tax-payment-note-text">{{ row.note }}</div>{% endif %}
+              </th>
+              {% for field_key, _ in tax_fields %}
+              <td><input type="text" class="tax-input" name="inputs_{{ row.key }}_{{ field_key }}" value="{{ inputs.get(row.key ~ '_' ~ field_key, '') }}"></td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+
+            {% for row in note_rows %}
+            <tr class="tax-payment-note-row">
+              <th scope="row" class="tax-payment-category tax-payment-note-category">
+                {{ row.label }}
+                <span class="tax-payment-note-sub">{{ row.sub_label }}</span>
+              </th>
+              <td class="tax-payment-note-input">
+                <input type="text" class="tax-input tax-input-note" name="inputs_{{ row.key }}_note" value="{{ inputs.get(row.key ~ '_note', '') }}">
+              </td>
+              {% for field_key, _ in tax_fields %}
+              <td><input type="text" class="tax-input" name="inputs_{{ row.key }}_{{ field_key }}" value="{{ inputs.get(row.key ~ '_' ~ field_key, '') }}"></td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="tax-actions">
+    <button type="submit" class="tax-submit-button">入力値を保存</button>
+  </div>
+</form>
+{% endblock %}

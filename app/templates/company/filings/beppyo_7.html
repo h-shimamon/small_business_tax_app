@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}別表７{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/corporate_tax_calculation.css') }}">
+  <style>
+    .beppyo7-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .beppyo7-card {
+      grid-column: 1 / -1;
+    }
+    .beppyo7-table-wrapper {
+      overflow-x: auto;
+    }
+    .beppyo7-table {
+      width: 100%;
+      min-width: 960px;
+      border-bottom: 1px solid #d8dce3;
+    }
+    .beppyo7-table th,
+    .beppyo7-table td {
+      text-align: left;
+      vertical-align: middle;
+    }
+    .beppyo7-table tbody tr:last-child th,
+    .beppyo7-table tbody tr:last-child td {
+      border-bottom: 1px solid #d8dce3;
+    }
+    .beppyo7-period-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .beppyo7-period-inputs .tax-input {
+      text-align: left;
+    }
+    .beppyo7-select {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #c6cad3;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    .beppyo7-label {
+      font-weight: 600;
+      display: block;
+      line-height: 1.4;
+    }
+    .beppyo7-label span {
+      display: block;
+    }
+    .beppyo7-blank {
+      background: #f0f1f5;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+{% set inputs = inputs if inputs is defined else {} %}
+{% set total_rows = range(14) %}
+
+<h1 class="content-title">別表７</h1>
+<p class="content-subtitle">控除未済欠損金額と当期控除額等を入力します。</p>
+
+<form method="post" class="tax-calculation-form">
+  <div class="tax-calculation-grid beppyo7-grid">
+    <section class="card tax-card beppyo7-card">
+      <h2 class="tax-cardタイトル">欠損金の控除状況</h2>
+      <div class="beppyo7-table-wrapper">
+        <table class="tax-table beppyo7-table">
+          <thead>
+            <tr>
+              <th scope="col">事業年度</th>
+              <th scope="col">区分</th>
+              <th scope="col">控除未済欠損金額</th>
+              <th scope="col">当期控除額</th>
+              <th scope="col">翌期繰越額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for idx in total_rows %}
+            {% set prefix = 'main' if idx < 10 else 'extra' %}
+            {% set serial = idx if idx < 10 else idx - 10 %}
+            {% set base = prefix ~ '_' ~ serial %}
+            {% set selected = inputs.get(base ~ '_category', 'blue_loss') %}
+
+            {% if idx < 10 %}
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="{{ base }}_period_start" value="{{ inputs.get(base ~ '_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="{{ base }}_period_end" value="{{ inputs.get(base ~ '_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="{{ base }}_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if selected == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if selected == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if selected == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_current_deduction" value="{{ inputs.get(base ~ '_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            {% elif idx == 10 %}
+            <tr>
+              <td colspan="2"><span class="beppyo7-label">計</span></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_current_deduction" value="{{ inputs.get(base ~ '_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            {% elif idx == 11 %}
+            <tr>
+              <td><span class="beppyo7-label">当期分</span></td>
+              <td><span class="beppyo7-label">欠損金額</span></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
+              <td><span class="beppyo7-label">欠損金の繰戻し額</span></td>
+              <td class="beppyo7-blank"></td>
+            </tr>
+            {% elif idx == 12 %}
+            <tr>
+              <td><span class="beppyo7-label">当期分</span></td>
+              <td><span class="beppyo7-label"><span>同上の内</span><span>青色欠損金</span></span></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_current_deduction" value="{{ inputs.get(base ~ '_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="2"><span class="beppyo7-label">合計</span></td>
+              <td class="beppyo7-blank"></td>
+              <td class="beppyo7-blank"></td>
+              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="tax-actions">
+    <button type="submit" class="tax-submit-button">入力値を保存</button>
+  </div>
+</form>
+{% endblock %}
