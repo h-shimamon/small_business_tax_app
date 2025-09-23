@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}利益積立金額の計算（別表５(1)）{% endblock %}
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/corporate_tax_calculation.css') }}">
+  <style>
+    .beppyo5-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .beppyo5-card {
+      grid-column: 1 / -1;
+    }
+    .beppyo5-table-wrapper {
+      overflow-x: auto;
+    }
+    .beppyo5-table {
+      width: 100%;
+      min-width: 840px;
+      border-collapse: collapse;
+      background: #fff;
+      border-bottom: 1px solid #d8dce3;
+    }
+    .beppyo5-table td {
+      border: 1px solid #d8dce3;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.95rem;
+      vertical-align: middle;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .beppyo5-table td:first-child {
+      white-space: normal;
+    }
+    .beppyo5-table .vertical-text {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      white-space: normal;
+    }
+  </style>
+{% endblock %}
+{% block content %}
+<h1 class="content-title">利益積立金額の計算（別表５(1)）</h1>
+<p class="content-subtitle">Excelシートから取り込んだ固定レイアウトです。</p>
+<div class="tax-calculation-grid beppyo5-grid">
+  <section class="card tax-card beppyo5-card">
+    <h2 class="tax-card-title">利益積立金額の計算（別表５(1)）</h2>
+    <div class="beppyo5-table-wrapper">
+      <table class="tax-table beppyo5-table">
+          <tbody>
+            <tr>
+              <td></td>
+              <td>区分</td>
+              <td></td>
+              <td>期首現在<br>利益積立金額  </td>
+              <td>当期の増減<br></td>
+              <td></td>
+              <td></td>
+              <td>差引翌期首現在<br>利益積立金額</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>減</td>
+              <td>増</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>①</td>
+              <td>②</td>
+              <td>③</td>
+              <td></td>
+              <td>④</td>
+            </tr>
+            <tr>
+              <td rowspan="14" class="vertical-text">未納法人税<br>（退職年金等積立金に対するものを除く）</td>
+              <td>利益準備金</td>
+              <td>1</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>         積立金</td>
+              <td>2</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>3</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>繰越損益金</td>
+              <td>4</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>納税充当金</td>
+              <td>5</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td rowspan="2">未納法人税及び<br>未納地方法人税<br> (附帯税を除く) </td>
+              <td>6</td>
+              <td></td>
+              <td></td>
+              <td>中間</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td></td>
+              <td></td>
+              <td>確定</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td rowspan="2">未払通算税効果額<br>(附帯税の額に係る部分の金額を除く。)</td>
+              <td>8</td>
+              <td></td>
+              <td></td>
+              <td>中間</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td></td>
+              <td></td>
+              <td>確定</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td rowspan="2">未納道府県民税<br>(均等割額を含む) </td>
+              <td>10</td>
+              <td></td>
+              <td></td>
+              <td>中間</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td></td>
+              <td></td>
+              <td>確定</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td rowspan="2">未納市町村民税<br>(均等割額を含む) </td>
+              <td>12</td>
+              <td></td>
+              <td></td>
+              <td>中間</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td></td>
+              <td></td>
+              <td>確定</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>差引合計額</td>
+              <td>14</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
