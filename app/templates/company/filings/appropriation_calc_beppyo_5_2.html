@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}納税充当金の計算（別表５(2)){% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/corporate_tax_calculation.css') }}">
+  <style>
+    .tax-payment-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tax-payment-card {
+      grid-column: 1 / -1;
+    }
+    .tax-payment-table-wrapper {
+      overflow-x: auto;
+    }
+    .tax-payment-table {
+      min-width: 900px;
+    }
+    .tax-payment-category {
+      text-align: center;
+      vertical-align: middle;
+      font-weight: 600;
+      background: #f7f8fb;
+      min-width: 160px;
+      white-space: normal;
+    }
+    .tax-payment-subcategory {
+      white-space: nowrap;
+      text-align: left;
+      min-width: 140px;
+    }
+    .tax-payment-header-input {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #c6cad3;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      background: #fff;
+      text-align: left;
+    }
+    .tax-payment-table tr:last-child th,
+    .tax-payment-table tr:last-child td {
+      border-bottom: 1px solid #c6cad3;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+{% set inputs = inputs if inputs is defined else {} %}
+
+
+<h1 class="content-title">納税充当金の計算（別表５(2))の内訳</h1>
+<p class="content-subtitle">納税充当金の状況を把握するための入力欄です。</p>
+
+<form method="post" class="tax-calculation-form">
+  <div class="tax-calculation-grid tax-payment-grid">
+    <section class="card tax-card tax-card-inputs tax-payment-card">
+      <h2 class="tax-card-title">入力内容</h2>
+      <div class="tax-payment-table-wrapper">
+        <table class="tax-table tax-payment-table">
+          <thead>
+            <tr>
+              <th scope="col">1</th>
+              <th scope="col">2</th>
+              <th scope="col">3</th>
+              <th scope="col">4</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="tax-payment-category" colspan="3">期首納税充当金</th>
+              <td><input type="text" class="tax-input tax-payment-header-input" name="summary_processed_reserve" value="{{ inputs.get('summary_processed_reserve', '') }}" placeholder="0"></td>
+            </tr>
+
+
+            <tr>
+              <th scope="rowgroup" class="tax-payment-category" rowspan="3">繰入額</th>
+              <th scope="row" class="tax-payment-subcategory" colspan="2">損金経理をした納税充当金</th>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_prior_current_tax" value="{{ inputs.get('corporate_tax_prior_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory" colspan="2">
+                <input type="text" class="tax-input" name="inputs_corporate_tax_prior_opening_balance" value="{{ inputs.get('corporate_tax_prior_opening_balance', '') }}">
+              </th>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_current_tax" value="{{ inputs.get('corporate_tax_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory" colspan="2">計</th>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_current_interim_current_tax" value="{{ inputs.get('corporate_tax_current_interim_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="rowgroup" class="tax-payment-category" rowspan="7">取崩額</th>
+              <th scope="row" class="tax-payment-subcategory" colspan="2">法人税額等</th>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_prior_current_tax" value="{{ inputs.get('prefectural_tax_prior_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory" colspan="2">事業税</th>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_current_tax" value="{{ inputs.get('prefectural_tax_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory" rowspan="4">その他</th>
+              <th scope="row" class="tax-payment-subcategory">損金算入のもの</th>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_current_interim_current_tax" value="{{ inputs.get('prefectural_tax_current_interim_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">損金不算入のもの</th>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_prior_current_tax" value="{{ inputs.get('municipal_tax_prior_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_label" value="{{ inputs.get('municipal_tax_prior_label', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_current_tax" value="{{ inputs.get('municipal_tax_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">仮払税金消却</th>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_current_interim_current_tax" value="{{ inputs.get('municipal_tax_current_interim_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <td colspan="2">計</td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_prior_current_tax" value="{{ inputs.get('enterprise_tax_prior_prior_current_tax', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-category" colspan="3">期末納税充当金(期末未払法人税等)</th>
+              <td><input type="text" class="tax-input" name="inputs_year_end_tax_reserve" value="{{ inputs.get('year_end_tax_reserve', '') }}"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="tax-actions">
+    <button type="submit" class="tax-submit-button">入力値を保存</button>
+  </div>
+</form>
+{% endblock %}

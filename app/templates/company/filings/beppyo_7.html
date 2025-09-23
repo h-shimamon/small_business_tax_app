@@ -60,8 +60,6 @@
 
 {% block content %}
 {% set inputs = inputs if inputs is defined else {} %}
-{% set total_rows = range(14) %}
-
 <h1 class="content-title">別表７</h1>
 <p class="content-subtitle">控除未済欠損金額と当期控除額等を入力します。</p>
 
@@ -80,64 +78,213 @@
               <th scope="col">翌期繰越額</th>
             </tr>
           </thead>
-          <tbody>
-            {% for idx in total_rows %}
-            {% set prefix = 'main' if idx < 10 else 'extra' %}
-            {% set serial = idx if idx < 10 else idx - 10 %}
-            {% set base = prefix ~ '_' ~ serial %}
-            {% set selected = inputs.get(base ~ '_category', 'blue_loss') %}
-
-            {% if idx < 10 %}
+                    <tbody>
             <tr>
               <td>
                 <div class="beppyo7-period-inputs">
-                  <input type="text" class="tax-input" name="{{ base }}_period_start" value="{{ inputs.get(base ~ '_period_start', '') }}" placeholder="YYYY-MM-DD">
-                  <input type="text" class="tax-input" name="{{ base }}_period_end" value="{{ inputs.get(base ~ '_period_end', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_0_period_start" value="{{ inputs.get('main_0_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_0_period_end" value="{{ inputs.get('main_0_period_end', '') }}" placeholder="YYYY-MM-DD">
                 </div>
               </td>
               <td>
-                <select name="{{ base }}_category" class="beppyo7-select">
-                  <option value="blue_loss" {{ 'selected' if selected == 'blue_loss' else '' }}>青色欠損</option>
-                  <option value="consolidated_loss" {{ 'selected' if selected == 'consolidated_loss' else '' }}>連結みなし欠損</option>
-                  <option value="disaster_loss" {{ 'selected' if selected == 'disaster_loss' else '' }}>災害損失</option>
+                <select name="main_0_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_0_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_0_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_0_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
                 </select>
               </td>
-              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_current_deduction" value="{{ inputs.get(base ~ '_current_deduction', '') }}" placeholder="0"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_0_carry_forward" value="{{ inputs.get('main_0_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_0_current_deduction" value="{{ inputs.get('main_0_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_0_next_carry" value="{{ inputs.get('main_0_next_carry', '') }}" placeholder="0"></td>
             </tr>
-            {% elif idx == 10 %}
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_1_period_start" value="{{ inputs.get('main_1_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_1_period_end" value="{{ inputs.get('main_1_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_1_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_1_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_1_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_1_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_1_carry_forward" value="{{ inputs.get('main_1_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_1_current_deduction" value="{{ inputs.get('main_1_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_1_next_carry" value="{{ inputs.get('main_1_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_2_period_start" value="{{ inputs.get('main_2_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_2_period_end" value="{{ inputs.get('main_2_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_2_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_2_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_2_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_2_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_2_carry_forward" value="{{ inputs.get('main_2_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_2_current_deduction" value="{{ inputs.get('main_2_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_2_next_carry" value="{{ inputs.get('main_2_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_3_period_start" value="{{ inputs.get('main_3_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_3_period_end" value="{{ inputs.get('main_3_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_3_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_3_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_3_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_3_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_3_carry_forward" value="{{ inputs.get('main_3_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_3_current_deduction" value="{{ inputs.get('main_3_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_3_next_carry" value="{{ inputs.get('main_3_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_4_period_start" value="{{ inputs.get('main_4_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_4_period_end" value="{{ inputs.get('main_4_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_4_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_4_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_4_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_4_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_4_carry_forward" value="{{ inputs.get('main_4_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_4_current_deduction" value="{{ inputs.get('main_4_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_4_next_carry" value="{{ inputs.get('main_4_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_5_period_start" value="{{ inputs.get('main_5_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_5_period_end" value="{{ inputs.get('main_5_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_5_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_5_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_5_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_5_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_5_carry_forward" value="{{ inputs.get('main_5_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_5_current_deduction" value="{{ inputs.get('main_5_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_5_next_carry" value="{{ inputs.get('main_5_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_6_period_start" value="{{ inputs.get('main_6_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_6_period_end" value="{{ inputs.get('main_6_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_6_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_6_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_6_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_6_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_6_carry_forward" value="{{ inputs.get('main_6_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_6_current_deduction" value="{{ inputs.get('main_6_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_6_next_carry" value="{{ inputs.get('main_6_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_7_period_start" value="{{ inputs.get('main_7_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_7_period_end" value="{{ inputs.get('main_7_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_7_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_7_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_7_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_7_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_7_carry_forward" value="{{ inputs.get('main_7_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_7_current_deduction" value="{{ inputs.get('main_7_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_7_next_carry" value="{{ inputs.get('main_7_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_8_period_start" value="{{ inputs.get('main_8_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_8_period_end" value="{{ inputs.get('main_8_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_8_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_8_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_8_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_8_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_8_carry_forward" value="{{ inputs.get('main_8_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_8_current_deduction" value="{{ inputs.get('main_8_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_8_next_carry" value="{{ inputs.get('main_8_next_carry', '') }}" placeholder="0"></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="beppyo7-period-inputs">
+                  <input type="text" class="tax-input" name="main_9_period_start" value="{{ inputs.get('main_9_period_start', '') }}" placeholder="YYYY-MM-DD">
+                  <input type="text" class="tax-input" name="main_9_period_end" value="{{ inputs.get('main_9_period_end', '') }}" placeholder="YYYY-MM-DD">
+                </div>
+              </td>
+              <td>
+                <select name="main_9_category" class="beppyo7-select">
+                  <option value="blue_loss" {{ 'selected' if inputs.get('main_9_category', 'blue_loss') == 'blue_loss' else '' }}>青色欠損</option>
+                  <option value="consolidated_loss" {{ 'selected' if inputs.get('main_9_category', 'blue_loss') == 'consolidated_loss' else '' }}>連結みなし欠損</option>
+                  <option value="disaster_loss" {{ 'selected' if inputs.get('main_9_category', 'blue_loss') == 'disaster_loss' else '' }}>災害損失</option>
+                </select>
+              </td>
+              <td><input type="text" class="tax-input" name="main_9_carry_forward" value="{{ inputs.get('main_9_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_9_current_deduction" value="{{ inputs.get('main_9_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="main_9_next_carry" value="{{ inputs.get('main_9_next_carry', '') }}" placeholder="0"></td>
+            </tr>
             <tr>
               <td colspan="2"><span class="beppyo7-label">計</span></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_current_deduction" value="{{ inputs.get(base ~ '_current_deduction', '') }}" placeholder="0"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_0_carry_forward" value="{{ inputs.get('extra_0_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_0_current_deduction" value="{{ inputs.get('extra_0_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_0_next_carry" value="{{ inputs.get('extra_0_next_carry', '') }}" placeholder="0"></td>
             </tr>
-            {% elif idx == 11 %}
             <tr>
               <td><span class="beppyo7-label">当期分</span></td>
               <td><span class="beppyo7-label">欠損金額</span></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_1_carry_forward" value="{{ inputs.get('extra_1_carry_forward', '') }}" placeholder="0"></td>
               <td><span class="beppyo7-label">欠損金の繰戻し額</span></td>
               <td class="beppyo7-blank"></td>
             </tr>
-            {% elif idx == 12 %}
             <tr>
               <td><span class="beppyo7-label">当期分</span></td>
               <td><span class="beppyo7-label"><span>同上の内</span><span>青色欠損金</span></span></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_carry_forward" value="{{ inputs.get(base ~ '_carry_forward', '') }}" placeholder="0"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_current_deduction" value="{{ inputs.get(base ~ '_current_deduction', '') }}" placeholder="0"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_2_carry_forward" value="{{ inputs.get('extra_2_carry_forward', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_2_current_deduction" value="{{ inputs.get('extra_2_current_deduction', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_2_next_carry" value="{{ inputs.get('extra_2_next_carry', '') }}" placeholder="0"></td>
             </tr>
-            {% else %}
             <tr>
               <td colspan="2"><span class="beppyo7-label">合計</span></td>
               <td class="beppyo7-blank"></td>
               <td class="beppyo7-blank"></td>
-              <td><input type="text" class="tax-input" name="{{ base }}_next_carry" value="{{ inputs.get(base ~ '_next_carry', '') }}" placeholder="0"></td>
+              <td><input type="text" class="tax-input" name="extra_3_next_carry" value="{{ inputs.get('extra_3_next_carry', '') }}" placeholder="0"></td>
             </tr>
-            {% endif %}
-            {% endfor %}
           </tbody>
         </table>
       </div>
