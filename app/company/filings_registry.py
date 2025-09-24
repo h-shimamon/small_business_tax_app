@@ -23,9 +23,9 @@ REGISTRY: Dict[str, FilingPage] = {
     'tax_payment_status_beppyo_5_2': {'title': '法人税等の納付状況（別表５(2))', 'template': 'company/filings/tax_payment_status_beppyo_5_2.html'},
     'beppyo_7': {'title': '別表７', 'template': 'company/filings/beppyo_7.html'},
     'corporate_tax_calculation': {'title': '法人税の計算', 'template': 'company/filings/corporate_tax_calculation.html'},
-    'beppyo_4': {'title': '別表４'},
+    'beppyo_4': {'title': '別表４', 'template': 'company/filings/beppyo_4.html'},
     'beppyo_5_1': {'title': '別表５(1)'},
-    'appropriation_calc_beppyo_5_2': {'title': '納税充当金の計算（別表５(2))'},
+    'appropriation_calc_beppyo_5_2': {'title': '納税充当金の計算（別表５(2))', 'template': 'company/filings/appropriation_calc_beppyo_5_2.html'},
     'local_tax_rates': {'title': '地方税税率登録'},
     # 事業概況説明書: 1のみ専用テンプレ/プレビューPDFを現時点で登録
     'business_overview_1': {
