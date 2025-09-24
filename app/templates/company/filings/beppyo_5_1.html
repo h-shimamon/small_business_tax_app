@@ -4,205 +4,174 @@
   {{ super() }}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/corporate_tax_calculation.css') }}">
   <style>
-    .beppyo5-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .beppyo5-card {
-      grid-column: 1 / -1;
-    }
-    .beppyo5-table-wrapper {
-      overflow-x: auto;
-    }
-    .beppyo5-table {
-      width: 100%;
-      min-width: 840px;
-      border-collapse: collapse;
+    .beppyo5-sheet {
+      display: grid;
+      grid-template-columns: 170px 170px 110px 160px 150px 150px 150px 200px;
+      grid-auto-rows: minmax(50px, auto);
+      border: 1px solid #d8dce3;
       background: #fff;
-      border-bottom: 1px solid #d8dce3;
     }
-    .beppyo5-table td {
+    .beppyo5-sheet .cell {
       border: 1px solid #d8dce3;
       padding: 0.45rem 0.6rem;
       font-size: 0.95rem;
-      vertical-align: middle;
-      text-align: left;
-      white-space: nowrap;
-    }
-    .beppyo5-table td:first-child {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      background: #fff;
       white-space: normal;
     }
-    .beppyo5-table .vertical-text {
+    .beppyo5-sheet .cell.header {
+      background: #f7f8fb;
+      font-weight: 600;
+    }
+    .beppyo5-sheet .cell.center {
+      justify-content: center;
+      text-align: center;
+    }
+    .beppyo5-sheet .cell.vertical {
       writing-mode: vertical-rl;
       text-orientation: upright;
-      white-space: normal;
+      justify-content: center;
+      align-items: center;
+    }
+    .beppyo5-sheet .cell.small {
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+    .beppyo5-hint {
+      margin-bottom: 1rem;
+      color: #566172;
+      font-size: 0.9rem;
     }
   </style>
 {% endblock %}
 {% block content %}
 <h1 class="content-title">利益積立金額の計算（別表５(1)）</h1>
-<p class="content-subtitle">Excelシートから取り込んだ固定レイアウトです。</p>
-<div class="tax-calculation-grid beppyo5-grid">
-  <section class="card tax-card beppyo5-card">
-    <h2 class="tax-card-title">利益積立金額の計算（別表５(1)）</h2>
-    <div class="beppyo5-table-wrapper">
-      <table class="tax-table beppyo5-table">
-          <tbody>
-            <tr>
-              <td></td>
-              <td>区分</td>
-              <td></td>
-              <td>期首現在<br>利益積立金額  </td>
-              <td>当期の増減<br></td>
-              <td></td>
-              <td></td>
-              <td>差引翌期首現在<br>利益積立金額</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>減</td>
-              <td>増</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>①</td>
-              <td>②</td>
-              <td>③</td>
-              <td></td>
-              <td>④</td>
-            </tr>
-            <tr>
-              <td rowspan="14" class="vertical-text">未納法人税<br>（退職年金等積立金に対するものを除く）</td>
-              <td>利益準備金</td>
-              <td>1</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>         積立金</td>
-              <td>2</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td>3</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>繰越損益金</td>
-              <td>4</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>納税充当金</td>
-              <td>5</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td rowspan="2">未納法人税及び<br>未納地方法人税<br> (附帯税を除く) </td>
-              <td>6</td>
-              <td></td>
-              <td></td>
-              <td>中間</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>7</td>
-              <td></td>
-              <td></td>
-              <td>確定</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td rowspan="2">未払通算税効果額<br>(附帯税の額に係る部分の金額を除く。)</td>
-              <td>8</td>
-              <td></td>
-              <td></td>
-              <td>中間</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>9</td>
-              <td></td>
-              <td></td>
-              <td>確定</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td rowspan="2">未納道府県民税<br>(均等割額を含む) </td>
-              <td>10</td>
-              <td></td>
-              <td></td>
-              <td>中間</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>11</td>
-              <td></td>
-              <td></td>
-              <td>確定</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td rowspan="2">未納市町村民税<br>(均等割額を含む) </td>
-              <td>12</td>
-              <td></td>
-              <td></td>
-              <td>中間</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>13</td>
-              <td></td>
-              <td></td>
-              <td>確定</td>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td>差引合計額</td>
-              <td>14</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-          </tbody>
-      </table>
-    </div>
-  </section>
+<p class="beppyo5-hint">セルの結合は grid-column / grid-row を編集することで Excel と同じ感覚で調整できます。</p>
+<div class="beppyo5-sheet">
+  <!-- Header -->
+  <div class="cell header center" style="grid-column: 1 / span 3; grid-row: 1 / span 3;">区分</div>
+  <div class="cell header center" style="grid-column: 4; grid-row: 1 / span 2;">期首現在<br>利益積立金額</div>
+  <div class="cell header center" style="grid-column: 5 / span 3; grid-row: 1;">当期の増減</div>
+  <div class="cell header center" style="grid-column: 5; grid-row: 2;">減</div>
+  <div class="cell header center" style="grid-column: 6 / span 2; grid-row: 2;">増</div>
+  <div class="cell header center" style="grid-column: 8; grid-row: 1 / span 2;">差引翌期首現在<br>利益積立金額</div>
+
+  <div class="cell center" style="grid-column: 4; grid-row: 3;">①</div>
+  <div class="cell center" style="grid-column: 5; grid-row: 3;">②</div>
+  <div class="cell center" style="grid-column: 6 / span 2; grid-row: 3;">③</div>
+  <div class="cell center" style="grid-column: 8; grid-row: 3;">④</div>
+
+  <!-- Blank rows above vertical label -->
+  <div class="cell" style="grid-column: 1; grid-row: 5;">&nbsp;</div>
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 6;">&nbsp;</div>
+  <div class="cell" style="grid-column: 1; grid-row: 7;">&nbsp;</div>
+  <div class="cell" style="grid-column: 1; grid-row: 8;">&nbsp;</div>
+
+  <!-- Data rows -->
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 4;">利益準備金</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 4;">1</div>
+  <div class="cell" style="grid-column: 4; grid-row: 4;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 4;">&nbsp;</div>
+  <div class="cell" style="grid-column: 6 / span 2; grid-row: 4;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 4;">&nbsp;</div>
+
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 5;">積立金</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 5;">2</div>
+  <div class="cell" style="grid-column: 4; grid-row: 5;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 5;">&nbsp;</div>
+  <div class="cell" style="grid-column: 6 / span 2; grid-row: 5;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 5;">&nbsp;</div>
+
+  <div class="cell center" style="grid-column: 3; grid-row: 6;">3</div>
+  <div class="cell" style="grid-column: 4; grid-row: 6;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 6;">&nbsp;</div>
+  <div class="cell" style="grid-column: 6 / span 2; grid-row: 6;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 6;">&nbsp;</div>
+
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 7;">繰越損益金</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 7;">4</div>
+  <div class="cell" style="grid-column: 4; grid-row: 7;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 7;">&nbsp;</div>
+  <div class="cell" style="grid-column: 6 / span 2; grid-row: 7;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 7;">&nbsp;</div>
+
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 8;">納税充当金</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 8;">5</div>
+  <div class="cell" style="grid-column: 4; grid-row: 8;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 8;">&nbsp;</div>
+  <div class="cell" style="grid-column: 6 / span 2; grid-row: 8;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 8;">&nbsp;</div>
+
+  <div class="cell small" style="grid-column: 2; grid-row: 9 / span 2;">未納法人税及び<br>未納地方法人税<br>(附帯税を除く)</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 9;">6</div>
+  <div class="cell" style="grid-column: 4; grid-row: 9;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 9;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 9;">中間</div>
+  <div class="cell" style="grid-column: 7; grid-row: 9;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 9;">&nbsp;</div>
+
+  <div class="cell center" style="grid-column: 3; grid-row: 10;">7</div>
+  <div class="cell" style="grid-column: 4; grid-row: 10;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 10;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 10;">確定</div>
+  <div class="cell" style="grid-column: 7; grid-row: 10;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 10;">&nbsp;</div>
+
+  <div class="cell small" style="grid-column: 2; grid-row: 11 / span 2;">未払通算税効果額<br>(附帯税の額に係る部分)</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 11;">8</div>
+  <div class="cell" style="grid-column: 4; grid-row: 11;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 11;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 11;">中間</div>
+  <div class="cell" style="grid-column: 7; grid-row: 11;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 11;">&nbsp;</div>
+
+  <div class="cell center" style="grid-column: 3; grid-row: 12;">9</div>
+  <div class="cell" style="grid-column: 4; grid-row: 12;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 12;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 12;">確定</div>
+  <div class="cell" style="grid-column: 7; grid-row: 12;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 12;">&nbsp;</div>
+
+  <div class="cell small" style="grid-column: 2; grid-row: 13 / span 2;">未納道府県民税<br>(均等割額を含む)</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 13;">10</div>
+  <div class="cell" style="grid-column: 4; grid-row: 13;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 13;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 13;">中間</div>
+  <div class="cell" style="grid-column: 7; grid-row: 13;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 13;">&nbsp;</div>
+
+  <div class="cell center" style="grid-column: 3; grid-row: 14;">11</div>
+  <div class="cell" style="grid-column: 4; grid-row: 14;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 14;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 14;">確定</div>
+  <div class="cell" style="grid-column: 7; grid-row: 14;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 14;">&nbsp;</div>
+
+  <div class="cell small" style="grid-column: 2; grid-row: 15 / span 2;">未納市町村民税<br>(均等割額を含む)</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 15;">12</div>
+  <div class="cell" style="grid-column: 4; grid-row: 15;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 15;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 15;">中間</div>
+  <div class="cell" style="grid-column: 7; grid-row: 15;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 15;">&nbsp;</div>
+
+  <div class="cell center" style="grid-column: 3; grid-row: 16;">13</div>
+  <div class="cell" style="grid-column: 4; grid-row: 16;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 16;">&nbsp;</div>
+  <div class="cell center" style="grid-column: 6; grid-row: 16;">確定</div>
+  <div class="cell" style="grid-column: 7; grid-row: 16;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 16;">&nbsp;</div>
+
+  <div class="cell" style="grid-column: 2; grid-row: 17;">差引合計額</div>
+  <div class="cell center" style="grid-column: 3; grid-row: 17;">14</div>
+  <div class="cell" style="grid-column: 4; grid-row: 17;">&nbsp;</div>
+  <div class="cell" style="grid-column: 5; grid-row: 17;">&nbsp;</div>
+  <div class="cell" style="grid-column: 6 / span 2; grid-row: 17;">&nbsp;</div>
+  <div class="cell" style="grid-column: 8; grid-row: 17;">&nbsp;</div>
+
+  <!-- Vertical label -->
+  <div class="cell vertical small" style="grid-column: 1; grid-row: 9 / span 9;">未納法人税<br>（退職年金等積立金に対するものを除く）</div>
 </div>
 {% endblock %}

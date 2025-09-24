@@ -120,8 +120,10 @@ NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
             {"key": "beppyo_7", "name": "別表７", "endpoint": "company.filings", "params": {"page": "beppyo_7"}},
                         {"key": "corporate_tax_calc", "name": "法人税の計算", "endpoint": "company.filings", "params": {"page": "corporate_tax_calculation"}},
             {"key": "beppyo_4", "name": "別表４", "endpoint": "company.filings", "params": {"page": "beppyo_4"}},
-            {"key": "beppyo_5_1", "name": "別表５(1)", "endpoint": "company.filings", "params": {"page": "beppyo_5_1"}},
-            {"key": "beppyo_5_1_copy", "name": "別表５(1)コピー", "endpoint": "company.filings", "params": {"page": "beppyo_5_1_copy"}},            {"key": "appropriation_calc_beppyo_5_2", "name": "納税充当金の計算（別表５(2))", "endpoint": "company.filings", "params": {"page": "appropriation_calc_beppyo_5_2"}},
+            {"key": "beppyo_5_1", "name": "利益積立金額の計算（別表５(1)）", "endpoint": "company.filings", "params": {"page": "beppyo_5_1"}},
+            {"key": "capital_calc_beppyo_5_1", "name": "資本金等の額の計算（別表５(1)）", "endpoint": "company.filings", "params": {"page": "capital_calc_beppyo_5_1"}},
+
+            {"key": "appropriation_calc_beppyo_5_2", "name": "納税充当金の計算（別表５(2))", "endpoint": "company.filings", "params": {"page": "appropriation_calc_beppyo_5_2"}},
             {"key": "local_tax_rates", "name": "地方税税率登録", "endpoint": "company.filings", "params": {"page": "local_tax_rates"}},
             {"key": "journal_entries_cit", "name": "法人税等に関する仕訳の表示", "endpoint": "company.filings", "params": {"page": "journal_entries_cit"}},
             {"key": "financial_statements", "name": "決算書", "endpoint": "company.filings", "params": {"page": "financial_statements"}},
