@@ -29,6 +29,31 @@
       justify-content: center;
       text-align: center;
     }
+    .beppyo5-sheet .cell .beppyo5-input {
+      width: 100%;
+      height: 100%;
+      min-height: 1.8rem;
+      border: 1px solid #d8dce3;
+      background: #fdfdff;
+      font: inherit;
+      padding: 0.2rem 0.4rem;
+      box-sizing: border-box;
+      align-self: stretch;
+      border-radius: 4px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .beppyo5-sheet .cell .beppyo5-input:focus {
+      border-color: #1f4bd8;
+      background: #ffffff;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(31, 75, 216, 0.1);
+    }
+    .beppyo5-sheet .cell .beppyo5-input::placeholder {
+      color: #9aa2b1;
+    }
+    .beppyo5-sheet .cell .beppyo5-input::placeholder {
+      color: #9aa2b1;
+    }
     .beppyo5-sheet .cell.vertical {
       writing-mode: vertical-rl;
       text-orientation: upright;
@@ -78,14 +103,14 @@
   <div class="cell" style="grid-column: 6 / span 2; grid-row: 5;">&nbsp;</div>
   <div class="cell" style="grid-column: 8; grid-row: 5;">&nbsp;</div>
 
-  <div class="cell" style="grid-column: 1 / span 2; grid-row: 6;">利益準備金</div>
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 6;"><input type="text" class="beppyo5-input" aria-label="区分 3"></div>
   <div class="cell center" style="grid-column: 3; grid-row: 6;">3</div>
   <div class="cell" style="grid-column: 4; grid-row: 6;">&nbsp;</div>
   <div class="cell" style="grid-column: 5; grid-row: 6;">&nbsp;</div>
   <div class="cell" style="grid-column: 6 / span 2; grid-row: 6;">&nbsp;</div>
   <div class="cell" style="grid-column: 8; grid-row: 6;">&nbsp;</div>
 
-  <div class="cell" style="grid-column: 1 / span 2; grid-row: 7;">その他資本剰余金</div>
+  <div class="cell" style="grid-column: 1 / span 2; grid-row: 7;"><input type="text" class="beppyo5-input" aria-label="区分 4"></div>
   <div class="cell center" style="grid-column: 3; grid-row: 7;">4</div>
   <div class="cell" style="grid-column: 4; grid-row: 7;">&nbsp;</div>
   <div class="cell" style="grid-column: 5; grid-row: 7;">&nbsp;</div>
