@@ -91,7 +91,7 @@
   <!-- Rows cloned from beppyo_5_1 for further editing -->
   <div class="cell" style="grid-column: 1 / span 2; grid-row: 4;">資本金又は出資金</div>
   <div class="cell center" style="grid-column: 3; grid-row: 4;">1</div>
-  <div class="cell" style="grid-column: 4; grid-row: 4;"><input type="text" inputmode="decimal" class="beppyo5-input js-col1-input js-row-capital-input" aria-label="区分1 期首現在資本金等"></div>
+  <div class="cell js-col1-static js-row-capital-source" style="grid-column: 4; grid-row: 4;">{{ capital_stock_amount | format_number }}</div>
   <div class="cell" style="grid-column: 5; grid-row: 4;"><input type="text" class="beppyo5-input js-col2-input js-row-capital-input" aria-label="区分1 減"></div>
   <div class="cell" style="grid-column: 6 / span 2; grid-row: 4;"><input type="text" class="beppyo5-input js-col3-input js-row-capital-input" aria-label="区分1 増"></div>
   <div class="cell beppyo5-total js-row-capital-total" style="grid-column: 8; grid-row: 4;">0</div>
@@ -119,16 +119,17 @@
 
   <div class="cell" style="grid-column: 1 / span 2; grid-row: 8;">差引合計額</div>
   <div class="cell center" style="grid-column: 3; grid-row: 8;">5</div>
-  <div class="cell js-col1-total" style="grid-column: 4; grid-row: 8;">0</div>
-  <div class="cell js-col2-total" style="grid-column: 5; grid-row: 8;">0</div>
-  <div class="cell js-col3-total" style="grid-column: 6 / span 2; grid-row: 8;">0</div>
-  <div class="cell js-row-area5-total" style="grid-column: 8; grid-row: 8;">0</div>
+  <div class="cell beppyo5-total js-col1-total" style="grid-column: 4; grid-row: 8;">0</div>
+  <div class="cell beppyo5-total js-col2-total" style="grid-column: 5; grid-row: 8;">0</div>
+  <div class="cell beppyo5-total js-col3-total" style="grid-column: 6 / span 2; grid-row: 8;">0</div>
+  <div class="cell beppyo5-total js-row-area5-total" style="grid-column: 8; grid-row: 8;">0</div>
 
 </div>
 <script>
   (function() {
     const col1Inputs = document.querySelectorAll('.js-col1-input');
     const col1Total = document.querySelector('.js-col1-total');
+    const col1StaticCells = document.querySelectorAll('.js-col1-static');
     const col2Inputs = document.querySelectorAll('.js-col2-input');
     const col2Total = document.querySelector('.js-col2-total');
     const col3Inputs = document.querySelectorAll('.js-col3-input');
@@ -165,11 +166,16 @@
       return Number.isFinite(number) ? number : 0;
     };
 
-    const sumSelectors = (selectors, readText = false) => {
-      return selectors.reduce((sum, selector) => {
+    const sumSelectors = (entries) => {
+      return entries.reduce((sum, entry) => {
+        const isTuple = Array.isArray(entry);
+        const selector = isTuple ? entry[0] : entry;
+        const mode = isTuple ? entry[1] : 'value';
         const element = document.querySelector(selector);
-        if (!element) return sum;
-        const source = readText ? element.textContent : element.value;
+        if (!element) {
+          return sum;
+        }
+        const source = mode === 'text' ? element.textContent : element.value;
         return sum + parseNumber(source || '');
       }, 0);
     };
@@ -182,6 +188,9 @@
       if (col1Total) {
         col1Inputs.forEach((input) => {
           sum1 += parseNumber(input.value);
+        });
+        col1StaticCells.forEach((cell) => {
+          sum1 += parseNumber(cell.textContent);
         });
         col1Total.textContent = formatter.format(sum1);
       }
@@ -202,7 +211,7 @@
 
       if (rowCapitalTotal) {
         const sumRowCapital = sumSelectors([
-          '[aria-label="区分1 期首現在資本金等"]',
+          ['.js-row-capital-source', 'text'],
           '[aria-label="区分1 減"]',
           '[aria-label="区分1 増"]',
         ]);
@@ -238,10 +247,10 @@
 
       if (rowArea5Total) {
         const sumRowArea5 = sumSelectors([
-          '.js-col1-total',
-          '.js-col2-total',
-          '.js-col3-total',
-        ], true);
+          ['.js-col1-total', 'text'],
+          ['.js-col2-total', 'text'],
+          ['.js-col3-total', 'text'],
+        ]);
         rowArea5Total.textContent = formatter.format(sumRowArea5);
       }
     };

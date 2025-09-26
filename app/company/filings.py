@@ -66,6 +66,35 @@ def _compute_manual_period(start_text: Optional[str], end_text: Optional[str]) -
     return months_ceil, months_floor
 
 
+def _get_capital_stock_amount(bs_data) -> int:
+    """Extract capital stock amount from the balance sheet payload."""
+    try:
+        if not isinstance(bs_data, dict):
+            return 0
+        equity = bs_data.get('純資産')
+        if not isinstance(equity, dict):
+            return 0
+        shareholders = equity.get('株主資本')
+        if not isinstance(shareholders, dict):
+            return 0
+        items = shareholders.get('items') or []
+        for item in items:
+            if isinstance(item, dict):
+                name = item.get('name')
+                amount = item.get('amount')
+            else:
+                name = getattr(item, 'name', None)
+                amount = getattr(item, 'amount', None)
+            if name == '資本金':
+                try:
+                    return int(Decimal(str(amount))) if amount is not None else 0
+                except (InvalidOperation, TypeError, ValueError):
+                    return 0
+    except Exception:
+        return 0
+    return 0
+
+
 def _build_filings_context(page: str):
     title = filings_service.get_title(page)
     if not title:
@@ -94,6 +123,8 @@ def _build_filings_context(page: str):
         bs_data = None
         pl_data = None
 
+    capital_stock_amount = _get_capital_stock_amount(bs_data) if bs_data else 0
+
     empty_cfg = get_empty_state(page)
     return {
         'page': page,
@@ -108,6 +139,7 @@ def _build_filings_context(page: str):
         'preview_src': preview_src,
         'bs_data': bs_data,
         'pl_data': pl_data,
+        'capital_stock_amount': capital_stock_amount,
         'cta_config': get_post_create_cta(page),
         'empty_state_config': {
             'headline': empty_cfg['headline'].format(title=title),
