@@ -18,7 +18,7 @@
 
     .beppyo4-sheet {
       display: grid;
-      grid-template-columns: 80px 320px 70px 160px 140px 90px 150px 90px;
+      grid-template-columns: 80px 320px 70px 160px 140px 150px 90px;
       grid-auto-rows: minmax(48px, auto);
       border: 1px solid #d8dce3;
       background: #fff;
@@ -43,6 +43,37 @@
       text-align: center;
       white-space: nowrap;
     }
+
+    .beppyo4-sheet .cell.center {
+      justify-content: center;
+      text-align: center;
+    }
+
+    .beppyo4-sheet .cell.vertical {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .beppyo4-sheet .cell.small {
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .beppyo4-sheet .cell.merged-cell {
+      justify-content: center;
+      align-items: center;
+    }
+
+    .beppyo4-sheet .cell .vertical-text {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      letter-spacing: 0.1em;
+      margin: 0 auto;
+      display: inline-flex;
+      align-items: center;
+    }
   </style>
 {% endblock %}
 {% block content %}
@@ -53,61 +84,326 @@
     <section class="card tax-card beppyo4-card">
       <h2 class="tax-card-title">別表４</h2>
       <div class="beppyo4-sheet-wrapper">
-        {% set rows = [
-          ["", "区　　　分", "", "総　　　　 額", "処　　　　　　分", "", "", ""],
-          ["", "", "", "", "留　　　　 保", "", "社外流出", ""],
-          ["", "", "", "①", "②", "", "③", ""],
-          ["", "当期利益又は当期欠損の額", "1", "", "", "", "配当", "0"],
-          ["", "", "", "", "", "", "その他", "0"],
-          ["", "損金経理をした法人税及び<br>地方法人税(附帯税を除く｡)", "2", "", "", "", "", "0"],
-          ["", "損金経理をした道府県民税及び市町村民税", "3", "", "", "", "", "0"],
-          ["加", "損金経理をした納税充当金", "4", "", "", "", "", "0"],
-          ["算", "損金経理をした附帯税(利子税を除く｡)、<br>加算金、延滞金(延納分を除く｡)及び過怠税", "5", "", "", "", "その他", "0"],
-          ["", "減価償却の償却超過額", "6", "", "", "", "", "0"],
-          ["", "役員給与の損金不算入額", "7", "", "", "", "その他", "0"],
-          ["", "交際費等の損金不算入額", "8", "", "", "", "その他", "0"],
-          ["", "通算法人に係る加算額<br>（ 別 表 四 付 表 ｢5｣ ）", "9", "", "", "", "外 ※", "0"],
-          ["", "", "10", "", "", "", "", "0"],
-          ["", "", "", "", "", "", "", "0"],
-          ["", "", "", "", "", "", "", "0"],
-          ["", "", "", "", "", "", "", "0"],
-          ["", "小　　　　　　計", "11", "", "", "", "外 ※", "0"],
-          ["", "", "", "", "", "", "", "0"],
-          ["", "減価償却超過額の当期認容額", "12", "", "", "", "", "0"],
-          ["", "納税充当金から支出した事業税等の金額", "13", "", "", "", "", "0"],
-          ["減", "受取配当等の益金不算入額<br>（ 別 表 八 (一) ｢5｣ ）", "14", "", "", "", "※", "0"],
-          ["算", "外国子会社から受ける剰余金の配当<br>等の益金不算入額（別表八(二)｢26｣）", "15", "", "", "", "※", "0"],
-          ["", "受贈益の益金不算入額", "16", "", "", "", "※", "0"],
-          ["", "適格現物分配に係る益金不算入額", "17", "", "", "", "※", "0"],
-          ["", "法人税等の中間納付額及び<br>過誤納に係る還付金額", "18", "", "", "", "", "0"],
-          ["", "所得税額等及び欠損金の<br>繰戻しによる還付金額等", "19", "", "", "", "※", "0"],
-          ["", "通算法人に係る減算額<br>（ 別 表 四 付 表 ｢10｣ ）", "20", "", "", "", "※", "0"],
-          ["", "", "21", "", "", "", "", "0"],
-          ["", "", "", "", "", "", "", "0"],
-          ["", "", "", "", "", "", "", "0"],
-          ["", "小　　　　　　計", "22", "", "", "", "外 ※", "0"],
-          ["", "仮　　　　　　　  計<br>(1)＋(11)－(22)", "23", "", "", "", "外 ※", "0"],
-          ["", "対象純支払利子等の損金不算入額<br>(別表十七(二の二)｢29｣又は｢34｣)", "24", "", "", "", "その他", "0"],
-          ["", "超過利子額の損金算入額<br>(別表十七(二の三)｢10｣)", "25", "", "", "", "※", "0"],
-          ["", "仮　　　　　　　　  計　<br>（(23)から(25)までの計）", "26", "", "", "", "外 ※", "0"],
-          ["", "寄附金の損金不算入額<br>(別表十四(二)｢24｣又は｢40｣)", "27", "", "", "", "その他", "0"],
-          ["", "法人税額から控除される所得税額<br>(別表六(一)｢6の③｣)", "29", "", "", "", "その他", "0"],
-          ["", "合　　　　　　　  計<br>(26)＋(27)＋(29)", "34", "", "", "", "外 ※", "0"],
-          ["", "欠損金等の当期控除額<br>(別表七(一)｢4の計｣)＋(別表七(四)｢10｣)", "44", "", "", "", "※", "0"],
-          ["", "所得金額又は欠損金額", "52", "", "", "", "外 ※", "0"]
-        ] %}
-        {% set header_rows = [0, 1, 2] %}
         <div class="beppyo4-sheet">
-          {% for row in rows %}
-            {% set is_header = loop.index0 in header_rows %}
-            {% for cell in row %}
-              {% if cell %}
-                <div class="cell{% if is_header %} header{% endif %}">{{ cell|safe }}</div>
-              {% else %}
-                <div class="cell{% if is_header %} header{% endif %}">&nbsp;</div>
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
+          <!-- Row 1 -->
+          <div class="cell header" style="grid-column: 1 / span 3; grid-row: 1 / span 3;">区　　　分</div>
+          <div class="cell header" style="grid-column: 4; grid-row: 1 / span 2;">総　　　　 額</div>
+          <div class="cell header" style="grid-column: 5 / span 3; grid-row: 1;">処　　　　　　分</div>
+
+          <!-- Row 2 -->
+          <div class="cell header" style="grid-column: 5; grid-row: 2;">留　　　　 保</div>
+          <div class="cell header" style="grid-column: 6 / span 2; grid-row: 2;">社外流出</div>
+
+          <!-- Row 3 -->
+          <div class="cell header center" style="grid-column: 4; grid-row: 3;">①</div>
+          <div class="cell header center" style="grid-column: 5; grid-row: 3;">②</div>
+          <div class="cell header center" style="grid-column: 6 / span 2; grid-row: 3;">③</div>
+          <!-- Row 4 -->
+          <div class="cell" style="grid-column: 4; grid-row: 4 / span 2;">&nbsp;</div>
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 4 / span 2;">当期利益又は当期欠損の額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 4 / span 2;">1</div>
+          <div class="cell" style="grid-column: 5; grid-row: 4 / span 2;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 4;">配当</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 4;">0</div>
+
+          <!-- Row 5 -->
+          <div class="cell" style="grid-column: 6; grid-row: 5;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 5;">0</div>
+
+          <!-- Row 6 -->
+          <div class="cell" style="grid-column: 2; grid-row: 6;">損金経理をした法人税及び<br>地方法人税(附帯税を除く｡)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 6;">2</div>
+          <div class="cell" style="grid-column: 4; grid-row: 6;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 6;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 6;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 6;">0</div>
+
+          <!-- Row 7 -->
+          <div class="cell" style="grid-column: 2; grid-row: 7;">損金経理をした道府県民税及び市町村民税</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 7;">3</div>
+          <div class="cell" style="grid-column: 4; grid-row: 7;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 7;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 7;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 7;">0</div>
+
+          <!-- Column 1 Combined (Rows 6-18) -->
+          <div class="cell merged-cell vertical" style="grid-column: 1; grid-row: 6 / span 13;"><span class="vertical-text">加算</span></div>
+
+          <!-- Row 8 -->
+          <div class="cell" style="grid-column: 2; grid-row: 8;">損金経理をした納税充当金</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 8;">4</div>
+          <div class="cell" style="grid-column: 4; grid-row: 8;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 8;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 8;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 8;">0</div>
+
+          <!-- Row 9 -->
+          <div class="cell" style="grid-column: 2; grid-row: 9;">損金経理をした附帯税(利子税を除く｡)、<br>加算金、延滞金(延納分を除く｡)及び過怠税</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 9;">5</div>
+          <div class="cell" style="grid-column: 4; grid-row: 9;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 9;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 9;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 9;">0</div>
+
+          <!-- Row 10 -->
+          <div class="cell" style="grid-column: 2; grid-row: 10;">減価償却の償却超過額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 10;">6</div>
+          <div class="cell" style="grid-column: 4; grid-row: 10;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 10;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 10;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 10;">0</div>
+
+          <!-- Row 11 -->
+          <div class="cell" style="grid-column: 2; grid-row: 11;">役員給与の損金不算入額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 11;">7</div>
+          <div class="cell" style="grid-column: 4; grid-row: 11;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 11;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 11;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 11;">0</div>
+
+          <!-- Row 12 -->
+          <div class="cell" style="grid-column: 2; grid-row: 12;">交際費等の損金不算入額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 12;">8</div>
+          <div class="cell" style="grid-column: 4; grid-row: 12;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 12;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 12;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 12;">0</div>
+
+          <!-- Row 13 -->
+          <div class="cell" style="grid-column: 2; grid-row: 13;">通算法人に係る加算額<br>（ 別 表 四 付 表 ｢5｣ ）</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 13;">9</div>
+          <div class="cell" style="grid-column: 4; grid-row: 13;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 13;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 13;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 13;">0</div>
+
+          <!-- Row 14 -->
+          <div class="cell" style="grid-column: 2; grid-row: 14;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 14;">10</div>
+          <div class="cell" style="grid-column: 4; grid-row: 14;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 14;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 14;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 14;">0</div>
+
+          <!-- Row 15 -->
+          <div class="cell" style="grid-column: 2; grid-row: 15;">&nbsp;</div>
+          <div class="cell" style="grid-column: 3; grid-row: 15;">&nbsp;</div>
+          <div class="cell" style="grid-column: 4; grid-row: 15;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 15;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 15;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 15;">0</div>
+
+          <!-- Row 16 -->
+          <div class="cell" style="grid-column: 2; grid-row: 16;">&nbsp;</div>
+          <div class="cell" style="grid-column: 3; grid-row: 16;">&nbsp;</div>
+          <div class="cell" style="grid-column: 4; grid-row: 16;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 16;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 16;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 16;">0</div>
+
+          <!-- Row 17 -->
+          <div class="cell" style="grid-column: 2; grid-row: 17;">&nbsp;</div>
+          <div class="cell" style="grid-column: 3; grid-row: 17;">&nbsp;</div>
+          <div class="cell" style="grid-column: 4; grid-row: 17;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 17;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 17;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 17;">0</div>
+
+          <!-- Row 18 -->
+          <div class="cell" style="grid-column: 2; grid-row: 18;">小　　　　　　計</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 18;">11</div>
+          <div class="cell" style="grid-column: 4; grid-row: 18;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 18;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 18;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 18;">0</div>
+
+          <!-- Row 19 -->
+          <div class="cell" style="grid-column: 2; grid-row: 19;">減価償却超過額の当期認容額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 19;">12</div>
+          <div class="cell" style="grid-column: 4; grid-row: 19;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 19;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 19;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 19;">0</div>
+
+          <!-- Row 20 -->
+          <div class="cell" style="grid-column: 2; grid-row: 20;">納税充当金から支出した事業税等の金額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 20;">13</div>
+          <div class="cell" style="grid-column: 4; grid-row: 20;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 20;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 20;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 20;">0</div>
+
+          <!-- Column 1 Combined (Rows 19-32) -->
+          <div class="cell merged-cell vertical" style="grid-column: 1; grid-row: 19 / span 14;"><span class="vertical-text">減算</span></div>
+
+          <!-- Row 21 -->
+          <div class="cell" style="grid-column: 2; grid-row: 21;">受取配当等の益金不算入額<br>（ 別 表 八 (一) ｢5｣ ）</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 21;">14</div>
+          <div class="cell" style="grid-column: 4; grid-row: 21;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 21;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 21;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 21;">0</div>
+
+          <!-- Row 22 -->
+          <div class="cell" style="grid-column: 2; grid-row: 22;">外国子会社から受ける剰余金の配当<br>等の益金不算入額（別表八(二)｢26｣）</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 22;">15</div>
+          <div class="cell" style="grid-column: 4; grid-row: 22;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 22;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 22;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 22;">0</div>
+
+          <!-- Row 23 -->
+          <div class="cell" style="grid-column: 2; grid-row: 23;">受贈益の益金不算入額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 23;">16</div>
+          <div class="cell" style="grid-column: 4; grid-row: 23;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 23;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 23;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 23;">0</div>
+
+          <!-- Row 24 -->
+          <div class="cell" style="grid-column: 2; grid-row: 24;">適格現物分配に係る益金不算入額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 24;">17</div>
+          <div class="cell" style="grid-column: 4; grid-row: 24;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 24;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 24;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 24;">0</div>
+
+          <!-- Row 25 -->
+          <div class="cell" style="grid-column: 2; grid-row: 25;">法人税等の中間納付額及び<br>過誤納に係る還付金額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 25;">18</div>
+          <div class="cell" style="grid-column: 4; grid-row: 25;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 25;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 25;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 25;">0</div>
+
+          <!-- Row 26 -->
+          <div class="cell" style="grid-column: 2; grid-row: 26;">所得税額等及び欠損金の<br>繰戻しによる還付金額等</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 26;">19</div>
+          <div class="cell" style="grid-column: 4; grid-row: 26;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 26;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 26;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 26;">0</div>
+
+          <!-- Row 27 -->
+          <div class="cell" style="grid-column: 2; grid-row: 27;">通算法人に係る減算額<br>（ 別 表 四 付 表 ｢10｣ ）</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 27;">20</div>
+          <div class="cell" style="grid-column: 4; grid-row: 27;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 27;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 27;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 27;">0</div>
+
+          <!-- Row 28 -->
+          <div class="cell" style="grid-column: 2; grid-row: 28;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 28;">21</div>
+          <div class="cell" style="grid-column: 4; grid-row: 28;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 28;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 28;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 28;">0</div>
+
+          <!-- Row 29 -->
+          <div class="cell" style="grid-column: 2; grid-row: 29;">&nbsp;</div>
+          <div class="cell" style="grid-column: 3; grid-row: 29;">&nbsp;</div>
+          <div class="cell" style="grid-column: 4; grid-row: 29;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 29;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 29;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 29;">0</div>
+
+          <!-- Row 30 -->
+          <div class="cell" style="grid-column: 2; grid-row: 30;">&nbsp;</div>
+          <div class="cell" style="grid-column: 3; grid-row: 30;">&nbsp;</div>
+          <div class="cell" style="grid-column: 4; grid-row: 30;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 30;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 30;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 30;">0</div>
+
+          <!-- Row 31 -->
+          <div class="cell" style="grid-column: 2; grid-row: 31;">&nbsp;</div>
+          <div class="cell" style="grid-column: 3; grid-row: 31;">&nbsp;</div>
+          <div class="cell" style="grid-column: 4; grid-row: 31;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 31;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 31;">&nbsp;</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 31;">0</div>
+
+          <!-- Row 32 -->
+          <div class="cell" style="grid-column: 2; grid-row: 32;">小　　　　　　計</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 32;">22</div>
+          <div class="cell" style="grid-column: 4; grid-row: 32;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 32;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 32;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 32;">0</div>
+
+          <!-- Row 33 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 33;">仮　　　　　　　  計<br>(1)＋(11)－(22)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 33;">23</div>
+          <div class="cell" style="grid-column: 4; grid-row: 33;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 33;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 33;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 33;">0</div>
+
+          <!-- Row 34 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 34;">対象純支払利子等の損金不算入額<br>(別表十七(二の二)｢29｣又は｢34｣)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 34;">24</div>
+          <div class="cell" style="grid-column: 4; grid-row: 34;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 34;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 34;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 34;">0</div>
+
+          <!-- Row 35 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 35;">超過利子額の損金算入額<br>(別表十七(二の三)｢10｣)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 35;">25</div>
+          <div class="cell" style="grid-column: 4; grid-row: 35;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 35;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 35;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 35;">0</div>
+
+          <!-- Row 36 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 36;">仮　　　　　　　　  計　<br>（(23)から(25)までの計）</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 36;">26</div>
+          <div class="cell" style="grid-column: 4; grid-row: 36;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 36;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 36;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 36;">0</div>
+
+          <!-- Row 37 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 37;">寄附金の損金不算入額<br>(別表十四(二)｢24｣又は｢40｣)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 37;">27</div>
+          <div class="cell" style="grid-column: 4; grid-row: 37;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 37;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 37;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 37;">0</div>
+
+          <!-- Row 38 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 38;">法人税額から控除される所得税額<br>(別表六(一)｢6の③｣)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 38;">29</div>
+          <div class="cell" style="grid-column: 4; grid-row: 38;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 38;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 38;">その他</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 38;">0</div>
+
+          <!-- Row 39 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 39;">合　　　　　　　  計<br>(26)＋(27)＋(29)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 39;">34</div>
+          <div class="cell" style="grid-column: 4; grid-row: 39;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 39;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 39;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 39;">0</div>
+
+          <!-- Row 40 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 40;">欠損金等の当期控除額<br>(別表七(一)｢4の計｣)＋(別表七(四)｢10｣)</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 40;">44</div>
+          <div class="cell" style="grid-column: 4; grid-row: 40;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 40;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 40;">※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 40;">0</div>
+
+          <!-- Row 41 -->
+          <div class="cell" style="grid-column: 1 / span 2; grid-row: 41;">所得金額又は欠損金額</div>
+          <div class="cell center" style="grid-column: 3; grid-row: 41;">52</div>
+          <div class="cell" style="grid-column: 4; grid-row: 41;">&nbsp;</div>
+          <div class="cell" style="grid-column: 5; grid-row: 41;">&nbsp;</div>
+          <div class="cell" style="grid-column: 6; grid-row: 41;">外 ※</div>
+          <div class="cell center" style="grid-column: 7; grid-row: 41;">0</div>
+
         </div>
       </div>
     </section>
