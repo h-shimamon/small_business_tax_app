@@ -1,0 +1,68 @@
+{% macro render_beppyo15_summary(summary) -%}
+<div class="card summary-card beppyo15-summary">
+  <div class="summary-item">
+    <span class="summary-label">支出交際額</span>
+    <span class="summary-value">{{ summary.spending_cross | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">交際費等の額から控除される費用の額</span>
+    <span class="summary-value">{{ summary.hospitality_deduction | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">中小法人等の定額控除限度額</span>
+    <span class="summary-value">{{ summary.small_corp_limit | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">損金算入限度額</span>
+    <span class="summary-value">{{ summary.deductible_limit | format_currency }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-label">損金不算入額</span>
+    <span class="summary-value">{{ summary.non_deductible_amount | format_currency }}</span>
+  </div>
+</div>
+{%- endmacro %}
+
+
+{% macro render_beppyo15_table(items) -%}
+<div class="table-wrapper">
+  <table class="table beppyo15-table">
+    <thead>
+      <tr>
+        <th scope="col">科目</th>
+        <th scope="col">支出額</th>
+        <th scope="col">交際費等の額から控除される費用の額</th>
+        <th scope="col">差引交際費等の額(A)</th>
+        <th scope="col">(A)のうち接待飲食費の額</th>
+        <th scope="col" class="table-actions">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td data-label="科目">{{ item.subject }}</td>
+          <td data-label="支出額" class="numeric">{{ item.expense_amount | format_currency }}</td>
+          <td data-label="交際費等の額から控除される費用の額" class="numeric">{{ item.deductible_amount | format_currency }}</td>
+          <td data-label="差引交際費等の額(A)" class="numeric">{{ item.net_amount | format_currency }}</td>
+          <td data-label="(A)のうち接待飲食費の額" class="numeric">{{ item.hospitality_amount | format_currency }}</td>
+          <td class="table-actions">
+                        <div class="action-buttons">
+              <a href="{{ url_for('company.beppyo15_edit', item_id=item.id) }}" class="action-btn">編集</a>
+              <form method="post" action="{{ url_for('company.beppyo15_delete', item_id=item.id) }}" onsubmit="return confirm('削除してもよろしいですか？');">
+                {% if csrf_token is defined %}
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                <button type="submit" class="action-btn delete">削除</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6" class="table-empty">まだ明細が登録されていません。</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{%- endmacro %}

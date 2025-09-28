@@ -351,7 +351,29 @@ class Miscellaneous(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('miscellaneous_items', lazy=True))
 
+
 # ▲▲▲▲▲ ここまで新規追加 ▲▲▲▲▲
+
+class Beppyo15Breakdown(db.Model):
+    """別表15の内訳（交際費等）を管理するモデル"""
+    __tablename__ = 'beppyo15_breakdown'
+
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(100), nullable=False)
+    expense_amount = db.Column(db.Integer, nullable=False)
+    deductible_amount = db.Column(db.Integer, nullable=False)
+    net_amount = db.Column(db.Integer, nullable=False)
+    hospitality_amount = db.Column(db.Integer, nullable=False)
+    remarks = db.Column(db.String(200))
+
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id', name='fk_beppyo15_breakdown_company_id'), nullable=False, index=True)
+    company = db.relationship('Company', backref=db.backref('beppyo15_breakdowns', lazy=True))
+
+    def __repr__(self):
+        return f'<Beppyo15Breakdown {self.subject}>'
+
+
+# ▲▲▲▲▲ ここから既存モデル ▲▲▲▲▲
 
 class AccountTitleMaster(db.Model):
     """勘定科目マスターモデル"""

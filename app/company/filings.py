@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Optional, Tuple
 
 from dateutil.relativedelta import relativedelta
-from flask import render_template, request, abort, url_for, current_app
+from flask import render_template, request, abort, url_for, current_app, redirect, flash
 from flask_login import current_user
 
 from app.company import company_bp
@@ -15,10 +15,12 @@ from app.services.app_registry import get_default_pdf_year, get_post_create_cta,
 from app.company.services.filings_service import FilingsService
 from app.company.services.protocols import FilingsServiceProtocol
 from app.company.services.corporate_tax_service import CorporateTaxCalculationService
+from app.company.beppyo15 import Beppyo15Service
+from app.company.beppyo15.constants import BEPPYO15_FIELD_DEFINITIONS
+from app.company.forms import Beppyo15BreakdownForm
 
 filings_service: FilingsServiceProtocol = FilingsService()
 corporate_tax_service = CorporateTaxCalculationService()
-
 
 @company_bp.app_template_filter('format_number')
 def format_number(value):
@@ -103,6 +105,7 @@ def _build_filings_context(page: str):
     has_preview = bool(preview_pdf)
     preview_src = url_for('company.filings_preview', page=page) if has_preview else None
 
+    accounting_data = None
     bs_data = None
     pl_data = None
     try:
@@ -120,13 +123,14 @@ def _build_filings_context(page: str):
                 bs_data = payload.get('balance_sheet', {})
                 pl_data = payload.get('profit_loss_statement', {})
     except Exception:
+        accounting_data = None
         bs_data = None
         pl_data = None
 
     capital_stock_amount = _get_capital_stock_amount(bs_data) if bs_data else 0
 
     empty_cfg = get_empty_state(page)
-    return {
+    context = {
         'page': page,
         'page_title': title,
         'items': [],
@@ -146,7 +150,20 @@ def _build_filings_context(page: str):
             'description': empty_cfg.get('description'),
             'action_label': (empty_cfg.get('action_label') or '').format(title=title),
         },
+        'beppyo15_fields': BEPPYO15_FIELD_DEFINITIONS if page == 'beppyo_15' else None,
+
     }
+
+    if page == 'beppyo_15':
+        company = getattr(current_user, 'company', None)
+        company_id = getattr(company, 'id', None)
+        if company_id:
+            beppyo15_service = Beppyo15Service(company_id)
+            context['beppyo15_view'] = beppyo15_service.build_page_view(accounting_data=accounting_data)
+        else:
+            context['beppyo15_view'] = None
+
+    return context
 
 
 @company_bp.route('/filings', methods=['GET', 'POST'])
@@ -245,8 +262,72 @@ def filings(company):
         abort(404)
     template_path = filings_service.get_template(page)
     if template_path:
-        return render_template(template_path, **context)
+        view_model = context.get('beppyo15_view') if page == 'beppyo_15' else None
+        field_definitions = context.get('beppyo15_fields') if page == 'beppyo_15' else None
+        return render_template(template_path, **context, view=view_model, field_definitions=field_definitions)
     return render_template('company/statement_of_accounts.html', **context)
+
+
+@company_bp.route('/filings/beppyo_15/add', methods=['GET', 'POST'])
+@company_required
+def beppyo15_add(company):
+    form = Beppyo15BreakdownForm()
+    service = Beppyo15Service(company.id)
+    if form.validate_on_submit():
+        success, _, error = service.create_item(form)
+        if success:
+            flash('別表15の内訳を登録しました。', 'success')
+            return redirect(url_for('company.filings', page='beppyo_15'))
+        flash(error or '登録に失敗しました。', 'error')
+    return render_template(
+        'company/filings/beppyo_15_form.html',
+        form=form,
+        form_title='別表15の内訳を登録',
+        field_definitions=BEPPYO15_FIELD_DEFINITIONS,
+    )
+
+
+@company_bp.route('/filings/beppyo_15/edit/<int:item_id>', methods=['GET', 'POST'])
+@company_required
+def beppyo15_edit(company, item_id):
+    service = Beppyo15Service(company.id)
+    item = service.get_item(item_id)
+    if item is None:
+        abort(404)
+
+    if request.method == 'POST':
+        form = Beppyo15BreakdownForm()
+    else:
+        form = Beppyo15BreakdownForm(obj=item)
+
+    if form.validate_on_submit():
+        success, _, error = service.update_item(item, form)
+        if success:
+            flash('別表15の内訳を更新しました。', 'success')
+            return redirect(url_for('company.filings', page='beppyo_15'))
+        flash(error or '更新に失敗しました。', 'error')
+
+    return render_template(
+        'company/filings/beppyo_15_form.html',
+        form=form,
+        form_title='別表15の内訳を編集',
+        field_definitions=BEPPYO15_FIELD_DEFINITIONS,
+    )
+
+
+@company_bp.route('/filings/beppyo_15/delete/<int:item_id>', methods=['POST'])
+@company_required
+def beppyo15_delete(company, item_id):
+    service = Beppyo15Service(company.id)
+    item = service.get_item(item_id)
+    if item is None:
+        abort(404)
+    success, error = service.delete_item(item)
+    if success:
+        flash('別表15の内訳を削除しました。', 'success')
+    else:
+        flash(error or '削除に失敗しました。', 'error')
+    return redirect(url_for('company.filings', page='beppyo_15'))
 
 
 @company_bp.get('/filings/preview')

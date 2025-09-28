@@ -19,7 +19,7 @@ REGISTRY: Dict[str, FilingPage] = {
     # --- 別表・概況等（既存TITLE_MAPを移設） ---
     'beppyo_2': {'title': '別表2'},
     'beppyo_16_2': {'title': '別表16(2)'},
-    'beppyo_15': {'title': '別表15'},
+    'beppyo_15': {'title': '別表15', 'template': 'company/filings/beppyo_15.html', 'preview_pdf': 'resources/pdf_forms/beppyou_15/2025/source.pdf'},
     'tax_payment_status_beppyo_5_2': {'title': '法人税等の納付状況（別表５(2))', 'template': 'company/filings/tax_payment_status_beppyo_5_2.html'},
     'beppyo_7': {'title': '別表７', 'template': 'company/filings/beppyo_7.html'},
     'corporate_tax_calculation': {'title': '法人税の計算', 'template': 'company/filings/corporate_tax_calculation.html'},
