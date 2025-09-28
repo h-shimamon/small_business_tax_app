@@ -97,6 +97,23 @@ def _get_capital_stock_amount(bs_data) -> int:
     return 0
 
 
+def _get_pl_value(pl_data, category: str, account_name: str):
+    try:
+        if not isinstance(pl_data, dict):
+            return None
+        category_data = pl_data.get(category)
+        if not isinstance(category_data, dict):
+            return None
+        account = category_data.get(account_name)
+        if isinstance(account, dict):
+            for key in ('total', 'amount', 'value'):
+                if account.get(key) is not None:
+                    return account.get(key)
+        return None
+    except Exception:
+        return None
+
+
 def _build_filings_context(page: str):
     title = filings_service.get_title(page)
     if not title:
@@ -153,6 +170,17 @@ def _build_filings_context(page: str):
         'beppyo15_fields': BEPPYO15_FIELD_DEFINITIONS if page == 'beppyo_15' else None,
 
     }
+
+    if page == 'beppyo_4':
+        context['beppyo4_net_income'] = _get_pl_value(pl_data, '利益計算', '当期純利益')
+        company = getattr(current_user, 'company', None)
+        company_id = getattr(company, 'id', None)
+        if company_id:
+            beppyo15_service = Beppyo15Service(company_id)
+            beppyo15_view = beppyo15_service.build_page_view(accounting_data=accounting_data)
+            context['beppyo4_non_deductible'] = getattr(beppyo15_view.summary, 'non_deductible_amount', None)
+        else:
+            context['beppyo4_non_deductible'] = None
 
     if page == 'beppyo_15':
         company = getattr(current_user, 'company', None)

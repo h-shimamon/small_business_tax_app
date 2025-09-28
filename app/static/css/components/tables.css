@@ -124,3 +124,29 @@ tbody tr:hover {
 .action-menu-item.delete:hover {
     background-color: #fef2f2;
 }
+
+
+/* 共通: 斜線セル (Excel風) */
+.diagonal-cell {
+  position: relative;
+  color: transparent;
+}
+
+.diagonal-cell::before,
+.diagonal-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.diagonal-cell::before {
+  background: #f2f4f7;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.diagonal-cell::after {
+  background: #ffffff;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  border-left: 1px solid #cbd0d6;
+}
