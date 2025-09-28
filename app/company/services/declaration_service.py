@@ -4,6 +4,7 @@ from app.company.models import Company
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 from app.company.services.statement_of_accounts_service import StatementOfAccountsService
 from app import db
+from werkzeug.exceptions import NotFound
 
 
 class DeclarationService:
@@ -15,7 +16,10 @@ class DeclarationService:
         self.company_id = company_id
 
     def _get_company(self):
-        return Company.query.get_or_404(self.company_id)
+        company = db.session.get(Company, self.company_id)
+        if company is None:
+            raise NotFound()
+        return company
 
     def _get_all_statement_data(self):
         """STATEMENT_PAGES_CONFIG に基づき各ページのデータを収集する。"""

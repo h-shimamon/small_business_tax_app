@@ -180,7 +180,7 @@ def verify():
         form = ResetConfirmForm()
         if request.method == "POST" and form.validate_on_submit():
             from app.company.models import User
-            user = db.session.get(User, row["user_id"]) if hasattr(db.session, "get") else User.query.get(row["user_id"])  # type: ignore[index]
+            user = db.session.get(User, row["user_id"])  # type: ignore[index]
             if not user:
                 flash("リンクが無効か期限切れです。", "danger")
                 return redirect(url_for("newauth.login_page"))
@@ -315,7 +315,7 @@ def reset_confirm():
     form = ResetConfirmForm()
     if request.method == "POST" and form.validate_on_submit():
         from app.company.models import User
-        user = db.session.get(User, row["user_id"]) if hasattr(db.session, "get") else User.query.get(row["user_id"])  # type: ignore[index]
+        user = db.session.get(User, row["user_id"])  # type: ignore[index]
         if not user:
             flash("リンクが無効か期限切れです。", "danger")
             return redirect(url_for("newauth.reset_request"))

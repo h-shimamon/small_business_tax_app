@@ -14,9 +14,10 @@ class NavigationNodeDef(TypedDict, total=False):
     children: List["NavigationNodeDef"]
 
 
-class PDFExportEntry(TypedDict):
+class PDFExportEntry(TypedDict, total=False):
     endpoint: str
     label: str
+    page_key: str
 
 
 @dataclass(frozen=True)
@@ -133,14 +134,14 @@ NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
 
 
 PDF_EXPORTS: Dict[str, PDFExportEntry] = {
-    "deposits": {"endpoint": "company.deposits_pdf", "label": "預貯金等"},
-    "accounts_receivable": {"endpoint": "company.accounts_receivable_pdf", "label": "売掛金"},
-    "notes_receivable": {"endpoint": "company.notes_receivable_pdf", "label": "受取手形"},
-    "temporary_payments": {"endpoint": "company.temporary_payments_pdf", "label": "仮払金（前渡金）"},
-    "loans_receivable": {"endpoint": "company.loans_receivable_pdf", "label": "貸付金・受取利息"},
-    "notes_payable": {"endpoint": "company.notes_payable_pdf", "label": "支払手形"},
-    "accounts_payable": {"endpoint": "company.accounts_payable_pdf", "label": "買掛金"},
-    "borrowings": {"endpoint": "company.borrowings_pdf", "label": "借入金及び支払利子"},
+    "deposits": {"endpoint": "company.statement_pdf", "label": "預貯金等", "page_key": "deposits"},
+    "accounts_receivable": {"endpoint": "company.statement_pdf", "label": "売掛金", "page_key": "accounts_receivable"},
+    "notes_receivable": {"endpoint": "company.statement_pdf", "label": "受取手形", "page_key": "notes_receivable"},
+    "temporary_payments": {"endpoint": "company.statement_pdf", "label": "仮払金（前渡金）", "page_key": "temporary_payments"},
+    "loans_receivable": {"endpoint": "company.statement_pdf", "label": "貸付金・受取利息", "page_key": "loans_receivable"},
+    "notes_payable": {"endpoint": "company.statement_pdf", "label": "支払手形", "page_key": "notes_payable"},
+    "accounts_payable": {"endpoint": "company.statement_pdf", "label": "買掛金", "page_key": "accounts_payable"},
+    "borrowings": {"endpoint": "company.statement_pdf", "label": "借入金及び支払利子", "page_key": "borrowings"},
 }
 
 STATEMENT_POST_CREATE_CTA: Dict[str, StatementCTAConfig] = {

@@ -1,28 +1,28 @@
 # app/company/statement_of_accounts.py
-from flask import render_template, request, redirect, url_for, flash, abort
+import os
+from datetime import datetime
+
+from flask import abort, flash, redirect, render_template, request, send_file, url_for
+
 from app.company import company_bp
-from app.company.models import (
-    AccountingData
-)
+from app.company.models import AccountingData
 from app.navigation import (
-    get_navigation_state,
     compute_skipped_steps_for_company,
+    get_navigation_state,
     mark_step_as_completed,
     unmark_step_as_completed,
 )
 from .auth import company_required
 from app.company.services.statement_of_accounts_flow import (
-    StatementOfAccountsFlow,
     RedirectRequired,
+    StatementOfAccountsFlow,
 )
 from app.company.services.statement_of_accounts_service import StatementOfAccountsService
 from app.company.services.protocols import StatementOfAccountsServiceProtocol
 from app.progress.evaluator import SoAProgressEvaluator
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG
-from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
-from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
-from app.pdf.uchiwakesyo_uketoritegata import generate_uchiwakesyo_uketoritegata
-from app.pdf.uchiwakesyo_karibaraikin_kashitukekin import generate_uchiwakesyo_karibaraikin_kashitukekin
+from app.services import get_statement_pdf_config, get_default_pdf_year
+from flask import current_app
 from app.models_utils.date_readers import ensure_date
 
 # mappings are centralized in app.services.soa_registry
@@ -56,184 +56,36 @@ def statement_of_accounts(company):
     context = context_data.context
     return render_template('company/statement_of_accounts.html', **context)
 
-@company_bp.route('/statement/deposits/pdf')
+@company_bp.route('/statement/<string:page_key>/pdf')
 @company_required
-def deposits_pdf(company):
-    """預貯金等の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_yocyokin_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_yocyokin(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"uchiwakesyo_yocyokin_{year}.pdf"
-    )
+def statement_pdf(company, page_key):
+    """汎用的な勘定科目内訳書PDF出力エンドポイント。"""
+    config = get_statement_pdf_config(page_key)
+    if not config:
+        abort(404)
 
-@company_bp.route('/statement/accounts_receivable/pdf')
-@company_required
-def accounts_receivable_pdf(company):
-    """売掛金（未収入金）の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    # Always print on the latest available template year (hint only)
-    year = '2099'
+    year = get_default_pdf_year()
     base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
     filled_dir = os.path.join(base_dir, 'temporary', 'filled')
     os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_urikakekin_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_urikakekin(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"uchiwakesyo_urikakekin_{year}.pdf"
-    )
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 
-@company_bp.route('/statement/temporary_payments/pdf')
-@company_required
-def temporary_payments_pdf(company):
-    """仮払金（前渡金）の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_karibaraikin-kashitukekin_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_karibaraikin_kashitukekin(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"uchiwakesyo_karibaraikin-kashitukekin_{year}.pdf"
-    )
+    filename = config.filename_pattern.format(company_id=company.id, timestamp=timestamp)
+    output_path = os.path.join(filled_dir, filename)
 
-@company_bp.route('/statement/notes_receivable/pdf')
-@company_required
-def notes_receivable_pdf(company):
-    """受取手形の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_uketoritegata_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_uketoritegata(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"uchiwakesyo_uketoritegata_{year}.pdf"
-    )
+    try:
+        config.generator(company_id=company.id, year=year, output_path=output_path)
+    except Exception as exc:
+        current_app.logger.exception('Failed to generate PDF for %s: %s', page_key, exc)
+        flash('PDF生成中にエラーが発生しました。時間をおいて再度お試しください。', 'danger')
+        return redirect(url_for('company.statement_of_accounts', page=page_key))
 
-@company_bp.route('/statement/notes_payable/pdf')
-@company_required
-def notes_payable_pdf(company):
-    """支払手形の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    from app.pdf.uchiwakesyo_shiharaitegata import generate_uchiwakesyo_shiharaitegata
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_shiharaitegata_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_shiharaitegata(company_id=company.id, year=year, output_path=out_path)
+    download_name = config.download_name_pattern.format(year=year)
     return send_file(
-        out_path,
+        output_path,
         mimetype='application/pdf',
         as_attachment=False,
-        download_name=f"uchiwakesyo_shiharaitegata_{year}.pdf"
-    )
-
-@company_bp.route('/statement/accounts_payable/pdf')
-@company_required
-def accounts_payable_pdf(company):
-    """買掛金（未払金・未払費用）の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    from app.pdf.uchiwakesyo_kaikakekin import generate_uchiwakesyo_kaikakekin
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_kaikakekin_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_kaikakekin(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"uchiwakesyo_kaikakekin_{year}.pdf"
-    )
-
-@company_bp.route('/statement/loans_receivable/pdf')
-@company_required
-def loans_receivable_pdf(company):
-    """貸付金・受取利息の内訳をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    # 同一様式（上段: 仮払金 / 下段: 貸付金）を使用
-    out_path = os.path.join(filled_dir, f"uchiwakesyo_karibaraikin-kashitukekin_{company.id}_{ts}.pdf")
-    generate_uchiwakesyo_karibaraikin_kashitukekin(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"uchiwakesyo_karibaraikin-kashitukekin_{year}.pdf"
-    )
-
-@company_bp.route('/statement/borrowings/pdf')
-@company_required
-def borrowings_pdf(company):
-    """借入金及び支払利子の内訳（上下二段）をPDFに出力（検証用）。"""
-    from flask import current_app, send_file
-    import os
-    from datetime import datetime
-    from app.pdf.borrowings_two_tier import generate_borrowings_two_tier
-    # Always print on the latest available template year (hint only)
-    year = '2099'
-    base_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
-    filled_dir = os.path.join(base_dir, 'temporary', 'filled')
-    os.makedirs(filled_dir, exist_ok=True)
-    ts = datetime.now().strftime('%Y%m%d%H%M%S')
-    out_path = os.path.join(filled_dir, f"borrowings_two_tier_{company.id}_{ts}.pdf")
-    generate_borrowings_two_tier(company_id=company.id, year=year, output_path=out_path)
-    return send_file(
-        out_path,
-        mimetype='application/pdf',
-        as_attachment=False,
-        download_name=f"borrowings_two_tier_{year}.pdf"
+        download_name=download_name,
     )
 
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])

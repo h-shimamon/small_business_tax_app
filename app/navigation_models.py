@@ -44,25 +44,23 @@ class NavigationNode:
         テンプレートに渡すための辞書形式に変換する
         """
         skipped_steps = skipped_steps or set()
-        # 親がアクティブかどうかを計算
         is_parent_active = self.is_active(current_page_key)
 
         children_states = []
         for child in self.children:
-            # 子自身のキーまたはパラメータが一致するかで子のis_activeを決定
-            is_child_active = (child.key == current_page_key) or \
-                              (child.params and child.params.get('page') == current_page_key)
-            
-            # SoA以外のグループではスキップ概念を適用しない（堅牢化）
-            is_child_skipped = (self.key == 'statement_of_accounts_group') and (child.key in skipped_steps)
+            child_page_key = (child.params or {}).get('page')
+            child_is_active = child.key == current_page_key or child_page_key == current_page_key
+
+            is_child_skipped = self.key == 'statement_of_accounts_group' and child.key in skipped_steps
+            is_child_completed = (child.key in completed_steps) and not is_child_skipped
 
             children_states.append({
                 'name': child.name,
                 'url': child.get_url(),
-                'is_active': is_child_active,
-                'is_completed': child.key in skipped_steps and False or child.key in completed_steps,
+                'is_active': child_is_active,
+                'is_completed': is_child_completed,
                 'is_skipped': is_child_skipped,
-                'key': child.key
+                'key': child.key,
             })
 
         return {
@@ -70,5 +68,5 @@ class NavigationNode:
             'name': self.name,
             'type': self.node_type,
             'is_active': is_parent_active,
-            'children': children_states
+            'children': children_states,
         }

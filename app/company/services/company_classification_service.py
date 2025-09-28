@@ -1,4 +1,6 @@
 # app/company/services/company_classification_service.py
+from werkzeug.exceptions import NotFound
+
 from app.company.models import Company, Shareholder
 from app import db
 
@@ -14,7 +16,9 @@ def classify_company(company_id):
         dict: 判定結果を含む辞書。
     """
     # 1. 会社情報を取得し、判定基準を決定
-    company = Company.query.get_or_404(company_id)
+    company = db.session.get(Company, company_id)
+    if company is None:
+        raise NotFound()
     company_name = company.company_name
 
     if any(corp_type in company_name for corp_type in ['合同会社', '合名会社', '合資会社']):

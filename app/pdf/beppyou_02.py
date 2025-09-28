@@ -532,7 +532,7 @@ def generate_beppyou_02(company_id: Optional[int], year: str = "2025", *, output
         rectangles.append((p, *box_hi_douzoku))
 
     # --- Period (wareki) and company name ---
-    company = Company.query.get(company_id)
+    company = db.session.get(Company, company_id)
     if company:
         # 会計期間 開始: era/YY/MM/DD を分割し、それぞれ指定矩形に下寄せ配置
         period = get_company_period(company)

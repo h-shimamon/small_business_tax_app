@@ -10,6 +10,64 @@ class DataMappingService:
 
     def __init__(self, user_id):
         self.user_id = user_id
+        self._master_name_cache = None
+        self._existing_mapping_cache = None
+        self._master_accounts_cache = None
+        self._normalized_master_index = None
+
+    def _get_master_account_names(self) -> set[str]:
+        if self._master_name_cache is None:
+            self._master_name_cache = {
+                master.name.strip().lower()
+                for master in AccountTitleMaster.query.all()
+            }
+        return self._master_name_cache
+
+    def _get_existing_mapping_names(self) -> set[str]:
+        if self._existing_mapping_cache is None:
+            self._existing_mapping_cache = {
+                mapping.original_account_name.strip().lower()
+                for mapping in UserAccountMapping.query.filter_by(user_id=self.user_id).all()
+            }
+        return self._existing_mapping_cache
+
+    def _get_master_accounts(self):
+        if self._master_accounts_cache is None:
+            self._master_accounts_cache = AccountTitleMaster.query.order_by(
+                AccountTitleMaster.major_category,
+                AccountTitleMaster.middle_category,
+                AccountTitleMaster.number,
+            ).all()
+        return self._master_accounts_cache
+
+    def _get_normalized_master_index(self):
+        if self._normalized_master_index is None:
+            alias_map = {
+                '給料手当': '給料賃金',
+                '給与手当': '給料賃金',
+                '給料': '給料賃金',
+                '給与': '給料賃金',
+                '仕入': '仕入高',
+                '仕入れ': '仕入高',
+                '売上': '売上高',
+                '旅費交通費': '旅費交通費',
+                '通信費': '通信費',
+            }
+
+            master_accounts = self._get_master_accounts()
+            master_choices = {m.name: m.id for m in master_accounts}
+            alias_map_norm = {self._normalize_string(k): v for k, v in alias_map.items()}
+            master_norm_to_name = {self._normalize_string(name): name for name in master_choices.keys()}
+            self._normalized_master_index = (master_choices, alias_map_norm, master_norm_to_name)
+        return self._normalized_master_index
+
+    @staticmethod
+    def _normalize_string(value: str) -> str:
+        try:
+            return str(value).strip().replace('　', '').replace(' ', '')
+        except Exception:
+            return str(value).strip()
+
 
     def get_unmatched_accounts(self, user_accounts):
         """
@@ -17,13 +75,10 @@ class DataMappingService:
         比較はcase-insensitiveに行う。
         """
         # マスター勘定科目名を小文字のセットとして準備
-        master_account_names = {master.name.strip().lower() for master in AccountTitleMaster.query.all()}
+        master_account_names = self._get_master_account_names()
         
         # 既存のマッピング（ユーザーが過去に設定したもの）を小文字のセットとして準備
-        existing_mappings = {
-            mapping.original_account_name.strip().lower()
-            for mapping in UserAccountMapping.query.filter_by(user_id=self.user_id).all()
-        }
+        existing_mappings = self._get_existing_mapping_names()
         
         unmatched = []
         # 処理済みの勘定科目を小文字で保持し、重複チェック
@@ -50,55 +105,22 @@ class DataMappingService:
         return unmatched
 
     def get_mapping_suggestions(self, unmatched_accounts):
-        master_accounts = AccountTitleMaster.query.order_by(
-            AccountTitleMaster.major_category,
-            AccountTitleMaster.middle_category,
-            AccountTitleMaster.number
-        ).all()
-        master_choices = {master.name: master.id for master in master_accounts}
-
-        # 軽量正規化（全角/半角スペース除去、前後空白トリム）
-        def _normalize(s: str) -> str:
-            try:
-                return str(s).strip().replace('　', '').replace(' ', '')
-            except Exception:
-                return str(s).strip()
-
-        # よく出る別表記のエイリアス（将来拡張可）
-        alias_map = {
-            '給料手当': '給料賃金',
-            '給与手当': '給料賃金',
-            '給料': '給料賃金',
-            '給与': '給料賃金',
-            # 仕入系の表記ゆれを統一
-            '仕入': '仕入高',
-            '仕入れ': '仕入高',
-            '売上': '売上高',
-            # 例: 旅費交通費/通信費は同名だが、将来別表記が来た際の受け皿
-            '旅費交通費': '旅費交通費',
-            '通信費': '通信費',
-        }
-        alias_map_norm = {_normalize(k): v for k, v in alias_map.items()}
-
-        # マスター名の正規化インデックス
-        master_norm_to_name = {_normalize(name): name for name in master_choices.keys()}
+        master_accounts = self._get_master_accounts()
+        master_choices, alias_map_norm, master_norm_to_name = self._get_normalized_master_index()
 
         mapping_items = []
         for account in unmatched_accounts:
             suggested_master_id = None
-            norm_acc = _normalize(account)
+            norm_acc = self._normalize_string(account)
 
-            # 1) エイリアス優先
             alias_target = alias_map_norm.get(norm_acc)
             if alias_target and alias_target in master_choices:
                 suggested_master_id = master_choices[alias_target]
             else:
-                # 2) そのままfuzzy（しきい値を少し緩める）
                 best_match = process.extractOne(account, master_choices.keys())
                 if best_match and best_match[1] > 65:
                     suggested_master_id = master_choices[best_match[0]]
                 else:
-                    # 3) 正規化文字列でfuzzy（保険）
                     best_norm = process.extractOne(norm_acc, list(master_norm_to_name.keys()))
                     if best_norm and best_norm[1] > 70:
                         target_name = master_norm_to_name[best_norm[0]]
@@ -106,7 +128,7 @@ class DataMappingService:
 
             mapping_items.append({
                 'original_name': account,
-                'suggested_master_id': suggested_master_id
+                'suggested_master_id': suggested_master_id,
             })
         return mapping_items, master_accounts
 
@@ -116,14 +138,12 @@ class DataMappingService:
             raise ValueError("セッション情報が不足しています。")
 
         try:
-            # 既存のマッピングを一括で取得し、セットに変換して高速な存在チェックを可能にする
-            existing_mappings = db.session.query(UserAccountMapping.original_account_name).filter_by(user_id=self.user_id).all()
-            existing_mapping_set = {item.original_account_name for item in existing_mappings}
+            existing_mapping_set = set(self._get_existing_mapping_names())
 
             new_mappings = []
             for original_name in original_names:
-                # セットでの存在チェック (DBクエリは発生しない)
-                if original_name in existing_mapping_set:
+                normalized = original_name.strip().lower()
+                if normalized in existing_mapping_set:
                     continue
 
                 master_id_str = mappings_form_data.get(f'map_{original_name}')
@@ -132,14 +152,16 @@ class DataMappingService:
                         user_id=self.user_id,
                         software_name=software_name,
                         original_account_name=original_name,
-                        master_account_id=int(master_id_str)
+                        master_account_id=int(master_id_str),
                     )
                     new_mappings.append(mapping)
-            
+                    existing_mapping_set.add(normalized)
+
             if new_mappings:
                 db.session.add_all(new_mappings)
-            
+
             db.session.commit()
+            self._existing_mapping_cache = None
         except Exception as e:
             db.session.rollback()
             raise Exception(f'データベースへの保存中にエラーが発生しました: {e}')

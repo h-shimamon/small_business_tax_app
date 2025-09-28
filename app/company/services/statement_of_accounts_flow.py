@@ -21,7 +21,7 @@ from app.navigation import (
 from app.navigation_helpers import get_soa_child_key, get_next_soa_page
 from app.services.app_registry import get_default_pdf_year, get_post_create_cta, get_empty_state
 from app.services.soa_registry import SUMMARY_PAGE_MAP, STATEMENT_PAGES_CONFIG
-from app.company.services.soa_summary_service import SoASummaryService
+from app.company.services.soa_difference_service import SoADifferenceBatch
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,8 @@ class StatementOfAccountsFlow:
         self.accounting_data = accounting_data
         from app.company.services.statement_of_accounts_service import StatementOfAccountsService
         self.service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company_id)
+        self._difference_batch = SoADifferenceBatch(company_id, accounting_data=accounting_data)
+        self._difference_batch.bind_to_request()
 
     def compute_skipped(self) -> set[str]:
         return compute_skipped_steps_for_company(self.company_id, accounting_data=self.accounting_data)
@@ -86,15 +88,7 @@ class StatementOfAccountsFlow:
     def compute_summaries_and_mark(self, page: str, config: dict) -> tuple[dict, Optional[str]]:
         summaries: dict = {'generic_summary': {'bs_total': 0, 'breakdown_total': 0, 'difference': 0}}
         if page in SUMMARY_PAGE_MAP:
-            model = config['model']
-            total_field_name = config['total_field']
-            diff = SoASummaryService.compute_difference(
-                self.company_id,
-                page,
-                model,
-                total_field_name,
-                accounting_data=self.accounting_data,
-            )
+            diff = self._difference_batch.get(page)
             if page == 'borrowings':
                 summaries['borrowings_summary'] = {
                     'bs_total': diff.get('bs_total', 0),

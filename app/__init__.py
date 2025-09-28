@@ -71,6 +71,13 @@ def _attach_ui_context_safe(app: Flask) -> None:
         _log_init_failure('attach_app_ui_context', exc)
 
 
+def _register_pdf_registry(app: Flask) -> None:
+    try:
+        from app.services import pdf_registry_init  # noqa: F401
+    except Exception as exc:
+        _log_init_failure('pdf_registry_init', exc)
+
+
 def _configure_logging(app: Flask) -> None:
     try:
         import logging as _logging
@@ -175,6 +182,7 @@ def _build_init_steps(test_config) -> Sequence[InitStep]:
     return [
         {'key': 'template_globals', 'runner': _register_template_globals, 'optional': True, 'severity': 'soft'},
         {'key': 'configuration', 'runner': _configuration_runner, 'optional': False, 'severity': 'fatal'},
+        {'key': 'pdf_registry', 'runner': _register_pdf_registry, 'depends_on': ('configuration',), 'optional': True, 'severity': 'soft'},
         {'key': 'instance_folder', 'runner': _ensure_instance_folder, 'depends_on': ('configuration',), 'optional': True, 'severity': 'soft'},
         {'key': 'settings', 'runner': _register_settings, 'depends_on': ('configuration',), 'optional': True, 'severity': 'soft'},
         {'key': 'ui_context', 'runner': _attach_ui_context_safe, 'depends_on': ('configuration',), 'optional': True, 'severity': 'soft'},

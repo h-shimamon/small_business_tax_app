@@ -9,6 +9,7 @@ from app.company.models import (
     UserAccountMapping,
     AccountingData,
 )
+from app import db
 from app.primitives.dates import get_company_period
 
 
@@ -19,8 +20,15 @@ def _filled_str(v) -> bool:
         return False
 
 
+
+def _get_company(company_id: int) -> Company | None:
+    try:
+        return db.session.get(Company, company_id)
+    except Exception:
+        return None
+
 def _company_info_completed(company_id: int, user_id: int) -> bool:
-    c = Company.query.get(company_id)
+    c = _get_company(company_id)
     if not c:
         return False
     return all([
@@ -41,7 +49,7 @@ def _shareholders_completed(company_id: int, user_id: int) -> bool:
 
 
 def _declaration_completed(company_id: int, user_id: int) -> bool:
-    c = Company.query.get(company_id)
+    c = _get_company(company_id)
     if not c:
         return False
     # Keep original string-based gating, but also accept date presence via centralized readers

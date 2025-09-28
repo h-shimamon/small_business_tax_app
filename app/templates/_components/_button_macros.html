@@ -14,7 +14,7 @@
   {% set exports = get_pdf_export_map() %}
   {% set config = exports.get(page) %}
   {% if config %}
-    {{ render_pdf_button(url_for(config.endpoint, year=(pdf_year or default_pdf_year)|string),
-                         'PDF出力（' ~ config.label ~ '・検証用）') }}
+    {% set href = url_for(config.endpoint, page_key=config.page_key, year=(pdf_year or default_pdf_year)|string) %}
+    {{ render_pdf_button(href, 'PDF出力（' ~ config.label ~ '・検証用）') }}
   {% endif %}
 {% endmacro %}

@@ -18,19 +18,21 @@ class SoAProgressEvaluator:
         Returns normalized difference result for a SoA page.
         {'difference': int, 'source_total': int, 'breakdown_total': int}
         """
-        # Lazy imports to avoid cycles and keep import cost low for tests
+        from app.company.services.soa_difference_service import SoADifferenceBatch
         from app.company.services.soa_summary_service import SoASummaryService
         from app.services.soa_registry import STATEMENT_PAGES_CONFIG
+
+        batch = SoADifferenceBatch.current(company_id)
+        if batch is not None:
+            return batch.get(page)
 
         cfg = STATEMENT_PAGES_CONFIG.get(page) or {}
         model = cfg.get('model')
         total_field = cfg.get('total_field', 'amount')
 
-        # Source (dict) → normalized totals
         source_dict = SoASummaryService.compute_source_total(company_id, page)
         source_total = int(source_dict.get('source_total', 0) or 0)
 
-        # Breakdown total via existing service (page-aware)
         breakdown_total = int(
             SoASummaryService.compute_breakdown_total(company_id, page, model, total_field) or 0
         )
