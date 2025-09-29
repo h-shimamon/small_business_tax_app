@@ -56,7 +56,11 @@ def _instantiate_form_safely(form_cls: type[Form]) -> Form | None:
 
 
 def _iter_unbound_fields(form_cls: type[Form]) -> Iterable[Tuple[str, Any]]:
-    for name, attr in form_cls.__dict__.items():
-        if isinstance(attr, UnboundField):
-            yield name, attr
-}
+    seen: Dict[str, Any] = {}
+    for cls in reversed(form_cls.mro()):
+        if not issubclass(cls, Form):
+            continue
+        for name, attr in cls.__dict__.items():
+            if isinstance(attr, UnboundField):
+                seen[name] = attr
+    return list(seen.items())

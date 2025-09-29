@@ -48,7 +48,7 @@ def _build_manual_result(overrides: dict):
 
 
 def _load_case_rows():
-    path = Path(__file__).parent / "data" / "corporate_tax_cases.csv"
+    path = Path(__file__).parent / "fixtures" / "corporate_tax_cases.csv"
     if not path.exists():
         return []
     with path.open(encoding='utf-8') as fp:

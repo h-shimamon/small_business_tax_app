@@ -7,17 +7,19 @@ from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import AccountingData, UserAccountMapping
 from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
-from .services import (
-    DataMappingService,
-    FinancialStatementService,
+from app.company.services.data_mapping_service import DataMappingService
+from app.company.services.financial_statement_service import FinancialStatementService
+from app.company.services.import_consistency_service import (
     on_mapping_saved,
     on_mapping_deleted,
     on_mappings_reset,
+)
+from app.company.services.upload_flow_service import (
     UploadFlowService,
     UploadFlowError,
     UploadValidationError,
-    UploadWizardService,
 )
+from app.company.services.import_wizard_service import UploadWizardService
 from .parser_factory import ParserFactory
 from app.primitives.dates import get_company_period
 

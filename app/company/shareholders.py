@@ -6,11 +6,11 @@ from app.company import company_bp
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
 from app.company.models import Shareholder
 from app.company.utils import get_officer_choices, set_page_title_and_verify_company_type
-from app.company.services import (
+from app.company.services.shareholder_service import (
     shareholder_service,
-    company_classification_service,
     get_shareholder_service_for,
 )
+import app.company.services.company_classification_service as company_classification_service
 from app.company.services.protocols import ShareholderServiceProtocol
 from app.navigation import get_navigation_state
 from .auth import company_required

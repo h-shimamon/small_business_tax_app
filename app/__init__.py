@@ -95,7 +95,7 @@ def _attach_ui_context_safe(app: Flask) -> None:
 
 def _register_pdf_registry(app: Flask) -> None:
     try:
-        from app.services import pdf_registry_init  # noqa: F401
+        import app.services.pdf_registry_init  # noqa: F401
     except Exception as exc:
         _log_init_failure('pdf_registry_init', exc)
 

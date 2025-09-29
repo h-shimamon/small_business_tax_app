@@ -6,7 +6,7 @@ import os
 from flask_login import current_user
 from flask import has_request_context
 from app.company.models import Company, Shareholder
-from app.company.services import shareholder_service as shs
+from app.company.services.shareholder_service import shareholder_service as shs
 from app.primitives.dates import get_company_period, to_iso
 
 from reportlab.pdfbase import pdfmetrics
@@ -14,7 +14,7 @@ from reportlab.pdfbase import pdfmetrics
 from .pdf_fill import overlay_pdf, TextSpec
 from sqlalchemy import func
 from app import db
-from app.company.services import company_classification_service
+import app.company.services.company_classification_service as company_classification_service
 from app.primitives import wareki as _w
 from .geom import merge_rects, get_row_metrics
 
@@ -157,8 +157,7 @@ def _collect_rows(company_id: int, limit: int = 12) -> List[Dict]:
         # related sorted by shares_held desc (None treated as 0)
         children = list(main.children or [])
         children.sort(key=lambda c: (c.shares_held or 0), reverse=True)
-        if children:
-            rel = children[0]
+        for rel in children:
             rows.append({
                 "group": group_num,
                 "person": rel,
@@ -166,9 +165,9 @@ def _collect_rows(company_id: int, limit: int = 12) -> List[Dict]:
                 "relation": rel.relationship or "",
                 "main": main,
             })
-        else:
-            # next group's main will occupy this row per spec; handled by loop naturally
-            pass
+            if len(rows) >= limit:
+                break
+
         if len(rows) >= limit:
             break
 

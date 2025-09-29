@@ -4,9 +4,9 @@ from flask_login import login_required, current_user
 from app.company import company_bp
 from app.company.forms import CompanyForm, DeclarationForm
 from app.navigation import get_navigation_state, mark_step_as_completed
-from .services import DeclarationService
+from app.company.services.declaration_service import DeclarationService
 from .auth import company_required
-from .services.company_service import CompanyService
+from app.company.services.company_service import CompanyService
 from app.primitives.dates import get_company_period, company_closing_date
 from app.models_utils.date_readers import ensure_date
 

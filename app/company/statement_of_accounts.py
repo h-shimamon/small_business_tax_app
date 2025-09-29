@@ -21,7 +21,8 @@ from app.company.services.statement_of_accounts_service import StatementOfAccoun
 from app.company.services.protocols import StatementOfAccountsServiceProtocol
 from app.progress.evaluator import SoAProgressEvaluator
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG
-from app.services import get_statement_pdf_config, get_default_pdf_year
+from app.services.pdf_registry import get_statement_pdf_config
+from app.services.app_registry import get_default_pdf_year
 from flask import current_app
 from app.models_utils.date_readers import ensure_date
 
