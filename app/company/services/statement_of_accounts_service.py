@@ -1,6 +1,8 @@
 # app/company/services/statement_of_accounts_service.py
 from typing import Any, Iterable, List, Optional, Tuple
 
+from flask import current_app
+
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 from app import db
 from .protocols import StatementOfAccountsServiceProtocol
@@ -20,7 +22,8 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
         if callable(query_filter):
             try:
                 query = query_filter(query)
-            except Exception:
+            except Exception as exc:
+                current_app.logger.warning('SoA query filter failed for %s: %s', getattr(model, '__name__', model), exc)
                 query = model.query.filter_by(company_id=self.company_id)
         return query
 

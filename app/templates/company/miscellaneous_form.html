@@ -4,13 +4,15 @@
 
 {% block title %}{{ form_title }}{% endblock %}
 
+{% set current_page_key = request.view_args.get('page_key', request.args.get('page', 'misc_income')) %}
+
 {% block sidebar %}
-    {{ render_soa_sidebar(request.view_args.get('page_key', 'miscellaneous'), navigation_state) }}
+    {{ render_soa_sidebar(current_page_key, navigation_state) }}
 {% endblock %}
 
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
-{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='miscellaneous'), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
+{% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page=current_page_key), cancel_label='キャンセル', form_attrs='novalidate class="ui-ctrl-44"') %}
   {{ render_field(form.account_name) }}
   {{ render_field(form.details) }}
   {{ render_field(form.amount) }}

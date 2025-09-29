@@ -85,6 +85,19 @@ class DeclarationForm(FlaskForm):
     refund_account_number = StringField('口座番号', validators=[Optional()])
     submit = SubmitField('保存する')
 
+    def validate(self, extra_validators=None) -> bool:
+        if not super().validate(extra_validators=extra_validators):
+            return False
+        start = self.accounting_period_start.data
+        end = self.accounting_period_end.data
+        if start and end and end < start:
+            self.accounting_period_end.errors.append('会計期間の終了日は開始日以降の日付を入力してください。')
+            return False
+        if self.employee_count_at_eoy.data is not None and self.employee_count_at_eoy.data < 0:
+            self.employee_count_at_eoy.errors.append('従業者数は0以上で入力してください。')
+            return False
+        return True
+
 
 class OfficeForm(FlaskForm):
     office_name = StringField('事業所名', validators=[DataRequired(message="事業所名は必須です。"), Length(max=100)])

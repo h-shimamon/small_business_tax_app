@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, Optional, Tuple
 
 from dateutil.relativedelta import relativedelta
@@ -9,32 +9,17 @@ from sqlalchemy import and_
 
 from app import db
 from app.company.models import AccountingData, Company, CorporateTaxMaster
+from app.domain.tax.engine import calculate_tax
+from app.domain.tax.models import EqualizationAmounts, TaxInput, TaxPeriod, TaxRates
+from app.domain.tax.rates import (
+    DEFAULT_EQUALIZATION_DEFAULTS,
+    DEFAULT_RATE_DEFAULTS,
+    build_equalization_amounts,
+    build_tax_rates,
+)
 
 
 _DECIMAL_ZERO = Decimal("0")
-_HUNDRED = Decimal("100")
-_EIGHT_MILLION = Decimal("8000000")
-_FOUR_MILLION = Decimal("4000000")
-_TWELVE = Decimal("12")
-_THOUSAND = Decimal("1000")
-
-
-DEFAULT_RATE_VALUES = {
-    'corporate_tax_rate_low': Decimal('15.0'),
-    'corporate_tax_rate_high': Decimal('23.2'),
-    'local_corporate_tax_rate': Decimal('10.3'),
-    'enterprise_tax_rate_u4m': Decimal('3.5'),
-    'enterprise_tax_rate_4m_8m': Decimal('5.3'),
-    'enterprise_tax_rate_o8m': Decimal('7.0'),
-    'local_special_tax_rate': Decimal('37.0'),
-    'prefectural_corporate_tax_rate': Decimal('1.0'),
-    'municipal_corporate_tax_rate': Decimal('6.0'),
-}
-
-DEFAULT_AMOUNT_VALUES = {
-    'prefectural_equalization_amount': 20000,
-    'municipal_equalization_amount': 50000,
-}
 
 class CorporateTaxCalculationService:
     """Builds the context dictionaries for the corporate tax calculation page."""
@@ -44,10 +29,6 @@ class CorporateTaxCalculationService:
         master = self._resolve_master(company)
         accounting_data = self._latest_accounting_data(company_id) if company_id else None
         return self._compile(company, master, accounting_data)
-
-    # ----------------------------
-    # Internal helpers
-    # ----------------------------
 
     @staticmethod
     def _empty_response() -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
@@ -112,47 +93,11 @@ class CorporateTaxCalculationService:
             fiscal_start = master.fiscal_start_date
         if not fiscal_end and master is not None:
             fiscal_end = master.fiscal_end_date
-        period_months = self._resolve_period_months(company, master, fiscal_start, fiscal_end)
 
+        period_months = self._resolve_period_months(company, master, fiscal_start, fiscal_end)
+        months_truncated = self._resolve_truncated_months(master)
         pre_tax_income = self._extract_pre_tax_income(accounting_data)
 
-        rate_values = {
-            'corporate_tax_rate_low': getattr(master, 'corporate_tax_rate_u8m', None) if master else None,
-            'corporate_tax_rate_high': getattr(master, 'corporate_tax_rate_o8m', None) if master else None,
-            'local_corporate_tax_rate': getattr(master, 'local_corporate_tax_rate', None) if master else None,
-            'enterprise_tax_rate_u4m': getattr(master, 'enterprise_tax_rate_u4m', None) if master else None,
-            'enterprise_tax_rate_4m_8m': getattr(master, 'enterprise_tax_rate_4m_8m', None) if master else None,
-            'enterprise_tax_rate_o8m': getattr(master, 'enterprise_tax_rate_o8m', None) if master else None,
-            'local_special_tax_rate': getattr(master, 'local_special_tax_rate', None) if master else None,
-            'prefectural_corporate_tax_rate': getattr(master, 'prefectural_corporate_tax_rate', None) if master else None,
-            'municipal_corporate_tax_rate': getattr(master, 'municipal_corporate_tax_rate', None) if master else None,
-        }
-        amount_values = {
-            'prefectural_equalization_amount': getattr(master, 'prefectural_equalization_amount', None) if master else None,
-            'municipal_equalization_amount': getattr(master, 'municipal_equalization_amount', None) if master else None,
-        }
-        months_truncated = self._resolve_truncated_months(master)
-
-        return self._compute_values(
-            fiscal_start,
-            fiscal_end,
-            period_months,
-            months_truncated,
-            pre_tax_income,
-            rate_values,
-            amount_values,
-        )
-
-    def _compute_values(
-        self,
-        fiscal_start: Optional[date],
-        fiscal_end: Optional[date],
-        period_months: Optional[Any],
-        months_truncated: Optional[Any],
-        pre_tax_income: Any,
-        rate_values: Dict[str, Any],
-        amount_values: Dict[str, Any],
-    ) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
         months_in_period_int = self._coerce_int(period_months)
         if months_in_period_int is None or months_in_period_int <= 0:
             months_in_period_int = self._calculate_period_months(fiscal_start, fiscal_end) or 12
@@ -160,148 +105,24 @@ class CorporateTaxCalculationService:
         if months_truncated_int is None or months_truncated_int <= 0:
             months_truncated_int = months_in_period_int
 
-        pre_tax_income_decimal = self._decimal(pre_tax_income)
-        taxable_income = pre_tax_income_decimal if pre_tax_income_decimal > _DECIMAL_ZERO else _DECIMAL_ZERO
+        taxable_income = self._decimal(pre_tax_income)
+        if taxable_income <= _DECIMAL_ZERO:
+            taxable_income = _DECIMAL_ZERO
 
-        rate_low = self._with_rate_default(rate_values.get('corporate_tax_rate_low'), 'corporate_tax_rate_low')
-        rate_high = self._with_rate_default(rate_values.get('corporate_tax_rate_high'), 'corporate_tax_rate_high')
-        local_corp_rate = self._with_rate_default(rate_values.get('local_corporate_tax_rate'), 'local_corporate_tax_rate')
-        ent_rate_low = self._with_rate_default(rate_values.get('enterprise_tax_rate_u4m'), 'enterprise_tax_rate_u4m')
-        ent_rate_mid = self._with_rate_default(rate_values.get('enterprise_tax_rate_4m_8m'), 'enterprise_tax_rate_4m_8m')
-        ent_rate_high = self._with_rate_default(rate_values.get('enterprise_tax_rate_o8m'), 'enterprise_tax_rate_o8m')
-        local_special_rate = self._with_rate_default(rate_values.get('local_special_tax_rate'), 'local_special_tax_rate')
-        pref_rate = self._with_rate_default(rate_values.get('prefectural_corporate_tax_rate'), 'prefectural_corporate_tax_rate')
-        municipal_rate = self._with_rate_default(rate_values.get('municipal_corporate_tax_rate'), 'municipal_corporate_tax_rate')
-
-        pref_equalization_amount = self._with_amount_default(amount_values.get('prefectural_equalization_amount'), 'prefectural_equalization_amount')
-        municipal_equalization_amount = self._with_amount_default(amount_values.get('municipal_equalization_amount'), 'municipal_equalization_amount')
-
-        months_in_period_decimal = Decimal(months_in_period_int)
-
-        corporate_income_limit = (_EIGHT_MILLION * months_in_period_decimal) / _TWELVE
-        income_u800_limit = self._ceil_thousand(corporate_income_limit)
-        income_u800 = min(income_u800_limit, taxable_income)
-        if income_u800 < _DECIMAL_ZERO:
-            income_u800 = _DECIMAL_ZERO
-        income_o800_raw = taxable_income - income_u800
-        income_o800 = self._floor_thousand(income_o800_raw) if income_o800_raw > _DECIMAL_ZERO else _DECIMAL_ZERO
-
-        corporate_tax_low_base = min(taxable_income, income_u800)
-        corporate_tax_low = self._apply_rate(corporate_tax_low_base, rate_low)
-
-        corporate_tax_high_base = income_o800 if income_o800 > _DECIMAL_ZERO else _DECIMAL_ZERO
-        corporate_tax_high = self._apply_rate(corporate_tax_high_base, rate_high)
-        enterprise_income_u4m = (_FOUR_MILLION * months_in_period_decimal) / _TWELVE
-        enterprise_tax_base_value = taxable_income
-        enterprise_base_u4m = self._floor_thousand(min(enterprise_tax_base_value, enterprise_income_u4m))
-
-        enterprise_income_4m_8m = max(enterprise_tax_base_value - enterprise_income_u4m, _DECIMAL_ZERO)
-        enterprise_base_4m_8m = self._floor_thousand(min(enterprise_income_4m_8m, enterprise_income_u4m))
-
-        enterprise_income_o8m = enterprise_tax_base_value - (enterprise_income_u4m * 2)
-        if enterprise_income_o8m < _DECIMAL_ZERO:
-            enterprise_income_o8m = _DECIMAL_ZERO
-        enterprise_base_o8m = self._floor_thousand(enterprise_income_o8m) if enterprise_income_o8m > _DECIMAL_ZERO else _DECIMAL_ZERO
-
-        enterprise_tax_u4m = self._apply_rate(enterprise_base_u4m, ent_rate_low)
-
-        enterprise_tax_4m_8m_raw = self._apply_rate(enterprise_base_4m_8m, ent_rate_mid)
-        enterprise_tax_4m_8m = self._floor_hundred(enterprise_tax_4m_8m_raw)
-
-        enterprise_tax_o8m_raw = self._apply_rate(enterprise_base_o8m, ent_rate_high)
-        enterprise_tax_o8m = self._floor_hundred(enterprise_tax_o8m_raw)
-
-        enterprise_tax_amount = enterprise_tax_u4m + enterprise_tax_4m_8m + enterprise_tax_o8m
-        local_special_amount_raw = (enterprise_tax_amount * local_special_rate) / _HUNDRED
-        local_special_amount = self._floor_hundred(local_special_amount_raw)
-
-        corporate_tax_amount = corporate_tax_low + corporate_tax_high
-        corporate_tax_rounded = self._floor_hundred(corporate_tax_amount)
-
-        local_corporate_base = self._floor_thousand(corporate_tax_rounded)
-        local_corporate_tax_amount = self._floor_hundred(self._apply_rate(local_corporate_base, local_corp_rate))
-
-        pref_base = self._floor_thousand(corporate_tax_rounded)
-        pref_corporate_amount = self._floor_hundred(self._apply_rate(pref_base, pref_rate))
-        months_truncated_decimal = Decimal(months_truncated_int)
-        pref_equalization_component = self._floor_hundred(
-            (Decimal(pref_equalization_amount) / _TWELVE) * months_truncated_decimal
+        rates = build_tax_rates(master)
+        equalization = build_equalization_amounts(master)
+        tax_input = self._build_tax_input(
+            fiscal_start,
+            fiscal_end,
+            months_in_period_int,
+            months_truncated_int,
+            taxable_income,
+            rates,
+            equalization,
         )
-        pref_tax_amount = pref_corporate_amount + pref_equalization_component
-
-        municipal_corporate_amount = self._floor_hundred(self._apply_rate(pref_base, municipal_rate))
-        municipal_equalization_component = self._floor_hundred(
-            (Decimal(municipal_equalization_amount) / _TWELVE) * months_truncated_decimal
-        )
-        municipal_tax_amount = municipal_corporate_amount + municipal_equalization_component
-
-        local_tax_total = (
-            local_corporate_tax_amount
-            + enterprise_tax_amount
-            + local_special_amount
-            + pref_tax_amount
-            + municipal_tax_amount
-        )
-        total_tax = corporate_tax_rounded + local_tax_total
-
-        inputs = {
-            'fiscal_start_date': self._format_date(fiscal_start),
-            'fiscal_end_date': self._format_date(fiscal_end),
-            'months_in_period': months_in_period_int,
-            'months_truncated': months_truncated_int,
-            'pre_tax_income': self._to_int(pre_tax_income_decimal),
-            'corporate_tax_rate_low': self._format_rate(rate_low),
-            'corporate_tax_rate_high': self._format_rate(rate_high),
-            'local_corporate_tax_rate': self._format_rate(local_corp_rate),
-            'enterprise_tax_rate_u4m': self._format_rate(ent_rate_low),
-            'enterprise_tax_rate_4m_8m': self._format_rate(ent_rate_mid),
-            'enterprise_tax_rate_o8m': self._format_rate(ent_rate_high),
-            'local_special_tax_rate': self._format_rate(local_special_rate),
-            'prefectural_corporate_tax_rate': self._format_rate(pref_rate),
-            'prefectural_equalization_amount': pref_equalization_amount,
-            'municipal_corporate_tax_rate': self._format_rate(municipal_rate),
-            'municipal_equalization_amount': municipal_equalization_amount,
-        }
-
-        results = {
-            'corporate_tax': self._to_int(corporate_tax_rounded),
-            'local_corporate_tax': self._to_int(local_corporate_tax_amount),
-            'local_tax': self._to_int(local_tax_total),
-            'total_tax': self._to_int(total_tax),
-            'payment_rate': self._format_percent(total_tax, pre_tax_income_decimal),
-            'effective_rate': self._format_percent(total_tax, pre_tax_income_decimal + enterprise_tax_amount + local_special_amount),
-            'enterprise_tax_amount': self._to_int(enterprise_tax_amount),
-            'local_special_tax': self._to_int(local_special_amount),
-            'enterprise_tax_total': self._to_int(enterprise_tax_amount + local_special_amount),
-            'pref_corporate_tax': self._to_int(pref_corporate_amount),
-            'pref_equalization_amount': self._to_int(pref_equalization_component),
-            'pref_tax_total': self._to_int(pref_tax_amount),
-            'enterprise_pref_total': self._to_int(enterprise_tax_amount + local_special_amount + pref_tax_amount),
-            'municipal_corporate_tax': self._to_int(municipal_corporate_amount),
-            'municipal_equalization_amount': self._to_int(municipal_equalization_component),
-            'municipal_tax_total': self._to_int(municipal_tax_amount),
-        }
-
-        breakdown = {
-            'income_u800': self._to_int(income_u800),
-            'income_o800': self._to_int(income_o800),
-            'corporate_tax_low_rate': self._to_int(corporate_tax_low),
-            'corporate_tax_high_rate': self._to_int(corporate_tax_high),
-            'enterprise_tax_base': self._to_int(enterprise_tax_base_value),
-            'enterprise_income_u4m': self._to_int(enterprise_income_u4m),
-            'enterprise_base_u4m': self._to_int(enterprise_base_u4m),
-            'enterprise_income_4m_8m': self._to_int(enterprise_income_4m_8m),
-            'enterprise_base_4m_8m': self._to_int(enterprise_base_4m_8m),
-            'enterprise_income_o8m': self._to_int(enterprise_income_o8m),
-            'enterprise_base_o8m': self._to_int(enterprise_base_o8m),
-            'enterprise_tax_u4m': self._to_int(enterprise_tax_u4m),
-            'enterprise_tax_4m_8m': self._to_int(enterprise_tax_4m_8m),
-            'enterprise_tax_o8m': self._to_int(enterprise_tax_o8m),
-            'pref_tax_base': self._to_int(self._floor_thousand(corporate_tax_rounded)),
-            'municipal_tax_base': self._to_int(self._floor_thousand(corporate_tax_rounded)),
-        }
-
-        return inputs, results, breakdown
+        calculation = calculate_tax(tax_input)
+        payload = calculation.to_payload()
+        return payload.inputs, payload.results, payload.breakdown
 
     def build_from_manual(self, raw_inputs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
         cleaned = {key: (value.strip() if isinstance(value, str) else value) for key, value in raw_inputs.items()}
@@ -323,70 +144,94 @@ class CorporateTaxCalculationService:
         if not months_truncated:
             months_truncated = period_months
 
-        pre_tax_income = self._clean_numeric(cleaned.get('pre_tax_income'))
+        months_in_period_int = self._coerce_int(period_months) or 12
+        months_truncated_int = self._coerce_int(months_truncated) or months_in_period_int
 
-        rate_values = {
-            'corporate_tax_rate_low': self._clean_rate(cleaned.get('corporate_tax_rate_low')),
-            'corporate_tax_rate_high': self._clean_rate(cleaned.get('corporate_tax_rate_high')),
-            'local_corporate_tax_rate': self._clean_rate(cleaned.get('local_corporate_tax_rate')),
-            'enterprise_tax_rate_u4m': self._clean_rate(cleaned.get('enterprise_tax_rate_u4m')),
-            'enterprise_tax_rate_4m_8m': self._clean_rate(cleaned.get('enterprise_tax_rate_4m_8m')),
-            'enterprise_tax_rate_o8m': self._clean_rate(cleaned.get('enterprise_tax_rate_o8m')),
-            'local_special_tax_rate': self._clean_rate(cleaned.get('local_special_tax_rate')),
-            'prefectural_corporate_tax_rate': self._clean_rate(cleaned.get('prefectural_corporate_tax_rate')),
-            'municipal_corporate_tax_rate': self._clean_rate(cleaned.get('municipal_corporate_tax_rate')),
-        }
-        amount_values = {
-            'prefectural_equalization_amount': self._clean_numeric(cleaned.get('prefectural_equalization_amount')),
-            'municipal_equalization_amount': self._clean_numeric(cleaned.get('municipal_equalization_amount')),
-        }
+        taxable_income = self._decimal(self._clean_numeric(cleaned.get('pre_tax_income')))
+        if taxable_income <= _DECIMAL_ZERO:
+            taxable_income = _DECIMAL_ZERO
 
-        return self._compute_values(
+        rates = self._construct_rates_from_values(cleaned)
+        equalization = self._construct_equalization_from_values(cleaned)
+
+        tax_input = self._build_tax_input(
             fiscal_start,
             fiscal_end,
-            period_months,
-            months_truncated,
-            pre_tax_income,
-            rate_values,
-            amount_values,
+            months_in_period_int,
+            months_truncated_int,
+            taxable_income,
+            rates,
+            equalization,
+        )
+        calculation = calculate_tax(tax_input)
+        payload = calculation.to_payload()
+        return payload.inputs, payload.results, payload.breakdown
+
+    def _build_tax_input(
+        self,
+        fiscal_start: Optional[date],
+        fiscal_end: Optional[date],
+        months_in_period: int,
+        months_truncated: int,
+        taxable_income: Decimal,
+        rates: TaxRates,
+        equalization: EqualizationAmounts,
+    ) -> TaxInput:
+        period = TaxPeriod(
+            fiscal_start=fiscal_start,
+            fiscal_end=fiscal_end,
+            months_in_period=max(months_in_period, 1),
+            months_truncated=max(months_truncated, 1),
+        )
+        return TaxInput(
+            period=period,
+            taxable_income=taxable_income,
+            rates=rates,
+            equalization=equalization,
+        )
+
+    def _construct_rates_from_values(self, values: Dict[str, Any]) -> TaxRates:
+        defaults = DEFAULT_RATE_DEFAULTS
+        return TaxRates(
+            corporate_low=self._decimal_with_default(values.get('corporate_tax_rate_low'), defaults.corporate_low),
+            corporate_high=self._decimal_with_default(values.get('corporate_tax_rate_high'), defaults.corporate_high),
+            local_corporate=self._decimal_with_default(values.get('local_corporate_tax_rate'), defaults.local_corporate),
+            enterprise_low=self._decimal_with_default(values.get('enterprise_tax_rate_u4m'), defaults.enterprise_low),
+            enterprise_mid=self._decimal_with_default(values.get('enterprise_tax_rate_4m_8m'), defaults.enterprise_mid),
+            enterprise_high=self._decimal_with_default(values.get('enterprise_tax_rate_o8m'), defaults.enterprise_high),
+            local_special=self._decimal_with_default(values.get('local_special_tax_rate'), defaults.local_special),
+            prefectural_corporate=self._decimal_with_default(values.get('prefectural_corporate_tax_rate'), defaults.prefectural_corporate),
+            municipal_corporate=self._decimal_with_default(values.get('municipal_corporate_tax_rate'), defaults.municipal_corporate),
+        )
+
+    def _construct_equalization_from_values(self, values: Dict[str, Any]) -> EqualizationAmounts:
+        defaults = DEFAULT_EQUALIZATION_DEFAULTS
+        return EqualizationAmounts(
+            prefectural=self._int_with_default(values.get('prefectural_equalization_amount'), defaults.prefectural),
+            municipal=self._int_with_default(values.get('municipal_equalization_amount'), defaults.municipal),
         )
 
     @staticmethod
-    def _format_date(value: Optional[date]) -> str:
-        if not isinstance(value, date):
-            return ''
-        return value.strftime('%Y%m%d')
+    def _int_with_default(value: Any, default: int) -> int:
+        try:
+            if isinstance(value, str):
+                value = value.replace(',', '').strip()
+            return int(value) if value not in (None, '') else default
+        except (TypeError, ValueError):
+            return default
 
     @staticmethod
-    def _resolve_period_months(
-        company: Optional[Company],
-        master: Optional[CorporateTaxMaster],
-        start: Optional[date] = None,
-        end: Optional[date] = None,
-    ) -> Optional[int]:
-        if start is None and company is not None:
-            start = CorporateTaxCalculationService._coerce_date(
-                company.accounting_period_start_date,
-                company.accounting_period_start,
-            )
-        if end is None and company is not None:
-            end = CorporateTaxCalculationService._coerce_date(
-                company.accounting_period_end_date,
-                company.accounting_period_end,
-            )
-        if start and end and end >= start:
-            delta = relativedelta(end, start)
-            months = delta.years * 12 + delta.months
-            if delta.days > 0 or months == 0:
-                months += 1
-            return max(months, 1)
-        if master is not None:
-            try:
-                return int(master.months_standard)
-            except (TypeError, ValueError):
-                return None
-        return None
-        return None
+    def _decimal_with_default(value: Any, default: Decimal) -> Decimal:
+        if value in (None, ''):
+            return default
+        try:
+            cleaned = str(value).replace('%', '').replace(',', '').strip()
+            if not cleaned:
+                return default
+            result = Decimal(cleaned)
+            return result if result > _DECIMAL_ZERO else default
+        except (InvalidOperation, TypeError):
+            return default
 
     @staticmethod
     def _resolve_truncated_months(master: Optional[CorporateTaxMaster]):
@@ -414,9 +259,35 @@ class CorporateTaxCalculationService:
             months_floor = max(months_ceil - 1, 0)
         return months_ceil, months_floor
 
-    def _calculate_period_months(self, start: Optional[date], end: Optional[date]) -> Optional[int]:
-        months = self._calculate_manual_months(start, end)
-        return months[0]
+    def _resolve_period_months(
+        self,
+        company: Optional[Company],
+        master: Optional[CorporateTaxMaster],
+        start: Optional[date] = None,
+        end: Optional[date] = None,
+    ) -> Optional[int]:
+        if start is None and company is not None:
+            start = CorporateTaxCalculationService._coerce_date(
+                company.accounting_period_start_date,
+                company.accounting_period_start,
+            )
+        if end is None and company is not None:
+            end = CorporateTaxCalculationService._coerce_date(
+                company.accounting_period_end_date,
+                company.accounting_period_end,
+            )
+        if start and end and end >= start:
+            delta = relativedelta(end, start)
+            months = delta.years * 12 + delta.months
+            if delta.days > 0 or months == 0:
+                months += 1
+            return max(months, 1)
+        if master is not None:
+            try:
+                return int(master.months_standard)
+            except (TypeError, ValueError):
+                return None
+        return None
 
     @staticmethod
     def _parse_compact_date_text(value: Optional[str]) -> Optional[date]:
@@ -462,47 +333,6 @@ class CorporateTaxCalculationService:
         return None
 
     @staticmethod
-    def _with_rate_default(value: Any, key: str) -> Decimal:
-        rate = CorporateTaxCalculationService._decimal(value)
-        default = DEFAULT_RATE_VALUES.get(key)
-        if rate <= _DECIMAL_ZERO and default is not None:
-            return default
-        return rate
-
-    @staticmethod
-    def _with_amount_default(value: Any, key: str) -> int:
-        try:
-            amount = int(value)
-        except (TypeError, ValueError):
-            amount = 0
-        default = DEFAULT_AMOUNT_VALUES.get(key)
-        if amount <= 0 and default is not None:
-            return default
-        return amount
-
-    @staticmethod
-    def _ceil_thousand(value: Decimal) -> Decimal:
-        if value <= _DECIMAL_ZERO:
-            return _DECIMAL_ZERO
-        quotient = value // _THOUSAND
-        remainder = value % _THOUSAND
-        if remainder == _DECIMAL_ZERO:
-            return quotient * _THOUSAND
-        return (quotient + 1) * _THOUSAND
-
-    @staticmethod
-    def _floor_thousand(value: Decimal) -> Decimal:
-        if value <= _DECIMAL_ZERO:
-            return _DECIMAL_ZERO
-        return (value // _THOUSAND) * _THOUSAND
-
-    @staticmethod
-    def _floor_hundred(value: Decimal) -> Decimal:
-        if value <= _DECIMAL_ZERO:
-            return _DECIMAL_ZERO
-        return (value // _HUNDRED) * _HUNDRED
-
-    @staticmethod
     def _decimal(value: Any) -> Decimal:
         if isinstance(value, Decimal):
             return value
@@ -513,35 +343,9 @@ class CorporateTaxCalculationService:
         except (InvalidOperation, TypeError):
             return _DECIMAL_ZERO
 
-    @staticmethod
-    def _apply_rate(base: Decimal, rate: Decimal) -> Decimal:
-        if base <= _DECIMAL_ZERO or rate <= _DECIMAL_ZERO:
-            return _DECIMAL_ZERO
-        return (base * rate / _HUNDRED).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
-
-    @staticmethod
-    def _to_int(value: Any) -> int:
-        if isinstance(value, Decimal):
-            return int(value)
-        if value in (None, ''):
-            return 0
-        return int(value)
-
-    @staticmethod
-    def _format_rate(rate: Decimal) -> str:
-        if rate <= _DECIMAL_ZERO:
-            return ''
-        quantized = rate.quantize(Decimal('0.01'))
-        text = format(quantized, 'f').rstrip('0').rstrip('.')
-        return f"{text}%"
-
-    @staticmethod
-    def _format_percent(numerator: Decimal, denominator: Decimal) -> str:
-        if denominator <= _DECIMAL_ZERO:
-            return ''
-        percent = (numerator / denominator * _HUNDRED).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
-        text = format(percent, 'f').rstrip('0').rstrip('.')
-        return f"{text}%"
+    def _calculate_period_months(self, start: Optional[date], end: Optional[date]) -> Optional[int]:
+        months = self._calculate_manual_months(start, end)
+        return months[0]
 
     @staticmethod
     def _extract_pre_tax_income(accounting_data: Optional[AccountingData]) -> Decimal:

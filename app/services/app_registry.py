@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, TypedDict
 
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 
 class NavigationNodeDef(TypedDict, total=False):
     key: str
@@ -52,6 +53,56 @@ class StatementEmptyState(TypedDict, total=False):
     action_label: str
 
 
+
+
+
+
+SOA_NAV_ORDER: List[Tuple[str, str]] = [
+    ("deposits", "deposits"),
+    ("notes_receivable", "notes_receivable"),
+    ("accounts_receivable", "accounts_receivable"),
+    ("temporary_payments", "temporary_payments"),
+    ("loans_receivable", "loans_receivable"),
+    ("inventories", "inventories"),
+    ("securities", "securities"),
+    ("fixed_assets_soa", "fixed_assets"),
+    ("notes_payable", "notes_payable"),
+    ("accounts_payable", "accounts_payable"),
+    ("temporary_receipts", "temporary_receipts"),
+    ("borrowings", "borrowings"),
+    ("executive_compensations", "executive_compensations"),
+    ("land_rents", "land_rents"),
+    ("misc_income", "misc_income"),
+    ("misc_losses", "misc_losses"),
+]
+
+PDF_EXPORT_PAGES: Tuple[str, ...] = (
+    "deposits",
+    "accounts_receivable",
+    "notes_receivable",
+    "temporary_payments",
+    "loans_receivable",
+    "notes_payable",
+    "accounts_payable",
+    "borrowings",
+)
+
+DEFAULT_PDF_YEAR = "2025"
+
+def _build_soa_children() -> List[NavigationNodeDef]:
+    children: List[NavigationNodeDef] = []
+    for nav_key, page_key in SOA_NAV_ORDER:
+        config = STATEMENT_PAGES_CONFIG.get(page_key)
+        if not config:
+            continue
+        children.append({
+            "key": nav_key,
+            "name": config["title"],
+            "endpoint": "company.statement_of_accounts",
+            "params": {"page": page_key},
+        })
+    return children
+
 NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
     {
         "key": "company_info_group",
@@ -89,24 +140,7 @@ NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
         "key": "statement_of_accounts_group",
         "name": "勘定科目内訳書",
         "node_type": "menu",
-        "children": [
-            {"key": "deposits", "name": "預貯金等", "endpoint": "company.statement_of_accounts", "params": {"page": "deposits"}},
-            {"key": "notes_receivable", "name": "受取手形", "endpoint": "company.statement_of_accounts", "params": {"page": "notes_receivable"}},
-            {"key": "accounts_receivable", "name": "売掛金（未収入金）", "endpoint": "company.statement_of_accounts", "params": {"page": "accounts_receivable"}},
-            {"key": "temporary_payments", "name": "仮払金（前渡金）", "endpoint": "company.statement_of_accounts", "params": {"page": "temporary_payments"}},
-            {"key": "loans_receivable", "name": "貸付金・受取利息", "endpoint": "company.statement_of_accounts", "params": {"page": "loans_receivable"}},
-            {"key": "inventories", "name": "棚卸資産", "endpoint": "company.statement_of_accounts", "params": {"page": "inventories"}},
-            {"key": "securities", "name": "有価証券", "endpoint": "company.statement_of_accounts", "params": {"page": "securities"}},
-            {"key": "fixed_assets_soa", "name": "固定資産（土地等）", "endpoint": "company.statement_of_accounts", "params": {"page": "fixed_assets"}},
-            {"key": "notes_payable", "name": "支払手形", "endpoint": "company.statement_of_accounts", "params": {"page": "notes_payable"}},
-            {"key": "accounts_payable", "name": "買掛金（未払金・未払費用）", "endpoint": "company.statement_of_accounts", "params": {"page": "accounts_payable"}},
-            {"key": "temporary_receipts", "name": "仮受金（前受金・預り金）", "endpoint": "company.statement_of_accounts", "params": {"page": "temporary_receipts"}},
-            {"key": "borrowings", "name": "借入金及び支払利子", "endpoint": "company.statement_of_accounts", "params": {"page": "borrowings"}},
-            {"key": "executive_compensations", "name": "役員給与等", "endpoint": "company.statement_of_accounts", "params": {"page": "executive_compensations"}},
-            {"key": "land_rents", "name": "地代家賃等", "endpoint": "company.statement_of_accounts", "params": {"page": "land_rents"}},
-            {"key": "misc_income", "name": "雑収入", "endpoint": "company.statement_of_accounts", "params": {"page": "misc_income"}},
-            {"key": "misc_losses", "name": "雑損失", "endpoint": "company.statement_of_accounts", "params": {"page": "misc_losses"}},
-        ],
+        "children": _build_soa_children(),
     },
     {
         "key": "filings_group",
@@ -134,14 +168,13 @@ NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
 
 
 PDF_EXPORTS: Dict[str, PDFExportEntry] = {
-    "deposits": {"endpoint": "company.statement_pdf", "label": "預貯金等", "page_key": "deposits"},
-    "accounts_receivable": {"endpoint": "company.statement_pdf", "label": "売掛金", "page_key": "accounts_receivable"},
-    "notes_receivable": {"endpoint": "company.statement_pdf", "label": "受取手形", "page_key": "notes_receivable"},
-    "temporary_payments": {"endpoint": "company.statement_pdf", "label": "仮払金（前渡金）", "page_key": "temporary_payments"},
-    "loans_receivable": {"endpoint": "company.statement_pdf", "label": "貸付金・受取利息", "page_key": "loans_receivable"},
-    "notes_payable": {"endpoint": "company.statement_pdf", "label": "支払手形", "page_key": "notes_payable"},
-    "accounts_payable": {"endpoint": "company.statement_pdf", "label": "買掛金", "page_key": "accounts_payable"},
-    "borrowings": {"endpoint": "company.statement_pdf", "label": "借入金及び支払利子", "page_key": "borrowings"},
+    page_key: {
+        "endpoint": "company.statement_pdf",
+        "label": STATEMENT_PAGES_CONFIG[page_key]["title"],
+        "page_key": page_key,
+    }
+    for page_key in PDF_EXPORT_PAGES
+    if page_key in STATEMENT_PAGES_CONFIG
 }
 
 STATEMENT_POST_CREATE_CTA: Dict[str, StatementCTAConfig] = {
@@ -162,8 +195,6 @@ STATEMENT_EMPTY_STATE: Dict[str, StatementEmptyState] = {
         "action_label": "最初の{title}を登録する",
     }
 }
-
-DEFAULT_PDF_YEAR = "2025"
 
 
 def get_navigation_structure() -> List[NavigationNodeDef]:

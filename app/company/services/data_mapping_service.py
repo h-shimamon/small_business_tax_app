@@ -1,8 +1,10 @@
 # app/company/services/data_mapping_service.py
 from collections import defaultdict
 from thefuzz import process
-from app.company.models import AccountTitleMaster, UserAccountMapping
+
 from app import db
+from app.company.models import AccountTitleMaster, UserAccountMapping
+from app.domain.master.catalog import load_catalog
 
 
 class DataMappingService:
@@ -10,6 +12,7 @@ class DataMappingService:
 
     def __init__(self, user_id):
         self.user_id = user_id
+        self.catalog = load_catalog()
         self._master_name_cache = None
         self._existing_mapping_cache = None
         self._master_accounts_cache = None
@@ -17,10 +20,16 @@ class DataMappingService:
 
     def _get_master_account_names(self) -> set[str]:
         if self._master_name_cache is None:
-            self._master_name_cache = {
-                master.name.strip().lower()
-                for master in AccountTitleMaster.query.all()
+            normalized = {
+                self.catalog.normalize(name)
+                for name in self.catalog.canonical_names
             }
+            if not normalized:
+                normalized = {
+                    self.catalog.normalize(master.name)
+                    for master in AccountTitleMaster.query.all()
+                }
+            self._master_name_cache = normalized
         return self._master_name_cache
 
     def _get_existing_mapping_names(self) -> set[str]:
@@ -42,31 +51,22 @@ class DataMappingService:
 
     def _get_normalized_master_index(self):
         if self._normalized_master_index is None:
-            alias_map = {
-                '給料手当': '給料賃金',
-                '給与手当': '給料賃金',
-                '給料': '給料賃金',
-                '給与': '給料賃金',
-                '仕入': '仕入高',
-                '仕入れ': '仕入高',
-                '売上': '売上高',
-                '旅費交通費': '旅費交通費',
-                '通信費': '通信費',
-            }
-
             master_accounts = self._get_master_accounts()
             master_choices = {m.name: m.id for m in master_accounts}
-            alias_map_norm = {self._normalize_string(k): v for k, v in alias_map.items()}
-            master_norm_to_name = {self._normalize_string(name): name for name in master_choices.keys()}
+
+            alias_map_norm = {}
+            for alias_norm, target_name in self.catalog.aliases.items():
+                if target_name in master_choices:
+                    alias_map_norm[alias_norm] = target_name
+
+            master_norm_to_name = {
+                self.catalog.normalize(name): name for name in master_choices.keys()
+            }
             self._normalized_master_index = (master_choices, alias_map_norm, master_norm_to_name)
         return self._normalized_master_index
 
-    @staticmethod
-    def _normalize_string(value: str) -> str:
-        try:
-            return str(value).strip().replace('　', '').replace(' ', '')
-        except Exception:
-            return str(value).strip()
+    def _normalize_string(self, value: str) -> str:
+        return self.catalog.normalize(value)
 
 
     def get_unmatched_accounts(self, user_accounts):

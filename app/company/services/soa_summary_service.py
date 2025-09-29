@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Any, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 from app.company.services.master_data_service import MasterDataService
 from app.services.soa_registry import PL_PAGE_ACCOUNTS, SUMMARY_PAGE_MAP
@@ -122,7 +122,7 @@ class SoASummaryService:
             return {'source_total': 0}
 
     @staticmethod
-    def compute_breakdown_total(company_id: int, page: str, model, total_field_name: str) -> int:
+    def compute_breakdown_total(company_id: int, page: str, model, total_field_name: Optional[str]) -> int:
         # ページ指定だけで呼ばれた場合のフォールバック: ページ→モデル解決
         if model is None:
             try:
@@ -142,14 +142,25 @@ class SoASummaryService:
                 .filter_by(company_id=company_id).scalar() or 0
             return (sum_balance or 0) + (sum_interest or 0)
 
-        total_field = getattr(model, total_field_name)
-        return db.session.query(db.func.sum(total_field))\
+        if not total_field_name:
+            total_field_name = 'amount'
+        try:
+            total_field = getattr(model, total_field_name)
+        except AttributeError:
+            return 0
+        return db.session.query(db.func.sum(total_field)) \
             .filter_by(company_id=company_id).scalar() or 0
 
     @classmethod
-    def compute_difference(cls, company_id: int, page: str, model, total_field_name: str, accounting_data=None) -> DifferenceResult:
+    def compute_difference(cls, company_id: int, page: str, model, total_field_name: Optional[str], accounting_data=None) -> DifferenceResult:
         source = cls.compute_source_total(company_id, page, accounting_data=accounting_data)
-        breakdown_total = cls.compute_breakdown_total(company_id, page, model, total_field_name)
+        effective_model = model
+        effective_field = total_field_name
+        if effective_model is None or effective_field is None:
+            cfg = STATEMENT_PAGES_CONFIG.get(page, {})
+            effective_model = effective_model or cfg.get('model')
+            effective_field = effective_field or cfg.get('total_field', 'amount')
+        breakdown_total = cls.compute_breakdown_total(company_id, page, effective_model, effective_field)
         if page == 'borrowings':
             bs_total = source.get('bs_total', 0)
             pl_interest_total = source.get('pl_interest_total', 0)
@@ -187,6 +198,20 @@ class SoASummaryService:
         if page == 'borrowings':
             return (source.get('bs_total', 0) + source.get('pl_interest_total', 0))
         return source.get('source_total', 0)
+
+    @classmethod
+    def evaluate_page(cls, company_id: int, page: str, accounting_data=None) -> Dict[str, Any]:
+        """差分・スキップ判定・完了状態をまとめた結果を返す。"""
+        difference = cls.compute_difference(company_id, page, None, None, accounting_data=accounting_data)
+        skip_total = cls.compute_skip_total(company_id, page, accounting_data=accounting_data)
+        is_balanced = difference.get('difference', 0) == 0
+        should_skip = skip_total == 0
+        return {
+            'difference': difference,
+            'skip_total': skip_total,
+            'is_balanced': is_balanced,
+            'should_skip': should_skip,
+        }
 
 # TypedDicts to clarify returned shapes (non-functional)
 class SourceTotalResult(TypedDict, total=False):

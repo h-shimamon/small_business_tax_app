@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from datetime import date, datetime
 from pathlib import Path
 import csv
 from decimal import Decimal
@@ -8,6 +9,8 @@ import pytest
 from app import db
 from app.company.models import AccountingData, Company, CorporateTaxMaster
 from app.company.services.corporate_tax_service import CorporateTaxCalculationService
+from app.domain.tax.engine import calculate_tax
+from app.domain.tax.models import EqualizationAmounts, TaxInput, TaxPeriod, TaxRates
 
 
 
@@ -252,3 +255,39 @@ def test_corporate_tax_master_csv_alignment(app, init_database):
             assert stored.prefectural_equalization_amount == int(row['prefectural_equalization_amount'])
             assert stored.municipal_corporate_tax_rate == Decimal(row['municipal_corporate_tax_rate'])
             assert stored.municipal_equalization_amount == int(row['municipal_equalization_amount'])
+
+
+
+def test_tax_engine_matches_service_results():
+    rates = TaxRates(
+        corporate_low=Decimal('15.0'),
+        corporate_high=Decimal('23.2'),
+        local_corporate=Decimal('10.3'),
+        enterprise_low=Decimal('3.5'),
+        enterprise_mid=Decimal('5.3'),
+        enterprise_high=Decimal('7.0'),
+        local_special=Decimal('43.2'),
+        prefectural_corporate=Decimal('1.0'),
+        municipal_corporate=Decimal('6.0'),
+    )
+    equalization = EqualizationAmounts(prefectural=20_000, municipal=50_000)
+    period = TaxPeriod(
+        fiscal_start=date(2024, 4, 1),
+        fiscal_end=date(2025, 3, 31),
+        months_in_period=12,
+        months_truncated=12,
+    )
+
+    tax_input = TaxInput(
+        period=period,
+        taxable_income=Decimal('12000000'),
+        rates=rates,
+        equalization=equalization,
+    )
+    payload = calculate_tax(tax_input).to_payload()
+
+    assert payload.results['corporate_tax'] == 2_128_000
+    assert payload.results['local_tax'] == 1_342_900
+    assert payload.results['total_tax'] == 3_470_900
+    assert payload.breakdown['pref_tax_base'] == 2_128_000
+    assert payload.results['pref_tax_total'] == 41_200

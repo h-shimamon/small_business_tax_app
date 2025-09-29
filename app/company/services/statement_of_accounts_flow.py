@@ -88,7 +88,8 @@ class StatementOfAccountsFlow:
     def compute_summaries_and_mark(self, page: str, config: dict) -> tuple[dict, Optional[str]]:
         summaries: dict = {'generic_summary': {'bs_total': 0, 'breakdown_total': 0, 'difference': 0}}
         if page in SUMMARY_PAGE_MAP:
-            diff = self._difference_batch.get(page)
+            evaluation = self._difference_batch.get(page)
+            diff = evaluation.get('difference', {})
             if page == 'borrowings':
                 summaries['borrowings_summary'] = {
                     'bs_total': diff.get('bs_total', 0),
@@ -106,9 +107,8 @@ class StatementOfAccountsFlow:
                 }
                 label = f"{'B/S上の' if SUMMARY_PAGE_MAP[page][0] == 'BS' else 'P/L上の'}{config['title']}残高"
                 summaries['generic_summary'] = generic
-            difference = generic.get('difference', 0)
             step_key = 'fixed_assets_soa' if page == 'fixed_assets' else page
-            if difference == 0:
+            if evaluation.get('is_balanced', False):
                 mark_step_as_completed(step_key)
             else:
                 unmark_step_as_completed(step_key)
