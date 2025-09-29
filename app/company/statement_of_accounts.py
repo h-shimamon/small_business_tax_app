@@ -75,7 +75,9 @@ def statement_pdf(company, page_key):
     output_path = os.path.join(filled_dir, filename)
 
     try:
-        config.generator(company_id=company.id, year=year, output_path=output_path)
+        generated_path = config.generator(company_id=company.id, year=year, output_path=output_path)
+        if generated_path:
+            output_path = generated_path
     except Exception as exc:
         current_app.logger.exception('Failed to generate PDF for %s: %s', page_key, exc)
         flash('PDF生成中にエラーが発生しました。時間をおいて再度お試しください。', 'danger')

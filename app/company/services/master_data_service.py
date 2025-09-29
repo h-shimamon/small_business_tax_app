@@ -10,6 +10,11 @@ from typing import Dict
 import pandas as pd
 from flask import current_app
 
+from app.services.master_data_loader import (
+    clear_master_dataframe_cache,
+    load_master_dataframe,
+)
+
 from app import db
 from app.company.models import AccountTitleMaster, MasterVersion
 
@@ -61,7 +66,7 @@ class MasterDataService:
                         self.logger.warning("マスターファイルが見つかりません: %s", file_path)
                         continue
 
-                    df = pd.read_csv(file_path, encoding='utf-8-sig')
+                    df = load_master_dataframe(file_path, index_column=None).copy()
                     df.dropna(how='all', inplace=True)
                     df.dropna(subset=['No.', '勘定科目名'], inplace=True)
 
@@ -84,6 +89,9 @@ class MasterDataService:
         except Exception as exc:
             self.logger.exception("マスターデータ同期中に問題が発生しました")
             raise
+        finally:
+            clear_master_dataframe_cache()
+
 
     def _get_current_files_hash(self):
         """現在のマスターCSVファイル群のハッシュ値を返す。_version.txtから読み込むことを基本とする。"""

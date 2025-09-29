@@ -1,7 +1,7 @@
 # app/utils.py
 from functools import lru_cache
 
-import pandas as pd
+from app.services.master_data_loader import load_master_dataframe
 
 def format_currency(value):
     """数値を日本円の通貨書式にフォーマットする。"""
@@ -13,15 +13,8 @@ def format_currency(value):
 @lru_cache(maxsize=1)
 def _load_master_frames():
     try:
-        bs_master_df = pd.read_csv('resources/masters/balance_sheet.csv', encoding='utf-8-sig')
-        bs_master_df.dropna(subset=['勘定科目名'], inplace=True)
-        bs_master_df['勘定科目名'] = bs_master_df['勘定科目名'].str.strip()
-        bs_master_df = bs_master_df.set_index('勘定科目名')
-
-        pl_master_df = pd.read_csv('resources/masters/profit_and_loss.csv', encoding='utf-8-sig')
-        pl_master_df.dropna(subset=['勘定科目名'], inplace=True)
-        pl_master_df['勘定科目名'] = pl_master_df['勘定科目名'].str.strip()
-        pl_master_df = pl_master_df.set_index('勘定科目名')
+        bs_master_df = load_master_dataframe('resources/masters/balance_sheet.csv', index_column='勘定科目名')
+        pl_master_df = load_master_dataframe('resources/masters/profit_and_loss.csv', index_column='勘定科目名')
         return bs_master_df, pl_master_df
     except FileNotFoundError as e:
         raise RuntimeError(f"マスターファイルが見つかりません: {e}. アプリケーションを起動できません。")

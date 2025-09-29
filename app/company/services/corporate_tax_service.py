@@ -9,13 +9,16 @@ from sqlalchemy import and_
 
 from app import db
 from app.company.models import AccountingData, Company, CorporateTaxMaster
-from app.domain.tax.engine import calculate_tax
-from app.domain.tax.models import EqualizationAmounts, TaxInput, TaxPeriod, TaxRates
-from app.domain.tax.rates import (
+from app.tax_engine import (
     DEFAULT_EQUALIZATION_DEFAULTS,
     DEFAULT_RATE_DEFAULTS,
+    EqualizationAmounts,
+    TaxInput,
+    TaxPeriod,
+    TaxRates,
     build_equalization_amounts,
     build_tax_rates,
+    calculate_tax,
 )
 
 
