@@ -1,11 +1,18 @@
 # app/__init__.py
 import json
+import logging
 import os
 import sys
 from typing import Callable, Optional, Sequence, Set, Tuple, TypedDict
 
+logger = logging.getLogger("app.init")
+
+
 def _log_init_failure(context: str, exc: Exception) -> None:
-    print(f"[init] {context} failed: {exc}", file=sys.stderr)
+    try:
+        logger.warning("init.%s failed", context, exc_info=exc)
+    except Exception:
+        print(f"[init] {context} failed: {exc}", file=sys.stderr)
 
 def _load_env() -> None:
     try:
@@ -46,6 +53,7 @@ def _apply_configuration(app: Flask, test_config) -> None:
         app.config.from_object(env_map.get(env, 'config.Config'))
     else:
         app.config.from_mapping(test_config)
+        app.config.setdefault('SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:')
 
 
 def _ensure_instance_folder(app: Flask) -> None:
@@ -58,7 +66,21 @@ def _ensure_instance_folder(app: Flask) -> None:
 def _register_settings(app: Flask) -> None:
     try:
         from .config.schema import AppSettings
-        app.extensions.setdefault('settings', AppSettings())
+        settings = AppSettings()
+        app.extensions.setdefault('settings', settings)
+        for key, value in {
+            'ENABLE_NEW_AUTH': settings.ENABLE_NEW_AUTH,
+            'ENABLE_SIGNUP_EMAIL_FIRST': settings.ENABLE_SIGNUP_EMAIL_FIRST,
+            'ENABLE_CORP_TAX_MANUAL_EDIT': settings.ENABLE_CORP_TAX_MANUAL_EDIT,
+            'NEW_AUTH_EMAIL_BACKEND': settings.NEW_AUTH_EMAIL_BACKEND,
+            'NEW_AUTH_EMAIL_HOST': settings.NEW_AUTH_EMAIL_HOST,
+            'NEW_AUTH_EMAIL_PORT': settings.NEW_AUTH_EMAIL_PORT,
+            'NEW_AUTH_EMAIL_USERNAME': settings.NEW_AUTH_EMAIL_USERNAME,
+            'NEW_AUTH_EMAIL_PASSWORD': settings.NEW_AUTH_EMAIL_PASSWORD,
+            'NEW_AUTH_EMAIL_USE_TLS': settings.NEW_AUTH_EMAIL_USE_TLS,
+            'NEW_AUTH_EMAIL_FROM': settings.NEW_AUTH_EMAIL_FROM,
+        }.items():
+            app.config.setdefault(key, value)
     except Exception as exc:
         _log_init_failure('config schema', exc)
 
@@ -119,7 +141,7 @@ def _register_company_blueprint(app: Flask) -> None:
 
 def _register_newauth_blueprint(app: Flask) -> None:
     try:
-        flag = str(app.config.get('ENABLE_NEW_AUTH') or os.getenv('ENABLE_NEW_AUTH', '0')).lower()
+        flag = str(app.config.get('ENABLE_NEW_AUTH', False)).lower()
         if flag in ('1', 'true', 'yes', 'on'):
             from .newauth import newauth_bp
             app.register_blueprint(newauth_bp, url_prefix='/xauth')

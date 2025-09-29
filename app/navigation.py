@@ -1,9 +1,18 @@
 # app/navigation.py
-from flask import session
+from flask import current_app, session
 from flask_login import current_user
 from .navigation_builder import navigation_tree
 from app.navigation_completion import compute_completed
 from app.progress.evaluator import SoAProgressEvaluator
+
+
+def _log_navigation_issue(event: str, **details) -> None:
+    """Log navigation-related failures without breaking UX."""
+    try:
+        safe_details = {key: str(value) for key, value in details.items()}
+        current_app.logger.warning("navigation.%s", event, extra={"navigation_error": safe_details})
+    except Exception:
+        pass
 
 def compute_skipped_steps_for_company(company_id, accounting_data=None):
     """Compute skipped steps (SoA pages with source total == 0) for the given company.
@@ -32,8 +41,8 @@ def compute_skipped_steps_for_company(company_id, accounting_data=None):
                         break
                 if soa_children:
                     skipped.add(soa_children[0].key)  # e.g., 'deposits'
-            except Exception:
-                pass
+            except Exception as exc:
+                _log_navigation_issue('compute_skipped_steps.prefetch_children', error=exc, company_id=company_id)
             return skipped
         soa_children = []
         for node in navigation_tree:
@@ -46,8 +55,8 @@ def compute_skipped_steps_for_company(company_id, accounting_data=None):
                 total = SoASummaryService.compute_skip_total(company_id, child_page, accounting_data=accounting_data)
                 if total == 0:
                     skipped.add(child.key)
-    except Exception:
-        # ここでは安全側に倒す（スキップなしとして扱う）。詳細は呼び出し元でログ済みのはず。
+    except Exception as exc:
+        _log_navigation_issue('compute_skipped_steps', error=exc, company_id=company_id)
         return set()
     return skipped
 
@@ -65,16 +74,18 @@ def get_navigation_state(current_page_key, skipped_steps=None):
     try:
         company = getattr(current_user, 'company', None)
         user_id = getattr(current_user, 'id', None)
-    except Exception:
+    except Exception as exc:
         company = None
         user_id = None
+        _log_navigation_issue('resolve_current_user', error=exc)
 
     if skipped_steps is None:
         if company:
             try:
                 skipped_steps = compute_skipped_steps_for_company(company.id)
-            except Exception:
+            except Exception as exc:
                 skipped_steps = set()
+                _log_navigation_issue('get_navigation_state.skipped', error=exc, company_id=getattr(company, 'id', None))
         else:
             skipped_steps = set()
     else:
@@ -84,8 +95,8 @@ def get_navigation_state(current_page_key, skipped_steps=None):
     if company and user_id is not None:
         try:
             completed_steps |= compute_completed(company.id, user_id)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_navigation_issue('get_navigation_state.completed', error=exc, company_id=getattr(company, 'id', None), user_id=user_id)
 
     if company:
         try:
@@ -101,10 +112,10 @@ def get_navigation_state(current_page_key, skipped_steps=None):
                 try:
                     if SoAProgressEvaluator.is_completed(company.id, page):
                         completed_steps.add(child.key)
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as exc:
+                    _log_navigation_issue('get_navigation_state.progress_check', error=exc, company_id=getattr(company, 'id', None), page=page)
+        except Exception as exc:
+            _log_navigation_issue('get_navigation_state.progress_loop', error=exc, company_id=getattr(company, 'id', None))
 
     nav_state = [
         node.to_dict(current_page_key, list(completed_steps), skipped_steps)

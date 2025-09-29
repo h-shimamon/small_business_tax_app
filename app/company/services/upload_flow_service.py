@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -117,19 +118,19 @@ class UploadFlowService:
         path = os.path.join(upload_dir, filename)
 
         raw_bytes = getattr(parser, 'file_content_bytes', None)
-        if raw_bytes is None:
-            try:
-                file_storage.stream.seek(0)
-                raw_bytes = file_storage.read()
-            finally:
-                try:
-                    file_storage.stream.seek(0)
-                except Exception:
-                    pass
-
         try:
             with open(path, 'wb') as fh:
-                fh.write(raw_bytes or b'')
+                if raw_bytes is not None:
+                    fh.write(raw_bytes)
+                else:
+                    try:
+                        file_storage.stream.seek(0)
+                        shutil.copyfileobj(file_storage.stream, fh, length=1024 * 1024)
+                    finally:
+                        try:
+                            file_storage.stream.seek(0)
+                        except Exception:
+                            pass
         except Exception as exc:
             current_app.logger.warning('Failed to persist uploaded file: %s', exc)
             return

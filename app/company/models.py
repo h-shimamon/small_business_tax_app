@@ -20,6 +20,9 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 class Company(db.Model):
+    __table_args__ = (
+        db.CheckConstraint('employee_count_at_eoy >= 0', name='ck_company_employee_count_non_negative'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     corporate_number = db.Column(db.String(13), unique=True, nullable=False)
     company_name = db.Column(db.String(100), nullable=False)
@@ -95,6 +98,10 @@ class Company(db.Model):
 
 class Shareholder(db.Model):
     __tablename__ = 'shareholder'
+    __table_args__ = (
+        db.CheckConstraint('shares_held >= 0', name='ck_shareholder_shares_non_negative'),
+        db.CheckConstraint('voting_rights >= 0', name='ck_shareholder_votes_non_negative'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     last_name = db.Column(db.String(50), nullable=False)
     entity_type = db.Column(db.String(20), nullable=False, default='individual')

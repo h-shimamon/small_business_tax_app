@@ -11,6 +11,8 @@
           {% for category, msg in messages %}
             <div class="notification is-{{ 'danger' if category == 'danger' else ('success' if category == 'success' else 'info') }}">{{ msg }}</div>
           {% endfor %}
+        {% elif request.args.get('verified') %}
+          <div class="notification is-success">メール認証が完了しました。ログインできます。</div>
         {% endif %}
       {% endwith %}
       <form method="post">

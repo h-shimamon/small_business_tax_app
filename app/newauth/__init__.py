@@ -203,7 +203,7 @@ def verify():
     db.session.execute(db.text("UPDATE user SET is_email_verified = 1 WHERE id = :uid"), {"uid": row["user_id"]})
     db.session.commit()
     flash("メール認証が完了しました。ログインできます。", "success")
-    return redirect(url_for("newauth.login_page"))
+    return redirect(url_for("newauth.login_page", verified=1))
 
 
 @newauth_bp.route("/login", methods=["GET", "POST"])  # type: ignore[misc]

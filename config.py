@@ -1,4 +1,5 @@
 # config.py
+# NOTE: 設定値は「.env → app.config.schema.AppSettings → Flask app.config」の順で反映されます。
 import os
 
 # アプリケーションのベースディレクトリ

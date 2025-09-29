@@ -29,25 +29,25 @@ class StatementOfAccountsServiceProtocol(Protocol):
 class ShareholderServiceProtocol(Protocol):
     """Contract for shareholder-related service operations."""
 
-    def get_shareholders_by_company(self, company_id: int):
+    def get_shareholders_by_company(self, company_id: int, user_id: Optional[int] = None):
         ...
 
-    def get_main_shareholders(self, company_id: int):
+    def get_main_shareholders(self, company_id: int, user_id: Optional[int] = None):
         ...
 
-    def get_shareholder_by_id(self, shareholder_id: int):
+    def get_shareholder_by_id(self, shareholder_id: int, user_id: Optional[int] = None):
         ...
 
-    def add_shareholder(self, company_id: int, form, parent_id: Optional[int] = None):
+    def add_shareholder(self, company_id: int, form, parent_id: Optional[int] = None, user_id: Optional[int] = None):
         ...
 
-    def get_related_shareholders(self, main_shareholder_id: int):
+    def get_related_shareholders(self, main_shareholder_id: int, user_id: Optional[int] = None):
         ...
 
-    def update_shareholder(self, shareholder_id: int, form):
+    def update_shareholder(self, shareholder_id: int, form, user_id: Optional[int] = None):
         ...
 
-    def delete_shareholder(self, shareholder_id: int):
+    def delete_shareholder(self, shareholder_id: int, user_id: Optional[int] = None):
         ...
 
     def get_shareholder_form(self, shareholder):
@@ -56,19 +56,19 @@ class ShareholderServiceProtocol(Protocol):
     def is_same_address(self, a, b) -> bool:
         ...
 
-    def get_main_shareholder_group_number(self, company_id: int, main_shareholder_id: int) -> int:
+    def get_main_shareholder_group_number(self, company_id: int, main_shareholder_id: int, user_id: Optional[int] = None) -> int:
         ...
 
-    def compute_company_total(self, company_id: int) -> int:
+    def compute_company_total(self, company_id: int, user_id: Optional[int] = None) -> int:
         ...
 
-    def compute_group_total(self, company_id: int, main_shareholder_id: int) -> int:
+    def compute_group_total(self, company_id: int, main_shareholder_id: int, user_id: Optional[int] = None) -> int:
         ...
 
-    def compute_group_totals_map(self, company_id: int) -> dict[int, int]:
+    def compute_group_totals_map(self, company_id: int, user_id: Optional[int] = None) -> dict[int, int]:
         ...
 
-    def compute_group_totals_both_map(self, company_id: int) -> dict[int, dict[str, int]]:
+    def compute_group_totals_both_map(self, company_id: int, user_id: Optional[int] = None) -> dict[int, dict[str, int]]:
         ...
 
 

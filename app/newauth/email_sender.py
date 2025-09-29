@@ -7,7 +7,11 @@ Email sending abstraction for newauth.
 """
 import logging  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
-from typing import Protocol, Optional  # noqa: E402
+from email.message import EmailMessage  # noqa: E402
+import smtplib  # noqa: E402
+from typing import Optional, Protocol  # noqa: E402
+
+from flask import current_app, has_app_context  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +38,61 @@ class DummyEmailSender:
             return "***"
 
 
+@dataclass
+class SMTPEmailSender:
+    host: str
+    port: int
+    username: Optional[str] = None
+    password: Optional[str] = None
+    use_tls: bool = True
+    default_from: str = "no-reply@example.com"
+    timeout: int = 10
+
+    def send(self, to: str, subject: str, html: Optional[str] = None, text: Optional[str] = None) -> None:
+        msg = EmailMessage()
+        msg["To"] = to
+        msg["Subject"] = subject
+        msg["From"] = self.username or self.default_from
+        msg.set_content(text or "")
+        if html:
+            msg.add_alternative(html, subtype="html")
+        try:
+            with smtplib.SMTP(self.host, self.port, timeout=self.timeout) as smtp:
+                if self.use_tls:
+                    smtp.starttls()
+                if self.username:
+                    smtp.login(self.username, self.password or "")
+                smtp.send_message(msg)
+            logger.info(
+                "[EmailSMTP] delivered",
+                extra={"email_backend": "smtp", "to": DummyEmailSender._mask(to)},
+            )
+        except Exception:
+            logger.exception(
+                "[EmailSMTP] delivery failed",
+                extra={"email_backend": "smtp", "to": DummyEmailSender._mask(to)},
+            )
+
+
+def _config_value(key: str, default):
+    if has_app_context():
+        return current_app.config.get(key, default)
+    return default
+
+
 def get_sender() -> EmailSender:
-    # 将来: 環境変数や設定に応じて実装を切替
+    backend = str(_config_value('NEW_AUTH_EMAIL_BACKEND', 'dummy')).lower()
+    if backend == 'smtp':
+        host = _config_value('NEW_AUTH_EMAIL_HOST', '')
+        if not host:
+            logger.warning('[EmailSender] SMTP backend selected but host is missing; using DummyEmailSender')
+            return DummyEmailSender()
+        return SMTPEmailSender(
+            host=host,
+            port=int(_config_value('NEW_AUTH_EMAIL_PORT', 587) or 587),
+            username=_config_value('NEW_AUTH_EMAIL_USERNAME', None),
+            password=_config_value('NEW_AUTH_EMAIL_PASSWORD', None),
+            use_tls=bool(_config_value('NEW_AUTH_EMAIL_USE_TLS', True)),
+            default_from=_config_value('NEW_AUTH_EMAIL_FROM', 'no-reply@example.com'),
+        )
     return DummyEmailSender()
