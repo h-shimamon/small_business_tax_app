@@ -2,6 +2,7 @@
 from .base_parser import BaseParser
 
 class OtherParser(BaseParser):
+    SUPPORTED = False
     """
     特定の会計ソフトに依存しない、汎用的なデータ形式を解析するためのパーサークラス。
     【注意】このクラスは雛形であり、まだ実装されていません。

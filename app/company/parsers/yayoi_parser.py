@@ -2,6 +2,7 @@
 from .base_parser import BaseParser
 
 class YayoiParser(BaseParser):
+    SUPPORTED = False
     """
     弥生会計のデータ形式を解析するためのパーサークラス。
     """

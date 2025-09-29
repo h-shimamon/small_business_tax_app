@@ -2,6 +2,7 @@
 from .base_parser import BaseParser
 
 class FreeeParser(BaseParser):
+    SUPPORTED = False
     """
     freeeのデータ形式を解析するためのパーサークラス。
     【注意】このクラスは雛形であり、まだ実装されていません。

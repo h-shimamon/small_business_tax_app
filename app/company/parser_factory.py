@@ -29,10 +29,13 @@ class ParserFactory:
             BaseParser: software_nameに対応するパーサーのインスタンス。
 
         Raises:
-            ValueError: 対応するパーサーが見つからない場合。
+            ValueError: 対応するパーサーが見つからない、または未対応の場合。
         """
         parser_class = cls._parsers.get(software_name)
         if not parser_class:
             raise ValueError(f"'{software_name}' に対応するパーサーが見つかりません。")
-        
+
+        if not getattr(parser_class, 'SUPPORTED', True):
+            raise ValueError('選択された会計ソフトにはまだ対応していません。対応済みソフトを選択してください。')
+
         return parser_class(file_storage)
