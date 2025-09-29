@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
+from functools import lru_cache
+from typing import Optional, Tuple
 
 from app.company.models import CorporateTaxMaster
 from .models import EqualizationAmounts, TaxRates
@@ -38,19 +39,15 @@ DEFAULT_EQUALIZATION_DEFAULTS = EqualizationDefaults()
 def build_tax_rates(master: Optional[CorporateTaxMaster]) -> TaxRates:
     """DBのマスタ行から税率を構築。マスタが無ければデフォルト。"""
 
-    defaults = DEFAULT_RATE_DEFAULTS
-    if master is None:
-        return TaxRates(
-            corporate_low=defaults.corporate_low,
-            corporate_high=defaults.corporate_high,
-            local_corporate=defaults.local_corporate,
-            enterprise_low=defaults.enterprise_low,
-            enterprise_mid=defaults.enterprise_mid,
-            enterprise_high=defaults.enterprise_high,
-            local_special=defaults.local_special,
-            prefectural_corporate=defaults.prefectural_corporate,
-            municipal_corporate=defaults.municipal_corporate,
-        )
+    key = _rates_cache_key(master)
+    return _build_tax_rates_cached(key)
+
+
+def build_equalization_amounts(master: Optional[CorporateTaxMaster]) -> EqualizationAmounts:
+    """DBのマスタ行から均等割額を構築。"""
+
+    key = _equalization_cache_key(master)
+    return _build_equalization_cached(key)
 
     return TaxRates(
         corporate_low=Decimal(master.corporate_tax_rate_u8m),
@@ -78,4 +75,89 @@ def build_equalization_amounts(master: Optional[CorporateTaxMaster]) -> Equaliza
     return EqualizationAmounts(
         prefectural=int(master.prefectural_equalization_amount or defaults.prefectural),
         municipal=int(master.municipal_equalization_amount or defaults.municipal),
+    )
+
+
+def _rates_cache_key(master: Optional[CorporateTaxMaster]) -> Tuple:
+    if master is None:
+        return ('default',)
+    return (
+        'master',
+        getattr(master, 'id', None),
+        str(master.corporate_tax_rate_u8m),
+        str(master.corporate_tax_rate_o8m),
+        str(master.local_corporate_tax_rate),
+        str(master.enterprise_tax_rate_u4m),
+        str(master.enterprise_tax_rate_4m_8m),
+        str(master.enterprise_tax_rate_o8m),
+        str(master.local_special_tax_rate),
+        str(master.prefectural_corporate_tax_rate),
+        str(master.municipal_corporate_tax_rate),
+    )
+
+
+@lru_cache(maxsize=64)
+def _build_tax_rates_cached(key: Tuple) -> TaxRates:
+    defaults = DEFAULT_RATE_DEFAULTS
+    if key == ('default',):
+        return TaxRates(
+            corporate_low=defaults.corporate_low,
+            corporate_high=defaults.corporate_high,
+            local_corporate=defaults.local_corporate,
+            enterprise_low=defaults.enterprise_low,
+            enterprise_mid=defaults.enterprise_mid,
+            enterprise_high=defaults.enterprise_high,
+            local_special=defaults.local_special,
+            prefectural_corporate=defaults.prefectural_corporate,
+            municipal_corporate=defaults.municipal_corporate,
+        )
+    (
+        _,
+        _master_id,
+        corporate_low,
+        corporate_high,
+        local_corporate,
+        enterprise_low,
+        enterprise_mid,
+        enterprise_high,
+        local_special,
+        prefectural_corporate,
+        municipal_corporate,
+    ) = key
+    return TaxRates(
+        corporate_low=Decimal(corporate_low),
+        corporate_high=Decimal(corporate_high),
+        local_corporate=Decimal(local_corporate),
+        enterprise_low=Decimal(enterprise_low),
+        enterprise_mid=Decimal(enterprise_mid),
+        enterprise_high=Decimal(enterprise_high),
+        local_special=Decimal(local_special),
+        prefectural_corporate=Decimal(prefectural_corporate),
+        municipal_corporate=Decimal(municipal_corporate),
+    )
+
+
+def _equalization_cache_key(master: Optional[CorporateTaxMaster]) -> Tuple:
+    if master is None:
+        return ('default',)
+    return (
+        'master',
+        getattr(master, 'id', None),
+        int(getattr(master, 'prefectural_equalization_amount', DEFAULT_EQUALIZATION_DEFAULTS.prefectural) or 0),
+        int(getattr(master, 'municipal_equalization_amount', DEFAULT_EQUALIZATION_DEFAULTS.municipal) or 0),
+    )
+
+
+@lru_cache(maxsize=64)
+def _build_equalization_cached(key: Tuple) -> EqualizationAmounts:
+    defaults = DEFAULT_EQUALIZATION_DEFAULTS
+    if key == ('default',):
+        return EqualizationAmounts(
+            prefectural=defaults.prefectural,
+            municipal=defaults.municipal,
+        )
+    _, _master_id, prefectural, municipal = key
+    return EqualizationAmounts(
+        prefectural=int(prefectural) if prefectural else defaults.prefectural,
+        municipal=int(municipal) if municipal else defaults.municipal,
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, TypedDict
 
 from app.company.services.master_data_service import MasterDataService
+from app.domain.soa.evaluation import SoAPageEvaluation
 from app.services.soa_registry import PL_PAGE_ACCOUNTS, SUMMARY_PAGE_MAP
 from app import db
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG  # ページ→モデル解決用
@@ -200,18 +201,18 @@ class SoASummaryService:
         return source.get('source_total', 0)
 
     @classmethod
-    def evaluate_page(cls, company_id: int, page: str, accounting_data=None) -> Dict[str, Any]:
+    def evaluate_page(cls, company_id: int, page: str, accounting_data=None) -> SoAPageEvaluation:
         """差分・スキップ判定・完了状態をまとめた結果を返す。"""
         difference = cls.compute_difference(company_id, page, None, None, accounting_data=accounting_data)
         skip_total = cls.compute_skip_total(company_id, page, accounting_data=accounting_data)
         is_balanced = difference.get('difference', 0) == 0
         should_skip = skip_total == 0
-        return {
-            'difference': difference,
-            'skip_total': skip_total,
-            'is_balanced': is_balanced,
-            'should_skip': should_skip,
-        }
+        return SoAPageEvaluation(
+            difference=difference,
+            skip_total=skip_total,
+            is_balanced=is_balanced,
+            should_skip=should_skip,
+        )
 
 # TypedDicts to clarify returned shapes (non-functional)
 class SourceTotalResult(TypedDict, total=False):

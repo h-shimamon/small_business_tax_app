@@ -133,12 +133,19 @@ class TaxCalculation:
 
     def to_payload(self) -> TaxBreakdown:
         """UI互換の辞書ペイロードへ変換。"""
+        return TaxBreakdown(
+            inputs=self._build_inputs_payload(),
+            results=self._build_results_payload(),
+            breakdown=self._build_breakdown_payload(),
+        )
 
-        inputs_payload = {
-            'fiscal_start_date': self._format_date(self.tax_input.period.fiscal_start),
-            'fiscal_end_date': self._format_date(self.tax_input.period.fiscal_end),
-            'months_in_period': self.tax_input.period.months_in_period,
-            'months_truncated': self.tax_input.period.months_truncated,
+    def _build_inputs_payload(self) -> Dict[str, int]:
+        period = self.tax_input.period
+        return {
+            'fiscal_start_date': self._format_date(period.fiscal_start),
+            'fiscal_end_date': self._format_date(period.fiscal_end),
+            'months_in_period': period.months_in_period,
+            'months_truncated': period.months_truncated,
             'pre_tax_income': int(self.taxable_income),
             'corporate_tax_rate_low': self._format_rate(self.tax_input.rates.corporate_low),
             'corporate_tax_rate_high': self._format_rate(self.tax_input.rates.corporate_high),
@@ -153,7 +160,15 @@ class TaxCalculation:
             'municipal_equalization_amount': self.tax_input.equalization.municipal,
         }
 
-        results_payload = {
+    def _build_results_payload(self) -> Dict[str, int]:
+        enterprise_total = self.components.enterprise
+        enterprise_with_special = self.components.enterprise_with_special
+        pref_equalization = self.components.prefectural_equalization
+        municipal_equalization = self.components.municipal_equalization
+        pref_corporate = self.components.prefectural
+        municipal_corporate = self.components.municipal
+
+        return {
             'corporate_tax': int(self.components.corporate),
             'local_corporate_tax': int(self.components.local_corporate),
             'local_tax': int(self.components.local_tax_total),
@@ -161,43 +176,40 @@ class TaxCalculation:
             'payment_rate': self._format_percent(self.components.total_tax, self.taxable_income),
             'effective_rate': self._format_percent(
                 self.components.total_tax,
-                self.taxable_income + self.components.enterprise + self.components.local_special,
+                self.taxable_income + enterprise_total + self.components.local_special,
             ),
-            'enterprise_tax_amount': int(self.components.enterprise),
+            'enterprise_tax_amount': int(enterprise_total),
             'local_special_tax': int(self.components.local_special),
-            'enterprise_tax_total': int(self.components.enterprise_with_special),
-            'pref_corporate_tax': int(self.components.prefectural),
-            'pref_equalization_amount': int(self.components.prefectural_equalization),
-            'pref_tax_total': int(self.components.prefectural + self.components.prefectural_equalization),
-            'enterprise_pref_total': int(self.components.enterprise_with_special + self.components.prefectural + self.components.prefectural_equalization),
-            'municipal_corporate_tax': int(self.components.municipal),
-            'municipal_equalization_amount': int(self.components.municipal_equalization),
-            'municipal_tax_total': int(self.components.municipal + self.components.municipal_equalization),
+            'enterprise_tax_total': int(enterprise_with_special),
+            'pref_corporate_tax': int(pref_corporate),
+            'pref_equalization_amount': int(pref_equalization),
+            'pref_tax_total': int(pref_corporate + pref_equalization),
+            'enterprise_pref_total': int(enterprise_with_special + pref_corporate + pref_equalization),
+            'municipal_corporate_tax': int(municipal_corporate),
+            'municipal_equalization_amount': int(municipal_equalization),
+            'municipal_tax_total': int(municipal_corporate + municipal_equalization),
         }
 
-        breakdown_payload = {
-            'income_u800': int(self.income_bands.corporate_income_under),
-            'income_o800': int(self.income_bands.corporate_income_over),
+    def _build_breakdown_payload(self) -> Dict[str, int]:
+        bands = self.income_bands
+        return {
+            'income_u800': int(bands.corporate_income_under),
+            'income_o800': int(bands.corporate_income_over),
             'corporate_tax_low_rate': int(self.components.corporate_low),
             'corporate_tax_high_rate': int(self.components.corporate_high),
             'enterprise_tax_base': int(self.enterprise_tax_base),
-            'enterprise_income_u4m': int(self.income_bands.enterprise_income_limit_u4m),
-            'enterprise_base_u4m': int(self.income_bands.enterprise_base_u4m),
-            'enterprise_income_4m_8m': int(self.income_bands.enterprise_income_4m_8m),
-            'enterprise_base_4m_8m': int(self.income_bands.enterprise_base_4m_8m),
-            'enterprise_income_o8m': int(self.income_bands.enterprise_income_over_8m),
-            'enterprise_base_o8m': int(self.income_bands.enterprise_base_over_8m),
+            'enterprise_income_u4m': int(bands.enterprise_income_limit_u4m),
+            'enterprise_base_u4m': int(bands.enterprise_base_u4m),
+            'enterprise_income_4m_8m': int(bands.enterprise_income_4m_8m),
+            'enterprise_base_4m_8m': int(bands.enterprise_base_4m_8m),
+            'enterprise_income_o8m': int(bands.enterprise_income_over_8m),
+            'enterprise_base_o8m': int(bands.enterprise_base_over_8m),
             'enterprise_tax_u4m': int(self.components.enterprise_low),
             'enterprise_tax_4m_8m': int(self.components.enterprise_mid),
             'enterprise_tax_o8m': int(self.components.enterprise_high),
             'pref_tax_base': int(self.pref_tax_base),
             'municipal_tax_base': int(self.municipal_tax_base),
         }
-        return TaxBreakdown(
-            inputs=inputs_payload,
-            results=results_payload,
-            breakdown=breakdown_payload,
-        )
 
     @staticmethod
     def _format_date(value: Optional[date]) -> str:
@@ -211,6 +223,14 @@ class TaxCalculation:
             return ''
         quantized = value.quantize(Decimal('0.01'))
         text = format(quantized, 'f').rstrip('0').rstrip('.')
+        return f"{text}%"
+
+    @staticmethod
+    def _format_percent(numerator: Decimal, denominator: Decimal) -> str:
+        if denominator <= Decimal('0'):
+            return ''
+        percent = (numerator / denominator * Decimal('100')).quantize(Decimal('0.1'))
+        text = format(percent, 'f').rstrip('0').rstrip('.')
         return f"{text}%"
 
     @staticmethod

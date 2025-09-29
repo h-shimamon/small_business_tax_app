@@ -9,6 +9,8 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 
+from app.company.forms.metadata import extract_form_field_metadata, merge_field_metadata
+
 
 class StatementPageConfig(TypedDict, total=False):
     model: Any
@@ -127,6 +129,8 @@ def _build_statement_pages_config() -> Dict[str, StatementPageConfig]:
         model = _resolve_attribute(definition.model)
         form = _resolve_attribute(definition.form)
 
+        auto_fields = extract_form_field_metadata(form)
+
         entry: StatementPageConfig = {
             'model': model,
             'form': form,
@@ -139,7 +143,9 @@ def _build_statement_pages_config() -> Dict[str, StatementPageConfig]:
             },
         }
         if definition.form_fields:
-            entry['form_fields'] = definition.form_fields
+            entry['form_fields'] = merge_field_metadata(auto_fields, definition.form_fields)
+        elif auto_fields:
+            entry['form_fields'] = auto_fields
         if definition.pl_targets:
             entry['pl_targets'] = definition.pl_targets
         if definition.query_filter:
