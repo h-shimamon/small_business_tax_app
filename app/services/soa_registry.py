@@ -1,44 +1,13 @@
 """Centralized registry for Statement of Accounts configuration and mappings."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, TypedDict
-
-from app.company.forms import (
-    AccountsPayableForm,
-    AccountsReceivableForm,
-    BorrowingForm,
-    DepositForm,
-    ExecutiveCompensationForm,
-    FixedAssetForm,
-    InventoryForm,
-    LandRentForm,
-    LoansReceivableForm,
-    MiscellaneousForm,
-    MiscellaneousIncomeForm,
-    MiscellaneousLossForm,
-    NotesPayableForm,
-    NotesReceivableForm,
-    SecurityForm,
-    TemporaryPaymentForm,
-    TemporaryReceiptForm,
-)
-from app.company.models import (
-    AccountsPayable,
-    AccountsReceivable,
-    Borrowing,
-    Deposit,
-    ExecutiveCompensation,
-    FixedAsset,
-    Inventory,
-    LandRent,
-    LoansReceivable,
-    Miscellaneous,
-    NotesPayable,
-    NotesReceivable,
-    Security,
-    TemporaryPayment,
-    TemporaryReceipt,
-)
+import json
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from functools import lru_cache
+from importlib import import_module
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 
 
 class StatementPageConfig(TypedDict, total=False):
@@ -49,263 +18,173 @@ class StatementPageConfig(TypedDict, total=False):
     template: str
     query_filter: Callable[[Any], Any]
     form_fields: List[Dict[str, Any]]
+    summary: Dict[str, str]
+    pl_targets: List[str]
 
 
-STATEMENT_PAGES_CONFIG: Dict[str, StatementPageConfig] = {
-    'deposits': {
-        'model': Deposit,
-        'form': DepositForm,
-        'title': '預貯金等',
-        'total_field': 'balance',
-        'template': 'deposit_form.html',
-    },
-    'notes_receivable': {
-        'model': NotesReceivable,
-        'form': NotesReceivableForm,
-        'title': '受取手形',
-        'total_field': 'amount',
-        'template': 'notes_receivable_form.html',
-    },
-    'accounts_receivable': {
-        'model': AccountsReceivable,
-        'form': AccountsReceivableForm,
-        'title': '売掛金（未収入金）',
-        'total_field': 'balance_at_eoy',
-        'template': 'accounts_receivable_form.html',
-        'form_fields': [
-            {'name': 'account_name', 'autofocus': True},
-            {'name': 'registration_number', 'placeholder': '例：1234567890123'},
-            {'name': 'partner_name', 'placeholder': '例：株式会社 △△商会'},
-            {'name': 'partner_address', 'placeholder': '例：東京都千代田区〇〇町1-2-3'},
-            {'name': 'balance_at_eoy', 'type': 'number', 'placeholder': '例：500000'},
-            {'name': 'remarks', 'placeholder': '例：商品Aの売上代金'},
-        ],
-    },
-    'temporary_payments': {
-        'model': TemporaryPayment,
-        'form': TemporaryPaymentForm,
-        'title': '仮払金（前渡金）',
-        'total_field': 'balance_at_eoy',
-        'template': 'temporary_payment_form.html',
-        'form_fields': [
-            {'name': 'account_name', 'autofocus': True},
-            {'name': 'registration_number', 'placeholder': '例：1234567890123'},
-            {'name': 'partner_name', 'placeholder': '例：株式会社 □□'},
-            {'name': 'partner_address', 'placeholder': '例：東京都中央区〇〇1-2-3'},
-            {'name': 'relationship', 'placeholder': '例：代表者の子会社'},
-            {'name': 'balance_at_eoy', 'type': 'number', 'placeholder': '例：300000'},
-            {'name': 'transaction_details', 'placeholder': '例：出張旅費の仮払い'},
-        ],
-    },
-    'loans_receivable': {
-        'model': LoansReceivable,
-        'form': LoansReceivableForm,
-        'title': '貸付金・受取利息',
-        'total_field': 'balance_at_eoy',
-        'template': 'loans_receivable_form.html',
-        'form_fields': [
-            {'name': 'registration_number', 'autofocus': True, 'placeholder': '例：1234567890123'},
-            {'name': 'borrower_name', 'placeholder': '例：株式会社 〇〇商事'},
-            {'name': 'borrower_address', 'placeholder': '例：東京都千代田区〇〇1-2-3'},
-            {'name': 'relationship', 'placeholder': '例：代表者の親族会社'},
-            {'name': 'balance_at_eoy', 'placeholder': '例：300000'},
-            {'name': 'received_interest', 'placeholder': '例：15000'},
-            {'name': 'interest_rate', 'placeholder': '例：2.0'},
-            {'name': 'collateral_details', 'placeholder': '例：不動産（東京都港区…）'},
-        ],
-    },
-    'inventories': {
-        'model': Inventory,
-        'form': InventoryForm,
-        'title': '棚卸資産',
-        'total_field': 'balance_at_eoy',
-        'template': 'inventories_form.html',
-        'form_fields': [
-            {'name': 'item_name', 'autofocus': True},
-            {'name': 'location'},
-            {'name': 'quantity'},
-            {'name': 'unit'},
-            {'name': 'unit_price'},
-            {'name': 'balance_at_eoy'},
-            {'name': 'remarks'},
-        ],
-    },
-    'securities': {
-        'model': Security,
-        'form': SecurityForm,
-        'title': '有価証券',
-        'total_field': 'balance_at_eoy',
-        'template': 'securities_form.html',
-        'form_fields': [
-            {'name': 'security_type', 'autofocus': True},
-            {'name': 'issuer'},
-            {'name': 'quantity'},
-            {'name': 'balance_at_eoy'},
-            {'name': 'remarks'},
-        ],
-    },
-    'fixed_assets': {
-        'model': FixedAsset,
-        'form': FixedAssetForm,
-        'title': '固定資産（土地等）',
-        'total_field': 'balance_at_eoy',
-        'template': 'fixed_assets_form.html',
-        'form_fields': [
-            {'name': 'asset_type', 'autofocus': True},
-            {'name': 'location'},
-            {'name': 'area'},
-            {'name': 'balance_at_eoy'},
-            {'name': 'remarks'},
-        ],
-    },
-    'notes_payable': {
-        'model': NotesPayable,
-        'form': NotesPayableForm,
-        'title': '支払手形',
-        'total_field': 'amount',
-        'template': 'notes_payable_form.html',
-    },
-    'accounts_payable': {
-        'model': AccountsPayable,
-        'form': AccountsPayableForm,
-        'title': '買掛金（未払金・未払費用）',
-        'total_field': 'balance_at_eoy',
-        'template': 'accounts_payable_form.html',
-        'form_fields': [
-            {'name': 'registration_number', 'autofocus': True, 'placeholder': '例：1234567890123'},
-            {'name': 'partner_name', 'placeholder': '例：株式会社〇〇商事（または氏名）'},
-            {'name': 'partner_address', 'placeholder': '例：東京都千代田区丸の内…'},
-            {'name': 'balance_at_eoy', 'type': 'number', 'placeholder': '例：1000000'},
-            {'name': 'remarks', 'placeholder': '例：仕入代金'},
-        ],
-    },
-    'temporary_receipts': {
-        'model': TemporaryReceipt,
-        'form': TemporaryReceiptForm,
-        'title': '仮受金（前受金・預り金）',
-        'total_field': 'balance_at_eoy',
-        'template': 'temporary_receipts_form.html',
-        'form_fields': [
-            {'name': 'account_name', 'autofocus': True, 'placeholder': '例：預り金'},
-            {'name': 'partner_name', 'placeholder': '例：株式会社 △△'},
-            {'name': 'balance_at_eoy', 'placeholder': '例：100000'},
-            {'name': 'transaction_details', 'rows': 3, 'placeholder': '例：保証金の預り'},
-        ],
-    },
-    'borrowings': {
-        'model': Borrowing,
-        'form': BorrowingForm,
-        'title': '借入金及び支払利子',
-        'total_field': 'balance_at_eoy',
-        'template': 'borrowings_form.html',
-        'form_fields': [
-            {'name': 'lender_name', 'autofocus': True, 'placeholder': '例：〇〇銀行'},
-            {'name': 'is_subsidiary', 'render': 'checkbox'},
-            {'name': 'balance_at_eoy', 'placeholder': '例：5000000'},
-            {'name': 'interest_rate', 'placeholder': '例：1.8'},
-            {'name': 'paid_interest', 'placeholder': '例：120000'},
-            {'name': 'remarks', 'placeholder': '例：設備投資のため'},
-        ],
-    },
-    'executive_compensations': {
-        'model': ExecutiveCompensation,
-        'form': ExecutiveCompensationForm,
-        'title': '役員給与等',
-        'total_field': 'total_compensation',
-        'template': 'executive_compensations_form.html',
-        'form_fields': [
-            {'name': 'shareholder_name', 'autofocus': True, 'placeholder': '例：山田 太郎'},
-            {'name': 'relationship', 'placeholder': '例：代表取締役'},
-            {'name': 'position', 'placeholder': '例：代表取締役社長'},
-            {'name': 'base_salary', 'placeholder': '例：500000'},
-            {'name': 'other_allowances', 'placeholder': '例：役員賞与は無し'},
-            {'name': 'total_compensation', 'placeholder': '例：600000'},
-        ],
-    },
-    'land_rents': {
-        'model': LandRent,
-        'form': LandRentForm,
-        'title': '地代家賃等',
-        'total_field': 'rent_paid',
-        'template': 'land_rents_form.html',
-        'form_fields': [
-            {'name': 'account_name', 'autofocus': True, 'placeholder': '例：地代'},
-            {'name': 'lessor_name', 'placeholder': '例：〇〇不動産'},
-            {'name': 'property_details', 'placeholder': '例：東京都港区六本木6-10-1'},
-            {'name': 'rent_paid', 'placeholder': '例：200000'},
-            {'name': 'remarks', 'placeholder': '例：本店オフィス賃料'},
-        ],
-    },
-    'miscellaneous': {
-        'model': Miscellaneous,
-        'form': MiscellaneousForm,
-        'title': '雑益・雑損失等',
-        'total_field': 'amount',
-        'template': 'miscellaneous_form.html',
-        'form_fields': [
-            {'name': 'account_name'},
-            {'name': 'details'},
-            {'name': 'amount'},
-            {'name': 'remarks'},
-        ],
-    },
-    'misc_income': {
-        'model': Miscellaneous,
-        'form': MiscellaneousIncomeForm,
-        'title': '雑収入',
-        'total_field': 'amount',
-        'template': 'miscellaneous_form.html',
-        'query_filter': lambda q: q.filter(Miscellaneous.account_name == '雑収入'),
-        'form_fields': [
-            {'name': 'account_name'},
-            {'name': 'details'},
-            {'name': 'amount'},
-            {'name': 'remarks'},
-        ],
-    },
-    'misc_losses': {
-        'model': Miscellaneous,
-        'form': MiscellaneousLossForm,
-        'title': '雑損失',
-        'total_field': 'amount',
-        'template': 'miscellaneous_form.html',
-        'query_filter': lambda q: q.filter(Miscellaneous.account_name == '雑損失'),
-        'form_fields': [
-            {'name': 'account_name'},
-            {'name': 'details'},
-            {'name': 'amount'},
-            {'name': 'remarks'},
-        ],
-    },
+@dataclass(frozen=True)
+class StatementPageDefinition:
+    key: str
+    model: str
+    form: str
+    title: str
+    total_field: str
+    template: str
+    summary_type: str
+    summary_label: str
+    form_fields: List[Dict[str, Any]] = field(default_factory=list)
+    query_filter: Optional[Dict[str, Any]] = None
+    pl_targets: List[str] = field(default_factory=list)
+
+
+_ALLOWED_SUMMARY_TYPES = {'BS', 'PL'}
+_ALLOWED_QUERY_TYPES = {'equals'}
+_CONFIG_PATH = Path(__file__).resolve().parents[2] / 'resources' / 'config' / 'soa_pages.json'
+
+
+@lru_cache(maxsize=1)
+def _load_page_definitions() -> Tuple[StatementPageDefinition, ...]:
+    with _CONFIG_PATH.open('r', encoding='utf-8') as fh:
+        raw = json.load(fh)
+
+    definitions: List[StatementPageDefinition] = []
+    seen_keys: set[str] = set()
+    for item in raw.get('pages', []):
+        summary = item.get('summary') or {}
+        if 'type' not in summary or 'label' not in summary:
+            raise ValueError(f"SoA page '{item.get('key')}' requires a summary definition")
+
+        definition = StatementPageDefinition(
+            key=item['key'],
+            model=item['model'],
+            form=item['form'],
+            title=item['title'],
+            total_field=item['total_field'],
+            template=item['template'],
+            summary_type=summary['type'],
+            summary_label=summary['label'],
+            form_fields=item.get('form_fields', []),
+            query_filter=item.get('query_filter'),
+            pl_targets=item.get('pl_targets', []),
+        )
+        _validate_definition(definition, seen_keys)
+        definitions.append(definition)
+    return tuple(definitions)
+
+
+def _validate_definition(definition: StatementPageDefinition, seen_keys: set[str]) -> None:
+    if definition.key in seen_keys:
+        raise ValueError(f"Duplicate SoA page key detected: {definition.key}")
+    seen_keys.add(definition.key)
+
+    if definition.summary_type not in _ALLOWED_SUMMARY_TYPES:
+        raise ValueError(
+            f"Unsupported summary_type '{definition.summary_type}' for SoA page '{definition.key}'"
+        )
+
+    if definition.query_filter is not None:
+        if definition.query_filter.get('type') not in _ALLOWED_QUERY_TYPES:
+            raise ValueError(
+                f"Unsupported query_filter type '{definition.query_filter.get('type')}' for '{definition.key}'"
+            )
+        if 'field' not in definition.query_filter or 'value' not in definition.query_filter:
+            raise ValueError(f"Incomplete query_filter definition for '{definition.key}'")
+
+    if not isinstance(definition.form_fields, list):
+        raise ValueError(f"form_fields must be a list for '{definition.key}'")
+    for field_def in definition.form_fields:
+        if 'name' not in field_def:
+            raise ValueError(f"form_fields entries must include 'name' for '{definition.key}'")
+
+    if not isinstance(definition.pl_targets, list):
+        raise ValueError(f"pl_targets must be a list for '{definition.key}'")
+
+
+def _resolve_attribute(import_path: str) -> Any:
+    module_path, attr = import_path.rsplit('.', 1)
+    module = import_module(module_path)
+    return getattr(module, attr)
+
+
+def _build_query_filter(model: Any, spec: Dict[str, Any]) -> Callable[[Any], Any]:
+    filter_type = spec.get('type')
+    if filter_type == 'equals':
+        field_name = spec['field']
+        value = spec['value']
+        target = getattr(model, field_name)
+
+        def _apply(query):
+            return query.filter(target == value)
+
+        return _apply
+    raise ValueError(f"Unsupported query_filter type: {filter_type}")
+
+
+@lru_cache(maxsize=1)
+def _build_statement_pages_config() -> Dict[str, StatementPageConfig]:
+    configs: Dict[str, StatementPageConfig] = {}
+    for definition in _load_page_definitions():
+        model = _resolve_attribute(definition.model)
+        form = _resolve_attribute(definition.form)
+
+        entry: StatementPageConfig = {
+            'model': model,
+            'form': form,
+            'title': definition.title,
+            'total_field': definition.total_field,
+            'template': definition.template,
+            'summary': {
+                'type': definition.summary_type,
+                'label': definition.summary_label,
+            },
+        }
+        if definition.form_fields:
+            entry['form_fields'] = definition.form_fields
+        if definition.pl_targets:
+            entry['pl_targets'] = definition.pl_targets
+        if definition.query_filter:
+            entry['query_filter'] = _build_query_filter(model, definition.query_filter)
+        configs[definition.key] = entry
+    return configs
+
+
+class _StatementPagesProxy(Mapping[str, StatementPageConfig]):
+    """Lazily materialise the statement page configurations."""
+
+    def __init__(self) -> None:
+        self._cache: Optional[Dict[str, StatementPageConfig]] = None
+
+    def _ensure(self) -> Dict[str, StatementPageConfig]:
+        if self._cache is None:
+            self._cache = _build_statement_pages_config()
+        return self._cache
+
+    def refresh(self) -> Dict[str, StatementPageConfig]:
+        self._cache = None
+        return self._ensure()
+
+    def __getitem__(self, key):  # type: ignore[override]
+        return self._ensure()[key]
+
+    def __iter__(self):  # type: ignore[override]
+        return iter(self._ensure())
+
+    def __len__(self):  # type: ignore[override]
+        return len(self._ensure())
+
+    def get(self, key, default=None):  # type: ignore[override]
+        return self._ensure().get(key, default)
+
+
+STATEMENT_PAGES_CONFIG: Mapping[str, StatementPageConfig] = _StatementPagesProxy()
+SUMMARY_PAGE_MAP: Dict[str, Tuple[str, str]] = {
+    definition.key: (definition.summary_type, definition.summary_label)
+    for definition in _load_page_definitions()
 }
-
-
-SUMMARY_PAGE_MAP = {
-    'deposits': ('BS', '預貯金'),
-    'notes_receivable': ('BS', '受取手形'),
-    'accounts_receivable': ('BS', '売掛金'),
-    'temporary_payments': ('BS', '仮払金'),
-    'loans_receivable': ('BS', '貸付金'),
-    'inventories': ('BS', '棚卸資産'),
-    'securities': ('BS', '有価証券'),
-    'fixed_assets': ('BS', '固定資産（土地等）'),
-    'notes_payable': ('BS', '支払手形'),
-    'accounts_payable': ('BS', '買掛金'),
-    'temporary_receipts': ('BS', '仮受金'),
-    'borrowings': ('BS', '借入金'),
-    'executive_compensations': ('PL', '役員給与等'),
-    'land_rents': ('PL', '地代家賃等'),
-    'miscellaneous': ('PL', '雑益・雑損失等'),
-    'misc_income': ('PL', '雑収入'),
-    'misc_losses': ('PL', '雑損失'),
-}
-
-
-PL_PAGE_ACCOUNTS = {
-    'executive_compensations': ['役員報酬', '役員賞与'],
-    'land_rents': ['地代家賃', '賃借料'],
-    'misc_income': ['雑収入'],
-    'misc_losses': ['雑損失'],
+PL_PAGE_ACCOUNTS: Dict[str, List[str]] = {
+    definition.key: definition.pl_targets
+    for definition in _load_page_definitions()
+    if definition.pl_targets
 }
 
 

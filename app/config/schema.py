@@ -95,18 +95,18 @@ except Exception:
 
     @dataclass
     class AppSettings:  # type: ignore
-        LOCALE: str = _env_str("ja_JP", "APP_LOCALE", "LOCALE")
-        UI_PROFILE: str = _env_str("default", "APP_UI_PROFILE", "UI_PROFILE")
-        UI_OPTIONS_VERSION: str = _env_str("v1", "APP_UI_OPTIONS_VERSION", "UI_OPTIONS_VERSION")
+        LOCALE: str = field(default_factory=lambda: _env_str("ja_JP", "APP_LOCALE", "LOCALE"))
+        UI_PROFILE: str = field(default_factory=lambda: _env_str("default", "APP_UI_PROFILE", "UI_PROFILE"))
+        UI_OPTIONS_VERSION: str = field(default_factory=lambda: _env_str("v1", "APP_UI_OPTIONS_VERSION", "UI_OPTIONS_VERSION"))
         FEATURE_FLAGS: Dict[str, bool] = field(default_factory=dict)
-        ENABLE_UI_OPTIONS_DI: bool = _env_bool(True, "APP_ENABLE_UI_OPTIONS_DI", "ENABLE_UI_OPTIONS_DI")
-        ENABLE_NEW_AUTH: bool = _env_bool(False, "APP_ENABLE_NEW_AUTH", "ENABLE_NEW_AUTH")
-        ENABLE_SIGNUP_EMAIL_FIRST: bool = _env_bool(False, "APP_ENABLE_SIGNUP_EMAIL_FIRST", "ENABLE_SIGNUP_EMAIL_FIRST")
-        ENABLE_CORP_TAX_MANUAL_EDIT: bool = _env_bool(False, "APP_ENABLE_CORP_TAX_MANUAL_EDIT", "ENABLE_CORP_TAX_MANUAL_EDIT")
-        NEW_AUTH_EMAIL_BACKEND: str = _env_str("dummy", "APP_NEW_AUTH_EMAIL_BACKEND", "NEW_AUTH_EMAIL_BACKEND")
-        NEW_AUTH_EMAIL_HOST: str = _env_str("", "APP_NEW_AUTH_EMAIL_HOST", "NEW_AUTH_EMAIL_HOST")
-        NEW_AUTH_EMAIL_PORT: int = int(_env_str("587", "APP_NEW_AUTH_EMAIL_PORT", "NEW_AUTH_EMAIL_PORT"))
-        NEW_AUTH_EMAIL_USERNAME: Optional[str] = _env_str("", "APP_NEW_AUTH_EMAIL_USERNAME", "NEW_AUTH_EMAIL_USERNAME") or None
-        NEW_AUTH_EMAIL_PASSWORD: Optional[str] = _env_str("", "APP_NEW_AUTH_EMAIL_PASSWORD", "NEW_AUTH_EMAIL_PASSWORD") or None
-        NEW_AUTH_EMAIL_USE_TLS: bool = _env_bool(True, "APP_NEW_AUTH_EMAIL_USE_TLS", "NEW_AUTH_EMAIL_USE_TLS")
-        NEW_AUTH_EMAIL_FROM: str = _env_str("no-reply@example.com", "APP_NEW_AUTH_EMAIL_FROM", "NEW_AUTH_EMAIL_FROM")
+        ENABLE_UI_OPTIONS_DI: bool = field(default_factory=lambda: _env_bool(True, "APP_ENABLE_UI_OPTIONS_DI", "ENABLE_UI_OPTIONS_DI"))
+        ENABLE_NEW_AUTH: bool = field(default_factory=lambda: _env_bool(False, "APP_ENABLE_NEW_AUTH", "ENABLE_NEW_AUTH"))
+        ENABLE_SIGNUP_EMAIL_FIRST: bool = field(default_factory=lambda: _env_bool(False, "APP_ENABLE_SIGNUP_EMAIL_FIRST", "ENABLE_SIGNUP_EMAIL_FIRST"))
+        ENABLE_CORP_TAX_MANUAL_EDIT: bool = field(default_factory=lambda: _env_bool(False, "APP_ENABLE_CORP_TAX_MANUAL_EDIT", "ENABLE_CORP_TAX_MANUAL_EDIT"))
+        NEW_AUTH_EMAIL_BACKEND: str = field(default_factory=lambda: _env_str("dummy", "APP_NEW_AUTH_EMAIL_BACKEND", "NEW_AUTH_EMAIL_BACKEND"))
+        NEW_AUTH_EMAIL_HOST: str = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_HOST", "NEW_AUTH_EMAIL_HOST"))
+        NEW_AUTH_EMAIL_PORT: int = field(default_factory=lambda: int(_env_str("587", "APP_NEW_AUTH_EMAIL_PORT", "NEW_AUTH_EMAIL_PORT")))
+        NEW_AUTH_EMAIL_USERNAME: Optional[str] = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_USERNAME", "NEW_AUTH_EMAIL_USERNAME") or None)
+        NEW_AUTH_EMAIL_PASSWORD: Optional[str] = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_PASSWORD", "NEW_AUTH_EMAIL_PASSWORD") or None)
+        NEW_AUTH_EMAIL_USE_TLS: bool = field(default_factory=lambda: _env_bool(True, "APP_NEW_AUTH_EMAIL_USE_TLS", "NEW_AUTH_EMAIL_USE_TLS"))
+        NEW_AUTH_EMAIL_FROM: str = field(default_factory=lambda: _env_str("no-reply@example.com", "APP_NEW_AUTH_EMAIL_FROM", "NEW_AUTH_EMAIL_FROM"))

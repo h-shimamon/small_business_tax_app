@@ -88,7 +88,9 @@ class Company(db.Model):
 
     # --- 還付口座 ---
     refund_bank_name = db.Column(db.String(100))
+    refund_bank_type = db.Column(db.String(20))
     refund_branch_name = db.Column(db.String(100))
+    refund_branch_type = db.Column(db.String(20))
     refund_account_type = db.Column(db.String(10))
     refund_account_number = db.Column(db.String(20))
 
@@ -140,6 +142,22 @@ class Office(db.Model):
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('offices', lazy=True))
+
+    @property
+    def office_name(self):
+        return self.name
+
+    @office_name.setter
+    def office_name(self, value):
+        self.name = value
+
+    @property
+    def city(self):
+        return self.municipality
+
+    @city.setter
+    def city(self, value):
+        self.municipality = value
 
     def __repr__(self):
         return f'<Office {self.name}>'

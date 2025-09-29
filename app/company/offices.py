@@ -22,11 +22,7 @@ def register_office(company):
     form = OfficeForm(request.form)
     if form.validate_on_submit():
         new_office = Office(company_id=company.id)
-        # まずフォーム値を適用（未知属性は無視されDBに影響なし）
         form.populate_obj(new_office)
-        # モデルの実カラム名に合わせて明示マッピング（UIは維持）
-        new_office.name = form.office_name.data
-        new_office.municipality = form.city.data
         db.session.add(new_office)
         db.session.commit()
         flash('事業所を登録しました。', 'success')
@@ -45,9 +41,6 @@ def edit_office(company, office_id):
     form = OfficeForm(request.form, obj=office)
     if form.validate_on_submit():
         form.populate_obj(office)
-        # 実カラム名へマッピング（UI名とモデル名の差異を吸収）
-        office.name = form.office_name.data
-        office.municipality = form.city.data
         db.session.commit()
         flash('事業所情報を更新しました。', 'success')
         return redirect(url_for('company.office_list'))

@@ -1,14 +1,46 @@
 # app/navigation_builder.py
+from __future__ import annotations
+
+from collections.abc import Iterator, Sequence
+from typing import List, Optional
+
 from .navigation_models import NavigationNode
 from app.services.app_registry import get_navigation_structure
 
-NAVIGATION_STRUCTURE_DATA = get_navigation_structure()
 
-def build_navigation_tree():
-    """
-    データ定義に基づき、NavigationNodeのツリーを構築して返す
-    """
-    return [NavigationNode(**data) for data in NAVIGATION_STRUCTURE_DATA]
+def build_navigation_tree() -> List[NavigationNode]:
+    """データ定義に基づき、NavigationNodeのツリーを構築して返す"""
+    return [NavigationNode(**data) for data in get_navigation_structure()]
 
-# アプリケーション起動時に一度だけツリーを構築
-navigation_tree = build_navigation_tree()
+
+class _NavigationTreeProxy(Sequence[NavigationNode]):
+    """Lazy proxy that builds the navigation tree only on first use."""
+
+    def __init__(self) -> None:
+        self._cache: Optional[List[NavigationNode]] = None
+
+    def _ensure(self) -> List[NavigationNode]:
+        if self._cache is None:
+            self._cache = build_navigation_tree()
+        return self._cache
+
+    def refresh(self) -> List[NavigationNode]:
+        """Clear the cache and rebuild on next access."""
+        self._cache = None
+        return self._ensure()
+
+    def __iter__(self) -> Iterator[NavigationNode]:
+        return iter(self._ensure())
+
+    def __len__(self) -> int:  # pragma: no cover - trivial
+        return len(self._ensure())
+
+    def __getitem__(self, index):  # pragma: no cover - trivial pass-through
+        return self._ensure()[index]
+
+
+def get_navigation_tree() -> Sequence[NavigationNode]:
+    return navigation_tree
+
+
+navigation_tree: Sequence[NavigationNode] = _NavigationTreeProxy()

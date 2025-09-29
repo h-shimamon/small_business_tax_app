@@ -43,7 +43,8 @@ class SoASummaryService:
             # Special: BS 借入金 + PL 支払利息
             bs_df = master_service.get_bs_master_df()
             bs_targets = bs_df[bs_df['breakdown_document'] == '借入金'].index.tolist()
-            return {'type': 'BORROWINGS', 'bs_targets': bs_targets, 'pl_targets': ['支払利息']}
+            pl_targets = PL_PAGE_ACCOUNTS.get(page, ['支払利息'])
+            return {'type': 'BORROWINGS', 'bs_targets': bs_targets, 'pl_targets': pl_targets}
         if master_type == 'BS':
             df = master_service.get_bs_master_df()
             targets = df[df['breakdown_document'] == breakdown_name].index.tolist()
