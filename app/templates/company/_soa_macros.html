@@ -3,21 +3,63 @@
 
 {% from 'company/_layout_helpers.html' import render_difference %}
 
-{% macro header_actions(page, difference, next_url) -%}
+{# 共通サイドバー: navigation_state から内訳書グループを描画し、なければ既存リストにフォールバック #}
+{% macro render_soa_sidebar(current_page, navigation_state=None) -%}
+  {% set groups = navigation_state or [] %}
+  {% set soa_group = none %}
+  {% for group in groups %}
+    {% if group.key == 'statement_of_accounts_group' %}
+      {% set soa_group = group %}
+    {% endif %}
+  {% endfor %}
+  <h3 class="sidebar-title">勘定科目内訳書</h3>
+  <ul class="sidebar-menu">
+    {% if soa_group %}
+      {% for child in soa_group.children %}
+        {% set is_active = child.is_active or child.key == current_page or (child.params and child.params.page == current_page) %}
+        <li>
+          <a href="{{ child.url }}" class="sidebar-link {% if is_active %}active{% endif %}">
+            {{ child.name }}
+          </a>
+        </li>
+      {% endfor %}
+    {% else %}
+      {% set fallback_pages = [
+        ('deposits', '預貯金等'), ('notes_receivable', '受取手形'), ('accounts_receivable', '売掛金（未収入金）'),
+        ('temporary_payments', '仮払金（前渡金）'), ('loans_receivable', '貸付金・受取利息'), ('inventories', '棚卸資産'),
+        ('securities', '有価証券'), ('fixed_assets', '固定資産（土地等）'), ('notes_payable', '支払手形'),
+        ('accounts_payable', '買掛金（未払金・未払費用）'), ('temporary_receipts', '仮受金（前受金・預り金）'), ('borrowings', '借入金及び支払利子'),
+        ('executive_compensations', '役員給与等'), ('land_rents', '地代家賃等'), ('misc_income', '雑収入'), ('misc_losses', '雑損失')
+      ] %}
+      {% for page_id, page_name in fallback_pages %}
+        <li>
+          <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" class="sidebar-link {% if page_id == current_page %}active{% endif %}">
+            {{ page_name }}
+          </a>
+        </li>
+      {% endfor %}
+    {% endif %}
+  </ul>
+{%- endmacro %}
+
+{% macro header_actions(page, difference, next_url, empty_state, cta_config) -%}
   {% if difference is not none and (difference | default(0)) == 0 and next_url %}
     <a href="{{ next_url }}" class="button-primary">次の内訳へ</a>
   {% else %}
-    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">＋ 新規登録</a>
+    <a href="{{ url_for('company.add_item', page_key=page) }}" class="{{ cta_config.header_class }}">{{ cta_config.header_label }}</a>
   {% endif %}
 {%- endmacro %}
 
-{% macro empty_state(page_title, page) -%}
+{% macro empty_state(page_title, page, empty_state) -%}
   <div class="empty-state-card">
-    <h2>まだ{{ page_title }}が登録されていません</h2>
-    <p>右上の「＋ 新規登録」ボタンから最初の情報を登録してください。</p>
-    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">最初の{{ page_title }}を登録する</a>
+    <h2>{{ empty_state.headline or ('まだ' ~ page_title ~ 'が登録されていません') }}</h2>
+    {% if empty_state.description %}
+      <p>{{ empty_state.description }}</p>
+    {% endif %}
+    <a href="{{ url_for('company.add_item', page_key=page) }}" class="button-primary">{{ empty_state.action_label or ('最初の' ~ page_title ~ 'を登録する') }}</a>
   </div>
 {%- endmacro %}
+
 
 {# Generic summary card (three rows) with difference highlighting #}
 {% macro summary_generic(label, bs_total, breakdown_total, difference) -%}

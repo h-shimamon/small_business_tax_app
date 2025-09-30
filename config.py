@@ -1,4 +1,5 @@
 # config.py
+# NOTE: 設定値は「.env → app.config.schema.AppSettings → Flask app.config」の順で反映されます。
 import os
 
 # アプリケーションのベースディレクトリ
@@ -66,6 +67,11 @@ class ProductionConfig(Config):
 
 class DevConfig(Config):
     """開発環境向けの設定。"""
+    # Differences from ProductionConfig:
+    # - DEBUG/LOG_LEVEL are verbose for local diagnosis.
+    # - CSRF is disabled to simplify local form testing.
+    # - Session/remember cookies are not marked Secure and use HTTP scheme.
+    # - Preferred URL scheme remains http for local endpoints.
     DEBUG = True
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
     # 開発体験を優先（本番は ProductionConfig が強化設定）

@@ -13,7 +13,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
 class GeometrySchemaError(Exception):
@@ -157,9 +157,9 @@ def _iter_geometry_files(repo_root: str) -> Iterable[Tuple[str, str, str]]:
                 yield (tkey, year, os.path.join(tdir, fname))
 
 
-def cli_check_all(repo_root: str) -> int:
+def cli_check_all(repo_root: str, report_path: Optional[str] = None) -> int:
     """Validate all geometry files. Returns process exit code (0 ok, 1 failure)."""
-    errors: List[str] = []
+    errors: List[Dict[str, str]] = []
     count = 0
     for tkey, year, path in _iter_geometry_files(repo_root):
         count += 1
@@ -169,24 +169,43 @@ def cli_check_all(repo_root: str) -> int:
             validate_and_apply_defaults(raw)
         except Exception as e:
             rel = os.path.relpath(path, repo_root)
-            errors.append(f"{rel}: {e}")
+            errors.append({"path": rel, "error": str(e)})
+    status = 0
     if errors:
         print("Geometry validation FAILED:", file=sys.stderr)
-        for msg in errors:
-            print(f" - {msg}", file=sys.stderr)
-        return 1
-    print(f"Geometry validation OK ({count} file(s))")
-    return 0
+        for item in errors:
+            print(f" - {item['path']}: {item['error']}", file=sys.stderr)
+        status = 1
+    else:
+        print(f"Geometry validation OK ({count} file(s))")
+    if report_path:
+        _write_json_report(report_path, count=count, errors=errors, status=status)
+    return status
+
+
+def _write_json_report(report_path: str, *, count: int, errors: List[Dict[str, str]], status: int) -> None:
+    payload = {
+        "status": "failed" if status else "ok",
+        "files_checked": count,
+        "errors": errors,
+    }
+    try:
+        _ensure_dir(report_path)
+        with open(report_path, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        print(f"Failed to write JSON report {report_path}: {exc}", file=sys.stderr)
 
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate PDF geometry templates")
     parser.add_argument("--check-all", action="store_true", help="validate all *_geometry.json under resources/pdf_templates")
     parser.add_argument("--repo-root", default=_repo_root_from_here(), help="repository root (auto-detected)")
+    parser.add_argument("--json-report", help="write validation result to JSON file")
     args = parser.parse_args(argv)
 
     if args.check_all:
-        return cli_check_all(args.repo_root)
+        return cli_check_all(args.repo_root, report_path=args.json_report)
 
     parser.print_help()
     return 0

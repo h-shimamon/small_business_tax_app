@@ -1,7 +1,10 @@
 # app/company/services/financial_statement_service.py
 from collections import defaultdict
+from typing import Dict, Optional
+
 import pandas as pd
 from datetime import datetime
+
 from .master_data_service import MasterDataService
 
 class FinancialStatementService:
@@ -21,7 +24,13 @@ class FinancialStatementService:
         self.end_date = datetime.combine(end_date, datetime.max.time())
         self.bs_master = master_data_service.get_bs_master_df()
         self.pl_master = master_data_service.get_pl_master_df()
-        
+        self._soa_breakdowns = {}
+        self._account_balances: Dict[int, int] = {}
+        self._name_to_id_cache = self._build_name_to_id_map()
+        self._pl_cache_key: Optional[tuple] = None
+        self._pl_structure_cache: Optional[dict] = None
+        self._net_income_cache: Optional[int] = None
+
         # 期首と期中の取引を分離
         opening_df, mid_year_df = self._separate_transactions(self.journals_df)
         self.opening_balances = self._calculate_balances_from_df(opening_df)
@@ -78,38 +87,115 @@ class FinancialStatementService:
             
         return {k: v for k, v in balances.items() if v != 0}
 
-    def get_total_by_breakdown_document(self, document_name):
-        """指定された内訳書名に該当する勘定科目の合計残高を計算する。"""
+    def _build_name_to_id_map(self) -> Dict[str, int]:
+        mapping: Dict[str, int] = {}
+        for df in (self.bs_master, self.pl_master):
+            if df is None or df.empty:
+                continue
+            if 'id' not in df.columns:
+                continue
+            try:
+                ids = df['id'].to_dict()
+            except Exception:
+                ids = {}
+            for name, raw_id in ids.items():
+                try:
+                    mapping[str(name)] = int(raw_id)
+                except (TypeError, ValueError):
+                    continue
+        return mapping
+
+    def _lookup_account_id(self, account_name: str) -> Optional[int]:
+        return self._name_to_id_cache.get(str(account_name))
+
+    def _build_account_balances(self, balances) -> Dict[int, int]:
+        totals: Dict[int, int] = {}
+        for acc_name, amount in balances.items():
+            account_id = self._lookup_account_id(acc_name)
+            if account_id is None:
+                continue
+            try:
+                numeric = int(round(float(amount)))
+            except (TypeError, ValueError):
+                continue
+            if numeric == 0:
+                continue
+            totals[account_id] = numeric
+        return totals
+
+    def get_account_balances(self) -> Dict[str, int]:
+        return {str(account_id): amount for account_id, amount in self._account_balances.items()}
+
+    def _combined_balances(self):
         all_balances = defaultdict(int, self.opening_balances)
         for acc, amount in self.mid_year_balances.items():
             all_balances[acc] += amount
+        return all_balances
 
-        target_accounts = self.bs_master[self.bs_master['breakdown_document'] == document_name].index.tolist()
-        total = sum(all_balances.get(acc, 0) for acc in target_accounts)
-        return total
+    def _compute_breakdown_totals(self, balances):
+        breakdowns = {}
+        if self.bs_master is None or self.bs_master.empty:
+            return breakdowns
+        for acc, amount in balances.items():
+            if acc not in self.bs_master.index:
+                continue
+            doc = self.bs_master.at[acc, 'breakdown_document'] if 'breakdown_document' in self.bs_master.columns else None
+            if not isinstance(doc, str) or not doc.strip():
+                continue
+            breakdowns[doc] = breakdowns.get(doc, 0) + amount
+        return breakdowns
+
+    def _get_pl_statement(self, balances):
+        cache_key = tuple(sorted(balances.items())) if balances else None
+        if (
+            cache_key is not None
+            and self._pl_cache_key == cache_key
+            and self._pl_structure_cache is not None
+        ):
+            return self._pl_structure_cache, self._net_income_cache or 0
+
+        pl_structure, net_income = self._create_profit_and_loss_statement_data(balances)
+        self._pl_cache_key = cache_key
+        self._pl_structure_cache = pl_structure
+        self._net_income_cache = net_income
+        return pl_structure, net_income
+
+    def get_total_by_breakdown_document(self, document_name):
+        """指定された内訳書名に該当する勘定科目の合計残高を計算する。"""
+        if document_name is None:
+            return 0
+        if self._soa_breakdowns:
+            return self._soa_breakdowns.get(document_name, 0)
+        balances = self._combined_balances()
+        breakdowns = self._compute_breakdown_totals(balances)
+        return breakdowns.get(document_name, 0)
 
     def create_balance_sheet(self):
         """貸借対照表を生成する。"""
-        all_balances = defaultdict(int, self.opening_balances)
-        for acc, amount in self.mid_year_balances.items():
-            all_balances[acc] += amount
-        
-        _, net_income = self._create_profit_and_loss_statement_data(all_balances)
+        all_balances = self._combined_balances()
+        _, net_income = self._get_pl_statement(all_balances)
 
-        final_bs_balances = {acc: amount for acc, amount in all_balances.items() if acc in self.bs_master.index}
+        adjusted_balances = dict(all_balances)
+        final_bs_balances = {acc: amount for acc, amount in adjusted_balances.items() if acc in self.bs_master.index}
         opening_retained_earnings = self.opening_balances.get('繰越利益剰余金', 0)
         final_bs_balances['繰越利益剰余金'] = opening_retained_earnings - net_income
+        adjusted_balances['繰越利益剰余金'] = final_bs_balances['繰越利益剰余金']
+
+        self._account_balances = self._build_account_balances(adjusted_balances)
+        self._soa_breakdowns = self._compute_breakdown_totals(adjusted_balances)
 
         return self._build_statement_structure(final_bs_balances, self.bs_master, is_bs=True)
 
     def create_profit_loss_statement(self):
         """損益計算書を生成する。"""
-        all_balances = defaultdict(int, self.opening_balances)
-        for acc, amount in self.mid_year_balances.items():
-            all_balances[acc] += amount
-            
-        pl_structure, _ = self._create_profit_and_loss_statement_data(all_balances)
+        all_balances = self._combined_balances()
+        if not self._account_balances:
+            self._account_balances = self._build_account_balances(all_balances)
+        pl_structure, _ = self._get_pl_statement(all_balances)
         return pl_structure
+
+    def get_soa_breakdowns(self):
+        return dict(self._soa_breakdowns)
 
     def _create_profit_and_loss_statement_data(self, all_balances):
         """損益計算書のデータ構造を生成し、当期純利益を返す。"""
@@ -145,61 +231,50 @@ class FinancialStatementService:
     def _build_statement_structure(self, balances, master_df, is_bs=False):
         """
         勘定科目の残高とマスターデータから、ソートとグルーピング済みの財務諸表データ構造を構築する。
-        - B/S(is_bs=True) の場合は明細行を「決算書名」で集約・表示する。
-        - P/L の場合は従来どおり勘定科目名で表示する。
+        - B/S(is_bs=True) と P/L(is_bs=False) の両方で、明細行は「決算書名」で集約・表示する。
+        - 並び順は同一の決算書名グループに属する科目の No. 最小値を用いる。
         """
         from collections import defaultdict as _dd
         import math as _math
         structure = _dd(lambda: _dd(lambda: {'items': [], 'total': 0}))
         sign_inversion_majors = {'負債', '純資産'} if is_bs else set()
 
-        if is_bs:
-            # B/S: 勘定科目名ではなく「決算書名」に集約
-            # (major, middle, statement_name) -> raw_amount（符号未反転）
-            grouped = {}
-            for acc, amount in balances.items():
-                if acc in master_df.index:
-                    major = master_df.loc[acc, 'major_category']
-                    middle = master_df.loc[acc, 'middle_category']
-                    stmt_name = master_df.loc[acc, 'statement_name']
-                    if pd.isna(stmt_name) or not str(stmt_name).strip():
-                        stmt_name = acc  # フォールバック
-                    key = (major, middle, str(stmt_name))
-                    grouped[key] = grouped.get(key, 0) + amount
+        # 共通: 「決算書名」に集約
+        grouped = {}
+        for acc, amount in balances.items():
+            if acc in master_df.index:
+                major = master_df.loc[acc, 'major_category']
+                middle = master_df.loc[acc, 'middle_category']
+                stmt_name = master_df.loc[acc, 'statement_name'] if 'statement_name' in master_df.columns else None
+                if pd.isna(stmt_name) or not str(stmt_name).strip():
+                    stmt_name = acc  # フォールバック
+                key = (major, middle, str(stmt_name))
+                grouped[key] = grouped.get(key, 0) + amount
 
-            # 決算書名ごとの表示順（No.の最小値）を計算
+        # 決算書名ごとの表示順（No.の最小値）
+        stmt_order = {}
+        try:
+            for acc in master_df.index:
+                major = master_df.at[acc, 'major_category']
+                middle = master_df.at[acc, 'middle_category']
+                sname = master_df.at[acc, 'statement_name'] if 'statement_name' in master_df.columns else None
+                if pd.isna(sname) or not str(sname).strip():
+                    sname = acc
+                key = (major, middle, str(sname))
+                num = master_df.at[acc, 'number']
+                try:
+                    n = int(num)
+                except Exception:
+                    continue
+                if key not in stmt_order or n < stmt_order[key]:
+                    stmt_order[key] = n
+        except Exception:
             stmt_order = {}
-            try:
-                for acc in master_df.index:
-                    major = master_df.at[acc, 'major_category']
-                    middle = master_df.at[acc, 'middle_category']
-                    sname = master_df.at[acc, 'statement_name']
-                    if pd.isna(sname) or not str(sname).strip():
-                        sname = acc
-                    key = (major, middle, str(sname))
-                    num = master_df.at[acc, 'number']
-                    try:
-                        n = int(num)
-                    except Exception:
-                        continue
-                    if key not in stmt_order or n < stmt_order[key]:
-                        stmt_order[key] = n
-            except Exception:
-                stmt_order = {}
 
-            # 構造へ流し込み（この段階で符号反転を適用）
-            for (major, middle, sname), amt in grouped.items():
-                display_amount = -amt if major in sign_inversion_majors else amt
-                structure[major][middle]['items'].append({'name': sname, 'amount': display_amount})
-
-        else:
-            # P/L: 従来どおり勘定科目名で表示
-            for acc, amount in balances.items():
-                if acc in master_df.index:
-                    major = master_df.loc[acc, 'major_category']
-                    middle = master_df.loc[acc, 'middle_category']
-                    display_amount = -amount if major in sign_inversion_majors else amount
-                    structure[major][middle]['items'].append({'name': acc, 'amount': display_amount})
+        # 構造へ流し込み（B/Sは負債・純資産のみ符号反転）
+        for (major, middle, sname), amt in grouped.items():
+            display_amount = -amt if (is_bs and (major in sign_inversion_majors)) else amt
+            structure[major][middle]['items'].append({'name': sname, 'amount': display_amount})
 
         # ここからは共通: メジャー/ミドル/明細の並びと小計・合計の算出
         final_structure = {}
@@ -218,18 +293,13 @@ class FinancialStatementService:
 
             sorted_major_content = {}
             for middle, data in sorted_middles:
-                # 明細の並び順
-                if is_bs:
-                    # 決算書名ベース: 事前計算した順序を使用。無ければ大きな値で末尾へ。
-                    def _order_fn(x):
-                        try:
-                            return stmt_order.get((major, middle, x['name']), _math.inf)
-                        except Exception:
-                            return _math.inf
-                    data['items'].sort(key=_order_fn)
-                else:
-                    # 勘定科目名ベース: その勘定科目のNo.
-                    data['items'].sort(key=lambda x: master_df.loc[x['name'], 'number'] if x['name'] in master_df.index else _math.inf)
+                # 明細の並び順（決算書名グループのNo.最小でソート）
+                def _order_fn(x):
+                    try:
+                        return stmt_order.get((major, middle, x['name']), _math.inf)
+                    except Exception:
+                        return _math.inf
+                data['items'].sort(key=_order_fn)
 
                 middle_total = sum(item['amount'] for item in data['items'])
                 data['total'] = middle_total

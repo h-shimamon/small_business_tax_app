@@ -21,7 +21,7 @@
         <p class="content-subtitle">登録された{{ page_title }}の情報を確認・編集します。</p>
     </div>
     <div class="header-actions">
-        {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url) }}
+        {{ header_actions(page, (generic_summary.difference if generic_summary else 0), soa_next_url, empty_state_config, cta_config) }}
         {{ render_pdf_button_if_available(page, pdf_year) }}
     </div>
 </div>
@@ -43,7 +43,7 @@
   {{ summary_generic('B/S上の売掛金（未収入金）残高', (generic_summary.bs_total if generic_summary else 0), (generic_summary.breakdown_total if generic_summary else 0), (generic_summary.difference if generic_summary else 0)) }}
 {% endif %}
 
-{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','executive_compensations','land_rents','miscellaneous','misc_income','misc_losses'] %}
+{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','executive_compensations','land_rents','misc_income','misc_losses'] %}
   {{ summary_generic(generic_summary_label, generic_summary.bs_total, generic_summary.breakdown_total, generic_summary.difference) }}
 {% endif %}
 
@@ -54,7 +54,7 @@
 <div class="card-grid">
     {% if items %}        {% include 'company/_cards/' + page + '_card.html' %}
     {% else %}
-        {{ empty_state(page_title, page) }}
+        {{ empty_state(page_title, page, empty_state_config) }}
     {% endif %}
 </div>
 {% endblock %}

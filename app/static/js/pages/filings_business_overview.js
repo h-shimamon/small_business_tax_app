@@ -78,6 +78,7 @@
       aside.style.width = w + 'px';
       aside.style.left = computeLeftForFixed(splitRect, w) + 'px';
       left.style.paddingRight = (w + 24) + 'px';
+
       wasFixed = true;
     } else {
       aside.style.position = '';
@@ -93,6 +94,7 @@
     var was = wasFixed;
     aside.style.position = '';
     aside.style.left = '';
+    left.style.paddingRight = '';
     wasFixed = false;
     tick();
     if(was){ tick(); }

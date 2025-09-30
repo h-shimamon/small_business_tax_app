@@ -1,0 +1,150 @@
+.tax-calculation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.tax-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(31, 31, 61, 0.08);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tax-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tax-card-subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.tax-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tax-table th,
+.tax-table td {
+  border: 1px solid #d8dce3;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.tax-table th {
+  background: #f7f8fb;
+  font-weight: 600;
+  text-align: left;
+}
+
+.tax-cell-input {
+  background: #ffffff;
+  font-weight: 400;
+}
+
+.tax-cell-highlight {
+  background: #ffffff;
+  font-weight: 400;
+}
+
+.tax-row-total td {
+  background: #ffffff;
+  font-weight: 400;
+}
+
+.tax-row-grand-total td {
+  background: #ffffff;
+  font-weight: 500;
+}
+
+.tax-card-results .tax-table + .tax-card-subtitle {
+  margin-top: 1.5rem;
+}
+
+.tax-calculation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tax-input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #c6cad3;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  background: inherit;
+  text-align: right;
+  font-weight: 400;
+}
+
+.tax-input-date {
+  text-align: left;
+}
+
+.tax-cell-highlight .tax-input {
+  font-weight: 700;
+  background: inherit;
+}
+
+.tax-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tax-submit-button {
+  padding: 0.75rem 1.5rem;
+  background: #1f4bd8;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.tax-submit-button:hover {
+  background: #1639a7;
+}
+
+.tax-card-blank {
+  background: transparent;
+  border: 2px dashed #d8dce3;
+  box-shadow: none;
+  min-height: 3rem;
+}
+
+@media (max-width: 1200px) {
+  .tax-calculation-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+  }
+
+  .tax-card-blank {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .tax-calculation-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tax-card {
+    padding: 1.25rem;
+  }
+
+  .tax-table th,
+  .tax-table td {
+    font-size: 0.9rem;
+  }
+}

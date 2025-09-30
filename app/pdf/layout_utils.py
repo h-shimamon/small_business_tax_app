@@ -2,11 +2,42 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, NamedTuple, Optional
+
+from .fonts import default_font_map, ensure_font_registered
 
 
 class GeometryError(Exception):
     pass
+
+
+class PdfAssets(NamedTuple):
+    repo_root: str
+    base_pdf: str
+    font_map: Dict[str, str]
+    geometry: Dict[str, Any]
+
+
+def prepare_pdf_assets(
+    form_subdir: str,
+    geometry_key: str,
+    year: str,
+    *,
+    repo_root: Optional[str] = None,
+    ensure_font_name: Optional[str] = "NotoSansJP",
+    required: bool = True,
+    validate: bool = True,
+) -> PdfAssets:
+    resolved_root = repo_root or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    base_pdf = os.path.join(resolved_root, f"resources/pdf_forms/{form_subdir}/{year}/source.pdf")
+    font_map = default_font_map(resolved_root)
+    if ensure_font_name:
+        try:
+            ensure_font_registered(ensure_font_name, font_map[ensure_font_name])
+        except Exception:
+            pass
+    geometry = load_geometry(geometry_key, year, repo_root=resolved_root, required=required, validate=validate)
+    return PdfAssets(repo_root=resolved_root, base_pdf=base_pdf, font_map=font_map, geometry=geometry)
 
 
 def _require_keys(obj: Dict[str, Any], path: List[str]) -> None:

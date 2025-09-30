@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field %}
+{% from 'company/_soa_macros.html' import render_soa_sidebar %}
+{% from 'company/_soa_form_macros.html' import render_soa_form %}
 
 {# ページのタイトルを設定 #}
 {% block title %}{{ form_title }} - 勘定科目内訳書{% endblock %}
@@ -13,25 +14,7 @@
 
 {# サイドバーは勘定科目内訳書画面と同じものを表示 #}
 {% block sidebar %}
-    {% set statement_pages = [
-        ('deposits', '預貯金等'), ('notes_receivable', '受取手形'), ('accounts_receivable', '売掛金（未収入金）'),
-        ('temporary_payments', '仮払金（前渡金）'), ('loans_receivable', '貸付金・受取利息'), ('inventories', '棚卸資産'),
-        ('securities', '有価証券'), ('fixed_assets', '固定資産（土地等）'), ('notes_payable', '支払手形'),
-        ('accounts_payable', '買掛金（未払金・未払費用）'), ('temporary_receipts', '仮受金（前受金・預り金）'), ('borrowings', '借入金及び支払利子'),
-        ('sales_by_office', '事業所別売上高等'), ('executive_compensation', '役員給与等'), ('land_rent', '地代家賃等'),
-        ('miscellaneous', '雑益・雑損失等')
-    ] %}
-    <h3 class="sidebar-title">勘定科目内訳書</h3>
-    <ul class="sidebar-menu">
-        {% for page_id, page_name in statement_pages %}
-            <li>
-                <a href="{{ url_for('company.statement_of_accounts', page=page_id) }}" 
-                   class="sidebar-link {% if page_id == 'accounts_receivable' %}active{% endif %}">
-                    {{ page_name }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
+    {{ render_soa_sidebar('accounts_receivable', navigation_state) }}
 {% endblock %}
 
 
@@ -39,11 +22,6 @@
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='accounts_receivable'), cancel_label='キャンセル', form_attrs='class="ui-ctrl-44"') %}
-  {{ render_field(form.account_name, autofocus=True) }}
-  {{ render_field(form.registration_number, placeholder="例：1234567890123") }}
-  {{ render_field(form.partner_name, placeholder="例：株式会社 △△商会") }}
-  {{ render_field(form.partner_address, placeholder="例：東京都千代田区〇〇町1-2-3") }}
-  {{ render_field(form.balance_at_eoy, type="number", placeholder="例：500000") }}
-  {{ render_field(form.remarks, placeholder="例：商品Aの売上代金") }}
+  {{ render_soa_form(form, form_fields) }}
 {% endcall %}
 {% endblock %}

@@ -11,6 +11,7 @@ from alembic import context
 # If new models live elsewhere, re-export them from that module
 # or import them here to ensure Alembic autogenerate picks them up.
 from app.company import models
+from app.extensions import db
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -39,7 +40,7 @@ def get_engine_url():
         return str(get_engine().url).replace('%', '%%')
 
 
-target_metadata = models.db.metadata
+target_metadata = db.metadata
 
 config.set_main_option('sqlalchemy.url', get_engine_url())
 target_db = current_app.extensions['migrate'].db

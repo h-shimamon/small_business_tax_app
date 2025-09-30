@@ -1,8 +1,10 @@
 # app/company/parsers/moneyforward_parser.py
 import pandas as pd
 from .base_parser import BaseParser
+from .normalizers import normalize_journal_dataframe
 
 class MoneyForwardParser(BaseParser):
+    SUPPORTED = True
     """
     マネーフォワードのデータ形式を解析するためのパーサークラス。
     ヘッダーの有無を自動判別して処理する。
@@ -90,13 +92,14 @@ class MoneyForwardParser(BaseParser):
         df = self._read_and_prepare_journals()
         
         # FinancialStatementServiceが期待する内部的な列名に統一する
-        return df.rename(columns={
+        renamed = df.rename(columns={
             'debit_account': '借方勘定科目',
             'credit_account': '貸方勘定科目',
             'debit_amount': '借方金額',
             'credit_amount': '貸方金額',
             'date': '日付'
         })
+        return normalize_journal_dataframe(renamed)
 
     def _read_and_prepare_journals(self):
         """仕訳帳CSVを読み込み、前処理を行う。ヘッダーの有無を自動判別する。"""

@@ -32,6 +32,9 @@
     margin-bottom: 2.5rem;
 }
 
+.digest-input {
+    text-align: right;
+}
 /* 2カラムレイアウト用のコンテナ */
 .bs-container {
     display: flex;
@@ -140,4 +143,104 @@
 
 [x-cloak] {
     display: none !important;
+}
+
+/* --- Dual layout for B/S (left) and P/L (right) --- */
+.fs-dual {
+    display: grid;
+    grid-template-columns: 3fr 2fr; /* ≒ 60/40 */
+    gap: 24px;
+    align-items: start;
+}
+.bs-card { min-width: 0; }
+.pl-card { min-width: 0; }
+
+@media (max-width: 1200px) {
+    .fs-dual { grid-template-columns: 1fr; }
+}
+
+/* Sticky headers for readability */
+.statement-section .table-bordered thead th,
+.statement-section .middle-header td {
+    position: sticky;
+    top: 0;
+    background: var(--bg-content);
+    z-index: 1;
+}
+
+/* Ensure middle-header stands out a bit */
+.statement-section .middle-header td {
+    background-color: #f7f7f9;
+}
+
+/* Collapsible P/L body rows: default hidden (JS will open) */
+/* details/summary styling for PL collapsibles */
+.pl-sec > summary {
+    cursor: pointer;
+    font-weight: 600;
+    outline: none;
+    list-style: none;
+}
+.pl-sec { display: block; }
+.pl-sec > summary::-webkit-details-marker { display: none; }
+.pl-sec > summary::marker { content: ''; }
+
+/* Hide UA default marker to avoid double arrow; keep custom caret */
+.pl-sec > summary::-webkit-details-marker { display: none !important; }
+.pl-sec > summary::marker { content: ''; font-size: 0; color: transparent; }
+
+/* Ensure inner tables in details use the same numeric styling */
+.pl-sec table.statement-table td.amount {
+    font-family: monospace !important;
+    }
+.pl-sec table.statement-table .account-name { font-weight: 400; }
+
+/* Reset inherited bold from middle-header for nested details tables */
+.pl-sec table.statement-table td,
+.pl-sec table.statement-table th {
+    font-weight: 400 !important;
+}
+/* details row spans all columns; remove inherited header styles */
+/* Align nested details table with outer columns (no extra padding) */
+/* Header-embedded details: keep header sticky but remove bolding within details */
+.middle-header details { display: block; }
+.middle-header details > summary { font-weight: 600; }
+.middle-header details table td, .middle-header details table th { font-weight: 400; }
+/* Align inner table with outer columns */
+.middle-header details table.statement-table { width: 100%; border: none; }
+.middle-header details table.statement-table td.amount { text-align: right; font-family: monospace; }
+
+/* Re-assert chevron style to override any previous neutralizer */
+.pl-sec--chevron > summary::-webkit-details-marker { display: none !important; }
+.pl-sec--chevron > summary::marker { content: ''; }
+.pl-sec--chevron > summary::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform .16s ease;
+  opacity: .9;
+  margin-right: 8px;
+}
+.pl-sec--chevron[open] > summary::before { transform: rotate(45deg); }
+
+
+/* Normalize fonts for nested P/L details rows */
+.middle-header details table.statement-table td,
+.middle-header details table.statement-table th {
+  font-weight: 400 !important;
+  font-family: inherit !important;
+}
+.middle-header details table.statement-table td.amount {
+  font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+  }
+
+
+
+/* P/L nested detail tables: match B/S font size */
+.middle-header details table.statement-table td,
+.middle-header details table.statement-table th {
+  font-size: 14px !important;
 }

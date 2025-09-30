@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}別表15の内訳{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/statement_of_accounts.css') }}">
+  <style>
+    .beppyo15-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .beppyo15-header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .beppyo15-summary {
+      margin-bottom: 1.75rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .beppyo15-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    }
+
+    .beppyo15-table th,
+    .beppyo15-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    .beppyo15-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .beppyo15-table td.numeric {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .beppyo15-table .table-actions {
+      width: 160px;
+      text-align: right;
+    }
+
+    .beppyo15-table .action-buttons {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .beppyo15-table .table-empty {
+      text-align: center;
+      color: #64748b;
+      padding: 1.75rem;
+    }
+
+    @media (max-width: 768px) {
+      .beppyo15-table th,
+      .beppyo15-table td {
+        padding: 0.75rem 0.75rem;
+      }
+      .beppyo15-table .table-actions {
+        width: auto;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% from 'company/_components/beppyo15_macros.html' import render_beppyo15_summary, render_beppyo15_table %}
+{% from '_components/_button_macros.html' import render_pdf_button_if_available %}
+
+{% block content %}
+  <div class="content-header beppyo15-header">
+    <div class="header-main">
+      <h1 class="content-title">別表15の内訳</h1>
+      <p class="content-subtitle">交際費等に該当する明細を登録し、別表15への転記に備えます。</p>
+    </div>
+    <div class="beppyo15-header-actions">
+      <a href="{{ url_for('company.beppyo15_add') }}" class="button-primary">＋ 新規登録</a>
+      {{ render_pdf_button_if_available(page, pdf_year) }}
+    </div>
+  </div>
+
+  {% set view = beppyo15_view %}
+  {% if view %}
+    {{ render_beppyo15_summary(view.summary) }}
+    {{ render_beppyo15_table(view.items) }}
+  {% else %}
+    <div class="empty-state-card">
+      <h2>{{ empty_state_config.headline }}</h2>
+      {% if empty_state_config.description %}
+        <p>{{ empty_state_config.description }}</p>
+      {% endif %}
+      <a href="{{ url_for('company.beppyo15_add') }}" class="button-primary">{{ empty_state_config.action_label or '最初の明細を登録する' }}</a>
+    </div>
+  {% endif %}
+{% endblock %}

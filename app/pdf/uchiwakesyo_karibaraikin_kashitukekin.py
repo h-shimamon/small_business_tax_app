@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import List, Tuple, Optional
-import os
 
 from flask import has_request_context, request, current_app
 from flask_login import current_user
@@ -12,13 +11,12 @@ from app.company.models import Company, TemporaryPayment, LoansReceivable
 from reportlab.pdfbase import pdfmetrics  # noqa: F401 (kept for parity)
 from .pdf_fill import overlay_pdf, TextSpec
 from .layout_utils import (
-    load_geometry,
+    prepare_pdf_assets,
     baseline0_from_center,
     center_from_baseline,
     append_left,
     append_right,
 )
-from .fonts import default_font_map, ensure_font_registered
 from app.utils import format_number
 
 
@@ -38,19 +36,14 @@ def generate_uchiwakesyo_karibaraikin_kashitukekin(company_id: Optional[int], ye
         company = Company.query.filter_by(user_id=current_user.id).first_or_404()
         company_id = company.id
 
-    # Resolve paths
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    base_pdf = os.path.join(repo_root, f"resources/pdf_forms/uchiwakesyo_karibaraikin-kashitukekin/{year}/source.pdf")
-    font_map = default_font_map(repo_root)
-
-    # Ensure font is registered before measuring string widths
-    try:
-        ensure_font_registered("NotoSansJP", font_map["NotoSansJP"])  # best-effort
-    except Exception:
-        pass
-
-    # Geometry (fail-fast if missing)
-    geom = load_geometry("uchiwakesyo_karibaraikin-kashitukekin", year, repo_root=repo_root, required=True, validate=True)
+    assets = prepare_pdf_assets(
+        form_subdir="uchiwakesyo_karibaraikin-kashitukekin",
+        geometry_key="uchiwakesyo_karibaraikin-kashitukekin",
+        year=year,
+    )
+    base_pdf = assets.base_pdf
+    font_map = assets.font_map
+    geom = assets.geometry
 
     texts: List[TextSpec] = []
     rectangles: List[Tuple[int, float, float, float, float]] = []

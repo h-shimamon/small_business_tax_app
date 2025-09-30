@@ -1,10 +1,24 @@
 # app/ui/context.py
 from __future__ import annotations
 from typing import Dict
-from flask import current_app
+from flask import current_app, has_app_context
 
 from app.config.schema import AppSettings
 from app.constants.ui_options import get_ui_options
+
+
+def _log_ui_context_issue(event: str, exc: Exception | None = None, **details) -> None:
+    if not has_app_context():
+        return
+    try:
+        payload = {key: str(value) for key, value in details.items()}
+        logger = current_app.logger
+        if exc is not None:
+            logger.warning("ui_context.%s", event, exc_info=exc, extra={"ui_context_error": payload})
+        else:
+            logger.warning("ui_context.%s", event, extra={"ui_context_error": payload})
+    except Exception:
+        pass
 
 
 def build_ui_context(settings: AppSettings | None) -> Dict:
@@ -18,24 +32,27 @@ def build_ui_context(settings: AppSettings | None) -> Dict:
             return {}
         ui_opts = get_ui_options(profile)
         # fallback判定: 要求profileと実profileが異なる場合は警告
+        real_profile = None
         try:
             real_profile = ui_opts.get('profile')  # type: ignore
-            if real_profile and real_profile != profile:
-                current_app.logger.warning('ui_options profile fallback: requested=%s, used=%s', profile, real_profile)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_ui_context_issue('profile_lookup_failed', exc=exc, requested=profile)
+        if real_profile and real_profile != profile:
+            _log_ui_context_issue('profile_fallback', requested=profile, used=real_profile)
         # minimal guard rails: check required keys exist
         required = ('staff_roles', 'pc_os', 'pc_usage', 'ecommerce', 'data_storage')
-        missing = [k for k in required if k not in ui_opts]
+        try:
+            missing = [k for k in required if k not in ui_opts]
+        except Exception as exc:
+            _log_ui_context_issue('missing_key_check_failed', exc=exc, requested=profile)
+            missing = []
         if missing:
-            try:
-                current_app.logger.warning('ui_options missing keys: %s', ','.join(missing))
-            except Exception:
-                pass
+            _log_ui_context_issue('missing_keys', requested=profile, missing=missing)
         return {
             'ui_options': ui_opts
         }
-    except Exception:
+    except Exception as exc:
+        _log_ui_context_issue('build', exc=exc)
         return {}
 
 
@@ -49,11 +66,12 @@ def attach_company_ui_context(company_bp) -> None:
             settings = None
             try:
                 settings = current_app.extensions.get('settings')  # type: ignore
-            except Exception:
-                pass
+            except Exception as exc:
+                _log_ui_context_issue('read_settings.company', exc=exc)
+                settings = None
             return build_ui_context(settings)
-    except Exception:
-        pass
+    except Exception as exc:
+        _log_ui_context_issue('attach_company', exc=exc)
 
 
 def attach_app_ui_context(app) -> None:
@@ -66,8 +84,9 @@ def attach_app_ui_context(app) -> None:
             settings = None
             try:
                 settings = app.extensions.get('settings')  # type: ignore
-            except Exception:
-                pass
+            except Exception as exc:
+                _log_ui_context_issue('read_settings.app', exc=exc)
+                settings = None
             return build_ui_context(settings)
 
         @app.template_global(name='get_ui_options')
@@ -77,8 +96,9 @@ def attach_app_ui_context(app) -> None:
             try:
                 settings = app.extensions.get('settings')  # type: ignore
                 prof = getattr(settings, 'UI_PROFILE', 'default') if settings else 'default'
-            except Exception:
+            except Exception as exc:
+                _log_ui_context_issue('read_settings.app_global', exc=exc)
                 prof = 'default'
             return get_ui_options(prof)
-    except Exception:
-        pass
+    except Exception as exc:
+        _log_ui_context_issue('attach_app', exc=exc)

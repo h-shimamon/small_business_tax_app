@@ -1,12 +1,10 @@
 # app/company/services/declaration_service.py
 from app.company.forms import DeclarationForm
-from app.company.models import (
-    Company, Deposit, NotesReceivable, AccountsReceivable, TemporaryPayment,
-    LoansReceivable, Inventory, Security, FixedAsset, NotesPayable,
-    AccountsPayable, TemporaryReceipt, Borrowing, ExecutiveCompensation,
-    LandRent, Miscellaneous
-)
+from app.company.models import Company
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG
+from app.company.services.statement_of_accounts_service import StatementOfAccountsService
 from app import db
+from werkzeug.exceptions import NotFound
 
 
 class DeclarationService:
@@ -18,26 +16,32 @@ class DeclarationService:
         self.company_id = company_id
 
     def _get_company(self):
-        return Company.query.get_or_404(self.company_id)
+        company = db.session.get(Company, self.company_id)
+        if company is None:
+            raise NotFound()
+        return company
 
     def _get_all_statement_data(self):
-        return {
-            'deposits': Deposit.query.filter_by(company_id=self.company_id).all(),
-            'notes_receivable': NotesReceivable.query.filter_by(company_id=self.company_id).all(),
-            'accounts_receivable': AccountsReceivable.query.filter_by(company_id=self.company_id).all(),
-            'temporary_payments': TemporaryPayment.query.filter_by(company_id=self.company_id).all(),
-            'loans_receivable': LoansReceivable.query.filter_by(company_id=self.company_id).all(),
-            'inventories': Inventory.query.filter_by(company_id=self.company_id).all(),
-            'securities': Security.query.filter_by(company_id=self.company_id).all(),
-            'fixed_assets': FixedAsset.query.filter_by(company_id=self.company_id).all(),
-            'notes_payable': NotesPayable.query.filter_by(company_id=self.company_id).all(),
-            'accounts_payable': AccountsPayable.query.filter_by(company_id=self.company_id).all(),
-            'temporary_receipts': TemporaryReceipt.query.filter_by(company_id=self.company_id).all(),
-            'borrowings': Borrowing.query.filter_by(company_id=self.company_id).all(),
-            'executive_compensations': ExecutiveCompensation.query.filter_by(company_id=self.company_id).all(),
-            'land_rents': LandRent.query.filter_by(company_id=self.company_id).all(),
-            'miscellaneous_items': Miscellaneous.query.filter_by(company_id=self.company_id).all(),
-        }
+        """STATEMENT_PAGES_CONFIG に基づき各ページのデータを収集する。"""
+        soa_service = StatementOfAccountsService(self.company_id)
+        keys = [
+            'accounts_receivable',
+            'accounts_payable',
+            'temporary_payments',
+            'temporary_receipts',
+            'loans_receivable',
+            'inventories',
+            'securities',
+            'fixed_assets',
+            'borrowings',
+            'executive_compensations',
+            'land_rents',
+            'misc_income',
+            'misc_losses',
+        ]
+        data = {key: soa_service.get_data_by_type(key) or [] for key in keys}
+        data['miscellaneous_items'] = (data.get('misc_income') or []) + (data.get('misc_losses') or [])
+        return data
 
     def populate_declaration_form(self):
         company = self._get_company()

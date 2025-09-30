@@ -1,87 +1,114 @@
 # app/company/services/statement_of_accounts_service.py
-from app.company.models import (
-    Deposit, NotesReceivable, AccountsReceivable, TemporaryPayment,
-    LoansReceivable, Inventory, Security, FixedAsset, NotesPayable,
-    AccountsPayable, TemporaryReceipt, Borrowing, ExecutiveCompensation,
-    LandRent, Miscellaneous
-)
+from typing import Any, Iterable, List, Optional, Tuple
+
+from flask import current_app
+
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG
 from app import db
+from .protocols import StatementOfAccountsServiceProtocol
 
 
-class StatementOfAccountsService:
+class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
     """
     勘定科目内訳明細書に関連するデータ操作を処理するサービスクラス。
     """
-    MODEL_MAP = {
-        'deposits': Deposit,
-        'notes_receivable': NotesReceivable,
-        'accounts_receivable': AccountsReceivable,
-        'temporary_payments': TemporaryPayment,
-        'loans_receivable': LoansReceivable,
-        'inventories': Inventory,
-        'securities': Security,
-        'fixed_assets': FixedAsset,
-        'notes_payable': NotesPayable,
-        'accounts_payable': AccountsPayable,
-        'temporary_receipts': TemporaryReceipt,
-        'borrowings': Borrowing,
-        'executive_compensations': ExecutiveCompensation,
-        'land_rents': LandRent,
-        'miscellaneous': Miscellaneous,
-    }
 
     def __init__(self, company_id):
         self.company_id = company_id
+
+    def _build_query(self, model, config):
+        query = model.query.filter_by(company_id=self.company_id)
+        query_filter = config.get('query_filter')
+        if callable(query_filter):
+            try:
+                query = query_filter(query)
+            except Exception as exc:
+                current_app.logger.warning('SoA query filter failed for %s: %s', getattr(model, '__name__', model), exc)
+                query = model.query.filter_by(company_id=self.company_id)
+        return query
+
+    def _get_model(self, data_type):
+        config = STATEMENT_PAGES_CONFIG.get(data_type, {})
+        return config.get('model'), config
 
     def get_all_data(self):
         """
         すべての関連データをデータベースから取得する。
         """
         all_data = {}
-        for key, model in self.MODEL_MAP.items():
-            all_data[key] = model.query.filter_by(company_id=self.company_id).all()
+        for key in STATEMENT_PAGES_CONFIG.keys():
+            all_data[key] = self.get_data_by_type(key)
         return all_data
 
     def get_data_by_type(self, data_type):
         """
         指定されたタイプのデータを取得する。
         """
-        model = self.MODEL_MAP.get(data_type)
+        model, config = self._get_model(data_type)
         if not model:
             return None
-        return model.query.filter_by(company_id=self.company_id).all()
+        query = self._build_query(model, config)
+        return query.all()
 
-    def get_item_by_id(self, data_type, item_id):
+    def get_item_by_id(self, data_type, item_id) -> Optional[Any]:
         """
-        指定されたIDのアイテムを取得する。
+        指定されたIDのアイテムを取得する（会社スコープでフィルタ）。
         """
-        model = self.MODEL_MAP.get(data_type)
+        model, _ = self._get_model(data_type)
         if not model:
             return None
-        return model.query.get(item_id)
+        return db.session.query(model).filter_by(id=item_id, company_id=self.company_id).first()
 
-    def add_or_update_item(self, form, data_type, item_id=None):
-        """
-        アイテムを追加または更新する。
-        """
-        model = self.MODEL_MAP.get(data_type)
+    def create_item(self, data_type, form) -> Tuple[bool, Optional[Any], Optional[str]]:
+        model, _ = self._get_model(data_type)
         if not model:
-            return False, "無効なデータタイプです。"
+            return False, None, "無効なデータタイプです。"
 
-        item = self.get_item_by_id(data_type, item_id) if item_id else model(company_id=self.company_id)
-        if not item:
-            return False, "指定されたアイテムが見つかりません。"
-
+        item = model(company_id=self.company_id)
         form.populate_obj(item)
         try:
             db.session.add(item)
             db.session.commit()
-            return True, "保存しました。"
-        except Exception as e:
+            return True, item, None
+        except Exception as exc:
             db.session.rollback()
-            return False, f"保存中にエラーが発生しました: {e}"
+            return False, None, f"保存中にエラーが発生しました: {exc}"
 
-    def delete_item(self, data_type, item_id):
+
+
+    def update_item(self, data_type, item, form) -> Tuple[bool, Optional[Any], Optional[str]]:
+        model, _ = self._get_model(data_type)
+        if not model:
+            return False, None, "無効なデータタイプです。"
+        if not item:
+            return False, None, "指定されたアイテムが見つかりません。"
+
+        form.populate_obj(item)
+        try:
+            db.session.commit()
+            return True, item, None
+        except Exception as exc:
+            db.session.rollback()
+            return False, None, f"更新中にエラーが発生しました: {exc}"
+
+    def list_items(self, data_type) -> List[Any]:
+        items = self.get_data_by_type(data_type)
+        return items or []
+
+    def calculate_total(self, data_type, items=None) -> int:
+        config = STATEMENT_PAGES_CONFIG.get(data_type, {})
+        total_field = config.get('total_field', 'balance')
+        target_items = items if items is not None else self.list_items(data_type)
+        total = 0
+        for item in target_items:
+            try:
+                value = getattr(item, total_field, 0) or 0
+            except Exception:
+                value = 0
+            total += value
+        return total
+
+    def delete_item(self, data_type, item_id) -> Tuple[bool, Optional[str]]:
         """
 
         指定されたIDのアイテムを削除する。
@@ -92,7 +119,7 @@ class StatementOfAccountsService:
         try:
             db.session.delete(item)
             db.session.commit()
-            return True, "削除しました。"
+            return True, None
         except Exception as e:
             db.session.rollback()
             return False, f"削除中にエラーが発生しました: {e}"
@@ -100,22 +127,46 @@ class StatementOfAccountsService:
     def get_summary(self):
         """
         各項目の合計残高をサマリーとして取得する。
+        モデルごとの合計列は STATEMENT_PAGES_CONFIG の total_field に従う。
         """
         summary = {}
-        for key, model in self.MODEL_MAP.items():
-            total = db.session.query(db.func.sum(model.balance)).filter_by(company_id=self.company_id).scalar()
-            summary[key] = total or 0
+        for key, config in STATEMENT_PAGES_CONFIG.items():
+            model = config.get('model')
+            if model is None:
+                continue
+            total_field = config.get('total_field', 'balance')
+            column = getattr(model, total_field, None)
+            if column is None:
+                summary[key] = 0
+                continue
+            query = self._build_query(model, config)
+            try:
+                total = query.with_entities(db.func.sum(column)).scalar() or 0
+            except Exception:
+                total = 0
+            summary[key] = total
         return summary
 
     def get_deposit_summary(self, bs_deposits_total):
         """
         預貯金の内訳合計と貸借対照表の金額を比較し、サマリーを返す。
         """
-        breakdown_total = db.session.query(db.func.sum(Deposit.balance)) \
-            .filter_by(company_id=self.company_id).scalar() or 0
-        
+        config = STATEMENT_PAGES_CONFIG.get('deposits', {})
+        model = config.get('model')
+        total_field = config.get('total_field', 'balance')
+        column = getattr(model, total_field, None) if model else None
+
+        if model is None or column is None:
+            breakdown_total = 0
+        else:
+            query = self._build_query(model, config)
+            try:
+                breakdown_total = query.with_entities(db.func.sum(column)).scalar() or 0
+            except Exception:
+                breakdown_total = 0
+
         difference = bs_deposits_total - breakdown_total
-        
+
         return {
             'bs_total': bs_deposits_total,
             'breakdown_total': breakdown_total,

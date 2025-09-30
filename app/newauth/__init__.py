@@ -180,7 +180,7 @@ def verify():
         form = ResetConfirmForm()
         if request.method == "POST" and form.validate_on_submit():
             from app.company.models import User
-            user = db.session.get(User, row["user_id"]) if hasattr(db.session, "get") else User.query.get(row["user_id"])  # type: ignore[index]
+            user = db.session.get(User, row["user_id"])  # type: ignore[index]
             if not user:
                 flash("リンクが無効か期限切れです。", "danger")
                 return redirect(url_for("newauth.login_page"))
@@ -203,7 +203,7 @@ def verify():
     db.session.execute(db.text("UPDATE user SET is_email_verified = 1 WHERE id = :uid"), {"uid": row["user_id"]})
     db.session.commit()
     flash("メール認証が完了しました。ログインできます。", "success")
-    return redirect(url_for("newauth.login_page"))
+    return redirect(url_for("newauth.login_page", verified=1))
 
 
 @newauth_bp.route("/login", methods=["GET", "POST"])  # type: ignore[misc]
@@ -315,7 +315,7 @@ def reset_confirm():
     form = ResetConfirmForm()
     if request.method == "POST" and form.validate_on_submit():
         from app.company.models import User
-        user = db.session.get(User, row["user_id"]) if hasattr(db.session, "get") else User.query.get(row["user_id"])  # type: ignore[index]
+        user = db.session.get(User, row["user_id"])  # type: ignore[index]
         if not user:
             flash("リンクが無効か期限切れです。", "danger")
             return redirect(url_for("newauth.reset_request"))

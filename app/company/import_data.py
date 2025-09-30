@@ -1,5 +1,5 @@
 # app/company/import_data.py
-from flask import render_template, redirect, url_for, flash, session, request
+from flask import render_template, redirect, url_for, flash, session, request, abort
 from flask_login import login_required, current_user
 
 from app import db
@@ -7,13 +7,19 @@ from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
 from app.company.models import AccountingData, UserAccountMapping
 from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
-from .services import (
-    DataMappingService,
-    FinancialStatementService,
+from app.company.services.data_mapping_service import DataMappingService
+from app.company.services.financial_statement_service import FinancialStatementService
+from app.company.services.import_consistency_service import (
     on_mapping_saved,
     on_mapping_deleted,
     on_mappings_reset,
 )
+from app.company.services.upload_flow_service import (
+    UploadFlowService,
+    UploadFlowError,
+    UploadValidationError,
+)
+from app.company.services.import_wizard_service import UploadWizardService
 from .parser_factory import ParserFactory
 from app.primitives.dates import get_company_period
 
@@ -72,27 +78,24 @@ def select_software():
 @login_required
 def data_upload_wizard():
     """ウィザードの進行を管理し、次のステップにリダイレクト"""
-    if 'selected_software' not in session:
+    wizard = UploadWizardService(session, FILE_UPLOAD_STEPS)
+    if not wizard.has_selected_software():
         flash('最初に会計ソフトを選択してください。', 'warning')
         return redirect(url_for('company.select_software'))
 
-    completed_steps = session.get('wizard_completed_steps', [])
-    next_step = next((step for step in FILE_UPLOAD_STEPS if step not in completed_steps), None)
-            
+    next_step = wizard.next_pending_step()
     if next_step:
         return redirect(url_for('company.upload_data', datatype=next_step))
-    else:
-        flash('すべてのファイルのアップロードが完了しました。', 'success')
-        session.pop('wizard_completed_steps', None)
-        session.pop('selected_software', None)
-        return redirect(url_for('company.statement_of_accounts'))
+
+    flash('すべてのファイルのアップロードが完了しました。', 'success')
+    wizard.reset()
+    return redirect(url_for('company.statement_of_accounts'))
 
 @import_bp.route('/upload/<datatype>', methods=['GET', 'POST'])
 @login_required
 def upload_data(datatype):
     """データタイプに応じたファイルアップロード処理"""
     config = DATA_TYPE_CONFIG.get(datatype)
-    # 任意: 前画面からの完了マーク指示（e.g., 残高試算表の確認）
     try:
         from_step = request.args.get('from_step')
         if from_step:
@@ -103,177 +106,39 @@ def upload_data(datatype):
         flash('無効なデータタイプです。', 'danger')
         return redirect(url_for('company.data_upload_wizard'))
 
-    completed_steps = session.get('wizard_completed_steps', [])
-    if 'select_software' not in completed_steps:
+    wizard = UploadWizardService(session, FILE_UPLOAD_STEPS)
+    if not wizard.has_selected_software():
         return redirect(url_for('company.select_software'))
-    
-    current_step_index = FILE_UPLOAD_STEPS.index(datatype) if datatype in FILE_UPLOAD_STEPS else 0
-    for i in range(current_step_index):
-        if FILE_UPLOAD_STEPS[i] not in completed_steps:
-            flash('前のステップを先に完了してください。', 'warning')
-            return redirect(url_for('company.data_upload_wizard'))
+
+    missing_prerequisite = wizard.ensure_previous_steps_completed(datatype)
+    if missing_prerequisite:
+        flash('前のステップを先に完了してください。', 'warning')
+        return redirect(url_for('company.data_upload_wizard'))
 
     form = FileUploadForm()
     if request.method == 'POST':
-        file = form.upload_file.data
-        if not file or not file.filename:
-            flash('ファイルが選択されていません。', 'danger')
+        file_storage = form.upload_file.data
+        service = UploadFlowService(datatype, current_user, config, session)
+        try:
+            result = service.handle(file_storage)
+        except UploadValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(request.url)
+        except UploadFlowError as exc:
+            flash(f"エラーが発生しました: {exc}", 'danger')
+            return redirect(request.url)
+        except Exception as exc:
+            flash(f"エラーが発生しました: {exc}", 'danger')
             return redirect(request.url)
 
-        # 拡張子とサイズの検証（CSV/TXT、<=20MB）
-        try:
-            import os
-            allowed_exts = {'.csv', '.txt'}
-            ext = os.path.splitext(file.filename)[1].lower()
-            if ext not in allowed_exts:
-                flash('CSVまたはTXTファイルのみアップロードできます。', 'danger')
-                return redirect(request.url)
-            max_bytes = 20 * 1024 * 1024
-            size = getattr(file, 'content_length', None)
-            if size is None:
-                try:
-                    pos = file.stream.tell()
-                    file.stream.seek(0, os.SEEK_END)
-                    size = file.stream.tell()
-                    file.stream.seek(0)
-                except Exception:
-                    size = None
-            if size is not None and size > max_bytes:
-                flash('ファイルサイズが大きすぎます。（上限20MB）', 'danger')
-                return redirect(request.url)
-        except Exception:
-            # 検証中の例外はブロックせず続行
-            pass
-
-        software = session.get('selected_software')
-        try:
-            parser = ParserFactory.create_parser(software, file)
-            # Save raw uploaded journals file for later reuse (C-plan staging)
-            try:
-                import os, uuid
-                from flask import current_app as _app
-                upload_dir = os.path.join(_app.instance_path, 'uploads')
-                os.makedirs(upload_dir, exist_ok=True)
-                # TTL cleanup: remove files older than 7 days in uploads
-                try:
-                    import time
-                    _now = time.time()
-                    _ttl = 7 * 24 * 3600
-                    for _fn in os.listdir(upload_dir):
-                        _fp = os.path.join(upload_dir, _fn)
-                        try:
-                            if os.path.isfile(_fp) and (_now - os.path.getmtime(_fp)) > _ttl:
-                                os.remove(_fp)
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-                _suffix = ''
-                try:
-                    import os as _os
-                    _orig = getattr(file, 'filename', '') or ''
-                    _suffix = _os.path.splitext(_orig)[1].lower()
-                except Exception:
-                    _suffix = ''
-                _name = f"journals_{uuid.uuid4().hex}{_suffix}"
-                _path = os.path.join(upload_dir, _name)
-                _raw = getattr(parser, 'file_content_bytes', None)
-                if _raw is None:
-                    try:
-                        file.stream.seek(0)
-                        _raw = file.read()
-                        file.stream.seek(0)
-                    except Exception:
-                        _raw = b''
-                with open(_path, 'wb') as _f:
-                    _f.write(_raw or b'')
-                session['uploaded_journals_path'] = _path
-                session['uploaded_journals_name'] = getattr(file, 'filename', '')
-            except Exception:
-                pass
-            parser_method = getattr(parser, config['parser_method'])
-            parsed_data = parser_method()
-
-            if datatype == 'chart_of_accounts':
-                mapping_service = DataMappingService(current_user.id)
-                unmatched_accounts = mapping_service.get_unmatched_accounts(parsed_data)
-                if not unmatched_accounts:
-                    flash('すべての勘定科目の取り込みが完了しました。', 'success')
-                    mark_step_as_completed(datatype)
-                    return redirect(url_for('company.data_upload_wizard'))
-                else:
-                    session['unmatched_accounts'] = unmatched_accounts
-                    return redirect(url_for('company.data_mapping'))
-            
-            elif datatype == 'journals':
-                company = current_user.company
-                if not company:
-                    flash('申告情報で会計期間が設定されていません。先に基本情報を登録してください。', 'warning')
-                    return redirect(url_for('company.declaration'))
-
-                # Companyモデルから会計期間を取得（共通プリミティブを使用）
-                period = get_company_period(company)
-                start_date = period.start
-                end_date = period.end
-                if not start_date or not end_date:
-                    flash('申告情報で会計期間が設定されていません。先に基本情報を登録してください。', 'warning')
-                    return redirect(url_for('company.declaration'))
-
-                # マッピングサービスを利用してデータを変換
-                mapping_service = DataMappingService(current_user.id)
-                df_journals = mapping_service.apply_mappings_to_journals(parsed_data)
-
-                # 再検出: 未マッピングの勘定科目が残っていないか確認（借方/貸方の全科目）
-                try:
-                    acc_names = set()
-                    for col in ['借方勘定科目', '貸方勘定科目']:
-                        if col in df_journals.columns:
-                            acc_names.update([str(x).strip() for x in df_journals[col].dropna().unique().tolist() if str(x).strip()])
-                    unmatched_after = mapping_service.get_unmatched_accounts(list(acc_names))
-                    if unmatched_after:
-                        session['unmatched_accounts'] = unmatched_after
-                        flash('未マッピングの勘定科目があります。対応後に仕訳帳を再取込してください。', 'warning')
-                        return redirect(url_for('company.data_mapping'))
-                except Exception:
-                    # ここでの失敗は致命ではないため、続行（従来挙動）
-                    pass
-
-                # 財務諸表サービスを呼び出し
-                fs_service = FinancialStatementService(df_journals, start_date, end_date)
-                bs_data = fs_service.create_balance_sheet()
-                pl_data = fs_service.create_profit_loss_statement()
-
-                # 既存の会計データを削除
-                AccountingData.query.filter_by(company_id=company.id).delete()
-
-                # 新しい会計データをDBに保存
-                accounting_data = AccountingData(
-                    company_id=company.id,
-                    period_start=start_date,
-                    period_end=end_date,
-                    data={
-                        'balance_sheet': bs_data,
-                        'profit_loss_statement': pl_data
-                    }
-                )
-                db.session.add(accounting_data)
-                db.session.commit()
-
-                mark_step_as_completed(datatype)
-                flash('仕訳帳データが正常に取り込まれ、財務諸表が生成されました。', 'success')
-                return redirect(url_for('company.confirm_trial_balance'))
-
-            elif datatype == 'fixed_assets':
-                # 互換: 固定資産は独立ページに移動
-                return redirect(url_for('company.fixed_assets_import'))
-
-        except Exception as e:
-            flash(f"エラーが発生しました: {e}", 'danger')
-            return redirect(request.url)
+        if result.flash_message:
+            message, category = result.flash_message
+            flash(message, category)
+        return redirect(url_for(result.redirect_endpoint, **result.redirect_kwargs))
 
     navigation_state = get_navigation_state(datatype)
     show_reset_link = (datatype == 'journals')
-    
+
     template_config = {
         'title': config['title'],
         'description': config['description'],
@@ -281,9 +146,9 @@ def upload_data(datatype):
     }
 
     return render_template(
-        'company/upload_data.html', 
-        form=form, 
-        navigation_state=navigation_state, 
+        'company/upload_data.html',
+        form=form,
+        navigation_state=navigation_state,
         show_reset_link=show_reset_link,
         **template_config
     )
@@ -343,11 +208,12 @@ def data_mapping():
                     fs_service = FinancialStatementService(df_journals, start_date, end_date)
                     bs_data = fs_service.create_balance_sheet()
                     pl_data = fs_service.create_profit_loss_statement()
+                    soa_breakdowns = fs_service.get_soa_breakdowns()
                     # 永続化
                     from app.company.models import AccountingData
                     from app import db as _db
                     AccountingData.query.filter_by(company_id=company.id).delete()
-                    ad = AccountingData(company_id=company.id, period_start=start_date, period_end=end_date, data={'balance_sheet': bs_data, 'profit_loss_statement': pl_data})
+                    ad = AccountingData(company_id=company.id, period_start=start_date, period_end=end_date, data={'balance_sheet': bs_data, 'profit_loss_statement': pl_data, 'soa_breakdowns': soa_breakdowns})
                     _db.session.add(ad)
                     _db.session.commit()
                     # journalsステップは完了扱いにしてよい
@@ -439,7 +305,9 @@ def manage_mappings():
 @login_required
 def delete_mapping(mapping_id):
     """特定のマッピングを削除する"""
-    mapping_to_delete = UserAccountMapping.query.get_or_404(mapping_id)
+    mapping_to_delete = db.session.get(UserAccountMapping, mapping_id)
+    if mapping_to_delete is None:
+        abort(404)
     
     if mapping_to_delete.user_id != current_user.id:
         flash('権限がありません。', 'danger')

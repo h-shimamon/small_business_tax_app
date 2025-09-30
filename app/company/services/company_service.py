@@ -19,6 +19,9 @@ class CompanyService:
             company = Company(user_id=user_id)
             form.populate_obj(company)
             db.session.add(company)
-        
+
+        raw_office_count = getattr(getattr(form, 'office_count', None), 'data', None)
+        company.apply_office_count_input(raw_office_count if raw_office_count is not None else company.office_count)
+
         db.session.commit()
         return company

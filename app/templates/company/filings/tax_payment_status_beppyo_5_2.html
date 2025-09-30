@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}法人税等の納付状況（別表５(2)){% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/corporate_tax_calculation.css') }}">
+  <style>
+    .tax-payment-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tax-payment-card {
+      grid-column: 1 / -1;
+    }
+    .tax-payment-table-wrapper {
+      overflow-x: auto;
+    }
+    .tax-payment-table {
+      min-width: 1100px;
+    }
+    .tax-payment-category {
+      text-align: center;
+      vertical-align: middle;
+      font-weight: 600;
+      background: #f7f8fb;
+      min-width: 160px;
+      white-space: normal;
+    }
+    .tax-payment-subcategory {
+      white-space: nowrap;
+      text-align: left;
+      min-width: 140px;
+    }
+    .tax-payment-single .tax-payment-category {
+      text-align: left;
+      padding-left: 1.5rem;
+    }
+    .tax-payment-note-category {
+      text-align: left;
+      padding-left: 1.5rem;
+    }
+    .tax-payment-note-row td {
+      background: #fdfdfd;
+    }
+    .tax-payment-note-text {
+      font-size: 0.9rem;
+      color: #4f5a6b;
+      margin-top: 0.2rem;
+      line-height: 1.4;
+    }
+    .tax-payment-note-sub {
+      font-size: 0.95rem;
+      margin-top: 0.1rem;
+      display: block;
+    }
+    .tax-input-note {
+      text-align: left;
+    }
+
+  </style>
+{% endblock %}
+
+{% block content %}
+{% set inputs = inputs if inputs is defined else {} %}
+<h1 class="content-title">法人税等の納付状況（別表５(2))の内訳</h1>
+<p class="content-subtitle">法人税等の納付状況を把握するための入力欄です。</p>
+
+<form method="post" class="tax-calculation-form">
+  <div class="tax-calculation-grid tax-payment-grid">
+    <section class="card tax-card tax-card-inputs tax-payment-card">
+      <h2 class="tax-card-title">入力内容</h2>
+      <div class="tax-payment-table-wrapper">
+        <table class="tax-table tax-payment-table">
+          <thead>
+            <tr>
+              <th scope="col" colspan="2" rowspan="2">税目</th>
+              <th scope="col" rowspan="2">期首未納税額</th>
+              <th scope="col" rowspan="2">当期発生税額</th>
+              <th scope="col" colspan="2">納付の経理をどのように行ったか</th>
+              <th scope="col" rowspan="2">期末未納税額</th>
+            </tr>
+            <tr>
+              <th scope="col">納税充当金納付</th>
+              <th scope="col">損金経理納付</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="rowgroup" class="tax-payment-category" rowspan="3">法人税</th>
+              <th scope="row" class="tax-payment-subcategory">前期以前分</th>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_prior_opening_balance" value="{{ inputs.get('corporate_tax_prior_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_prior_current_tax" value="{{ inputs.get('corporate_tax_prior_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_prior_payment_from_reserve" value="{{ inputs.get('corporate_tax_prior_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_prior_payment_from_expense" value="{{ inputs.get('corporate_tax_prior_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_prior_closing_balance" value="{{ inputs.get('corporate_tax_prior_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">前期分</th>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_opening_balance" value="{{ inputs.get('corporate_tax_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_current_tax" value="{{ inputs.get('corporate_tax_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_payment_from_reserve" value="{{ inputs.get('corporate_tax_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_payment_from_expense" value="{{ inputs.get('corporate_tax_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_prior_closing_balance" value="{{ inputs.get('corporate_tax_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">当期中間分</th>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_current_interim_opening_balance" value="{{ inputs.get('corporate_tax_current_interim_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_current_interim_current_tax" value="{{ inputs.get('corporate_tax_current_interim_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_current_interim_payment_from_reserve" value="{{ inputs.get('corporate_tax_current_interim_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_current_interim_payment_from_expense" value="{{ inputs.get('corporate_tax_current_interim_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_corporate_tax_current_interim_closing_balance" value="{{ inputs.get('corporate_tax_current_interim_closing_balance', '') }}"></td>
+            </tr>
+
+            <tr>
+              <th scope="rowgroup" class="tax-payment-category" rowspan="3">道府県民税</th>
+              <th scope="row" class="tax-payment-subcategory">前期以前分</th>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_prior_opening_balance" value="{{ inputs.get('prefectural_tax_prior_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_prior_current_tax" value="{{ inputs.get('prefectural_tax_prior_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_prior_payment_from_reserve" value="{{ inputs.get('prefectural_tax_prior_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_prior_payment_from_expense" value="{{ inputs.get('prefectural_tax_prior_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_prior_closing_balance" value="{{ inputs.get('prefectural_tax_prior_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">前期分</th>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_opening_balance" value="{{ inputs.get('prefectural_tax_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_current_tax" value="{{ inputs.get('prefectural_tax_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_payment_from_reserve" value="{{ inputs.get('prefectural_tax_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_payment_from_expense" value="{{ inputs.get('prefectural_tax_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_prior_closing_balance" value="{{ inputs.get('prefectural_tax_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">当期中間分</th>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_current_interim_opening_balance" value="{{ inputs.get('prefectural_tax_current_interim_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_current_interim_current_tax" value="{{ inputs.get('prefectural_tax_current_interim_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_current_interim_payment_from_reserve" value="{{ inputs.get('prefectural_tax_current_interim_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_current_interim_payment_from_expense" value="{{ inputs.get('prefectural_tax_current_interim_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_prefectural_tax_current_interim_closing_balance" value="{{ inputs.get('prefectural_tax_current_interim_closing_balance', '') }}"></td>
+            </tr>
+
+            <tr>
+              <th scope="rowgroup" class="tax-payment-category" rowspan="3">市町村民税</th>
+              <th scope="row" class="tax-payment-subcategory">前期以前分</th>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_prior_opening_balance" value="{{ inputs.get('municipal_tax_prior_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_prior_current_tax" value="{{ inputs.get('municipal_tax_prior_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_prior_payment_from_reserve" value="{{ inputs.get('municipal_tax_prior_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_prior_payment_from_expense" value="{{ inputs.get('municipal_tax_prior_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_prior_closing_balance" value="{{ inputs.get('municipal_tax_prior_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">前期分</th>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_opening_balance" value="{{ inputs.get('municipal_tax_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_current_tax" value="{{ inputs.get('municipal_tax_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_payment_from_reserve" value="{{ inputs.get('municipal_tax_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_payment_from_expense" value="{{ inputs.get('municipal_tax_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_prior_closing_balance" value="{{ inputs.get('municipal_tax_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">当期中間分</th>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_current_interim_opening_balance" value="{{ inputs.get('municipal_tax_current_interim_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_current_interim_current_tax" value="{{ inputs.get('municipal_tax_current_interim_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_current_interim_payment_from_reserve" value="{{ inputs.get('municipal_tax_current_interim_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_current_interim_payment_from_expense" value="{{ inputs.get('municipal_tax_current_interim_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_municipal_tax_current_interim_closing_balance" value="{{ inputs.get('municipal_tax_current_interim_closing_balance', '') }}"></td>
+            </tr>
+
+            <tr>
+              <th scope="rowgroup" class="tax-payment-category" rowspan="3">事業税</th>
+              <th scope="row" class="tax-payment-subcategory">前期以前分</th>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_prior_opening_balance" value="{{ inputs.get('enterprise_tax_prior_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_prior_current_tax" value="{{ inputs.get('enterprise_tax_prior_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_prior_payment_from_reserve" value="{{ inputs.get('enterprise_tax_prior_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_prior_payment_from_expense" value="{{ inputs.get('enterprise_tax_prior_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_prior_closing_balance" value="{{ inputs.get('enterprise_tax_prior_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">前期分</th>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_opening_balance" value="{{ inputs.get('enterprise_tax_prior_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_current_tax" value="{{ inputs.get('enterprise_tax_prior_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_payment_from_reserve" value="{{ inputs.get('enterprise_tax_prior_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_payment_from_expense" value="{{ inputs.get('enterprise_tax_prior_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_prior_closing_balance" value="{{ inputs.get('enterprise_tax_prior_closing_balance', '') }}"></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tax-payment-subcategory">当期中間分</th>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_current_interim_opening_balance" value="{{ inputs.get('enterprise_tax_current_interim_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_current_interim_current_tax" value="{{ inputs.get('enterprise_tax_current_interim_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_current_interim_payment_from_reserve" value="{{ inputs.get('enterprise_tax_current_interim_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_current_interim_payment_from_expense" value="{{ inputs.get('enterprise_tax_current_interim_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_enterprise_tax_current_interim_closing_balance" value="{{ inputs.get('enterprise_tax_current_interim_closing_balance', '') }}"></td>
+            </tr>
+
+            <tr class="tax-payment-single">
+              <th scope="row" class="tax-payment-category" colspan="2">加算税（国税）・加算金（地方税）</th>
+              <td><input type="text" class="tax-input" name="inputs_additional_tax_opening_balance" value="{{ inputs.get('additional_tax_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_additional_tax_current_tax" value="{{ inputs.get('additional_tax_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_additional_tax_payment_from_reserve" value="{{ inputs.get('additional_tax_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_additional_tax_payment_from_expense" value="{{ inputs.get('additional_tax_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_additional_tax_closing_balance" value="{{ inputs.get('additional_tax_closing_balance', '') }}"></td>
+            </tr>
+            <tr class="tax-payment-single">
+              <th scope="row" class="tax-payment-category" colspan="2">延滞税（国税）</th>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_national_opening_balance" value="{{ inputs.get('delinquent_tax_national_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_national_current_tax" value="{{ inputs.get('delinquent_tax_national_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_national_payment_from_reserve" value="{{ inputs.get('delinquent_tax_national_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_national_payment_from_expense" value="{{ inputs.get('delinquent_tax_national_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_national_closing_balance" value="{{ inputs.get('delinquent_tax_national_closing_balance', '') }}"></td>
+            </tr>
+            <tr class="tax-payment-single">
+              <th scope="row" class="tax-payment-category" colspan="2">延滞金（地方税）（延納除く）</th>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_local_opening_balance" value="{{ inputs.get('delinquent_tax_local_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_local_current_tax" value="{{ inputs.get('delinquent_tax_local_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_local_payment_from_reserve" value="{{ inputs.get('delinquent_tax_local_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_local_payment_from_expense" value="{{ inputs.get('delinquent_tax_local_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_delinquent_tax_local_closing_balance" value="{{ inputs.get('delinquent_tax_local_closing_balance', '') }}"></td>
+            </tr>
+            <tr class="tax-payment-single">
+              <th scope="row" class="tax-payment-category" colspan="2">過怠税（当期分）</th>
+              <td><input type="text" class="tax-input" name="inputs_penalty_tax_opening_balance" value="{{ inputs.get('penalty_tax_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_penalty_tax_current_tax" value="{{ inputs.get('penalty_tax_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_penalty_tax_payment_from_reserve" value="{{ inputs.get('penalty_tax_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_penalty_tax_payment_from_expense" value="{{ inputs.get('penalty_tax_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_penalty_tax_closing_balance" value="{{ inputs.get('penalty_tax_closing_balance', '') }}"></td>
+            </tr>
+            <tr class="tax-payment-single">
+              <th scope="row" class="tax-payment-category" colspan="2">預金や配当から天引される所得税<div class="tax-payment-note-text">（損金に算入される所得税）</div></th>
+              <td><input type="text" class="tax-input" name="inputs_withheld_income_tax_opening_balance" value="{{ inputs.get('withheld_income_tax_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_withheld_income_tax_current_tax" value="{{ inputs.get('withheld_income_tax_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_withheld_income_tax_payment_from_reserve" value="{{ inputs.get('withheld_income_tax_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_withheld_income_tax_payment_from_expense" value="{{ inputs.get('withheld_income_tax_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_withheld_income_tax_closing_balance" value="{{ inputs.get('withheld_income_tax_closing_balance', '') }}"></td>
+            </tr>
+
+            <tr class="tax-payment-note-row">
+              <th scope="row" class="tax-payment-category tax-payment-note-category">（その他租税公課）<span class="tax-payment-note-sub">損金算入のもの</span></th>
+              <td class="tax-payment-note-input"><input type="text" class="tax-input tax-input-note" name="inputs_other_taxes_deductible_note" value="{{ inputs.get('other_taxes_deductible_note', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_deductible_opening_balance" value="{{ inputs.get('other_taxes_deductible_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_deductible_current_tax" value="{{ inputs.get('other_taxes_deductible_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_deductible_payment_from_reserve" value="{{ inputs.get('other_taxes_deductible_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_deductible_payment_from_expense" value="{{ inputs.get('other_taxes_deductible_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_deductible_closing_balance" value="{{ inputs.get('other_taxes_deductible_closing_balance', '') }}"></td>
+            </tr>
+            <tr class="tax-payment-note-row">
+              <th scope="row" class="tax-payment-category tax-payment-note-category">（その他租税公課）<span class="tax-payment-note-sub">損金不算入のもの</span></th>
+              <td class="tax-payment-note-input"><input type="text" class="tax-input tax-input-note" name="inputs_other_taxes_non_deductible_note" value="{{ inputs.get('other_taxes_non_deductible_note', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_non_deductible_opening_balance" value="{{ inputs.get('other_taxes_non_deductible_opening_balance', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_non_deductible_current_tax" value="{{ inputs.get('other_taxes_non_deductible_current_tax', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_non_deductible_payment_from_reserve" value="{{ inputs.get('other_taxes_non_deductible_payment_from_reserve', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_non_deductible_payment_from_expense" value="{{ inputs.get('other_taxes_non_deductible_payment_from_expense', '') }}"></td>
+              <td><input type="text" class="tax-input" name="inputs_other_taxes_non_deductible_closing_balance" value="{{ inputs.get('other_taxes_non_deductible_closing_balance', '') }}"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="tax-actions">
+    <button type="submit" class="tax-submit-button">入力値を保存</button>
+  </div>
+</form>
+{% endblock %}
