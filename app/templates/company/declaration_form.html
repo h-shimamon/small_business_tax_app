@@ -13,7 +13,7 @@
 <p class="content-subtitle">申告の対象となる事業年度の情報を入力し、保存してください。</p>
 
 <div class="card">
-    <form action=\"{{ url_for('company.declaration') }}\" method=\"post\" novalidate class=\"ui-ctrl-44\">
+    <form id="declaration-form" action="{{ url_for('company.declaration') }}" method="post" novalidate class="ui-ctrl-44">
         {{ form.hidden_tag() }}
 
         <div class="form-grid">
@@ -86,5 +86,16 @@
 
 {% block scripts %}
     {{ super() if super }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('declaration-form');
+            if (!form) {
+                return;
+            }
+            const expectedAction = '{{ url_for('company.declaration') }}';
+            form.setAttribute('action', expectedAction);
+            form.setAttribute('method', 'post');
+        });
+    </script>
     <script src="{{ url_for('static', filename='js/address_autofill.js') }}?v=2.0"></script>
 {% endblock %}

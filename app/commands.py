@@ -40,13 +40,27 @@ def init_db_command():
         # 1) 管理者ユーザーの作成（存在しない場合のみ）
         admin_user = User.query.filter_by(username='admin').first()
         if not admin_user:
-            admin_user = User(username='admin', email='admin@example.com')
+            admin_user = User(username='admin', email='admin@example.com', is_admin=True)
             admin_user.set_password('password')
             db.session.add(admin_user)
             db.session.commit()
             click.echo("管理者ユーザーを作成しました（admin/password）。")
         else:
-            click.echo("管理者ユーザーは既に存在します。スキップします。")
+            updated = False
+            if not admin_user.is_admin:
+                admin_user.is_admin = True
+                updated = True
+            if not admin_user.check_password('password'):
+                admin_user.set_password('password')
+                updated = True
+            if not admin_user.email:
+                admin_user.email = 'admin@example.com'
+                updated = True
+            if updated:
+                db.session.commit()
+                click.echo("管理者ユーザー情報を更新しました（admin/password を保証）。")
+            else:
+                click.echo("管理者ユーザーは既に存在します。スキップします。")
 
         # 2) サンプル会社の作成（adminに未紐付なら作成）
         company = Company.query.filter_by(user_id=admin_user.id).first()

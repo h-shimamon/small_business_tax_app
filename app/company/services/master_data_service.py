@@ -69,6 +69,7 @@ class MasterDataService:
     def _reload_master_tables(self) -> None:
         clear_master_dataframe_cache()
         clear_master_df_cache()
+        db.session.rollback()
         with db.session.begin():
             db.session.query(AccountTitleMaster).delete()
             db.session.query(MasterVersion).delete()
