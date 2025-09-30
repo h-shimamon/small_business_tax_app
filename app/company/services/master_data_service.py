@@ -43,7 +43,7 @@ class MasterDataService:
         マスターデータのバージョンを確認し、変更があれば同期する。
         アプリケーション起動時に呼び出す。
         """
-        current_hash = self._get_current_files_hash()
+        current_hash = self._calculate_and_store_current_hash()
         last_db_hash = self._get_last_db_hash()
 
         if current_hash != last_db_hash:
@@ -58,77 +58,46 @@ class MasterDataService:
         強制的にマスターデータをCSVから読み込み、データベースを更新する。
         """
         try:
-            with db.session.begin():
-                db.session.query(AccountTitleMaster).delete()
-                db.session.query(MasterVersion).delete()
-
-                for master_type, file_path in self.master_files.items():
-                    if not os.path.exists(file_path):
-                        self.logger.warning("マスターファイルが見つかりません: %s", file_path)
-                        continue
-
-                    df = load_master_dataframe(file_path, index_column=None).copy()
-                    df.dropna(how='all', inplace=True)
-                    df.dropna(subset=['No.', '勘定科目名'], inplace=True)
-
-                    for _, row in df.iterrows():
-                        master_entry = AccountTitleMaster(
-                            number=int(row['No.']),
-                            name=row['勘定科目名'],
-                            statement_name=row.get('決算書名'),
-                            major_category=row.get('大分類'),
-                            middle_category=row.get('中分類'),
-                            minor_category=row.get('小分類'),
-                            breakdown_document=row.get('内訳書'),
-                            master_type=master_type,
-                        )
-                        db.session.add(master_entry)
-
-                new_hash = self._get_current_files_hash()
-                new_version = MasterVersion(version_hash=new_hash)
-                db.session.add(new_version)
-        except Exception as exc:
-            self.logger.exception("マスターデータ同期中に問題が発生しました")
-            raise
-        finally:
-            clear_master_dataframe_cache()
-
-        try:
-            with db.session.begin():
-                db.session.query(AccountTitleMaster).delete()
-                db.session.query(MasterVersion).delete()
-
-                for master_type, file_path in self.master_files.items():
-                    if not os.path.exists(file_path):
-                        self.logger.warning("マスターファイルが見つかりません: %s", file_path)
-                        continue
-
-                    df = load_master_dataframe(file_path, index_column=None).copy()
-                    df.dropna(how='all', inplace=True)
-                    df.dropna(subset=['No.', '勘定科目名'], inplace=True)
-
-                    for _, row in df.iterrows():
-                        master_entry = AccountTitleMaster(
-                            number=int(row['No.']),
-                            name=row['勘定科目名'],
-                            statement_name=row.get('決算書名'),
-                            major_category=row.get('大分類'),
-                            middle_category=row.get('中分類'),
-                            minor_category=row.get('小分類'),
-                            breakdown_document=row.get('内訳書'),
-                            master_type=master_type,
-                        )
-                        db.session.add(master_entry)
-
-                new_hash = self._get_current_files_hash()
-                new_version = MasterVersion(version_hash=new_hash)
-                db.session.add(new_version)
+            self._reload_master_tables()
         except Exception as exc:
             self.logger.exception("マスターデータ同期中に問題が発生しました")
             raise
         finally:
             clear_master_dataframe_cache()
             self._account_metadata_cache = {}
+
+    def _reload_master_tables(self) -> None:
+        clear_master_dataframe_cache()
+        clear_master_df_cache()
+        with db.session.begin():
+            db.session.query(AccountTitleMaster).delete()
+            db.session.query(MasterVersion).delete()
+
+            for master_type, file_path in self.master_files.items():
+                if not os.path.exists(file_path):
+                    self.logger.warning("マスターファイルが見つかりません: %s", file_path)
+                    continue
+
+                df = load_master_dataframe(file_path, index_column=None).copy()
+                df.dropna(how='all', inplace=True)
+                df.dropna(subset=['No.', '勘定科目名'], inplace=True)
+
+                for _, row in df.iterrows():
+                    master_entry = AccountTitleMaster(
+                        number=int(row['No.']),
+                        name=row['勘定科目名'],
+                        statement_name=row.get('決算書名'),
+                        major_category=row.get('大分類'),
+                        middle_category=row.get('中分類'),
+                        minor_category=row.get('小分類'),
+                        breakdown_document=row.get('内訳書'),
+                        master_type=master_type,
+                    )
+                    db.session.add(master_entry)
+
+            new_hash = self._get_current_files_hash()
+            new_version = MasterVersion(version_hash=new_hash)
+            db.session.add(new_version)
 
     def get_account_metadata_index(self) -> Dict[int, Dict[str, Any]]:
         if self._account_metadata_cache:
@@ -149,14 +118,17 @@ class MasterDataService:
         return metadata
 
 
+    def _calculate_and_store_current_hash(self) -> str:
+        return calculate_and_save_hash(self.base_dir, self.version_file_path, list(self.master_files.values()))
+
     def _get_current_files_hash(self):
-        """現在のマスターCSVファイル群のハッシュ値を返す。_version.txtから読み込むことを基本とする。"""
+        """現在のマスターCSVファイル群のハッシュ値を返す。_version.txtが無ければ再計算する。"""
         try:
             with open(self.version_file_path, 'r') as f:
                 return f.read().strip()
         except FileNotFoundError:
             self.logger.warning("_version.txt が見つかりません。動的に生成します。")
-            return calculate_and_save_hash(self.base_dir, self.version_file_path, list(self.master_files.values()))
+            return self._calculate_and_store_current_hash()
 
 
     def _get_last_db_hash(self):

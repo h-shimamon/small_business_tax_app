@@ -103,7 +103,6 @@ class SoASummaryService:
         except Exception:
             soa_breakdowns = {}
 
-        master_service = MasterDataService()
         targets_info = cls.resolve_target_accounts(page, master_service)
 
         if targets_info.get('type') == 'BORROWINGS':
@@ -187,9 +186,9 @@ class SoASummaryService:
             .filter_by(company_id=company_id).scalar() or 0
 
     @classmethod
-    def compute_difference(cls, company_id: int, page: str, model, total_field_name: Optional[str], accounting_data=None, master_service: Optional[MasterDataService] = None) -> DifferenceResult:
+    def compute_difference(cls, company_id: int, page: str, model, total_field_name: Optional[str], accounting_data=None, master_service: Optional[MasterDataService] = None, source_totals: Optional["SourceTotalResult"] = None) -> DifferenceResult:
         master_service = master_service or MasterDataService()
-        source = cls.compute_source_total(company_id, page, accounting_data=accounting_data, master_service=master_service)
+        source = source_totals or cls.compute_source_total(company_id, page, accounting_data=accounting_data, master_service=master_service)
         effective_model = model
         effective_field = total_field_name
         if effective_model is None or effective_field is None:
@@ -228,9 +227,9 @@ class SoASummaryService:
         return source.get('source_total', 0) == 0
 
     @classmethod
-    def compute_skip_total(cls, company_id: int, page: str, accounting_data=None, master_service: Optional[MasterDataService] = None) -> int:
+    def compute_skip_total(cls, company_id: int, page: str, accounting_data=None, master_service: Optional[MasterDataService] = None, source_totals: Optional["SourceTotalResult"] = None) -> int:
         """Return the numeric source total used to determine skip."""
-        source = cls.compute_source_total(company_id, page, accounting_data=accounting_data, master_service=master_service)
+        source = source_totals or cls.compute_source_total(company_id, page, accounting_data=accounting_data, master_service=master_service)
         if page == 'borrowings':
             return (source.get('bs_total', 0) + source.get('pl_interest_total', 0))
         return source.get('source_total', 0)
@@ -239,6 +238,12 @@ class SoASummaryService:
     def evaluate_page(cls, company_id: int, page: str, accounting_data=None) -> SoAPageEvaluation:
         """差分・スキップ判定・完了状態をまとめた結果を返す。"""
         master_service = MasterDataService()
+        source_totals = cls.compute_source_total(
+            company_id,
+            page,
+            accounting_data=accounting_data,
+            master_service=master_service,
+        )
         difference = cls.compute_difference(
             company_id,
             page,
@@ -246,12 +251,14 @@ class SoASummaryService:
             None,
             accounting_data=accounting_data,
             master_service=master_service,
+            source_totals=source_totals,
         )
         skip_total = cls.compute_skip_total(
             company_id,
             page,
             accounting_data=accounting_data,
             master_service=master_service,
+            source_totals=source_totals,
         )
         is_balanced = difference.get('difference', 0) == 0
         should_skip = skip_total == 0

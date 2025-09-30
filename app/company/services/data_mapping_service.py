@@ -134,8 +134,8 @@ class DataMappingService:
 
             new_mappings = []
             for original_name in original_names:
-                normalized = original_name.strip().lower()
-                if normalized in existing_mapping_set:
+                normalized = self.catalog.normalize(original_name)
+                if not normalized or normalized in existing_mapping_set:
                     continue
 
                 master_id_str = mappings_form_data.get(f'map_{original_name}')

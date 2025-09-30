@@ -27,6 +27,9 @@ class FinancialStatementService:
         self._soa_breakdowns = {}
         self._account_balances: Dict[int, int] = {}
         self._name_to_id_cache = self._build_name_to_id_map()
+        self._pl_cache_key: Optional[tuple] = None
+        self._pl_structure_cache: Optional[dict] = None
+        self._net_income_cache: Optional[int] = None
 
         # 期首と期中の取引を分離
         opening_df, mid_year_df = self._separate_transactions(self.journals_df)
@@ -142,6 +145,21 @@ class FinancialStatementService:
             breakdowns[doc] = breakdowns.get(doc, 0) + amount
         return breakdowns
 
+    def _get_pl_statement(self, balances):
+        cache_key = tuple(sorted(balances.items())) if balances else None
+        if (
+            cache_key is not None
+            and self._pl_cache_key == cache_key
+            and self._pl_structure_cache is not None
+        ):
+            return self._pl_structure_cache, self._net_income_cache or 0
+
+        pl_structure, net_income = self._create_profit_and_loss_statement_data(balances)
+        self._pl_cache_key = cache_key
+        self._pl_structure_cache = pl_structure
+        self._net_income_cache = net_income
+        return pl_structure, net_income
+
     def get_total_by_breakdown_document(self, document_name):
         """指定された内訳書名に該当する勘定科目の合計残高を計算する。"""
         if document_name is None:
@@ -155,14 +173,16 @@ class FinancialStatementService:
     def create_balance_sheet(self):
         """貸借対照表を生成する。"""
         all_balances = self._combined_balances()
-        self._account_balances = self._build_account_balances(all_balances)
-        self._soa_breakdowns = self._compute_breakdown_totals(all_balances)
+        _, net_income = self._get_pl_statement(all_balances)
 
-        _, net_income = self._create_profit_and_loss_statement_data(all_balances)
-
-        final_bs_balances = {acc: amount for acc, amount in all_balances.items() if acc in self.bs_master.index}
+        adjusted_balances = dict(all_balances)
+        final_bs_balances = {acc: amount for acc, amount in adjusted_balances.items() if acc in self.bs_master.index}
         opening_retained_earnings = self.opening_balances.get('繰越利益剰余金', 0)
         final_bs_balances['繰越利益剰余金'] = opening_retained_earnings - net_income
+        adjusted_balances['繰越利益剰余金'] = final_bs_balances['繰越利益剰余金']
+
+        self._account_balances = self._build_account_balances(adjusted_balances)
+        self._soa_breakdowns = self._compute_breakdown_totals(adjusted_balances)
 
         return self._build_statement_structure(final_bs_balances, self.bs_master, is_bs=True)
 
@@ -171,7 +191,7 @@ class FinancialStatementService:
         all_balances = self._combined_balances()
         if not self._account_balances:
             self._account_balances = self._build_account_balances(all_balances)
-        pl_structure, _ = self._create_profit_and_loss_statement_data(all_balances)
+        pl_structure, _ = self._get_pl_statement(all_balances)
         return pl_structure
 
     def get_soa_breakdowns(self):
