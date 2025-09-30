@@ -5,7 +5,7 @@ import hashlib
 import logging
 import os
 from functools import lru_cache
-from typing import Dict
+from typing import Any, Dict
 
 import pandas as pd
 from flask import current_app
@@ -36,6 +36,7 @@ class MasterDataService:
         }
         self.version_file_path = _resolve(cfg.get('MASTER_DATA_VERSION_FILE', 'resources/masters/_version.txt'))
         self.logger = logging.getLogger(__name__)
+        self._account_metadata_cache: Dict[int, Dict[str, Any]] = {}
 
     def check_and_sync(self):
         """
@@ -91,6 +92,61 @@ class MasterDataService:
             raise
         finally:
             clear_master_dataframe_cache()
+
+        try:
+            with db.session.begin():
+                db.session.query(AccountTitleMaster).delete()
+                db.session.query(MasterVersion).delete()
+
+                for master_type, file_path in self.master_files.items():
+                    if not os.path.exists(file_path):
+                        self.logger.warning("マスターファイルが見つかりません: %s", file_path)
+                        continue
+
+                    df = load_master_dataframe(file_path, index_column=None).copy()
+                    df.dropna(how='all', inplace=True)
+                    df.dropna(subset=['No.', '勘定科目名'], inplace=True)
+
+                    for _, row in df.iterrows():
+                        master_entry = AccountTitleMaster(
+                            number=int(row['No.']),
+                            name=row['勘定科目名'],
+                            statement_name=row.get('決算書名'),
+                            major_category=row.get('大分類'),
+                            middle_category=row.get('中分類'),
+                            minor_category=row.get('小分類'),
+                            breakdown_document=row.get('内訳書'),
+                            master_type=master_type,
+                        )
+                        db.session.add(master_entry)
+
+                new_hash = self._get_current_files_hash()
+                new_version = MasterVersion(version_hash=new_hash)
+                db.session.add(new_version)
+        except Exception as exc:
+            self.logger.exception("マスターデータ同期中に問題が発生しました")
+            raise
+        finally:
+            clear_master_dataframe_cache()
+            self._account_metadata_cache = {}
+
+    def get_account_metadata_index(self) -> Dict[int, Dict[str, Any]]:
+        if self._account_metadata_cache:
+            return self._account_metadata_cache
+
+        metadata: Dict[int, Dict[str, Any]] = {}
+        for master in AccountTitleMaster.query.all():
+            try:
+                metadata[int(master.id)] = {
+                    'name': master.name,
+                    'master_type': master.master_type,
+                    'major_category': master.major_category,
+                    'breakdown_document': master.breakdown_document,
+                }
+            except (TypeError, ValueError):
+                continue
+        self._account_metadata_cache = metadata
+        return metadata
 
 
     def _get_current_files_hash(self):

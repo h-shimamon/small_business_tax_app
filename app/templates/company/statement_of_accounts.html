@@ -43,7 +43,7 @@
   {{ summary_generic('B/S上の売掛金（未収入金）残高', (generic_summary.bs_total if generic_summary else 0), (generic_summary.breakdown_total if generic_summary else 0), (generic_summary.difference if generic_summary else 0)) }}
 {% endif %}
 
-{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','executive_compensations','land_rents','miscellaneous','misc_income','misc_losses'] %}
+{% if page in ['temporary_payments','loans_receivable','inventories','securities','fixed_assets','notes_payable','accounts_payable','temporary_receipts','executive_compensations','land_rents','misc_income','misc_losses'] %}
   {{ summary_generic(generic_summary_label, generic_summary.bs_total, generic_summary.breakdown_total, generic_summary.difference) }}
 {% endif %}
 

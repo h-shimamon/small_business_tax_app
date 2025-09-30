@@ -1,4 +1,5 @@
 from app import db
+from app import db
 from app.company.forms import OfficeForm
 from app.company.models import Company, Office
 
@@ -23,3 +24,22 @@ def test_office_form_aliases(app, init_database):
         edit_form.populate_obj(office)
         assert office.name == '新宿支店'
         assert office.municipality == '新宿区'
+
+
+def test_company_office_count_numeric_helpers(app, init_database):
+    with app.app_context():
+        company = db.session.query(Company).first()
+        company.office_count = 'one'
+        assert company.office_count_numeric == 1
+
+        company.office_count_numeric = 2
+        assert company.office_count == 'multiple'
+        assert company.office_count_numeric == 2
+
+        company.apply_office_count_input('3')
+        assert company.office_count == 'multiple'
+        assert company.office_count_numeric == 2
+
+        company.apply_office_count_input(None)
+        assert company.office_count is None
+        assert company.office_count_numeric is None

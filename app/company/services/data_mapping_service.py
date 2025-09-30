@@ -35,7 +35,7 @@ class DataMappingService:
     def _get_existing_mapping_names(self) -> set[str]:
         if self._existing_mapping_cache is None:
             self._existing_mapping_cache = {
-                mapping.original_account_name.strip().lower()
+                self._normalize_string(mapping.original_account_name)
                 for mapping in UserAccountMapping.query.filter_by(user_id=self.user_id).all()
             }
         return self._existing_mapping_cache
@@ -72,36 +72,28 @@ class DataMappingService:
     def get_unmatched_accounts(self, user_accounts):
         """
         ユーザーアカウントリストとマスターデータを比較し、未マッピングの勘定科目を返す。
-        比較はcase-insensitiveに行う。
+        表記ゆれを避けるため、正規化後の文字列で比較する。
         """
-        # マスター勘定科目名を小文字のセットとして準備
         master_account_names = self._get_master_account_names()
-        
-        # 既存のマッピング（ユーザーが過去に設定したもの）を小文字のセットとして準備
         existing_mappings = self._get_existing_mapping_names()
-        
+
         unmatched = []
-        # 処理済みの勘定科目を小文字で保持し、重複チェック
-        processed_accounts = set()
+        processed_accounts: set[str] = set()
 
         for acc in user_accounts:
             if not acc:
                 continue
-            
-            clean_acc = acc.strip()
-            clean_acc_lower = clean_acc.lower()
 
-            # 空白のみの文字列や、既に処理済みの勘定科目はスキップ
-            if not clean_acc or clean_acc_lower in processed_accounts:
+            clean_acc = acc.strip()
+            normalized = self._normalize_string(clean_acc)
+            if not clean_acc or not normalized or normalized in processed_accounts:
                 continue
-            
-            processed_accounts.add(clean_acc_lower)
-            
-            # マスターと既存マッピングの両方に存在しないものを抽出（小文字で比較）
-            if clean_acc_lower not in master_account_names and clean_acc_lower not in existing_mappings:
-                # 画面表示用に、元の表記のままの勘定科目を追加
+
+            processed_accounts.add(normalized)
+
+            if normalized not in master_account_names and normalized not in existing_mappings:
                 unmatched.append(clean_acc)
-                
+
         return unmatched
 
     def get_mapping_suggestions(self, unmatched_accounts):

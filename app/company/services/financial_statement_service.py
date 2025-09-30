@@ -1,7 +1,10 @@
 # app/company/services/financial_statement_service.py
 from collections import defaultdict
+from typing import Dict, Optional
+
 import pandas as pd
 from datetime import datetime
+
 from .master_data_service import MasterDataService
 
 class FinancialStatementService:
@@ -22,7 +25,9 @@ class FinancialStatementService:
         self.bs_master = master_data_service.get_bs_master_df()
         self.pl_master = master_data_service.get_pl_master_df()
         self._soa_breakdowns = {}
-        
+        self._account_balances: Dict[int, int] = {}
+        self._name_to_id_cache = self._build_name_to_id_map()
+
         # 期首と期中の取引を分離
         opening_df, mid_year_df = self._separate_transactions(self.journals_df)
         self.opening_balances = self._calculate_balances_from_df(opening_df)
@@ -79,6 +84,45 @@ class FinancialStatementService:
             
         return {k: v for k, v in balances.items() if v != 0}
 
+    def _build_name_to_id_map(self) -> Dict[str, int]:
+        mapping: Dict[str, int] = {}
+        for df in (self.bs_master, self.pl_master):
+            if df is None or df.empty:
+                continue
+            if 'id' not in df.columns:
+                continue
+            try:
+                ids = df['id'].to_dict()
+            except Exception:
+                ids = {}
+            for name, raw_id in ids.items():
+                try:
+                    mapping[str(name)] = int(raw_id)
+                except (TypeError, ValueError):
+                    continue
+        return mapping
+
+    def _lookup_account_id(self, account_name: str) -> Optional[int]:
+        return self._name_to_id_cache.get(str(account_name))
+
+    def _build_account_balances(self, balances) -> Dict[int, int]:
+        totals: Dict[int, int] = {}
+        for acc_name, amount in balances.items():
+            account_id = self._lookup_account_id(acc_name)
+            if account_id is None:
+                continue
+            try:
+                numeric = int(round(float(amount)))
+            except (TypeError, ValueError):
+                continue
+            if numeric == 0:
+                continue
+            totals[account_id] = numeric
+        return totals
+
+    def get_account_balances(self) -> Dict[str, int]:
+        return {str(account_id): amount for account_id, amount in self._account_balances.items()}
+
     def _combined_balances(self):
         all_balances = defaultdict(int, self.opening_balances)
         for acc, amount in self.mid_year_balances.items():
@@ -111,6 +155,7 @@ class FinancialStatementService:
     def create_balance_sheet(self):
         """貸借対照表を生成する。"""
         all_balances = self._combined_balances()
+        self._account_balances = self._build_account_balances(all_balances)
         self._soa_breakdowns = self._compute_breakdown_totals(all_balances)
 
         _, net_income = self._create_profit_and_loss_statement_data(all_balances)
@@ -124,6 +169,8 @@ class FinancialStatementService:
     def create_profit_loss_statement(self):
         """損益計算書を生成する。"""
         all_balances = self._combined_balances()
+        if not self._account_balances:
+            self._account_balances = self._build_account_balances(all_balances)
         pl_structure, _ = self._create_profit_and_loss_statement_data(all_balances)
         return pl_structure
 

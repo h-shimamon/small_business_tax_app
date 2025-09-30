@@ -370,14 +370,38 @@ def filings_preview(company):
         abort(404)
 
     try:
-        repo_root = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), '..', '..'))
-        pdf_path = _os.path.join(repo_root, *pdf_rel.split('/'))
-        if not _os.path.exists(pdf_path):
+        normalized = _os.path.normpath(pdf_rel)
+        normalized = normalized.lstrip(_os.sep).lstrip('/')
+        if _os.path.isabs(normalized) or normalized.startswith('..'):
+            current_app.logger.warning('Rejected preview path outside repo: %s', pdf_rel)
             abort(404)
+
+        _, ext = _os.path.splitext(normalized)
+        if ext.lower() != '.pdf':
+            current_app.logger.warning('Rejected non-PDF preview request: %s', pdf_rel)
+            abort(404)
+
+        repo_root = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), '..', '..'))
+        pdf_path = _os.path.join(repo_root, normalized)
+        if not _os.path.exists(pdf_path):
+            current_app.logger.warning('Preview PDF not found: %s', pdf_path)
+            abort(404)
+
+        max_bytes = int(current_app.config.get('FILINGS_PREVIEW_MAX_BYTES', 5 * 1024 * 1024))
+        try:
+            if _os.path.getsize(pdf_path) > max_bytes:
+                current_app.logger.warning('Preview PDF exceeds size limit (%s bytes): %s', max_bytes, pdf_path)
+                abort(404)
+        except OSError as exc:
+            current_app.logger.warning('Failed to stat preview PDF %s: %s', pdf_path, exc)
+            abort(404)
+
         return send_file(
             pdf_path,
             mimetype='application/pdf',
             as_attachment=False,
         )
-    except Exception:
+    except Exception as exc:
+        current_app.logger.exception('Preview generation failed for %s: %s', page, exc)
         abort(404)
+

@@ -56,7 +56,10 @@ def user_stub():
 @pytest.fixture
 def session_stub(tmp_path, monkeypatch):
     session = {}
-    monkeypatch.setattr('app.company.services.upload_flow_service.current_app', SimpleNamespace(instance_path=str(tmp_path)))
+    monkeypatch.setattr(
+        'app.company.services.upload_flow_service.current_app',
+        SimpleNamespace(instance_path=str(tmp_path), config={}),
+    )
     return session
 
 
@@ -87,6 +90,7 @@ def financial_service_mock(monkeypatch):
     fs_mock.create_balance_sheet.return_value = {'assets': {}}
     fs_mock.create_profit_loss_statement.return_value = {'profit': {}}
     fs_mock.get_soa_breakdowns.return_value = {}
+    fs_mock.get_account_balances.return_value = {}
     fs_cls_mock = mock.Mock(return_value=fs_mock)
     monkeypatch.setattr('app.company.services.upload_flow_service.FinancialStatementService', fs_cls_mock)
     return fs_mock
@@ -95,8 +99,10 @@ def financial_service_mock(monkeypatch):
 @pytest.fixture
 def accounting_data_mock(monkeypatch):
     delete_mock = mock.Mock()
-    monkeypatch.setattr('app.company.services.upload_flow_service.AccountingData', mock.Mock(query=mock.Mock(filter_by=mock.Mock(return_value=mock.Mock(delete=delete_mock)))))
-    return delete_mock
+    accounting_data_class = mock.Mock()
+    accounting_data_class.query = mock.Mock(filter_by=mock.Mock(return_value=mock.Mock(delete=delete_mock)))
+    monkeypatch.setattr('app.company.services.upload_flow_service.AccountingData', accounting_data_class)
+    return SimpleNamespace(delete=delete_mock, class_mock=accounting_data_class)
 
 
 @pytest.fixture
@@ -143,4 +149,10 @@ def test_handle_journals_success(user_stub, session_stub, parser_factory_mock, m
     assert result.redirect_endpoint == 'company.confirm_trial_balance'
     assert result.flash_message[1] == 'success'
     financial_service_mock.create_balance_sheet.assert_called_once()
+
+    accounting_kwargs = accounting_data_mock.class_mock.call_args.kwargs
+    assert accounting_kwargs['schema_version'] == UploadFlowService.DEFAULT_SCHEMA_VERSION
+    assert accounting_kwargs['algo_version'] == UploadFlowService.DEFAULT_ALGO_VERSION
+    assert accounting_kwargs['source_hash']
+
     db_session_mock.commit.assert_called_once()

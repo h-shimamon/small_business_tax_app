@@ -216,22 +216,6 @@
       ]
     },
     {
-      "key": "miscellaneous",
-      "model": "app.company.models.Miscellaneous",
-      "form": "app.company.forms.MiscellaneousForm",
-      "title": "雑益・雑損失等",
-      "total_field": "amount",
-      "template": "miscellaneous_form.html",
-      "summary": {"type": "PL", "label": "雑益・雑損失等"},
-      "pl_targets": ["雑収入", "雑損失"],
-      "form_fields": [
-        {"name": "account_name"},
-        {"name": "details"},
-        {"name": "amount"},
-        {"name": "remarks"}
-      ]
-    },
-    {
       "key": "misc_income",
       "model": "app.company.models.Miscellaneous",
       "form": "app.company.forms.MiscellaneousIncomeForm",

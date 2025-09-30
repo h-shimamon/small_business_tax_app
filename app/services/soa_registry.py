@@ -193,10 +193,22 @@ PL_PAGE_ACCOUNTS: Dict[str, List[str]] = {
     if definition.pl_targets
 }
 
+STATEMENT_TOTAL_FIELDS: Dict[str, str] = {
+    definition.key: definition.total_field
+    for definition in _load_page_definitions()
+}
+
+STATEMENT_MODEL_PATHS: Dict[str, str] = {
+    definition.key: definition.model
+    for definition in _load_page_definitions()
+}
+
 
 __all__ = [
     'STATEMENT_PAGES_CONFIG',
     'SUMMARY_PAGE_MAP',
     'PL_PAGE_ACCOUNTS',
+    'STATEMENT_TOTAL_FIELDS',
+    'STATEMENT_MODEL_PATHS',
     'StatementPageConfig',
 ]

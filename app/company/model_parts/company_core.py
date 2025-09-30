@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional, Union
+
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -26,6 +28,9 @@ class Company(db.Model):
     __table_args__ = (
         db.CheckConstraint('employee_count_at_eoy >= 0', name='ck_company_employee_count_non_negative'),
     )
+    _OFFICE_COUNT_MAP = {'one': 1, 'multiple': 2}
+    _OFFICE_COUNT_REVERSE = {1: 'one', 2: 'multiple'}
+
     id = db.Column(db.Integer, primary_key=True)
     corporate_number = db.Column(db.String(13), unique=True, nullable=False)
     company_name = db.Column(db.String(100), nullable=False)
@@ -54,6 +59,50 @@ class Company(db.Model):
     accounting_period_end_date = db.Column(db.Date)
     term_number = db.Column(db.Integer)
     office_count = db.Column(db.String(10))
+    @classmethod
+    def _normalize_office_count_value(cls, value: Optional[Union[str, int]]) -> Optional[str]:
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return cls._OFFICE_COUNT_REVERSE.get(value, 'multiple' if value >= 2 else 'one')
+        text = str(value).strip()
+        if not text:
+            return None
+        lowered = text.lower()
+        if lowered in cls._OFFICE_COUNT_MAP:
+            return lowered
+        if lowered.isdigit():
+            try:
+                numeric = int(lowered)
+            except ValueError:
+                return lowered
+            return cls._OFFICE_COUNT_REVERSE.get(numeric, 'multiple' if numeric >= 2 else 'one')
+        return lowered
+
+    @property
+    def office_count_numeric(self) -> Optional[int]:
+        raw_value = getattr(self, 'office_count', None)
+        if raw_value is None:
+            return None
+        if isinstance(raw_value, int):
+            return raw_value
+        text = str(raw_value).strip()
+        if not text:
+            return None
+        lowered = text.lower()
+        if lowered.isdigit():
+            try:
+                return int(lowered)
+            except ValueError:
+                return None
+        return self._OFFICE_COUNT_MAP.get(lowered)
+
+    @office_count_numeric.setter
+    def office_count_numeric(self, value: Optional[Union[str, int]]) -> None:
+        self.office_count = self._normalize_office_count_value(value)
+
+    def apply_office_count_input(self, raw_value: Optional[Union[str, int]]) -> None:
+        self.office_count = self._normalize_office_count_value(raw_value)
     declaration_type = db.Column(db.String(10))
     tax_system = db.Column(db.String(10))
 

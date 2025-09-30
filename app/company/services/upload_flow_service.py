@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import shutil
 import time
@@ -40,6 +41,8 @@ class UploadFlowService:
 
     ALLOWED_EXTENSIONS = {'.csv', '.txt'}
     MAX_BYTES = 20 * 1024 * 1024
+    DEFAULT_SCHEMA_VERSION = '2025.1'
+    DEFAULT_ALGO_VERSION = '2025.1'
 
     def __init__(self, datatype: str, user, config: Dict[str, Any], flask_session):
         self.datatype = datatype
@@ -139,6 +142,24 @@ class UploadFlowService:
         self.session['uploaded_journals_name'] = original_name
 
     @staticmethod
+    def _calculate_dataframe_hash(df) -> str:
+        try:
+            csv_bytes = df.to_csv(index=False).encode('utf-8')
+        except Exception:
+            return ''
+        return hashlib.sha256(csv_bytes).hexdigest()
+
+    def _build_accounting_metadata(self, journals_df) -> Dict[str, str]:
+        schema_version = current_app.config.get('ACCOUNTING_DATA_SCHEMA_VERSION', self.DEFAULT_SCHEMA_VERSION)
+        algo_version = current_app.config.get('ACCOUNTING_DATA_ALGO_VERSION', self.DEFAULT_ALGO_VERSION)
+        source_hash = self._calculate_dataframe_hash(journals_df)
+        return {
+            'schema_version': schema_version,
+            'algo_version': algo_version,
+            'source_hash': source_hash,
+        }
+
+    @staticmethod
     def _cleanup_old_files(upload_dir: str) -> None:
         ttl = 7 * 24 * 3600
         now = time.time()
@@ -204,6 +225,7 @@ class UploadFlowService:
         bs_data = fs_service.create_balance_sheet()
         pl_data = fs_service.create_profit_loss_statement()
         soa_breakdowns = fs_service.get_soa_breakdowns()
+        metadata = self._build_accounting_metadata(df_journals)
 
         try:
             AccountingData.query.filter_by(company_id=company.id).delete()
@@ -211,10 +233,14 @@ class UploadFlowService:
                 company_id=company.id,
                 period_start=start_date,
                 period_end=end_date,
+                schema_version=metadata['schema_version'],
+                algo_version=metadata['algo_version'],
+                source_hash=metadata['source_hash'],
                 data={
                     'balance_sheet': bs_data,
                     'profit_loss_statement': pl_data,
                     'soa_breakdowns': soa_breakdowns,
+                    'account_balances': fs_service.get_account_balances(),
                 },
             )
             db.session.add(accounting_data)

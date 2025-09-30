@@ -36,13 +36,11 @@ class DeclarationService:
             'borrowings',
             'executive_compensations',
             'land_rents',
-            'miscellaneous',
             'misc_income',
             'misc_losses',
         ]
         data = {key: soa_service.get_data_by_type(key) or [] for key in keys}
-        if 'miscellaneous' in data:
-            data['miscellaneous_items'] = data['miscellaneous']
+        data['miscellaneous_items'] = (data.get('misc_income') or []) + (data.get('misc_losses') or [])
         return data
 
     def populate_declaration_form(self):
