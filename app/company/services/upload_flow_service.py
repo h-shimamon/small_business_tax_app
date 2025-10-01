@@ -19,6 +19,41 @@ from app.navigation import mark_step_as_completed
 from app.primitives.dates import get_company_period
 
 
+UPLOAD_ERROR_MESSAGES: dict[str, dict[str, str]] = {
+    'no_file': {
+        'title': 'ファイルが選択されていません',
+        'body': 'CSV または TXT ファイルを 1 つ選択してから「このファイルをインポートする」を押してください。',
+    },
+    'unsupported_extension': {
+        'title': '未対応のファイル形式です',
+        'body': '拡張子が .csv または .txt のファイルのみ取り込めます。ファイル形式をご確認ください。',
+    },
+    'file_too_large': {
+        'title': 'ファイルサイズが上限を超えています',
+        'body': '20MB 以下のファイルに分割するか、期間を短くして再度アップロードしてください。',
+    },
+    'unknown_datatype': {
+        'title': '想定外のデータ種別です',
+        'body': '画面をリロードしてから再度ウィザードを開始してください。',
+    },
+    'unknown_error': {
+        'title': 'インポート処理でエラーが発生しました',
+        'body': 'ファイル内容をご確認のうえ再試行してください。',
+    },
+}
+
+
+def build_upload_error_context(code: str | None, fallback: str) -> dict[str, str]:
+    info = UPLOAD_ERROR_MESSAGES.get(code or '')
+    if info:
+        return {'code': code or '', 'title': info['title'], 'body': info['body']}
+    return {
+        'code': code or '',
+        'title': fallback or 'インポート処理に失敗しました',
+        'body': fallback or '原因不明のエラーです。再度お試しください。',
+    }
+
+
 @dataclass
 class UploadResult:
     """Result payload consumed by the upload_data route."""
@@ -31,9 +66,16 @@ class UploadResult:
 class UploadFlowError(Exception):
     """Generic failure raised during upload processing."""
 
+    def __init__(self, message: str, *, code: str | None = None):
+        super().__init__(message)
+        self.code = code
+
 
 class UploadValidationError(UploadFlowError):
     """Validation related failure (e.g., extension / size)."""
+
+    def __init__(self, message: str, *, code: str | None = None):
+        super().__init__(message, code=code)
 
 
 class UploadFlowService:
@@ -52,7 +94,7 @@ class UploadFlowService:
 
     def handle(self, file_storage) -> UploadResult:
         if not file_storage or not getattr(file_storage, 'filename', None):
-            raise UploadValidationError('ファイルが選択されていません。')
+            raise UploadValidationError('ファイルが選択されていません。', code='no_file')
 
         self._validate_file(file_storage)
 
@@ -73,14 +115,14 @@ class UploadFlowService:
         if self.datatype == 'fixed_assets':
             return UploadResult('company.fixed_assets_import')
 
-        raise UploadFlowError('無効なデータタイプです。')
+        raise UploadFlowError('無効なデータタイプです。', code='unknown_datatype')
 
     # --- internal helpers -------------------------------------------------
 
     def _validate_file(self, file_storage) -> None:
         ext = os.path.splitext(file_storage.filename)[1].lower()
         if ext not in self.ALLOWED_EXTENSIONS:
-            raise UploadValidationError('CSVまたはTXTファイルのみアップロードできます。')
+            raise UploadValidationError('CSVまたはTXTファイルのみアップロードできます。', code='unsupported_extension')
 
         size = getattr(file_storage, 'content_length', None)
         if size is None:
@@ -92,7 +134,7 @@ class UploadFlowService:
             except Exception:
                 size = None
         if size is not None and size > self.MAX_BYTES:
-            raise UploadValidationError('ファイルサイズが大きすぎます。（上限20MB）')
+            raise UploadValidationError('ファイルサイズが大きすぎます。（上限20MB）', code='file_too_large')
 
         try:
             file_storage.stream.seek(0)
