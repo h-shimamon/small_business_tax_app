@@ -1,9 +1,7 @@
-# SSOT: フォーム定義は各 soa_* モジュールに集約。本モジュールは再エクスポートのみ。直接定義しないこと。
+"""Form re-exports grouped by domain to keep import paths stable."""
 from __future__ import annotations
 
 from .beppyo15 import Beppyo15BreakdownForm  # noqa: F401
-
-# 再エクスポートにより既存の import パス互換を維持
 from .declaration import (  # noqa: F401
     AccountingSelectionForm,
     CompanyForm,
@@ -19,21 +17,12 @@ from .shareholders import (  # noqa: F401
     MainShareholderForm,
     RelatedShareholderForm,
 )
-from .soa_deposits import DepositForm  # noqa: F401
-from .soa_notes import NotesPayableForm, NotesReceivableForm  # noqa: F401
-from .soa_receivables import (  # noqa: F401
-    AccountsPayableForm,
-    AccountsReceivableForm,
-    BorrowingForm,
-    ExecutiveCompensationForm,
-    FixedAssetForm,
-    InventoryForm,
-    LandRentForm,
-    LoansReceivableForm,
-    MiscellaneousForm,
-    MiscellaneousIncomeForm,
-    MiscellaneousLossForm,
-    SecurityForm,
-    TemporaryPaymentForm,
-    TemporaryReceiptForm,
+
+# SoA forms are exposed via the new domain package; wildcard export keeps dynamic
+# form classes (AccountsReceivableForm など) available under the legacy paths.
+from .soa import *  # noqa: F401,F403
+from .soa import (  # noqa: F401
+    DepositForm,
+    NotesPayableForm,
+    NotesReceivableForm,
 )

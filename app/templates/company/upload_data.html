@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% import 'company/_upload_macros.html' as upload_macros %}
+
 {% block title %}{{ title }} - {{ super() }}{% endblock %}
 
 {% block head %}
@@ -16,6 +18,7 @@
 <p class="content-subtitle">{{ description }}</p>
 
 <div class="card">
+    {{ upload_macros.render_error_banner(error_context) }}
     <form method="POST" enctype="multipart/form-data" novalidate class="ui-ctrl-44" x-data="fileUploadComponent()"
             @submit.prevent="isProcessing ? false : $el.submit()">
 

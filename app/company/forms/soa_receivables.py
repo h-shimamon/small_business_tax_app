@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from .soa_definitions import get_soa_form_classes
+from .soa import receivables as _receivables
 
-_form_classes = get_soa_form_classes()
+globals().update({name: getattr(_receivables, name) for name in _receivables.__all__})
 
-globals().update(_form_classes)
-
-__all__ = list(_form_classes.keys())
+__all__ = list(_receivables.__all__)

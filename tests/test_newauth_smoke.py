@@ -18,7 +18,9 @@ def test_healthz_and_login_routes_exist():
 
     r1 = client.get('/xauth/healthz')
     assert r1.status_code == 200
-    assert (r1.data or b'').decode('utf-8').strip() == 'OK'
+    payload = r1.get_json(force=True)
+    assert payload.get('status') == 'ok'
+    assert payload.get('signup_mode') in {'legacy', 'email-first'}
 
     r2 = client.get('/xauth/login')
     assert r2.status_code == 200

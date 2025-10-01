@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+
 from flask import current_app, has_request_context, request
 from flask_login import current_user
 

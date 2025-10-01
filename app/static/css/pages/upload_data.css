@@ -177,3 +177,28 @@
 [x-cloak] {
     display: none !important;
 }
+
+.upload-error-banner {
+    margin-bottom: 16px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    background-color: var(--danger-background, rgba(220, 53, 69, 0.08));
+    border: 1px solid rgba(220, 53, 69, 0.25);
+}
+
+.upload-error-banner__title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--danger-color, #b00020);
+}
+
+.upload-error-banner__body {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.upload-error-banner__code {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-tertiary, #6e6e73);
+}

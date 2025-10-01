@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 from flask import has_request_context
 from flask_login import current_user
 
@@ -112,11 +113,11 @@ def generate_uchiwakesyo_yocyokin(company_id: int | None, year: str = "2025", *,
                 'remarks': 7.5,
             }
             # helpers
-            def left(page: int, x: float, w: float, text: str, size: float):
-                append_left(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size)
+            def left(page: int, x: float, w: float, text: str, size: float, *, _center=center_y):
+                append_left(texts, page=page, x=x, w=w, center_y=_center, text=text, font_name="NotoSansJP", font_size=size)
 
-            def right(page: int, x: float, w: float, text: str, size: float):
-                append_right(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size, right_margin=right_margin)
+            def right(page: int, x: float, w: float, text: str, size: float, *, _center=center_y):
+                append_right(texts, page=page, x=x, w=w, center_y=_center, text=text, font_name="NotoSansJP", font_size=size, right_margin=right_margin)
 
             p = page_index
             bx, bw = col('bank')

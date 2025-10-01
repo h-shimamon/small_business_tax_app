@@ -1,0 +1,11 @@
+{% macro render_error_banner(ctx) %}
+    {% if ctx %}
+    <div class="upload-error-banner" role="alert">
+        <div class="upload-error-banner__title">{{ ctx.title }}</div>
+        <div class="upload-error-banner__body">{{ ctx.body }}</div>
+        {% if ctx.code %}
+        <div class="upload-error-banner__code">エラーコード: {{ ctx.code }}</div>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endmacro %}

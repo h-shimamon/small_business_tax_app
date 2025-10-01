@@ -6,8 +6,14 @@ the same API names to avoid breaking existing imports.
 
 from app.primitives.wareki import (
     era_name as wareki_era_name,  # noqa: F401
+)
+from app.primitives.wareki import (
     numeric_parts as wareki_numeric_parts,  # noqa: F401
+)
+from app.primitives.wareki import (
     to_wareki,  # noqa: F401
+)
+from app.primitives.wareki import (
     with_spaces as wareki_with_spaces,  # noqa: F401
 )
 

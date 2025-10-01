@@ -162,7 +162,7 @@ def cli_check_all(repo_root: str, report_path: str | None = None) -> int:
     """Validate all geometry files. Returns process exit code (0 ok, 1 failure)."""
     errors: list[dict[str, str]] = []
     count = 0
-    for tkey, year, path in _iter_geometry_files(repo_root):
+    for _tkey, _year, path in _iter_geometry_files(repo_root):
         count += 1
         try:
             with open(path, encoding="utf-8") as f:

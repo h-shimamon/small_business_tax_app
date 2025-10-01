@@ -16,6 +16,7 @@ from app.company.services.upload_flow_service import (
     UploadFlowError,
     UploadFlowService,
     UploadValidationError,
+    build_upload_error_context,
 )
 from app.extensions import db
 from app.navigation import (
@@ -99,12 +100,15 @@ def _process_upload_submission(form, datatype, config):
     try:
         result = service.handle(file_storage)
     except UploadValidationError as exc:
+        session['upload_error_ctx'] = build_upload_error_context(getattr(exc, 'code', None), str(exc))
         flash(str(exc), 'danger')
         return redirect(request.url)
     except UploadFlowError as exc:
+        session['upload_error_ctx'] = build_upload_error_context(getattr(exc, 'code', None), str(exc))
         flash(f"エラーが発生しました: {exc}", 'danger')
         return redirect(request.url)
     except Exception as exc:
+        session['upload_error_ctx'] = build_upload_error_context('unknown_error', str(exc))
         flash(f"エラーが発生しました: {exc}", 'danger')
         return redirect(request.url)
 
@@ -148,11 +152,13 @@ def upload_data(datatype):
         'description': config['description'],
         'step_name': config['step_name'],
     }
+    error_context = session.pop('upload_error_ctx', None)
     return render_template(
         'company/upload_data.html',
         form=form,
         navigation_state=navigation_state,
         show_reset_link=show_reset_link,
+        error_context=error_context,
         **template_config,
     )
 

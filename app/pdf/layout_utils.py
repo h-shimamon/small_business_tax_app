@@ -88,12 +88,12 @@ def _validate_geometry(data: dict[str, Any], validate: bool) -> dict[str, Any]:
         _require_keys(data, ["cols"])
         cols = data.get("cols", {})
         if not isinstance(cols, dict) or not cols:
-            raise GeometryError("geometry cols must be a non-empty object")
+            raise GeometryError("geometry cols must be a non-empty object") from None
         for name, spec in cols.items():
             if not isinstance(spec, dict) or "x" not in spec:
-                raise GeometryError(f"geometry column '{name}' missing x")
+                raise GeometryError(f"geometry column '{name}' missing x") from None
         if "margins" in data and not isinstance(data["margins"], dict):
-            raise GeometryError("geometry 'margins' must be an object when present")
+            raise GeometryError("geometry 'margins' must be an object when present") from None
     return data
 
 class OverlaySpec(NamedTuple):
@@ -138,6 +138,13 @@ def load_geometry(
     required: bool = True,
     validate: bool = True,
 ) -> dict[str, Any]:
+    """Load geometry JSON following the unified fallback chain.
+
+    Resolves ``<repo_root>/resources/pdf_templates/<template_key>/<year>_geometry.json``
+    first, then ``default_geometry.json``, and finally the newest ``*_geometry.json``
+    under the same directory. When ``required`` is ``False`` the function returns
+    an empty dict instead of raising if no candidate is found.
+    """
     base_dir = _geometry_base_dir(repo_root, template_key)
     explicit_paths = _geometry_paths(base_dir, year)
     candidates = [p for p in explicit_paths if os.path.exists(p)]

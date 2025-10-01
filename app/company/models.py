@@ -1,4 +1,8 @@
-"""Companyモデル群の集約モジュール。"""
+"""Companyモデル群の集約モジュール。
+
+新しいモデルは `app/company/model_parts` に追加し、このモジュール経由で
+再エクスポートすること。`__all__` は model_parts の公開一覧と同期させる。
+"""
 from __future__ import annotations
 
 from . import model_parts as _model_parts

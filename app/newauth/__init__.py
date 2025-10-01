@@ -3,10 +3,12 @@ from flask import (
     Blueprint,
     Response,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
     url_for,
+    current_app,
 )
 from flask_login import login_user, logout_user
 
@@ -28,18 +30,35 @@ from .rate_limit import (
 newauth_bp = Blueprint("newauth", __name__)
 
 
+@newauth_bp.record_once
+def _log_newauth_mode(state) -> None:
+    try:
+        mode = _signup_mode_from_config(state.app.config)
+        state.app.logger.info("NewAuth signup mode=%s", mode)
+    except Exception:
+        state.app.logger.debug("Failed to resolve NewAuth signup mode", exc_info=True)
+
+
 @newauth_bp.get("/healthz")
 def healthz() -> Response:
-    return Response("OK", mimetype="text/plain")
+    mode = _signup_mode_from_config(current_app.config)
+    payload = {"status": "ok", "signup_mode": mode}
+    return jsonify(payload)
 
 
+
+def _signup_mode_from_config(config) -> str:
+    try:
+        flag = str(config.get("ENABLE_SIGNUP_EMAIL_FIRST", "")).lower()
+        return "email-first" if flag in ("1", "true", "yes", "on") else "legacy"
+    except Exception:
+        return "legacy"
 
 
 def _email_first_mode() -> bool:
     try:
         from flask import current_app as _app
-        flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST")).lower()
-        return flag in ("1", "true", "yes", "on")
+        return _signup_mode_from_config(_app.config) == "email-first"
     except Exception:
         return False
 

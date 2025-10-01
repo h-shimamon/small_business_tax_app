@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+from typing import Any
+
 from flask import has_request_context
 from flask_login import current_user
 from reportlab.pdfbase import pdfmetrics
@@ -14,8 +16,13 @@ from app.primitives import wareki as _w
 from app.primitives.dates import get_company_period, to_iso
 
 from .geom import get_row_metrics, merge_rects
+from .layout_utils import (
+    baseline0_from_center,
+    build_overlay,
+    load_geometry,
+    prepare_pdf_assets,
+)
 from .pdf_fill import TextSpec
-from .layout_utils import build_overlay, prepare_pdf_assets, baseline0_from_center
 
 
 def _string_width(text: str, font_name: str, font_size: float) -> float:
@@ -99,27 +106,13 @@ def _format_number(n: int | None) -> str:
         return ""
 
 
-def _load_geometry(repo_root: str, year: str):
-    """Load optional geometry constants from JSON; return dict or {} on failure.
-    Adds schema validation (rects/cols) with safe defaults; silently falls back on error.
-    """
-    import json
-    path = os.path.join(repo_root, f"resources/pdf_templates/beppyou_02/{year}_geometry.json")
+def _load_geometry(repo_root: str, year: str) -> dict[str, Any]:
+    """Optional overrides resolved via :func:`load_geometry`."""
     try:
-        with open(path, encoding='utf-8') as f:
-            data = json.load(f) or {}
-        # Try strict validation + defaults (rects-mode supported); ignore validation errors to keep behavior
-        try:
-            from . import geom_loader as _geom
-            data = _geom.validate_and_apply_defaults(data)
-        except Exception:
-            pass
-        return data
+        return load_geometry('beppyou_02', year, repo_root=repo_root, required=False, validate=True) or {}
     except Exception:
         return {}
 
-
- 
 
 
 def _collect_rows(company_id: int, limit: int = 12) -> list[dict]:
