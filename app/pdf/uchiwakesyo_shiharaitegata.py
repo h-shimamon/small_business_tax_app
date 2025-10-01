@@ -1,28 +1,36 @@
 from __future__ import annotations
 
-from typing import List, Tuple, Optional
-import os
+from typing import Any, NamedTuple
 
-from flask import has_request_context, request, current_app
+from flask import current_app, has_request_context, request
 from flask_login import current_user
 
-from app import db
 from app.company.models import Company, NotesPayable
-
-from .pdf_fill import overlay_pdf, TextSpec
-from .layout_utils import (
-    load_geometry,
-    baseline0_from_center,
-    center_from_baseline,
-    append_left,
-    append_right,
-)
-from .fonts import default_font_map, ensure_font_registered
-from .date_jp import wareki_numeric_parts
+from app.extensions import db
 from app.utils import format_number
 
+from .date_jp import wareki_numeric_parts
+from .layout_utils import (
+    append_left,
+    append_right,
+    baseline0_from_center,
+    build_overlay,
+    center_from_baseline,
+    prepare_pdf_assets,
+)
+from .pdf_fill import TextSpec
 
-def _format_currency(n: Optional[int]) -> str:
+
+class NotesLayout(NamedTuple):
+    row1_center: float
+    row_step: float
+    data_rows_per_page: int
+    sum_row_index: int
+    right_margin: float
+    columns: dict[str, tuple[float, float]]
+
+
+def _format_currency(n: int | None) -> str:
     return format_number(n)
 
 
@@ -37,125 +45,260 @@ def _wareki_ymd_no_era(value_any) -> str:
     return ""
 
 
-def generate_uchiwakesyo_shiharaitegata(company_id: Optional[int], year: str = "2025", *, output_path: str) -> str:
-    """
-    支払手形の内訳書 PDF オーバレイを生成して output_path に書き込み、そのパスを返す。
-    """
-    if company_id is None:
-        if not has_request_context():
-            raise RuntimeError("company_id is required outside a request context")
-        company = Company.query.filter_by(user_id=current_user.id).first_or_404()
-        company_id = company.id
+def _resolve_company_id(company_id: int | None) -> int:
+    if company_id is not None:
+        return company_id
+    if not has_request_context():
+        raise RuntimeError("company_id is required outside a request context")
+    company = Company.query.filter_by(user_id=current_user.id).first_or_404()
+    return company.id
 
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    base_pdf = os.path.join(repo_root, f"resources/pdf_forms/uchiwakesyo_shiharaitegata/{year}/source.pdf")
-    font_map = default_font_map(repo_root)
 
+def _maybe_debug_rect(
+    rectangles: list[tuple[int, float, float, float, float]],
+    *,
+    page: int,
+    center_y: float,
+    font_size: float,
+    row_index: int,
+) -> None:
+    if not has_request_context() or request.args.get('debug_y') != '1':
+        return
+    y_dbg = center_y - font_size / 2.0
+    rectangles.append((page, 50.0, y_dbg, 500.0, 0.6))
     try:
-        ensure_font_registered("NotoSansJP", font_map["NotoSansJP"])  # best-effort for width/align
+        current_app.logger.info(f"row_idx={row_index} y={y_dbg:.2f} size={font_size}")
     except Exception:
         pass
 
-    geom = load_geometry("uchiwakesyo_shiharaitegata", year, repo_root=repo_root, required=True, validate=True)
 
-    ROW1_CENTER = float(geom.get('row', {}).get('ROW1_CENTER', 770.9))
-    ROW_STEP = float(geom.get('row', {}).get('ROW_STEP', 28.3))
-    rows_per_page = int(geom.get('row', {}).get('DETAIL_ROWS_DATA', geom.get('row', {}).get('DETAIL_ROWS', 20)))
+def _column_spec(cols: dict[str, Any], name: str) -> tuple[float, float]:
+    col = cols.get(name, {})
+    return float(col.get('x', 0.0)), float(col.get('w', 0.0))
 
+
+def _page_count(total_rows: int, rows_per_page: int) -> int:
+    if total_rows <= 0:
+        return 1
+    return (total_rows + rows_per_page - 1) // rows_per_page
+
+
+def _notes_layout(geom: dict[str, Any]) -> NotesLayout:
+    row = geom.get('row', {})
+    detail_rows = int(row.get('DETAIL_ROWS', 20))
+    data_rows = int(row.get('DETAIL_ROWS_DATA', detail_rows))
     cols = geom.get('cols', {})
-
-    def col(name: str) -> Tuple[float, float]:
-        c = cols.get(name, {})
-        return float(c.get('x', 0.0)), float(c.get('w', 0.0))
-
-    vx0, vw0 = col('balance')
+    columns = {
+        'reg_no': _column_spec(cols, 'reg_no'),
+        'partner': _column_spec(cols, 'partner'),
+        'issue_date': _column_spec(cols, 'issue_date'),
+        'due_date': _column_spec(cols, 'due_date'),
+        'payer_bank': _column_spec(cols, 'payer_bank'),
+        'payer_branch': _column_spec(cols, 'payer_branch'),
+        'balance': _column_spec(cols, 'balance'),
+        'remarks': _column_spec(cols, 'remarks'),
+    }
     right_margin = float(geom.get('margins', {}).get('right_margin', 0.0))
+    return NotesLayout(
+        row1_center=float(row.get('ROW1_CENTER', 770.9)),
+        row_step=float(row.get('ROW_STEP', 28.3)),
+        data_rows_per_page=data_rows,
+        sum_row_index=data_rows,
+        right_margin=right_margin,
+        columns=columns,
+    )
 
-    texts: List[TextSpec] = []
-    rectangles: List[Tuple[int, float, float, float, float]] = []
 
-    items: List[NotesPayable] = (
+def _notes_fonts() -> dict[str, float]:
+    return {
+        'reg_no': 7.5,
+        'partner': 7.5,
+        'payer_bank': 6.5,
+        'payer_branch': 6.5,
+        'issue_date': 8.5,
+        'due_date': 8.5,
+        'balance': 13.0,
+        'remarks': 7.0,
+    }
+
+
+def _collect_notes_payable(company_id: int) -> list[NotesPayable]:
+    return (
         db.session.query(NotesPayable)
         .filter_by(company_id=company_id)
         .order_by(NotesPayable.id.asc())
         .all()
     )
 
-    total = len(items)
-    pages = (total + rows_per_page - 1) // rows_per_page if total > 0 else 1
 
-    for page_index in range(pages):
-        start = page_index * rows_per_page
-        end = min(start + rows_per_page, total)
-        chunk = items[start:end]
+def _row_center(
+    row_index: int,
+    baseline0: float | None,
+    *,
+    layout: NotesLayout,
+    balance_font: float,
+) -> tuple[float, float]:
+    natural_center = layout.row1_center - layout.row_step * row_index
+    if baseline0 is None:
+        baseline0 = baseline0_from_center(natural_center, balance_font)
+        return natural_center, baseline0
+    center_y = center_from_baseline(baseline0, layout.row_step, row_index, balance_font)
+    return center_y, baseline0
 
-        baseline0 = None
 
-        for i, it in enumerate(chunk):
-            row_idx = i
-            natural_center = ROW1_CENTER - ROW_STEP * row_idx
-            fs = {
-                'payee': 7.5,
-                'payer_bank': 6.5,
-                'payer_branch': 6.5,
-                'issue_date': 8.5,
-                'due_date': 8.5,
-                'balance':   13.0,
-                'remarks': 7.0,
-            }
-            if row_idx == 0:
-                center_y = natural_center
-                baseline0 = baseline0_from_center(center_y, fs['balance'])
-            else:
-                center_y = center_from_baseline((baseline0 if baseline0 is not None else baseline0_from_center(ROW1_CENTER, fs['balance'])), ROW_STEP, row_idx, fs['balance'])
+def _append_note_row(
+    texts: list[TextSpec],
+    rectangles: list[tuple[int, float, float, float, float]],
+    *,
+    page_index: int,
+    row_index: int,
+    center_y: float,
+    item: NotesPayable,
+    layout: NotesLayout,
+    fonts: dict[str, float],
+) -> None:
+    def left(name: str, text: str, font_key: str) -> None:
+        x, w = layout.columns.get(name, (0.0, 0.0))
+        append_left(
+            texts,
+            page=page_index,
+            x=x,
+            w=w,
+            center_y=center_y,
+            text=text,
+            font_name="NotoSansJP",
+            font_size=fonts[font_key],
+        )
 
-            def left(page: int, x: float, w: float, text: str, size: float):
-                append_left(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size)
+    def right(name: str, text: str, font_key: str) -> None:
+        x, w = layout.columns.get(name, (0.0, 0.0))
+        append_right(
+            texts,
+            page=page_index,
+            x=x,
+            w=w,
+            center_y=center_y,
+            text=text,
+            font_name="NotoSansJP",
+            font_size=fonts[font_key],
+            right_margin=layout.right_margin,
+        )
 
-            def right(page: int, x: float, w: float, text: str, size: float):
-                append_right(texts, page=page, x=x, w=w, center_y=center_y, text=text, font_name="NotoSansJP", font_size=size, right_margin=right_margin)
-                try:
-                    if has_request_context() and request.args.get('debug_y') == '1':
-                        y_dbg = center_y - size / 2.0
-                        rectangles.append((page, 50.0, y_dbg, 500.0, 0.6))
-                        current_app.logger.info(f"row_idx={row_idx} y={y_dbg:.2f} size={size}")
-                except Exception:
-                    pass
-
-            p = page_index
-            rx, rw = col('reg_no')
-            left(p, rx, rw, (getattr(it, 'registration_number', '') or ''), fs['payee'])
-            px, pw = col('partner')  # 支払先
-            left(p, px, pw, (it.payee or ''), fs['payee'])
-            idx, idw = col('issue_date')
-            left(p, idx, idw, _wareki_ymd_no_era(it.issue_date), fs['issue_date'])
-            ddx, ddw = col('due_date')
-            left(p, ddx, ddw, _wareki_ymd_no_era(it.due_date), fs['due_date'])
-            bkx, bkw = col('payer_bank')
-            left(p, bkx, bkw, (getattr(it, 'payer_bank', '') or ''), fs['payer_bank'])
-            brx, brw = col('payer_branch')
-            left(p, brx, brw, (getattr(it, 'payer_branch', '') or ''), fs['payer_branch'])
-            bx, bw = col('balance')
-            right(p, bx, bw, _format_currency(it.amount), fs['balance'])
-            mx, mw = col('remarks')
-            left(p, mx, mw, (it.remarks or ''), fs['remarks'])
-
-        # Page total (24th row): sum of amounts in this page
-        page_sum = sum((getattr(it, 'amount', 0) or 0) for it in chunk)
-        fs_balance = 13.0
-        # Compute center_y for row index = rows_per_page (0..rows_per_page-1 are details; rows_per_page is total row)
-        base_b0 = baseline0 if baseline0 is not None else baseline0_from_center(ROW1_CENTER, fs_balance)
-        sum_center_y = center_from_baseline(base_b0, ROW_STEP, rows_per_page, fs_balance)
-        # Append right-aligned sum at balance column right edge
-        append_right(texts, page=p, x=vx0, w=vw0, center_y=sum_center_y, text=_format_currency(page_sum), font_name="NotoSansJP", font_size=fs_balance, right_margin=right_margin)
-
-    overlay_pdf(
-        base_pdf_path=base_pdf,
-        output_pdf_path=output_path,
-        texts=texts,
-        grids=[],
-        rectangles=rectangles,
-        font_registrations={"NotoSansJP": font_map["NotoSansJP"]},
+    left('reg_no', getattr(item, 'registration_number', '') or '', 'reg_no')
+    left('partner', item.payee or '', 'partner')
+    left('issue_date', _wareki_ymd_no_era(getattr(item, 'issue_date', None)), 'issue_date')
+    left('due_date', _wareki_ymd_no_era(getattr(item, 'due_date', None)), 'due_date')
+    left('payer_bank', getattr(item, 'payer_bank', '') or '', 'payer_bank')
+    left('payer_branch', getattr(item, 'payer_branch', '') or '', 'payer_branch')
+    right('balance', _format_currency(item.amount), 'balance')
+    left('remarks', item.remarks or '', 'remarks')
+    _maybe_debug_rect(
+        rectangles,
+        page=page_index,
+        center_y=center_y,
+        font_size=fonts['balance'],
+        row_index=row_index,
     )
 
-    return output_path
+
+def _append_page_total(
+    texts: list[TextSpec],
+    *,
+    page_index: int,
+    chunk: list[NotesPayable],
+    baseline0: float | None,
+    layout: NotesLayout,
+    fonts: dict[str, float],
+) -> None:
+    page_sum = sum((getattr(item, 'amount', 0) or 0) for item in chunk)
+    baseline_ref = baseline0 if baseline0 is not None else baseline0_from_center(layout.row1_center, fonts['balance'])
+    sum_center_y = center_from_baseline(
+        baseline_ref,
+        layout.row_step,
+        layout.sum_row_index,
+        fonts['balance'],
+    )
+    balance_x, balance_w = layout.columns.get('balance', (0.0, 0.0))
+    append_right(
+        texts,
+        page=page_index,
+        x=balance_x,
+        w=balance_w,
+        center_y=sum_center_y,
+        text=_format_currency(page_sum),
+        font_name="NotoSansJP",
+        font_size=fonts['balance'],
+        right_margin=layout.right_margin,
+    )
+
+
+def _render_notes_payable(
+    texts: list[TextSpec],
+    rectangles: list[tuple[int, float, float, float, float]],
+    items: list[NotesPayable],
+    layout: NotesLayout,
+) -> None:
+    fonts = _notes_fonts()
+    pages = _page_count(len(items), layout.data_rows_per_page)
+    for page_index in range(pages):
+        start = page_index * layout.data_rows_per_page
+        end = start + layout.data_rows_per_page
+        chunk = items[start:end]
+        baseline0: float | None = None
+        for row_index, item in enumerate(chunk):
+            center_y, baseline0 = _row_center(
+                row_index,
+                baseline0,
+                layout=layout,
+                balance_font=fonts['balance'],
+            )
+            _append_note_row(
+                texts,
+                rectangles,
+                page_index=page_index,
+                row_index=row_index,
+                center_y=center_y,
+                item=item,
+                layout=layout,
+                fonts=fonts,
+            )
+        _append_page_total(
+            texts,
+            page_index=page_index,
+            chunk=chunk,
+            baseline0=baseline0,
+            layout=layout,
+            fonts=fonts,
+        )
+
+
+def generate_uchiwakesyo_shiharaitegata(
+    company_id: int | None,
+    year: str = "2025",
+    *,
+    output_path: str,
+) -> str:
+    """
+    支払手形の内訳書 PDF オーバレイを生成して output_path に書き込み、そのパスを返す。
+    """
+    company_id = _resolve_company_id(company_id)
+    assets = prepare_pdf_assets(
+        form_subdir="uchiwakesyo_shiharaitegata",
+        geometry_key="uchiwakesyo_shiharaitegata",
+        year=year,
+    )
+
+    texts: list[TextSpec] = []
+    rectangles: list[tuple[int, float, float, float, float]] = []
+
+    items = _collect_notes_payable(company_id)
+    layout = _notes_layout(assets.geometry)
+    _render_notes_payable(texts, rectangles, items, layout)
+
+    return build_overlay(
+        base_pdf_path=assets.base_pdf,
+        output_pdf_path=output_path,
+        texts=texts,
+        rectangles=rectangles,
+        font_registrations={"NotoSansJP": assets.font_map["NotoSansJP"]},
+    )
