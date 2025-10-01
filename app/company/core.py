@@ -1,14 +1,17 @@
 # app/company/core.py
-from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_required, current_user
+from flask import flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+
 from app.company import company_bp
 from app.company.forms import CompanyForm, DeclarationForm
-from app.navigation import get_navigation_state, mark_step_as_completed
-from app.company.services.declaration_service import DeclarationService
-from .auth import company_required
 from app.company.services.company_service import CompanyService
-from app.primitives.dates import get_company_period, company_closing_date
+from app.company.services.declaration_service import DeclarationService
 from app.models_utils.date_readers import ensure_date
+from app.navigation import get_navigation_state, mark_step_as_completed
+from app.primitives.dates import company_closing_date, get_company_period
+
+from .auth import company_required
+
 
 @company_bp.route('/info', methods=['GET', 'POST'])
 @login_required
@@ -56,7 +59,7 @@ def declaration(company):
     else:
         form.accounting_period_end.data = ensure_date(form.accounting_period_end.data)
 
-    # Ensure closing_date (String in DB) is converted to date for WTForms DateField
+    # Ensure closing_date is converted to date for WTForms DateField
     close_d = company_closing_date(company)
     if close_d:
         form.closing_date.data = close_d

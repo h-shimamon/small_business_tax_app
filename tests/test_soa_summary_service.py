@@ -1,9 +1,9 @@
 # tests/test_soa_summary_service.py
 from datetime import date
 
-from app import db
-from app.company.models import AccountingData, Company, AccountTitleMaster, Borrowing
+from app.company.models import AccountingData, AccountTitleMaster, Borrowing, Company
 from app.company.services.soa_summary_service import SoASummaryService
+from app.extensions import db
 
 
 def test_soa_borrowings_difference_and_skip(app, init_database):

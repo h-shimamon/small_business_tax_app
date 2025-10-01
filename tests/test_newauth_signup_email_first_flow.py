@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, timezone
 import hashlib
+from datetime import datetime, timedelta, timezone
 
 from app import create_app, db
 from app.company.models import User

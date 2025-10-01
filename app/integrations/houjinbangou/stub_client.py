@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
 from .interface import HojinClient, HojinRecord
 
 
@@ -10,7 +8,7 @@ class StubHojinClient(HojinClient):
     開発用のインメモリ・スタブ。HTTPなどの外部通信は行わない。
     """
 
-    _FIXTURES: Dict[str, HojinRecord] = {
+    _FIXTURES: dict[str, HojinRecord] = {
         "0000000000000": {
             "corporate_number": "0000000000000",
             "name": "サンプル株式会社",
@@ -49,16 +47,16 @@ class StubHojinClient(HojinClient):
     def _norm(self, s: str) -> str:
         return "".join(ch for ch in (s or "") if ch.isalnum())
 
-    def get_by_number(self, number: str) -> Optional[HojinRecord]:
+    def get_by_number(self, number: str) -> HojinRecord | None:
         num = self._norm(number)
         return self._FIXTURES.get(num)
 
-    def search_by_name(self, name: str, *, prefecture: Optional[str] = None) -> List[HojinRecord]:
+    def search_by_name(self, name: str, *, prefecture: str | None = None) -> list[HojinRecord]:
         q = (name or "").strip()
         if not q:
             return []
         pref = (prefecture or "").strip()
-        results: List[HojinRecord] = []
+        results: list[HojinRecord] = []
         for rec in self._FIXTURES.values():
             if q in rec.get("name", "") or q in rec.get("name_kana", ""):
                 if pref and pref != rec.get("prefecture"):

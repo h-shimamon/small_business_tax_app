@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import datetime as _dt
-from typing import Optional
-
 from sqlalchemy import event
 
 
-def _to_date(value) -> Optional[_dt.date]:
+def _to_date(value) -> _dt.date | None:
     if value is None or value == "":
         return None
     if isinstance(value, _dt.date):
@@ -20,7 +18,7 @@ def _to_date(value) -> Optional[_dt.date]:
         return None
 
 
-def _to_iso(value: Optional[_dt.date]) -> Optional[str]:
+def _to_iso(value: _dt.date | None) -> str | None:
     if value is None:
         return None
     if isinstance(value, _dt.datetime):

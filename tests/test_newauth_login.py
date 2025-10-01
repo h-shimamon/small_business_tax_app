@@ -18,7 +18,7 @@ def _create_user(email="user@example.com", password="password1234"):
     u.set_password(password)
     # 新認証フラグを考慮
     try:
-        setattr(u, 'is_email_verified', True)
+        u.is_email_verified = True
     except Exception:
         pass
     db.session.add(u)

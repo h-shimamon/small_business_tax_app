@@ -1,11 +1,14 @@
 # app/company/offices.py
-from flask import render_template, request, redirect, url_for, flash
+from flask import flash, redirect, render_template, request, url_for
+
 from app.company import company_bp
-from app.company.models import Office
 from app.company.forms import OfficeForm
+from app.company.models import Office
+from app.extensions import db
 from app.navigation import get_navigation_state
-from app import db
+
 from .auth import company_required
+
 
 @company_bp.route('/offices')
 @company_required

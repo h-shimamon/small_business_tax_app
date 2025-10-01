@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Callable, Optional
+from typing import Callable
 
 from .engine import calculate_tax
 from .models import TaxCalculation, TaxInput
@@ -19,7 +19,7 @@ class TaxComputationContext:
 class TaxComputationPipeline:
     """会計データから税額を算出するための薄いパイプライン。"""
 
-    def __init__(self, default_master_resolver: Callable[[], Optional[object]]) -> None:
+    def __init__(self, default_master_resolver: Callable[[], object | None]) -> None:
         if not callable(default_master_resolver):
             raise ValueError('default_master_resolver must be callable')
         self._default_master_resolver = default_master_resolver

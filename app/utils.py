@@ -3,6 +3,7 @@ from functools import lru_cache
 
 from app.services.master_data_loader import load_master_dataframe
 
+
 def format_currency(value):
     """数値を日本円の通貨書式にフォーマットする。"""
     if value is None:
@@ -17,9 +18,9 @@ def _load_master_frames():
         pl_master_df = load_master_dataframe('resources/masters/profit_and_loss.csv', index_column='勘定科目名')
         return bs_master_df, pl_master_df
     except FileNotFoundError as e:
-        raise RuntimeError(f"マスターファイルが見つかりません: {e}. アプリケーションを起動できません。")
+        raise RuntimeError(f"マスターファイルが見つかりません: {e}. アプリケーションを起動できません。") from e
     except Exception as e:
-        raise RuntimeError(f"マスターファイルの読み込み中にエラーが発生しました: {e}")
+        raise RuntimeError(f"マスターファイルの読み込み中にエラーが発生しました: {e}") from e
 
 
 def load_master_data():

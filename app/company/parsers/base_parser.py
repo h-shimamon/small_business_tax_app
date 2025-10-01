@@ -1,8 +1,10 @@
 # app/company/parsers/base_parser.py
-import pandas as pd
 import csv
 import io
 from abc import ABC, abstractmethod
+
+import pandas as pd
+
 
 class BaseParser(ABC):
     """
@@ -86,4 +88,4 @@ class BaseParser(ABC):
                 df.columns = [str(col).strip() for col in df.columns]
             return df
         except Exception as e:
-            raise Exception(f'データ読み込みエラー: {e}')
+            raise Exception(f'データ読み込みエラー: {e}') from e

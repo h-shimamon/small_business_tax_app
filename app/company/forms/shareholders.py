@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, RadioField, BooleanField, IntegerField
+from wtforms import (
+    BooleanField,
+    IntegerField,
+    RadioField,
+    SelectField,
+    StringField,
+    SubmitField,
+)
 from wtforms.validators import DataRequired, Length, Optional
 
 from .base_fields import AddressMixin

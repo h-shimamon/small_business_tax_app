@@ -1,27 +1,24 @@
 from __future__ import annotations
 
-from typing import List, Tuple, Optional
 import os
-
 from flask import has_request_context
 from flask_login import current_user
 
-from app import db
 from app.company.models import Company, Deposit
-
-from .pdf_fill import overlay_pdf, TextSpec
-from .layout_utils import (
-    load_geometry,
-    center_from_row1,
-    append_left,
-    append_right,
-)
-from .fonts import default_font_map, ensure_font_registered
+from app.extensions import db
 from app.utils import format_number
 
+from .fonts import default_font_map, ensure_font_registered
+from .layout_utils import (
+    append_left,
+    append_right,
+    center_from_row1,
+    load_geometry,
+)
+from .pdf_fill import TextSpec, overlay_pdf
 
 
-def _format_currency(n: Optional[int]) -> str:
+def _format_currency(n: int | None) -> str:
     return format_number(n)
 
 
@@ -31,7 +28,7 @@ def _load_geometry(repo_root: str, year: str):
     return _lg("uchiwakesyo_yocyokin", year, repo_root=repo_root, required=True, validate=True)
 
 
-def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025", *, output_path: str) -> str:
+def generate_uchiwakesyo_yocyokin(company_id: int | None, year: str = "2025", *, output_path: str) -> str:
     """
     Generate '預貯金等の内訳書' PDF overlay for the given company.
     Writes to output_path and returns it.
@@ -69,14 +66,14 @@ def generate_uchiwakesyo_yocyokin(company_id: Optional[int], year: str = "2025",
         'remarks':   {'x': 535.0, 'w': 60.0},   # 摘要
     })
 
-    def col(name: str) -> Tuple[float, float]:
+    def col(name: str) -> tuple[float, float]:
         c = cols.get(name, {})
         return float(c.get('x', 0.0)), float(c.get('w', 0.0))
 
-    texts: List[TextSpec] = []
+    texts: list[TextSpec] = []
 
     # Fetch items
-    items: List[Deposit] = (
+    items: list[Deposit] = (
         db.session.query(Deposit)
         .filter_by(company_id=company_id)
         .order_by(Deposit.id.asc())

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from app import db
 from app.company.models import Company, Shareholder
+from app.extensions import db
 from app.pdf.beppyou_02 import generate_beppyou_02
 
 

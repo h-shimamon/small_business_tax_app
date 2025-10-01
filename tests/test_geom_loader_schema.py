@@ -1,6 +1,6 @@
 import pytest
 
-from app.pdf.geom_loader import validate_and_apply_defaults, GeometrySchemaError
+from app.pdf.geom_loader import GeometrySchemaError, validate_and_apply_defaults
 
 
 def test_cols_missing_w_raises():

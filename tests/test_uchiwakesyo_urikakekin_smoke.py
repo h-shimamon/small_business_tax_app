@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
 from app.company.models import Company
+from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
 
 
 def test_uchiwakesyo_urikakekin_generate_smoke(app, init_database):

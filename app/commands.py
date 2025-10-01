@@ -1,9 +1,11 @@
 # app/commands.py
 import click
 from flask.cli import with_appcontext
-from app.company.services.master_data_service import MasterDataService
-from app import db
+
 from app.company.models import User
+from app.company.services.master_data_service import MasterDataService
+from app.extensions import db
+
 
 def register_commands(app):
     """アプリケーションにCLIコマンドを登録する"""
@@ -35,6 +37,7 @@ def init_db_command():
     click.echo("データベースの初期データ投入を開始します...")
     try:
         from datetime import date
+
         from app.company.models import Company
 
         # 1) 管理者ユーザーの作成（存在しない場合のみ）
@@ -168,15 +171,7 @@ def _emit_pair_report(title, metrics):
     click.echo(f"  mismatch:      {metrics['mismatch']}")
 
 
-@click.command('report-date-health')
-@with_appcontext
-@click.option('--format', 'fmt', type=click.Choice(['text', 'json', 'csv']), default='text', help='出力形式（text/json/csv）')
-def report_date_health_command(fmt):
-    """Date/String(10) 同期の健全性レポートを出力します（UI非変更）。"""
-    from app.company.models import Company, NotesReceivable
-    if fmt == 'text':
-        click.echo("Date/String(10) 健全性レポート")
-    # Company
+def _collect_company_metrics(Company):
     try:
         company_rows = [
             {
@@ -189,15 +184,17 @@ def report_date_health_command(fmt):
             }
             for c in Company.query.all()
         ]
-        m_aps = _pair_metrics(company_rows, 'accounting_period_start', 'accounting_period_start_date')
-        m_ape = _pair_metrics(company_rows, 'accounting_period_end', 'accounting_period_end_date')
-        m_clo = _pair_metrics(company_rows, 'closing_date', 'closing_date_date')
-    except Exception as e:
-        if fmt == 'text':
-            click.echo(f"Company集計でエラー: {e}")
-        m_aps = m_ape = m_clo = None
+        return (
+            _pair_metrics(company_rows, 'accounting_period_start', 'accounting_period_start_date'),
+            _pair_metrics(company_rows, 'accounting_period_end', 'accounting_period_end_date'),
+            _pair_metrics(company_rows, 'closing_date', 'closing_date_date'),
+            None,
+        )
+    except Exception as exc:
+        return (None, None, None, exc)
 
-    # NotesReceivable
+
+def _collect_notes_receivable_metrics(NotesReceivable):
     try:
         nr_rows = [
             {
@@ -208,14 +205,61 @@ def report_date_health_command(fmt):
             }
             for n in NotesReceivable.query.all()
         ]
-        m_nri = _pair_metrics(nr_rows, 'issue_date', 'issue_date_date')
-        m_nrd = _pair_metrics(nr_rows, 'due_date', 'due_date_date')
-    except Exception as e:
-        if fmt == 'text':
-            click.echo(f"NotesReceivable集計でエラー: {e}")
-        m_nri = m_nrd = None
+        return (
+            _pair_metrics(nr_rows, 'issue_date', 'issue_date_date'),
+            _pair_metrics(nr_rows, 'due_date', 'due_date_date'),
+            None,
+        )
+    except Exception as exc:
+        return (None, None, exc)
 
-    # Output
+
+def _emit_sections(fmt, sections):
+    if fmt == 'text':
+        for title, metrics in sections:
+            if metrics is not None:
+                _emit_pair_report(title, metrics)
+        click.echo("\n完了。必要ならCSV/JSON出力も追加可能です。")
+        return
+    if fmt == 'json':
+        import json
+
+        out = {title: metrics for title, metrics in sections if metrics is not None}
+        click.echo(json.dumps(out, ensure_ascii=False, indent=2))
+        return
+    if fmt == 'csv':
+        headers = ['section', 'total', 'str_null', 'date_null', 'both_set', 'str_only', 'date_only', 'mismatch']
+        click.echo(','.join(headers))
+
+        def _row(title, metrics):
+            return (
+                f"{title},{metrics['total']},{metrics['str_null']},{metrics['date_null']},"
+                f"{metrics['both_set']},{metrics['str_only']},{metrics['date_only']},{metrics['mismatch']}"
+            )
+
+        for title, metrics in sections:
+            if metrics is not None:
+                click.echo(_row(title, metrics))
+
+
+@click.command('report-date-health')
+@with_appcontext
+@click.option('--format', 'fmt', type=click.Choice(['text', 'json', 'csv']), default='text', help='出力形式（text/json/csv）')
+def report_date_health_command(fmt):
+    """Date/String(10) 同期の健全性レポートを出力します（UI非変更）。"""
+    from app.company.models import Company, NotesReceivable
+
+    if fmt == 'text':
+        click.echo("Date/String(10) 健全性レポート")
+
+    m_aps, m_ape, m_clo, company_err = _collect_company_metrics(Company)
+    if company_err and fmt == 'text':
+        click.echo(f"Company集計でエラー: {company_err}")
+
+    m_nri, m_nrd, nr_err = _collect_notes_receivable_metrics(NotesReceivable)
+    if nr_err and fmt == 'text':
+        click.echo(f"NotesReceivable集計でエラー: {nr_err}")
+
     sections = [
         ('Company.accounting_period_start', m_aps),
         ('Company.accounting_period_end', m_ape),
@@ -223,159 +267,160 @@ def report_date_health_command(fmt):
         ('NotesReceivable.issue_date', m_nri),
         ('NotesReceivable.due_date', m_nrd),
     ]
-    if fmt == 'text':
-        for title, metrics in sections:
-            if metrics is not None:
-                _emit_pair_report(title, metrics)
-        click.echo("\n完了。必要ならCSV/JSON出力も追加可能です。")
-    elif fmt == 'json':
-        import json
-        out = {title: metrics for title, metrics in sections if metrics is not None}
-        click.echo(json.dumps(out, ensure_ascii=False, indent=2))
-    elif fmt == 'csv':
-        headers = ['section', 'total', 'str_null', 'date_null', 'both_set', 'str_only', 'date_only', 'mismatch']
-        click.echo(','.join(headers))
-        def _row(title, m):
-            return f"{title},{m['total']},{m['str_null']},{m['date_null']},{m['both_set']},{m['str_only']},{m['date_only']},{m['mismatch']}"
-        for title, m in sections:
-            if m is not None:
-                click.echo(_row(title, m))
 
+    _emit_sections(fmt, sections)
+
+
+
+
+
+
+def _ensure_admin_user() -> tuple[User, str]:
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        admin_user = User(username='admin', email='admin@example.com')
+        admin_user.set_password('password')
+        db.session.add(admin_user)
+        db.session.commit()
+        return admin_user, "[dev-bootstrap] 管理者ユーザーを作成しました（admin/password）。"
+    return admin_user, "[dev-bootstrap] 管理者ユーザーは既に存在します。"
+
+
+def _ensure_sample_company(admin_user, Company, date):
+    company = Company.query.filter_by(user_id=admin_user.id).first()
+    if not company:
+        company = Company(
+            user_id=admin_user.id,
+            corporate_number="1111111111111",
+            company_name="（ダミー）株式会社 Gemini",
+            company_name_kana="ダミー カブシキガイシャジェミニ",
+            zip_code="1066126",
+            prefecture="東京都",
+            city="港区",
+            address="六本木6-10-1 六本木ヒルズ森タワー",
+            phone_number="03-6384-9000",
+            establishment_date=date(2023, 1, 1),
+        )
+        db.session.add(company)
+        db.session.commit()
+        return company, "[dev-bootstrap] サンプル会社を作成しました。"
+    return company, "[dev-bootstrap] サンプル会社は既に存在します。"
+
+
+def _sync_master_data() -> str:
+    service = MasterDataService()
+    service.check_and_sync()
+    return "[dev-bootstrap] マスターデータの同期を確認しました。"
+
+
+def _initialize_company_defaults(company, date) -> str:
+    updated = False
+    if not (company.accounting_period_start or company.accounting_period_start_date):
+        company.accounting_period_start = '2025-04-01'
+        company.accounting_period_start_date = date(2025, 4, 1)
+        updated = True
+    if not (company.accounting_period_end or company.accounting_period_end_date):
+        company.accounting_period_end = '2026-03-31'
+        company.accounting_period_end_date = date(2026, 3, 31)
+        updated = True
+    if company.term_number is None:
+        company.term_number = 1
+        updated = True
+    if not (company.closing_date or company.closing_date_date):
+        company.closing_date = '2026-03-31'
+        company.closing_date_date = date(2026, 3, 31)
+        updated = True
+    if not company.declaration_type:
+        company.declaration_type = '確定'
+        updated = True
+    if not company.tax_system:
+        company.tax_system = '一般'
+        updated = True
+    if updated:
+        db.session.commit()
+        return "[dev-bootstrap] 基本情報/申告情報を初期化しました。"
+    return "[dev-bootstrap] 基本情報/申告情報は既に設定済みです。"
+
+
+def _ensure_shareholders(company, Shareholder, date) -> str:
+    try:
+        sh_count = Shareholder.query.filter_by(company_id=company.id).count()
+    except Exception:
+        sh_count = 0
+    if sh_count != 0:
+        return "[dev-bootstrap] 株主/社員情報は既に存在します。"
+    main = Shareholder(
+        company_id=company.id,
+        last_name='山田',
+        entity_type='individual',
+        joined_date=date(2023, 1, 1),
+        zip_code='1066126',
+        prefecture_city='東京都港区',
+        address='六本木6-10-1',
+        shares_held=600,
+        voting_rights=600,
+    )
+    db.session.add(main)
+    db.session.flush()
+    child = Shareholder(
+        company_id=company.id,
+        parent_id=main.id,
+        last_name='山田 太郎',
+        entity_type='individual',
+        zip_code='1066126',
+        prefecture_city='東京都港区',
+        address='六本木6-10-1',
+        shares_held=400,
+        voting_rights=400,
+    )
+    db.session.add(child)
+    db.session.commit()
+    return "[dev-bootstrap] 株主/社員情報を作成しました（主1＋関連1）。"
+
+
+def _ensure_office(company, Office, date) -> str:
+    try:
+        off_count = Office.query.filter_by(company_id=company.id).count()
+    except Exception:
+        off_count = 0
+    if off_count != 0:
+        return "[dev-bootstrap] 事業所は既に存在します。"
+    office = Office(
+        company_id=company.id,
+        name='本店',
+        zip_code='1066126',
+        prefecture='東京都',
+        municipality='港区',
+        address='六本木6-10-1',
+        phone_number='03-6384-9000',
+        opening_date=date(2023, 1, 1),
+        employee_count=10,
+    )
+    db.session.add(office)
+    db.session.commit()
+    return "[dev-bootstrap] 事業所を1件作成しました。"
 
 @click.command('dev-bootstrap')
 @with_appcontext
+
 def dev_bootstrap_command():
-    """開発用の安全な初期化: admin/password とサンプル会社、マスター同期を冪等に実施。
-    さらに 基本情報/申告情報/株主・社員/事業所 のダミーデータを必要に応じて投入します（UI変更なし）。"""
+    """開発用の安全な初期化を冪等に実行。"""
     click.echo("[dev-bootstrap] 開発用初期化を開始します…")
     try:
         from datetime import date
-        from app.company.models import Company, Shareholder, Office
 
-        # admin作成（なければ）
-        admin_user = User.query.filter_by(username='admin').first()
-        if not admin_user:
-            admin_user = User(username='admin', email='admin@example.com')
-            admin_user.set_password('password')
-            db.session.add(admin_user)
-            db.session.commit()
-            click.echo("[dev-bootstrap] 管理者ユーザーを作成しました（admin/password）。")
-        else:
-            click.echo("[dev-bootstrap] 管理者ユーザーは既に存在します。")
+        from app.company.models import Company, Office, Shareholder
 
-        # 会社作成（紐付け無ければ）
-        company = Company.query.filter_by(user_id=admin_user.id).first()
-        if not company:
-            company = Company(
-                user_id=admin_user.id,
-                corporate_number="1111111111111",
-                company_name="（ダミー）株式会社 Gemini",
-                company_name_kana="ダミー カブシキガイシャジェミニ",
-                zip_code="1066126",
-                prefecture="東京都",
-                city="港区",
-                address="六本木6-10-1 六本木ヒルズ森タワー",
-                phone_number="03-6384-9000",
-                establishment_date=date(2023, 1, 1),
-            )
-            db.session.add(company)
-            db.session.commit()
-            click.echo("[dev-bootstrap] サンプル会社を作成しました。")
-        else:
-            click.echo("[dev-bootstrap] サンプル会社は既に存在します。")
+        admin_user, admin_msg = _ensure_admin_user()
+        click.echo(admin_msg)
 
-        # マスター同期
-        service = MasterDataService()
-        service.check_and_sync()
-        click.echo("[dev-bootstrap] マスターデータの同期を確認しました。")
+        company, company_msg = _ensure_sample_company(admin_user, Company, date)
+        click.echo(company_msg)
 
-        # --- 基本情報/申告情報（Companyの項目）を安全に初期化（未設定のみ） ---
-        updated_company = False
-        if not (company.accounting_period_start or company.accounting_period_start_date):
-            company.accounting_period_start = '2025-04-01'
-            company.accounting_period_start_date = date(2025, 4, 1)
-            updated_company = True
-        if not (company.accounting_period_end or company.accounting_period_end_date):
-            company.accounting_period_end = '2026-03-31'
-            company.accounting_period_end_date = date(2026, 3, 31)
-            updated_company = True
-        if company.term_number is None:
-            company.term_number = 1
-            updated_company = True
-        if not (company.closing_date or company.closing_date_date):
-            company.closing_date = '2026-03-31'
-            company.closing_date_date = date(2026, 3, 31)
-            updated_company = True
-        if not company.declaration_type:
-            company.declaration_type = '確定'
-            updated_company = True
-        if not company.tax_system:
-            company.tax_system = '一般'
-            updated_company = True
-        if updated_company:
-            db.session.commit()
-            click.echo("[dev-bootstrap] 基本情報/申告情報を初期化しました。")
-        else:
-            click.echo("[dev-bootstrap] 基本情報/申告情報は既に設定済みです。")
-
-        # --- 株主/社員（主1＋関連1）を冪等投入（未登録時のみ） ---
-        try:
-            sh_count = Shareholder.query.filter_by(company_id=company.id).count()
-        except Exception:
-            sh_count = 0
-        if sh_count == 0:
-            main = Shareholder(
-                company_id=company.id,
-                last_name='山田',
-                entity_type='individual',
-                joined_date=date(2023, 1, 1),
-                zip_code='1066126',
-                prefecture_city='東京都港区',
-                address='六本木6-10-1',
-                shares_held=600,
-                voting_rights=600,
-            )
-            db.session.add(main)
-            db.session.flush()  # 子レコード用にIDを取得
-            child = Shareholder(
-                company_id=company.id,
-                parent_id=main.id,
-                last_name='山田 太郎',
-                entity_type='individual',
-                zip_code='1066126',
-                prefecture_city='東京都港区',
-                address='六本木6-10-1',
-                shares_held=400,
-                voting_rights=400,
-            )
-            db.session.add(child)
-            db.session.commit()
-            click.echo("[dev-bootstrap] 株主/社員情報を作成しました（主1＋関連1）。")
-        else:
-            click.echo("[dev-bootstrap] 株主/社員情報は既に存在します。")
-
-        # --- 事業所（Office）を冪等投入（未登録時のみ） ---
-        try:
-            off_count = Office.query.filter_by(company_id=company.id).count()
-        except Exception:
-            off_count = 0
-        if off_count == 0:
-            office = Office(
-                company_id=company.id,
-                name='本店',
-                zip_code='1066126',
-                prefecture='東京都',
-                municipality='港区',
-                address='六本木6-10-1',
-                phone_number='03-6384-9000',
-                opening_date=date(2023, 1, 1),
-                employee_count=10,
-            )
-            db.session.add(office)
-            db.session.commit()
-            click.echo("[dev-bootstrap] 事業所を1件作成しました。")
-        else:
-            click.echo("[dev-bootstrap] 事業所は既に存在します。")
+        click.echo(_sync_master_data())
+        click.echo(_initialize_company_defaults(company, date))
+        click.echo(_ensure_shareholders(company, Shareholder, date))
+        click.echo(_ensure_office(company, Office, date))
 
         click.echo("[dev-bootstrap] 完了しました。")
     except Exception as e:
@@ -439,8 +484,9 @@ def delete_seeded_command(page: str, company_id: int, prefix: str, execute: bool
 @click.option('--count', type=int, default=23, show_default=True, help='生成する受取手形の件数')
 def seed_notes_receivable_command(company_id: int | None, count: int):
     """受取手形（NotesReceivable）をダミーデータで一括投入します。"""
-    from datetime import date, timedelta
     import random
+    from datetime import date, timedelta
+
     from app.company.models import Company, NotesReceivable
 
     # 会社の決定
@@ -507,6 +553,7 @@ def seed_notes_receivable_command(company_id: int | None, count: int):
 def soa_recompute_command(company_id: int):
     """SoAの全ページについて完了状態を再評価し、結果をJSONで表示します（読み取りのみ）。"""
     import json
+
     from app.progress.evaluator import SoAProgressEvaluator
     try:
         results = SoAProgressEvaluator.recompute_company(company_id)
@@ -522,8 +569,9 @@ def soa_recompute_command(company_id: int):
 @click.option('--prefix', type=str, default='', show_default=True, help='姓に付与する識別用プレフィクス')
 def seed_main_shareholders_command(company_id: int | None, count: int, prefix: str):
     """主たる株主をダミーデータで追加します（parent_id=None）。"""
-    from datetime import date
     import random
+    from datetime import date
+
     from app.company.models import Company, Shareholder
 
     # 対象会社の決定
@@ -576,6 +624,7 @@ def seed_main_shareholders_command(company_id: int | None, count: int, prefix: s
 def seed_related_shareholders_command(company_id: int | None, count: int, parent: str, prefix: str):
     """特殊関係人（parent_idあり）をダミーデータで追加します。"""
     import random
+
     from app.company.models import Company, Shareholder
 
     # 対象会社の決定

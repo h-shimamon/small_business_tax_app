@@ -28,7 +28,6 @@ The new user management module is isolated under `/xauth/*` and disabled by defa
 
 See `docs/newauth_guide.md` for details (dev notes, token testing, and safety).
 
-$1
 
 ## CSP (scripts)
 - Inline初期化を撤去済みのため、unsafe-inlineは不要です。
@@ -36,3 +35,9 @@ $1
 
 ## Documentation
 - SoAフォーム設定の詳細は `docs/soa_form_fields.md` を参照してください。
+- ドメイン逆引き辞書: `docs/domain_dictionary.md`。
+
+## 開発ガイドライン
+- 新しいモデル/テーブルは `app/company/models`（または同配下の `model_parts`）に配置してから `app/company/models/__init__.py` で公開する。
+- モデルを別ディレクトリに追加する場合は、Alembic マイグレーションが正しく検出されるよう import 経路を整備すること。
+- 必要に応じて `ruff check --select I,UP,B,C90` で型アノテーションやimportの診断を行い、段階的に改善する。

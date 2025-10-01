@@ -6,15 +6,15 @@ import shutil
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any
 
 from flask import current_app
 
-from app import db
 from app.company.models import AccountingData
 from app.company.parser_factory import ParserFactory
 from app.company.services.data_mapping_service import DataMappingService
 from app.company.services.financial_statement_service import FinancialStatementService
+from app.extensions import db
 from app.navigation import mark_step_as_completed
 from app.primitives.dates import get_company_period
 
@@ -24,8 +24,8 @@ class UploadResult:
     """Result payload consumed by the upload_data route."""
 
     redirect_endpoint: str
-    redirect_kwargs: Dict[str, Any] = field(default_factory=dict)
-    flash_message: Optional[tuple[str, str]] = None
+    redirect_kwargs: dict[str, Any] = field(default_factory=dict)
+    flash_message: tuple[str, str] | None = None
 
 
 class UploadFlowError(Exception):
@@ -44,7 +44,7 @@ class UploadFlowService:
     DEFAULT_SCHEMA_VERSION = '2025.1'
     DEFAULT_ALGO_VERSION = '2025.1'
 
-    def __init__(self, datatype: str, user, config: Dict[str, Any], flask_session):
+    def __init__(self, datatype: str, user, config: dict[str, Any], flask_session):
         self.datatype = datatype
         self.user = user
         self.config = config or {}
@@ -149,7 +149,7 @@ class UploadFlowService:
             return ''
         return hashlib.sha256(csv_bytes).hexdigest()
 
-    def _build_accounting_metadata(self, journals_df) -> Dict[str, str]:
+    def _build_accounting_metadata(self, journals_df) -> dict[str, str]:
         schema_version = current_app.config.get('ACCOUNTING_DATA_SCHEMA_VERSION', self.DEFAULT_SCHEMA_VERSION)
         algo_version = current_app.config.get('ACCOUNTING_DATA_ALGO_VERSION', self.DEFAULT_ALGO_VERSION)
         source_hash = self._calculate_dataframe_hash(journals_df)

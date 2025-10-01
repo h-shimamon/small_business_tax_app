@@ -6,9 +6,9 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from app import db
 from app.company.models import AccountTitleMaster, MasterVersion
 from app.company.services.master_data_service import MasterDataService
+from app.extensions import db
 
 
 def _write_master_files(base_dir: Path) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 
 class UploadWizardService:
@@ -10,7 +10,7 @@ class UploadWizardService:
         self.session = flask_session
         self.file_upload_steps = list(file_upload_steps)
 
-    def selected_software(self) -> Optional[str]:
+    def selected_software(self) -> str | None:
         return self.session.get('selected_software')
 
     def has_selected_software(self) -> bool:
@@ -19,7 +19,7 @@ class UploadWizardService:
     def completed_steps(self) -> list[str]:
         return list(self.session.get('wizard_completed_steps', []))
 
-    def ensure_previous_steps_completed(self, datatype: str) -> Optional[str]:
+    def ensure_previous_steps_completed(self, datatype: str) -> str | None:
         if datatype not in self.file_upload_steps:
             return None
         completed = set(self.completed_steps())
@@ -29,7 +29,7 @@ class UploadWizardService:
                 return step
         return None
 
-    def next_pending_step(self) -> Optional[str]:
+    def next_pending_step(self) -> str | None:
         completed = set(self.completed_steps())
         for step in self.file_upload_steps:
             if step not in completed:

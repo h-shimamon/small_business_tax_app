@@ -5,8 +5,8 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired, Length
 
 from app.company.beppyo15.constants import BEPPYO15_FIELD_DEFINITIONS
-from .base_fields import MoneyField, MemoField
 
+from .base_fields import MemoField, MoneyField
 
 _FIELD_DEFINITION_MAP = {definition.key: definition for definition in BEPPYO15_FIELD_DEFINITIONS}
 

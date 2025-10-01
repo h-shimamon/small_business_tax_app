@@ -5,7 +5,7 @@ from wtforms import StringField, SubmitField
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, Optional
 
-from .base_fields import CorporateNumberField, MoneyField, MemoField
+from .base_fields import CorporateNumberField, MemoField, MoneyField
 
 
 class NotesReceivableForm(FlaskForm):

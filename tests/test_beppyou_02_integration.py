@@ -1,7 +1,5 @@
 from datetime import date
 
-from flask import current_app
-
 from app import create_app, db
 from app.company.models import Company, Shareholder
 from app.pdf.beppyou_02 import _collect_rows

@@ -2,17 +2,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, TypedDict
+from typing import TypedDict
 
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG
+
 
 class NavigationNodeDef(TypedDict, total=False):
     key: str
     name: str
     node_type: str
     endpoint: str
-    params: Dict[str, str]
-    children: List["NavigationNodeDef"]
+    params: dict[str, str]
+    children: list[NavigationNodeDef]
 
 
 class PDFExportEntry(TypedDict, total=False):
@@ -57,7 +58,7 @@ class StatementEmptyState(TypedDict, total=False):
 
 
 
-SOA_NAV_ORDER: List[Tuple[str, str]] = [
+SOA_NAV_ORDER: list[tuple[str, str]] = [
     ("deposits", "deposits"),
     ("notes_receivable", "notes_receivable"),
     ("accounts_receivable", "accounts_receivable"),
@@ -76,7 +77,7 @@ SOA_NAV_ORDER: List[Tuple[str, str]] = [
     ("misc_losses", "misc_losses"),
 ]
 
-PDF_EXPORT_PAGES: Tuple[str, ...] = (
+PDF_EXPORT_PAGES: tuple[str, ...] = (
     "deposits",
     "accounts_receivable",
     "notes_receivable",
@@ -89,8 +90,8 @@ PDF_EXPORT_PAGES: Tuple[str, ...] = (
 
 DEFAULT_PDF_YEAR = "2025"
 
-def _build_soa_children() -> List[NavigationNodeDef]:
-    children: List[NavigationNodeDef] = []
+def _build_soa_children() -> list[NavigationNodeDef]:
+    children: list[NavigationNodeDef] = []
     for nav_key, page_key in SOA_NAV_ORDER:
         config = STATEMENT_PAGES_CONFIG.get(page_key)
         if not config:
@@ -103,7 +104,7 @@ def _build_soa_children() -> List[NavigationNodeDef]:
         })
     return children
 
-NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
+NAVIGATION_STRUCTURE_DATA: list[NavigationNodeDef] = [
     {
         "key": "company_info_group",
         "name": "基本情報登録",
@@ -167,7 +168,7 @@ NAVIGATION_STRUCTURE_DATA: List[NavigationNodeDef] = [
 ]
 
 
-PDF_EXPORTS: Dict[str, PDFExportEntry] = {
+PDF_EXPORTS: dict[str, PDFExportEntry] = {
     page_key: {
         "endpoint": "company.statement_pdf",
         "label": STATEMENT_PAGES_CONFIG[page_key]["title"],
@@ -177,7 +178,7 @@ PDF_EXPORTS: Dict[str, PDFExportEntry] = {
     if page_key in STATEMENT_PAGES_CONFIG
 }
 
-STATEMENT_POST_CREATE_CTA: Dict[str, StatementCTAConfig] = {
+STATEMENT_POST_CREATE_CTA: dict[str, StatementCTAConfig] = {
     "default": StatementCTAConfig(
         header_label="＋ 新規登録",
         header_class="button-primary",
@@ -188,7 +189,7 @@ STATEMENT_POST_CREATE_CTA: Dict[str, StatementCTAConfig] = {
     )
 }
 
-STATEMENT_EMPTY_STATE: Dict[str, StatementEmptyState] = {
+STATEMENT_EMPTY_STATE: dict[str, StatementEmptyState] = {
     "default": {
         "headline": "最初の{title}情報を登録しましょう。",
         "description": "右上の「＋ 新規登録」ボタンから登録を開始してください。",
@@ -197,17 +198,17 @@ STATEMENT_EMPTY_STATE: Dict[str, StatementEmptyState] = {
 }
 
 
-def get_navigation_structure() -> List[NavigationNodeDef]:
+def get_navigation_structure() -> list[NavigationNodeDef]:
     """Return the raw navigation structure definition."""
     return NAVIGATION_STRUCTURE_DATA
 
 
-def get_pdf_export_map() -> Dict[str, PDFExportEntry]:
+def get_pdf_export_map() -> dict[str, PDFExportEntry]:
     """Return mapping of statement page key to PDF export configuration."""
     return PDF_EXPORTS
 
 
-def get_pdf_export(page: str) -> Optional[PDFExportEntry]:
+def get_pdf_export(page: str) -> PDFExportEntry | None:
     return PDF_EXPORTS.get(page)
 
 

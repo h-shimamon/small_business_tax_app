@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from app.services.master_data_loader import clear_master_dataframe_cache, load_master_dataframe
+from app.services.master_data_loader import (
+    clear_master_dataframe_cache,
+    load_master_dataframe,
+)
 
 
 def test_load_master_dataframe_trims_and_sets_index(tmp_path: Path):

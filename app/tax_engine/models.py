@@ -3,9 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Dict, Optional, Union
 
-PayloadValue = Union[str, int]
+PayloadValue = str | int
 
 
 @dataclass(frozen=True)
@@ -35,8 +34,8 @@ class EqualizationAmounts:
 class TaxPeriod:
     """会計期間情報。"""
 
-    fiscal_start: Optional[date]
-    fiscal_end: Optional[date]
+    fiscal_start: date | None
+    fiscal_end: date | None
     months_in_period: int
     months_truncated: int
 
@@ -115,9 +114,9 @@ class TaxComponents:
 class TaxBreakdown:
     """集計済みの税額と診断情報。"""
 
-    inputs: Dict[str, PayloadValue]
-    results: Dict[str, PayloadValue]
-    breakdown: Dict[str, int]
+    inputs: dict[str, PayloadValue]
+    results: dict[str, PayloadValue]
+    breakdown: dict[str, int]
 
 
 @dataclass(frozen=True)
@@ -141,7 +140,7 @@ class TaxCalculation:
             breakdown=self._build_breakdown_payload(),
         )
 
-    def _build_inputs_payload(self) -> Dict[str, PayloadValue]:
+    def _build_inputs_payload(self) -> dict[str, PayloadValue]:
         period = self.tax_input.period
         return {
             'fiscal_start_date': self._format_date(period.fiscal_start),
@@ -162,7 +161,7 @@ class TaxCalculation:
             'municipal_equalization_amount': self.tax_input.equalization.municipal,
         }
 
-    def _build_results_payload(self) -> Dict[str, PayloadValue]:
+    def _build_results_payload(self) -> dict[str, PayloadValue]:
         enterprise_total = self.components.enterprise
         enterprise_with_special = self.components.enterprise_with_special
         pref_equalization = self.components.prefectural_equalization
@@ -192,7 +191,7 @@ class TaxCalculation:
             'municipal_tax_total': int(municipal_corporate + municipal_equalization),
         }
 
-    def _build_breakdown_payload(self) -> Dict[str, int]:
+    def _build_breakdown_payload(self) -> dict[str, int]:
         bands = self.income_bands
         return {
             'income_u800': int(bands.corporate_income_under),
@@ -214,7 +213,7 @@ class TaxCalculation:
         }
 
     @staticmethod
-    def _format_date(value: Optional[date]) -> str:
+    def _format_date(value: date | None) -> str:
         if value is None:
             return ''
         return value.strftime('%Y%m%d')

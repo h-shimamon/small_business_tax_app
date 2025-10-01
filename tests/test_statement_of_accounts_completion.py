@@ -1,9 +1,10 @@
 # tests/test_statement_of_accounts_completion.py
 from datetime import date
-# from flask_login import login_user
 
-from app import db
-from app.company.models import Company, AccountingData, AccountTitleMaster, Deposit
+from app.company.models import AccountingData, AccountTitleMaster, Company, Deposit
+
+# from flask_login import login_user
+from app.extensions import db
 from tests.helpers.auth import login_as
 
 

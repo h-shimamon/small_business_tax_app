@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from decimal import Decimal
-from typing import Iterable, Mapping
 
 from ..models import EqualizationAmounts, TaxInput, TaxPeriod, TaxRates
 

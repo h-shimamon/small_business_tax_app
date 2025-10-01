@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional
-
-from wtforms import StringField, IntegerField
-from wtforms.validators import Optional as Opt, Length, NumberRange, Regexp, DataRequired
+from wtforms import IntegerField, StringField
+from wtforms.validators import DataRequired, Length, NumberRange, Regexp
+from wtforms.validators import Optional as Opt
 
 
 class AddressMixin:
@@ -13,7 +12,7 @@ class AddressMixin:
     address = StringField('番地以降の住所', validators=[Opt(), Length(max=200)])
 
 
-def _strip_hyphens_spaces(value: Optional[str]) -> Optional[str]:
+def _strip_hyphens_spaces(value: str | None) -> str | None:
     if value is None:
         return value
     return value.replace('-', '').replace(' ', '').strip()
@@ -32,7 +31,7 @@ def CorporateNumberField(label: str = "法人番号", required: bool = False, ma
     return StringField(label, validators=validators, filters=[_strip_hyphens_spaces])
 
 
-def _strip_thousand_sep(value: Optional[str]) -> Optional[str]:
+def _strip_thousand_sep(value: str | None) -> str | None:
     if value is None:
         return value
     if isinstance(value, (int, float)):

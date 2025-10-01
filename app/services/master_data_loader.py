@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from functools import lru_cache
-from typing import Iterable, Optional
 
 import pandas as pd
 
@@ -16,7 +16,7 @@ def _strip_columns(df: pd.DataFrame, columns: Iterable[str]) -> None:
 def load_master_dataframe(
     path: str,
     *,
-    index_column: Optional[str] = None,
+    index_column: str | None = None,
     strip_columns: Iterable[str] = ('勘定科目名',),
 ) -> pd.DataFrame:
     """共通のマスタCSV読み込みロジック。"""

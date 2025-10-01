@@ -1,11 +1,12 @@
 # app/company/services/financial_statement_service.py
 from collections import defaultdict
-from typing import Dict, Optional
+from datetime import datetime
+from typing import Optional
 
 import pandas as pd
-from datetime import datetime
 
 from .master_data_service import MasterDataService
+
 
 class FinancialStatementService:
     """財務諸表の生成に関連するロジックを処理するサービスクラス。"""
@@ -25,7 +26,7 @@ class FinancialStatementService:
         self.bs_master = master_data_service.get_bs_master_df()
         self.pl_master = master_data_service.get_pl_master_df()
         self._soa_breakdowns = {}
-        self._account_balances: Dict[int, int] = {}
+        self._account_balances: dict[int, int] = {}
         self._name_to_id_cache = self._build_name_to_id_map()
         self._pl_cache_key: Optional[tuple] = None
         self._pl_structure_cache: Optional[dict] = None
@@ -87,8 +88,8 @@ class FinancialStatementService:
             
         return {k: v for k, v in balances.items() if v != 0}
 
-    def _build_name_to_id_map(self) -> Dict[str, int]:
-        mapping: Dict[str, int] = {}
+    def _build_name_to_id_map(self) -> dict[str, int]:
+        mapping: dict[str, int] = {}
         for df in (self.bs_master, self.pl_master):
             if df is None or df.empty:
                 continue
@@ -108,8 +109,8 @@ class FinancialStatementService:
     def _lookup_account_id(self, account_name: str) -> Optional[int]:
         return self._name_to_id_cache.get(str(account_name))
 
-    def _build_account_balances(self, balances) -> Dict[int, int]:
-        totals: Dict[int, int] = {}
+    def _build_account_balances(self, balances) -> dict[int, int]:
+        totals: dict[int, int] = {}
         for acc_name, amount in balances.items():
             account_id = self._lookup_account_id(acc_name)
             if account_id is None:
@@ -123,7 +124,7 @@ class FinancialStatementService:
             totals[account_id] = numeric
         return totals
 
-    def get_account_balances(self) -> Dict[str, int]:
+    def get_account_balances(self) -> dict[str, int]:
         return {str(account_id): amount for account_id, amount in self._account_balances.items()}
 
     def _combined_balances(self):
@@ -228,85 +229,108 @@ class FinancialStatementService:
         
         return pl_structure, net_income
 
-    def _build_statement_structure(self, balances, master_df, is_bs=False):
-        """
-        勘定科目の残高とマスターデータから、ソートとグルーピング済みの財務諸表データ構造を構築する。
-        - B/S(is_bs=True) と P/L(is_bs=False) の両方で、明細行は「決算書名」で集約・表示する。
-        - 並び順は同一の決算書名グループに属する科目の No. 最小値を用いる。
-        """
+    def _group_balances_by_statement(self, balances, master_df) -> dict[tuple[str | None, str | None, str], int]:
+        grouped: dict[tuple[str | None, str | None, str], int] = {}
+        if master_df is None or master_df.empty:
+            return grouped
+        for account_name, amount in balances.items():
+            if account_name not in master_df.index:
+                continue
+            try:
+                row = master_df.loc[account_name]
+            except Exception:
+                continue
+            major = row.get('major_category') if isinstance(row, pd.Series) else None
+            middle = row.get('middle_category') if isinstance(row, pd.Series) else None
+            statement_name = row.get('statement_name') if isinstance(row, pd.Series) else None
+            if pd.isna(statement_name) or not str(statement_name).strip():
+                statement_name = account_name
+            key = (str(major) if major is not None else None, str(middle) if middle is not None else None, str(statement_name))
+            grouped[key] = grouped.get(key, 0) + amount
+        return grouped
+
+    def _calculate_sort_orders(self, master_df):
+        major_order: dict[str, int] = {}
+        middle_order: dict[str, int] = {}
+        statement_order: dict[tuple[str | None, str | None, str], int] = {}
+        if master_df is None or master_df.empty:
+            return major_order, middle_order, statement_order
+        for account_name in master_df.index:
+            try:
+                row = master_df.loc[account_name]
+            except Exception:
+                continue
+            number = row.get('number') if isinstance(row, pd.Series) else None
+            try:
+                numeric_number = int(number)
+            except (TypeError, ValueError):
+                continue
+            major = row.get('major_category') if isinstance(row, pd.Series) else None
+            middle = row.get('middle_category') if isinstance(row, pd.Series) else None
+            statement_name = row.get('statement_name') if isinstance(row, pd.Series) else None
+            if pd.isna(statement_name) or not str(statement_name).strip():
+                statement_name = account_name
+            if isinstance(major, str) and (major not in major_order or numeric_number < major_order[major]):
+                major_order[major] = numeric_number
+            if isinstance(middle, str) and (middle not in middle_order or numeric_number < middle_order[middle]):
+                middle_order[middle] = numeric_number
+            stmt_key = (
+                str(major) if major is not None else None,
+                str(middle) if middle is not None else None,
+                str(statement_name),
+            )
+            if stmt_key not in statement_order or numeric_number < statement_order[stmt_key]:
+                statement_order[stmt_key] = numeric_number
+        return major_order, middle_order, statement_order
+
+    def _build_initial_structure(self, grouped_amounts, is_bs: bool):
         from collections import defaultdict as _dd
-        import math as _math
+
         structure = _dd(lambda: _dd(lambda: {'items': [], 'total': 0}))
         sign_inversion_majors = {'負債', '純資産'} if is_bs else set()
+        for (major, middle, statement_name), amount in grouped_amounts.items():
+            safe_major = major or 'その他'
+            safe_middle = middle or 'その他'
+            display_amount = -amount if (is_bs and safe_major in sign_inversion_majors) else amount
+            structure[safe_major][safe_middle]['items'].append({'name': statement_name, 'amount': display_amount})
+        return structure
 
-        # 共通: 「決算書名」に集約
-        grouped = {}
-        for acc, amount in balances.items():
-            if acc in master_df.index:
-                major = master_df.loc[acc, 'major_category']
-                middle = master_df.loc[acc, 'middle_category']
-                stmt_name = master_df.loc[acc, 'statement_name'] if 'statement_name' in master_df.columns else None
-                if pd.isna(stmt_name) or not str(stmt_name).strip():
-                    stmt_name = acc  # フォールバック
-                key = (major, middle, str(stmt_name))
-                grouped[key] = grouped.get(key, 0) + amount
+    def _finalize_structure(self, structure, major_order, middle_order, statement_order):
+        final_structure: dict[str, dict] = {}
+        from math import inf as _inf
 
-        # 決算書名ごとの表示順（No.の最小値）
-        stmt_order = {}
-        try:
-            for acc in master_df.index:
-                major = master_df.at[acc, 'major_category']
-                middle = master_df.at[acc, 'middle_category']
-                sname = master_df.at[acc, 'statement_name'] if 'statement_name' in master_df.columns else None
-                if pd.isna(sname) or not str(sname).strip():
-                    sname = acc
-                key = (major, middle, str(sname))
-                num = master_df.at[acc, 'number']
-                try:
-                    n = int(num)
-                except Exception:
-                    continue
-                if key not in stmt_order or n < stmt_order[key]:
-                    stmt_order[key] = n
-        except Exception:
-            stmt_order = {}
+        def _major_sort_key(major_name: str):
+            return major_order.get(major_name, _inf)
 
-        # 構造へ流し込み（B/Sは負債・純資産のみ符号反転）
-        for (major, middle, sname), amt in grouped.items():
-            display_amount = -amt if (is_bs and (major in sign_inversion_majors)) else amt
-            structure[major][middle]['items'].append({'name': sname, 'amount': display_amount})
+        def _middle_sort_key(middle_name: str):
+            return middle_order.get(middle_name, _inf)
 
-        # ここからは共通: メジャー/ミドル/明細の並びと小計・合計の算出
-        final_structure = {}
-        # majorの並び順: そのmajorを持つ行のNo.の最小値
-        sorted_majors = sorted(structure.keys(), key=lambda m: master_df[master_df['major_category'] == m]['number'].min())
+        def _statement_sort_key(major_name: str, middle_name: str, statement_name: str):
+            return statement_order.get((major_name, middle_name, statement_name), _inf)
+
+        sorted_majors = sorted(structure.keys(), key=_major_sort_key)
 
         for major in sorted_majors:
             middles = structure[major]
+            sorted_middles = sorted(middles.items(), key=lambda item: _middle_sort_key(item[0]))
             major_total = 0
+            major_bucket: dict[str, dict] = {}
 
-            # middleの並び順: そのmiddleを持つ行のNo.の最小値
-            sorted_middles = sorted(
-                middles.items(),
-                key=lambda item: master_df[master_df['middle_category'] == item[0]]['number'].min()
-            )
-
-            sorted_major_content = {}
-            for middle, data in sorted_middles:
-                # 明細の並び順（決算書名グループのNo.最小でソート）
-                def _order_fn(x):
-                    try:
-                        return stmt_order.get((major, middle, x['name']), _math.inf)
-                    except Exception:
-                        return _math.inf
-                data['items'].sort(key=_order_fn)
-
-                middle_total = sum(item['amount'] for item in data['items'])
-                data['total'] = middle_total
+            for middle, payload in sorted_middles:
+                payload['items'].sort(key=lambda item: _statement_sort_key(major, middle, item['name']))
+                middle_total = sum(item['amount'] for item in payload['items'])
+                payload['total'] = middle_total
                 major_total += middle_total
-                sorted_major_content[middle] = data
+                major_bucket[middle] = payload
 
-            final_structure[major] = sorted_major_content
-            final_structure[major]['total'] = major_total
+            major_bucket['total'] = major_total
+            final_structure[major] = major_bucket
 
         return final_structure
+
+    def _build_statement_structure(self, balances, master_df, is_bs=False):
+        """勘定科目残高を財務諸表表示用のネスト構造へ変換する。"""
+        grouped_amounts = self._group_balances_by_statement(balances, master_df)
+        major_order, middle_order, statement_order = self._calculate_sort_orders(master_df)
+        initial_structure = self._build_initial_structure(grouped_amounts, is_bs=is_bs)
+        return self._finalize_structure(initial_structure, major_order, middle_order, statement_order)

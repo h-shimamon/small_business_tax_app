@@ -1,7 +1,6 @@
-from app import db
-from app import db
 from app.company.forms import OfficeForm
 from app.company.models import Company, Office
+from app.extensions import db
 
 
 def test_office_form_aliases(app, init_database):

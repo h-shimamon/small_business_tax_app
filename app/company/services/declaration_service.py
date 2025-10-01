@@ -1,10 +1,12 @@
 # app/company/services/declaration_service.py
+from werkzeug.exceptions import NotFound
+
 from app.company.forms import DeclarationForm
 from app.company.models import Company
-from app.services.soa_registry import STATEMENT_PAGES_CONFIG
-from app.company.services.statement_of_accounts_service import StatementOfAccountsService
-from app import db
-from werkzeug.exceptions import NotFound
+from app.company.services.statement_of_accounts_service import (
+    StatementOfAccountsService,
+)
+from app.extensions import db
 
 
 class DeclarationService:

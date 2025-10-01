@@ -2,32 +2,146 @@
 import os
 from datetime import datetime
 
-from flask import abort, flash, redirect, render_template, request, send_file, url_for
+from flask import (
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
 
 from app.company import company_bp
 from app.company.models import AccountingData
+from app.company.services.protocols import StatementOfAccountsServiceProtocol
+from app.company.services.statement_of_accounts_flow import (
+    RedirectRequired,
+    StatementOfAccountsFlow,
+)
+from app.company.services.statement_of_accounts_service import (
+    StatementOfAccountsService,
+)
+from app.models_utils.date_readers import ensure_date
 from app.navigation import (
     compute_skipped_steps_for_company,
     get_navigation_state,
     mark_step_as_completed,
     unmark_step_as_completed,
 )
-from .auth import company_required
-from app.company.services.statement_of_accounts_flow import (
-    RedirectRequired,
-    StatementOfAccountsFlow,
-)
-from app.company.services.statement_of_accounts_service import StatementOfAccountsService
-from app.company.services.protocols import StatementOfAccountsServiceProtocol
 from app.progress.evaluator import SoAProgressEvaluator
-from app.services.soa_registry import STATEMENT_PAGES_CONFIG
-from app.services.pdf_registry import get_statement_pdf_config
 from app.services.app_registry import get_default_pdf_year
-from flask import current_app
-from app.models_utils.date_readers import ensure_date
+from app.services.pdf_registry import get_statement_pdf_config
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG
+
+from .auth import company_required
 
 # mappings are centralized in app.services.soa_registry
 
+
+
+
+def _get_statement_config(page_key: str) -> dict:
+    config = STATEMENT_PAGES_CONFIG.get(page_key)
+    if not config:
+        abort(404)
+    return config
+
+
+def _build_statement_service(company_id: int) -> StatementOfAccountsServiceProtocol:
+    return StatementOfAccountsService(company_id)
+
+
+def _prefill_form_defaults(form, page_key: str) -> None:
+    try:
+        if hasattr(form, 'account_name'):
+            if page_key == 'misc_income':
+                form.account_name.data = '雑収入'
+            elif page_key == 'misc_losses':
+                form.account_name.data = '雑損失'
+    except Exception:
+        pass
+
+
+def _normalize_edit_form(form, page_key: str) -> None:
+    if page_key != 'notes_receivable':
+        return
+    try:
+        if hasattr(form, 'issue_date'):
+            form.issue_date.data = ensure_date(form.issue_date.data)
+        if hasattr(form, 'due_date'):
+            form.due_date.data = ensure_date(form.due_date.data)
+    except Exception:
+        pass
+
+
+def _latest_accounting_data(company_id: int):
+    return (
+        AccountingData.query
+        .filter_by(company_id=company_id)
+        .order_by(AccountingData.created_at.desc())
+        .first()
+    )
+
+
+def _navigation_state(company_id: int, page_key: str):
+    accounting_data = _latest_accounting_data(company_id)
+    skipped = compute_skipped_steps_for_company(company_id, accounting_data=accounting_data)
+    return get_navigation_state(page_key, skipped_steps=skipped)
+
+
+def _maybe_update_completion(company_id: int, page_key: str) -> None:
+    if not current_app.config.get('SOA_MARK_ON_POST', True):
+        return
+    try:
+        if SoAProgressEvaluator.is_completed(company_id, page_key):
+            mark_step_as_completed(page_key)
+        else:
+            unmark_step_as_completed(page_key)
+    except Exception as exc:
+        current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, exc)
+
+
+def _render_statement_form(company_id: int, page_key: str, config: dict, form, *, form_title: str):
+    navigation_state = _navigation_state(company_id, page_key)
+    template_name = f"company/{config['template']}"
+    return render_template(
+        template_name,
+        form=form,
+        form_title=form_title,
+        navigation_state=navigation_state,
+        form_fields=config.get('form_fields', []),
+    )
+
+
+def _handle_create_submission(company, page_key: str, config: dict, form):
+    service = _build_statement_service(company.id)
+    success, created_item, error = service.create_item(page_key, form)
+    if not success:
+        flash(error or '登録に失敗しました。', 'error')
+        return None
+    _maybe_update_completion(company.id, page_key)
+    flash(f"{config['title']}情報を登録しました。", 'success')
+    return redirect(
+        url_for(
+            'company.statement_of_accounts',
+            page=page_key,
+            created=1,
+            created_id=getattr(created_item, 'id', None),
+        )
+    )
+
+
+def _handle_update_submission(company, page_key: str, config: dict, form, item):
+    service = _build_statement_service(company.id)
+    success, updated_item, error = service.update_item(page_key, item, form)
+    if not success:
+        flash(error or '更新に失敗しました。', 'error')
+        return None
+    _maybe_update_completion(company.id, page_key)
+    flash(f"{config['title']}情報を更新しました。", 'success')
+    return redirect(url_for('company.statement_of_accounts', page=page_key))
 
 @company_bp.route('/statement_of_accounts')
 @company_required
@@ -93,96 +207,55 @@ def statement_pdf(company, page_key):
 
 @company_bp.route('/statement/<string:page_key>/add', methods=['GET', 'POST'])
 @company_required
+
 def add_item(company, page_key):
     """汎用的な項目追加ビュー"""
-    config = STATEMENT_PAGES_CONFIG.get(page_key)
-    if not config:
-        abort(404)
-    soa_service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company.id)
+    config = _get_statement_config(page_key)
     form = config['form'](request.form)
-    # ページに応じて初期値を与える（雑収入/雑損失の科目固定）
-    try:
-        if request.method == 'GET' and hasattr(form, 'account_name'):
-            if page_key == 'misc_income':
-                form.account_name.data = '雑収入'
-            elif page_key == 'misc_losses':
-                form.account_name.data = '雑損失'
-    except Exception:
-        pass
+
+    if request.method == 'GET':
+        _prefill_form_defaults(form, page_key)
+
     if form.validate_on_submit():
-        success, created_item, error = soa_service.create_item(page_key, form)
-        if success:
-            try:
-                if current_app.config.get('SOA_MARK_ON_POST', True):
-                    if SoAProgressEvaluator.is_completed(company.id, page_key):
-                        mark_step_as_completed(page_key)
-                    else:
-                        unmark_step_as_completed(page_key)
-            except Exception as e:
-                current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
-            flash(f"{config['title']}情報を登録しました。", 'success')
-            return redirect(url_for('company.statement_of_accounts', page=page_key, created=1, created_id=getattr(created_item, 'id', None)))
-        flash(error or '登録に失敗しました。', 'error')
-    # Compute skipped steps for sidebar consistency (same logic as main SoA view)
-    # Pre-fetch latest AccountingData once then compute skipped steps via helper
-    accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
-    skipped_steps = compute_skipped_steps_for_company(company.id, accounting_data=accounting_data)
-    form_template = f"company/{config['template']}"
-    return render_template(
-        form_template,
-        form=form,
+        response = _handle_create_submission(company, page_key, config, form)
+        if response is not None:
+            return response
+
+    return _render_statement_form(
+        company.id,
+        page_key,
+        config,
+        form,
         form_title=f"{config['title']}の新規登録",
-        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps),
-        form_fields=config.get('form_fields', []),
     )
 
 @company_bp.route('/statement/<string:page_key>/edit/<int:item_id>', methods=['GET', 'POST'])
 @company_required
+
 def edit_item(company, page_key, item_id):
     """汎用的な項目編集ビュー"""
-    config = STATEMENT_PAGES_CONFIG.get(page_key)
-    if not config:
-        abort(404)
-    soa_service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company.id)
-    item = soa_service.get_item_by_id(page_key, item_id)
+    config = _get_statement_config(page_key)
+    service = _build_statement_service(company.id)
+    item = service.get_item_by_id(page_key, item_id)
     if item is None:
         abort(404)
-    form = config['form'](request.form, obj=item)
-    if form.validate_on_submit():
-        success, updated_item, error = soa_service.update_item(page_key, item, form)
-        if success:
-            try:
-                if current_app.config.get('SOA_MARK_ON_POST', True):
-                    if SoAProgressEvaluator.is_completed(company.id, page_key):
-                        mark_step_as_completed(page_key)
-                    else:
-                        unmark_step_as_completed(page_key)
-            except Exception as e:
-                current_app.logger.warning('SoA mark (POST) failed for page %s: %s', page_key, e)
-            flash(f"{config['title']}情報を更新しました。", 'success')
-            return redirect(url_for('company.statement_of_accounts', page=page_key))
-        flash(error or '更新に失敗しました。', 'error')
-    if request.method == 'GET':
+
+    if request.method == 'POST':
+        form = config['form'](request.form, obj=item)
+        if form.validate_on_submit():
+            response = _handle_update_submission(company, page_key, config, form, item)
+            if response is not None:
+                return response
+    else:
         form = config['form'](obj=item)
-        # Ensure date fields are date objects for templates
-        try:
-            if page_key == 'notes_receivable':
-                if hasattr(form, 'issue_date'):
-                    form.issue_date.data = ensure_date(form.issue_date.data)
-                if hasattr(form, 'due_date'):
-                    form.due_date.data = ensure_date(form.due_date.data)
-        except Exception:
-            pass
-    # Compute skipped steps for sidebar consistency
-    accounting_data = AccountingData.query.filter_by(company_id=company.id).order_by(AccountingData.created_at.desc()).first()
-    skipped_steps = compute_skipped_steps_for_company(company.id, accounting_data=accounting_data)
-    form_template = f"company/{config['template']}"
-    return render_template(
-        form_template,
-        form=form,
+        _normalize_edit_form(form, page_key)
+
+    return _render_statement_form(
+        company.id,
+        page_key,
+        config,
+        form,
         form_title=f"{config['title']}の編集",
-        navigation_state=get_navigation_state(page_key, skipped_steps=skipped_steps),
-        form_fields=config.get('form_fields', []),
     )
 
 @company_bp.route('/statement/<string:page_key>/delete/<int:item_id>', methods=['POST'])

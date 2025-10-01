@@ -1,9 +1,10 @@
 # tests/test_statement_of_accounts_skip.py
 from datetime import date
-# from flask_login import login_user
 
-from app import db
-from app.company.models import Company, AccountingData, AccountTitleMaster
+from app.company.models import AccountingData, AccountTitleMaster, Company
+
+# from flask_login import login_user
+from app.extensions import db
 from tests.helpers.auth import login_as
 
 
@@ -58,9 +59,9 @@ def test_navigation_state_marks_skipped(client, init_database):
     notes_receivable のみ参照合計>0とし、get_navigation_state に渡した skipped_steps に
     deposits が含まれることを検証する（is_skipped=True）。
     """
-    from app.navigation_builder import navigation_tree
-    from app.navigation import get_navigation_state
     from app.company.services.soa_summary_service import SoASummaryService
+    from app.navigation import get_navigation_state
+    from app.navigation_builder import navigation_tree
 
     app = client.application
     login_as(client, 1)

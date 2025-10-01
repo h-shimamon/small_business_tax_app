@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from app.pdf.layout_utils import load_geometry

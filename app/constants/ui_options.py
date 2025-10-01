@@ -1,9 +1,10 @@
 # app/constants/ui_options.py
 from __future__ import annotations
-from typing import List, Tuple, TypedDict, Dict
 
-Option = Tuple[str, str]
-Options = List[Option]
+from typing import TypedDict
+
+Option = tuple[str, str]
+Options = list[Option]
 
 class UIOptions(TypedDict, total=False):
     # primary option keys
@@ -19,7 +20,7 @@ class UIOptions(TypedDict, total=False):
 # ---- Base (default) profile ----
 VERSION = "v1"
 
-BASE: Dict[str, Options] = {
+BASE: dict[str, Options] = {
     'staff_roles': [
         ("nonexec", "非常勤役員"),
         ("worker", "工員"),
@@ -57,13 +58,13 @@ BASE: Dict[str, Options] = {
 }
 
 # Profile diffs (future use). Keys must exist in BASE; labels/order must be identical unless explicitly allowed.
-PROFILES: Dict[str, Dict[str, Options]] = {
+PROFILES: dict[str, dict[str, Options]] = {
     'default': {},  # no diffs; use BASE
     # 'jp_smb': { 'pc_os': BASE['pc_os'] },  # example
 }
 
 
-def _merge_profile(base: Dict[str, Options], diff: Dict[str, Options]) -> UIOptions:
+def _merge_profile(base: dict[str, Options], diff: dict[str, Options]) -> UIOptions:
     out: UIOptions = {}
     # copy base keys only (guard against unknown keys)
     for k, v in base.items():

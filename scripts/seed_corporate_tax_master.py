@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import csv
+from collections.abc import Iterable
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Dict, Iterable
 
 from app import create_app, db
 from app.company.models import CorporateTaxMaster
@@ -27,7 +27,7 @@ def _parse_decimal(value: str) -> Decimal:
         return Decimal('0')
 
 
-def _load_rows() -> Iterable[Dict[str, object]]:
+def _load_rows() -> Iterable[dict[str, object]]:
     if not DATA_PATH.exists():
         raise FileNotFoundError(f'Data file not found: {DATA_PATH}')
     with DATA_PATH.open(newline='', encoding='utf-8') as fh:
@@ -54,7 +54,7 @@ def _load_rows() -> Iterable[Dict[str, object]]:
             }
 
 
-def _upsert_row(payload: Dict[str, object]) -> None:
+def _upsert_row(payload: dict[str, object]) -> None:
     record = CorporateTaxMaster.query.filter_by(fiscal_start_date=payload['fiscal_start_date']).first()
     if record:
         for key, value in payload.items():

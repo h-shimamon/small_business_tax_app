@@ -1,10 +1,14 @@
 # app/company/auth.py
 from functools import wraps
-from flask import render_template, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required, current_user
+
+from flask import flash, redirect, render_template, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+
 from app.company import company_bp
 from app.company.forms import LoginForm
+
 from .services.auth_service import AuthService
+
 
 def company_required(f):
     """

@@ -1,10 +1,11 @@
 # app/company/services/statement_of_accounts_service.py
-from typing import Any, Iterable, List, Optional, Tuple
+from typing import Any, Optional
 
 from flask import current_app
 
+from app.extensions import db
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG
-from app import db
+
 from .protocols import StatementOfAccountsServiceProtocol
 
 
@@ -59,7 +60,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
             return None
         return db.session.query(model).filter_by(id=item_id, company_id=self.company_id).first()
 
-    def create_item(self, data_type, form) -> Tuple[bool, Optional[Any], Optional[str]]:
+    def create_item(self, data_type, form) -> tuple[bool, Optional[Any], Optional[str]]:
         model, _ = self._get_model(data_type)
         if not model:
             return False, None, "無効なデータタイプです。"
@@ -76,7 +77,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
 
 
 
-    def update_item(self, data_type, item, form) -> Tuple[bool, Optional[Any], Optional[str]]:
+    def update_item(self, data_type, item, form) -> tuple[bool, Optional[Any], Optional[str]]:
         model, _ = self._get_model(data_type)
         if not model:
             return False, None, "無効なデータタイプです。"
@@ -91,7 +92,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
             db.session.rollback()
             return False, None, f"更新中にエラーが発生しました: {exc}"
 
-    def list_items(self, data_type) -> List[Any]:
+    def list_items(self, data_type) -> list[Any]:
         items = self.get_data_by_type(data_type)
         return items or []
 
@@ -108,7 +109,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
             total += value
         return total
 
-    def delete_item(self, data_type, item_id) -> Tuple[bool, Optional[str]]:
+    def delete_item(self, data_type, item_id) -> tuple[bool, Optional[str]]:
         """
 
         指定されたIDのアイテムを削除する。

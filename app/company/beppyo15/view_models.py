@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
 
 from .constants import Beppyo15FieldDefinition
 
@@ -32,6 +31,6 @@ class Beppyo15SummaryViewModel:
 
 @dataclass(frozen=True)
 class Beppyo15PageViewModel:
-    items: List[Beppyo15ItemViewModel]
+    items: list[Beppyo15ItemViewModel]
     summary: Beppyo15SummaryViewModel
-    field_definitions: List[Beppyo15FieldDefinition]
+    field_definitions: list[Beppyo15FieldDefinition]

@@ -1,19 +1,26 @@
 from __future__ import annotations
 
-from typing import Callable, Dict, Optional, Tuple, List
+from typing import Callable
 
-from app import db
 from app.company.models import (  # noqa: E402
-    NotesReceivable,
-    Deposit,
-    AccountsReceivable,
-    TemporaryPayment,
-    NotesPayable,
     AccountsPayable,
+    AccountsReceivable,
+    Deposit,
     LoansReceivable,
+    NotesPayable,
+    NotesReceivable,
+    TemporaryPayment,
 )
-from .seed_utils import SeedContext, make_context, random_bank, corporate_number_13, BANKS, BRANCHES
+from app.extensions import db
 
+from .seed_utils import (
+    BANKS,
+    BRANCHES,
+    SeedContext,
+    corporate_number_13,
+    make_context,
+    random_bank,
+)
 
 Seeder = Callable[[SeedContext, int], int]
 
@@ -55,12 +62,12 @@ def seed_notes_receivable(ctx: SeedContext, count: int) -> int:
     return created
 
 
-REGISTRY: Dict[str, Seeder] = {
+REGISTRY: dict[str, Seeder] = {
     'notes_receivable': seed_notes_receivable,
 }
 
 
-def run_seed(page: str, company_id: Optional[int], count: int, prefix: str = "") -> int:
+def run_seed(page: str, company_id: int | None, count: int, prefix: str = "") -> int:
     if page not in REGISTRY:
         raise KeyError(f"未対応のpageです: {page}")
     ctx = make_context(company_id=company_id, seed=42, prefix=prefix)
@@ -232,7 +239,13 @@ REGISTRY.update({
 # ----------------------
 # Additional SoA seeders (requested pages)
 # ----------------------
-from app.company.models import TemporaryReceipt, Borrowing, ExecutiveCompensation, LandRent  # noqa: E402
+from app.company.models import (  # noqa: E402
+    Borrowing,
+    ExecutiveCompensation,
+    LandRent,
+    TemporaryReceipt,
+)
+
 
 def seed_temporary_receipts(ctx: SeedContext, count: int) -> int:
     created = 0
@@ -378,6 +391,7 @@ DELETE_REGISTRY = {
 # Add delete queries for newly supported pages
 from sqlalchemy import or_  # noqa: E402
 
+
 def _delete_query_temporary_receipts(ctx: SeedContext, prefix: str):
     q = TemporaryReceipt.query.filter_by(company_id=ctx.company.id)
     return q.filter(or_(TemporaryReceipt.partner_name.startswith(prefix), TemporaryReceipt.transaction_details.startswith(prefix)))
@@ -402,6 +416,6 @@ DELETE_REGISTRY.update({
 })
 
 
-def run_delete(page: str, company_id: Optional[int], prefix: str, dry_run: bool = True) -> Tuple[int, List[int]]:
+def run_delete(page: str, company_id: int | None, prefix: str, dry_run: bool = True) -> tuple[int, list[int]]:
     if not prefix:
         raise ValueError('prefix は必須です（空文字は不可）')

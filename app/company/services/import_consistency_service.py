@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import Optional
-
-from app import db
 from app.company.models import AccountingData, Company
+from app.extensions import db
 
 
-def _company_id_for_user(user_id: int) -> Optional[int]:
+def _company_id_for_user(user_id: int) -> int | None:
     company = Company.query.filter_by(user_id=user_id).first()
     return company.id if company else None
 

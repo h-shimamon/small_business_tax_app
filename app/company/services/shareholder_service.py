@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 from flask import g, has_request_context
-from werkzeug.exceptions import NotFound
 from sqlalchemy import func, select
+from werkzeug.exceptions import NotFound
 
-from app import db
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
 from app.company.models import Company, Shareholder
+from app.extensions import db
+
 from .protocols import ShareholderServiceProtocol
 
 
 class ShareholderService(ShareholderServiceProtocol):
     """Concrete implementation of shareholder-domain operations."""
 
-    def _resolve_user_id(self, company_id: Optional[int], user_id: Optional[int]) -> int:
+    def _resolve_user_id(self, company_id: int | None, user_id: int | None) -> int:
         if user_id is not None:
             return int(user_id)
         if company_id is None:
@@ -36,7 +35,7 @@ class ShareholderService(ShareholderServiceProtocol):
             raise NotFound()
         return company
 
-    def get_shareholders_by_company(self, company_id: int, user_id: Optional[int] = None):
+    def get_shareholders_by_company(self, company_id: int, user_id: int | None = None):
         uid = self._resolve_user_id(company_id, user_id)
         stmt = (
             select(Shareholder)
@@ -46,7 +45,7 @@ class ShareholderService(ShareholderServiceProtocol):
         )
         return list(db.session.scalars(stmt))
 
-    def get_main_shareholders(self, company_id: int, user_id: Optional[int] = None):
+    def get_main_shareholders(self, company_id: int, user_id: int | None = None):
         uid = self._resolve_user_id(company_id, user_id)
         stmt = (
             select(Shareholder)
@@ -60,7 +59,7 @@ class ShareholderService(ShareholderServiceProtocol):
         )
         return list(db.session.scalars(stmt))
 
-    def get_shareholder_by_id(self, shareholder_id: int, user_id: Optional[int] = None):
+    def get_shareholder_by_id(self, shareholder_id: int, user_id: int | None = None):
         if user_id is None:
             raise RuntimeError('user_id is required to fetch shareholder records')
         uid = int(user_id)
@@ -74,7 +73,7 @@ class ShareholderService(ShareholderServiceProtocol):
             raise NotFound()
         return result
 
-    def add_shareholder(self, company_id: int, form, parent_id: int | None = None, user_id: Optional[int] = None):
+    def add_shareholder(self, company_id: int, form, parent_id: int | None = None, user_id: int | None = None):
         uid = self._resolve_user_id(company_id, user_id)
         company = self._get_company(company_id, uid)
         new_shareholder = Shareholder(company_id=company.id)
@@ -93,14 +92,14 @@ class ShareholderService(ShareholderServiceProtocol):
         db.session.commit()
         return new_shareholder, None
 
-    def get_related_shareholders(self, main_shareholder_id: int, user_id: Optional[int] = None):
+    def get_related_shareholders(self, main_shareholder_id: int, user_id: int | None = None):
         if user_id is None:
             raise RuntimeError('user_id is required to fetch related shareholders')
         main_shareholder = self.get_shareholder_by_id(main_shareholder_id, user_id=user_id)
         stmt = select(Shareholder).where(Shareholder.parent_id == main_shareholder.id)
         return list(db.session.scalars(stmt))
 
-    def update_shareholder(self, shareholder_id: int, form, user_id: Optional[int] = None):
+    def update_shareholder(self, shareholder_id: int, form, user_id: int | None = None):
         if user_id is None:
             raise RuntimeError('user_id is required to update shareholder records')
         shareholder = self.get_shareholder_by_id(shareholder_id, user_id=user_id)
@@ -118,7 +117,7 @@ class ShareholderService(ShareholderServiceProtocol):
         db.session.commit()
         return shareholder
 
-    def delete_shareholder(self, shareholder_id: int, user_id: Optional[int] = None):
+    def delete_shareholder(self, shareholder_id: int, user_id: int | None = None):
         if user_id is None:
             raise RuntimeError('user_id is required to delete shareholder records')
         shareholder = self.get_shareholder_by_id(shareholder_id, user_id=user_id)
@@ -143,7 +142,7 @@ class ShareholderService(ShareholderServiceProtocol):
             and _nz(getattr(a, 'address', None)) == _nz(getattr(b, 'address', None))
         )
 
-    def get_main_shareholder_group_number(self, company_id: int, main_shareholder_id: int, user_id: Optional[int] = None) -> int:
+    def get_main_shareholder_group_number(self, company_id: int, main_shareholder_id: int, user_id: int | None = None) -> int:
         uid = self._resolve_user_id(company_id, user_id)
         main_shareholders = self.get_main_shareholders(company_id, user_id=uid)
         for idx, shareholder in enumerate(main_shareholders, start=1):
@@ -167,7 +166,7 @@ class ShareholderService(ShareholderServiceProtocol):
             return g._shareholder_totals_cache
         return {}
 
-    def compute_company_total(self, company_id: int, user_id: Optional[int] = None) -> int:
+    def compute_company_total(self, company_id: int, user_id: int | None = None) -> int:
         uid = self._resolve_user_id(company_id, user_id)
         metric_col, metric_name = self._get_metric_column_for_company(company_id, uid)
         cache = self._get_request_cache()
@@ -188,7 +187,7 @@ class ShareholderService(ShareholderServiceProtocol):
         cache[key] = int(total)
         return int(total)
 
-    def compute_group_total(self, company_id: int, main_shareholder_id: int, user_id: Optional[int] = None) -> int:
+    def compute_group_total(self, company_id: int, main_shareholder_id: int, user_id: int | None = None) -> int:
         uid = self._resolve_user_id(company_id, user_id)
         metric_col, metric_name = self._get_metric_column_for_company(company_id, uid)
         cache = self._get_request_cache()
@@ -203,7 +202,7 @@ class ShareholderService(ShareholderServiceProtocol):
         cache[key] = total
         return total
 
-    def compute_group_totals_map(self, company_id: int, user_id: Optional[int] = None) -> dict[int, int]:
+    def compute_group_totals_map(self, company_id: int, user_id: int | None = None) -> dict[int, int]:
         uid = self._resolve_user_id(company_id, user_id)
         metric_col, metric_name = self._get_metric_column_for_company(company_id, uid)
         cache = self._get_request_cache()
@@ -230,7 +229,7 @@ class ShareholderService(ShareholderServiceProtocol):
         cache[key] = totals_map
         return totals_map
 
-    def compute_group_totals_both_map(self, company_id: int, user_id: Optional[int] = None) -> dict[int, dict[str, int]]:
+    def compute_group_totals_both_map(self, company_id: int, user_id: int | None = None) -> dict[int, dict[str, int]]:
         uid = self._resolve_user_id(company_id, user_id)
         cache = self._get_request_cache()
         key = ("group_totals_both_map", company_id, uid)
@@ -263,6 +262,6 @@ class ShareholderService(ShareholderServiceProtocol):
 shareholder_service = ShareholderService()
 
 
-def get_shareholder_service_for(company) -> Tuple[ShareholderService, Optional[int]]:
+def get_shareholder_service_for(company) -> tuple[ShareholderService, int | None]:
     """Return the shared ShareholderService with the user scope derived from company."""
     return shareholder_service, getattr(company, 'user_id', None)

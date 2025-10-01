@@ -1,10 +1,14 @@
 from datetime import date
 
-from datetime import date
-
-from app import db
-from app.company.models import AccountTitleMaster, AccountingData, Borrowing, Company, Miscellaneous
+from app.company.models import (
+    AccountingData,
+    AccountTitleMaster,
+    Borrowing,
+    Company,
+    Miscellaneous,
+)
 from app.company.services.soa_summary_service import SoASummaryService
+from app.extensions import db
 
 
 def _create_accounting_data(company_id: int, payload: dict) -> None:

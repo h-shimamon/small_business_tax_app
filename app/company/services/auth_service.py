@@ -1,5 +1,6 @@
 # app/company/services/auth_service.py
-from app.company.models import User, Company
+from app.company.models import Company, User
+
 
 class AuthService:
     @staticmethod

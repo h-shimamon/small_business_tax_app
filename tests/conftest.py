@@ -1,8 +1,10 @@
 # tests/conftest.py
 from datetime import date
+
 import pytest
+
 from app import create_app, db
-from app.company.models import User, Company, Shareholder
+from app.company.models import Company, Shareholder, User
 
 
 @pytest.fixture(scope='function')

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 _DECIMAL_ZERO = Decimal("0")
 _HUNDRED = Decimal("100")

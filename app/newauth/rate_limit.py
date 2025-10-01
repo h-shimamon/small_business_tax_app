@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import time
-from typing import Dict, Tuple
+
 from flask import Request
 
 # 超簡易レート制限（プロセス内メモリ）。本番は外部ストアに差し替え前提。
 # key=(ip,email), 値=(window_start_epoch, count)
-_store: Dict[Tuple[str, str], Tuple[float, int]] = {}
+_store: dict[tuple[str, str], tuple[float, int]] = {}
 WINDOW_SEC = 60.0
 LIMIT = 5
 RESET_WINDOW_SEC = 3600.0

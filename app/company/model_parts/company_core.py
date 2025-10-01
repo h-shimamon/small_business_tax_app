@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Optional, Union
+import datetime as _dt
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import db
-from app.models_utils.date_sync import attach_date_string_sync
+from app.extensions import db
 
 
 class User(UserMixin, db.Model):
@@ -23,6 +22,24 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+
+
+def _coerce_iso_date(value) -> _dt.date | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, _dt.date):
+        return value
+    if isinstance(value, _dt.datetime):
+        return value.date()
+    try:
+        return _dt.date.fromisoformat(str(value))
+    except Exception:
+        return None
+
+
+def _iso_or_none(value: _dt.date | None) -> str | None:
+    return value.isoformat() if isinstance(value, _dt.date) else None
 
 class Company(db.Model):
     __table_args__ = (
@@ -44,8 +61,21 @@ class Company(db.Model):
     establishment_date = db.Column(db.Date, nullable=False)
     capital_limit = db.Column(db.Boolean, default=True)
     is_supported_industry = db.Column(db.Boolean, default=True)
-    is_not_excluded_business = db.Column(db.Boolean, default=True)
     is_excluded_business = db.Column(db.Boolean, default=False)
+
+    @property
+    def is_not_excluded_business(self) -> bool | None:
+        value = getattr(self, 'is_excluded_business', None)
+        if value is None:
+            return None
+        return not bool(value)
+
+    @is_not_excluded_business.setter
+    def is_not_excluded_business(self, value: bool | None) -> None:
+        if value is None:
+            return
+        self.is_excluded_business = not bool(value)
+
     industry_type = db.Column(db.String(50))
     industry_code = db.Column(db.String(10))
     reference_number = db.Column(db.String(20))
@@ -53,14 +83,29 @@ class Company(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
     user = db.relationship('User', backref=db.backref('company', uselist=False))
 
-    accounting_period_start = db.Column(db.String(10))
     accounting_period_start_date = db.Column(db.Date)
-    accounting_period_end = db.Column(db.String(10))
     accounting_period_end_date = db.Column(db.Date)
+
+    @property
+    def accounting_period_start(self) -> str | None:
+        return _iso_or_none(self.accounting_period_start_date)
+
+    @accounting_period_start.setter
+    def accounting_period_start(self, value) -> None:
+        self.accounting_period_start_date = _coerce_iso_date(value)
+
+    @property
+    def accounting_period_end(self) -> str | None:
+        return _iso_or_none(self.accounting_period_end_date)
+
+    @accounting_period_end.setter
+    def accounting_period_end(self, value) -> None:
+        self.accounting_period_end_date = _coerce_iso_date(value)
+
     term_number = db.Column(db.Integer)
     office_count = db.Column(db.String(10))
     @classmethod
-    def _normalize_office_count_value(cls, value: Optional[Union[str, int]]) -> Optional[str]:
+    def _normalize_office_count_value(cls, value: str | int | None) -> str | None:
         if value is None:
             return None
         if isinstance(value, int):
@@ -80,7 +125,7 @@ class Company(db.Model):
         return lowered
 
     @property
-    def office_count_numeric(self) -> Optional[int]:
+    def office_count_numeric(self) -> int | None:
         raw_value = getattr(self, 'office_count', None)
         if raw_value is None:
             return None
@@ -98,10 +143,10 @@ class Company(db.Model):
         return self._OFFICE_COUNT_MAP.get(lowered)
 
     @office_count_numeric.setter
-    def office_count_numeric(self, value: Optional[Union[str, int]]) -> None:
+    def office_count_numeric(self, value: str | int | None) -> None:
         self.office_count = self._normalize_office_count_value(value)
 
-    def apply_office_count_input(self, raw_value: Optional[Union[str, int]]) -> None:
+    def apply_office_count_input(self, raw_value: str | int | None) -> None:
         self.office_count = self._normalize_office_count_value(raw_value)
     declaration_type = db.Column(db.String(10))
     tax_system = db.Column(db.String(10))
@@ -118,8 +163,16 @@ class Company(db.Model):
     accounting_manager_name = db.Column(db.String(100))
     accounting_manager_kana = db.Column(db.String(100))
 
-    closing_date = db.Column(db.String(10))
     closing_date_date = db.Column(db.Date)
+
+    @property
+    def closing_date(self) -> str | None:
+        return _iso_or_none(self.closing_date_date)
+
+    @closing_date.setter
+    def closing_date(self, value) -> None:
+        self.closing_date_date = _coerce_iso_date(value)
+
     is_corp_tax_extended = db.Column(db.Boolean, default=False)
     is_biz_tax_extended = db.Column(db.Boolean, default=False)
 
@@ -208,7 +261,3 @@ class Office(db.Model):
     def __repr__(self):
         return f'<Office {self.name}>'
 
-
-attach_date_string_sync(Company, 'accounting_period_start', 'accounting_period_start_date')
-attach_date_string_sync(Company, 'accounting_period_end', 'accounting_period_end_date')
-attach_date_string_sync(Company, 'closing_date', 'closing_date_date')

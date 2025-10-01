@@ -1,6 +1,7 @@
 # app/company/parsers/other_parser.py
 from .base_parser import BaseParser
 
+
 class OtherParser(BaseParser):
     SUPPORTED = False
     """

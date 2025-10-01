@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set
-
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -15,21 +14,21 @@ from app.company.services.master_data_service import MasterDataService
 class AccountCatalog:
     """勘定科目マスタと同義語辞書をカプセル化する。"""
 
-    canonical_names: Set[str]
-    aliases: Dict[str, str]
-    normalized_lookup: Dict[str, str]
-    bs_accounts: List[str]
-    pl_accounts: List[str]
+    canonical_names: set[str]
+    aliases: dict[str, str]
+    normalized_lookup: dict[str, str]
+    bs_accounts: list[str]
+    pl_accounts: list[str]
 
     def normalize(self, value: str) -> str:
         return _normalize(value)
 
-    def resolve(self, value: str) -> Optional[str]:
+    def resolve(self, value: str) -> str | None:
         key = self.normalize(value)
         return self.aliases.get(key) or self.normalized_lookup.get(key)
 
 
-def load_catalog(master_service: Optional[MasterDataService] = None) -> AccountCatalog:
+def load_catalog(master_service: MasterDataService | None = None) -> AccountCatalog:
     master_service = master_service or MasterDataService()
 
     try:
@@ -60,7 +59,7 @@ def load_catalog(master_service: Optional[MasterDataService] = None) -> AccountC
     )
 
 
-def _extract_account_names(df) -> List[str]:
+def _extract_account_names(df) -> list[str]:
     if df is None:
         return []
     try:
@@ -73,7 +72,52 @@ def _extract_account_names(df) -> List[str]:
     return []
 
 
-def _load_alias_map(canonical_names: Iterable[str]) -> Dict[str, str]:
+def _resolve_alias_file(cfg: dict, default_root: Path) -> Path | None:
+    base_dir = cfg.get('MASTER_DATA_BASE_DIR')
+    candidates: list[Path] = []
+    if base_dir:
+        candidates.append(Path(base_dir) / 'resources' / 'masters' / 'account_aliases.json')
+    candidates.append(default_root / 'resources' / 'masters' / 'account_aliases.json')
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+
+def _read_alias_json(path: Path) -> dict[str, str]:
+    try:
+        with path.open(encoding='utf-8') as fh:
+            raw = json.load(fh)
+        if isinstance(raw, dict):
+            return {str(k): str(v) for k, v in raw.items()}
+    except Exception:
+        pass
+    return {}
+
+
+def _normalize_alias_entries(alias_entries: dict[str, str]) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    for alias, target in alias_entries.items():
+        alias_norm = _normalize(alias)
+        if alias_norm:
+            normalized[alias_norm] = target
+    return normalized
+
+
+def _filter_aliases(alias_map: dict[str, str], canonical_names: Iterable[str]) -> dict[str, str]:
+    canonical_lookup = {_normalize(name): name for name in canonical_names}
+    has_canonical = bool(canonical_lookup)
+    filtered: dict[str, str] = {}
+    for alias_norm, target in alias_map.items():
+        canonical = canonical_lookup.get(_normalize(target))
+        if canonical:
+            filtered[alias_norm] = canonical
+        elif not has_canonical:
+            filtered[alias_norm] = target
+    return filtered
+
+
+def _load_alias_map(canonical_names: Iterable[str]) -> dict[str, str]:
     try:
         app = current_app._get_current_object()
         cfg = app.config
@@ -82,38 +126,13 @@ def _load_alias_map(canonical_names: Iterable[str]) -> Dict[str, str]:
         cfg = {}
         default_root = Path('.')
 
-    base_dir = cfg.get('MASTER_DATA_BASE_DIR')
-    candidates: List[Path] = []
-    if base_dir:
-        candidates.append(Path(base_dir) / 'resources' / 'masters' / 'account_aliases.json')
-    candidates.append(default_root / 'resources' / 'masters' / 'account_aliases.json')
+    alias_path = _resolve_alias_file(cfg, default_root)
+    if not alias_path:
+        return {}
 
-    alias_map: Dict[str, str] = {}
-    for path in candidates:
-        if path.exists():
-            try:
-                with path.open(encoding='utf-8') as fh:
-                    raw = json.load(fh)
-                for alias, target in raw.items():
-                    normalized_alias = _normalize(alias)
-                    if not normalized_alias:
-                        continue
-                    alias_map[normalized_alias] = str(target)
-            except Exception:
-                continue
-            break
-
-    canonical_normalized = {_normalize(name): name for name in canonical_names}
-    has_canonical = bool(canonical_normalized)
-
-    filtered_aliases: Dict[str, str] = {}
-    for alias_norm, target in alias_map.items():
-        canonical = canonical_normalized.get(_normalize(target))
-        if canonical:
-            filtered_aliases[alias_norm] = canonical
-        elif not has_canonical:
-            filtered_aliases[alias_norm] = target
-    return filtered_aliases
+    raw_aliases = _read_alias_json(alias_path)
+    normalized_aliases = _normalize_alias_entries(raw_aliases)
+    return _filter_aliases(normalized_aliases, canonical_names)
 
 
 def _normalize(value: str) -> str:

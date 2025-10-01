@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from decimal import Decimal
-from typing import Dict, Iterable, Mapping
 
 
-def summarize_retained_earnings(rows: Iterable[Mapping[str, object]]) -> Dict[str, Decimal]:
+def summarize_retained_earnings(rows: Iterable[Mapping[str, object]]) -> dict[str, Decimal]:
     """別表5(1)の期首・期末残高を集計。"""
 
     opening = Decimal('0')
@@ -18,7 +18,7 @@ def summarize_retained_earnings(rows: Iterable[Mapping[str, object]]) -> Dict[st
     }
 
 
-def summarize_tax_reserve(rows: Iterable[Mapping[str, object]]) -> Dict[str, Decimal]:
+def summarize_tax_reserve(rows: Iterable[Mapping[str, object]]) -> dict[str, Decimal]:
     """別表5(2)の納税充当金変動を集計。"""
 
     addition = Decimal('0')

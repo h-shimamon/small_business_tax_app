@@ -1,8 +1,9 @@
 # app/company/parser_factory.py
-from .parsers.moneyforward_parser import MoneyForwardParser
-from .parsers.yayoi_parser import YayoiParser
 from .parsers.freee_parser import FreeeParser
+from .parsers.moneyforward_parser import MoneyForwardParser
 from .parsers.other_parser import OtherParser
+from .parsers.yayoi_parser import YayoiParser
+
 
 class ParserFactory:
     """

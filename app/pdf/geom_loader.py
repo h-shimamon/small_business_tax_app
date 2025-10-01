@@ -13,7 +13,8 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 
 class GeometrySchemaError(Exception):
@@ -33,7 +34,7 @@ def _ensure_dir(path: str) -> None:
         raise GeometrySchemaError(f"directory does not exist: {d}")
 
 
-def _apply_defaults(data: Dict[str, Any]) -> Dict[str, Any]:
+def _apply_defaults(data: dict[str, Any]) -> dict[str, Any]:
     # schema_version default
     data.setdefault("schema_version", "1.0")
 
@@ -84,7 +85,7 @@ def _validate_rects(rects: Any) -> None:
                 raise GeometrySchemaError(f"rects['{name}'][{i}] must be a number")
 
 
-def validate_and_apply_defaults(data: Dict[str, Any]) -> Dict[str, Any]:
+def validate_and_apply_defaults(data: dict[str, Any]) -> dict[str, Any]:
     """Validate the geometry dict and apply safe defaults.
 
     Accepts either:
@@ -107,7 +108,7 @@ def validate_and_apply_defaults(data: Dict[str, Any]) -> Dict[str, Any]:
     return _apply_defaults(dict(data))
 
 
-def load(template_key: str, year: str, *, repo_root: str, required: bool = True, validate: bool = True) -> Dict[str, Any]:
+def load(template_key: str, year: str, *, repo_root: str, required: bool = True, validate: bool = True) -> dict[str, Any]:
     """Load a geometry JSON, optionally validate and apply defaults.
 
     - template_key: e.g. 'uchiwakesyo_uketoritegata' or 'beppyou_02'
@@ -123,7 +124,7 @@ def load(template_key: str, year: str, *, repo_root: str, required: bool = True,
         return {}
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f) or {}
     except Exception as e:
         if required:
@@ -142,7 +143,7 @@ def _repo_root_from_here() -> str:
     return repo_root
 
 
-def _iter_geometry_files(repo_root: str) -> Iterable[Tuple[str, str, str]]:
+def _iter_geometry_files(repo_root: str) -> Iterable[tuple[str, str, str]]:
     base = os.path.join(repo_root, "resources", "pdf_templates")
     if not os.path.isdir(base):
         return []
@@ -157,14 +158,14 @@ def _iter_geometry_files(repo_root: str) -> Iterable[Tuple[str, str, str]]:
                 yield (tkey, year, os.path.join(tdir, fname))
 
 
-def cli_check_all(repo_root: str, report_path: Optional[str] = None) -> int:
+def cli_check_all(repo_root: str, report_path: str | None = None) -> int:
     """Validate all geometry files. Returns process exit code (0 ok, 1 failure)."""
-    errors: List[Dict[str, str]] = []
+    errors: list[dict[str, str]] = []
     count = 0
     for tkey, year, path in _iter_geometry_files(repo_root):
         count += 1
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 raw = json.load(f) or {}
             validate_and_apply_defaults(raw)
         except Exception as e:
@@ -183,7 +184,7 @@ def cli_check_all(repo_root: str, report_path: Optional[str] = None) -> int:
     return status
 
 
-def _write_json_report(report_path: str, *, count: int, errors: List[Dict[str, str]], status: int) -> None:
+def _write_json_report(report_path: str, *, count: int, errors: list[dict[str, str]], status: int) -> None:
     payload = {
         "status": "failed" if status else "ok",
         "files_checked": count,
@@ -197,7 +198,7 @@ def _write_json_report(report_path: str, *, count: int, errors: List[Dict[str, s
         print(f"Failed to write JSON report {report_path}: {exc}", file=sys.stderr)
 
 
-def main(argv: List[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate PDF geometry templates")
     parser.add_argument("--check-all", action="store_true", help="validate all *_geometry.json under resources/pdf_templates")
     parser.add_argument("--repo-root", default=_repo_root_from_here(), help="repository root (auto-detected)")

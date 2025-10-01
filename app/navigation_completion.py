@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import Callable, Dict, Set
+from typing import Callable
 
 from app.company.models import (
-    Company,
-    Shareholder,
-    Office,
-    UserAccountMapping,
     AccountingData,
+    Company,
+    Office,
+    Shareholder,
+    UserAccountMapping,
 )
-from app import db
+from app.extensions import db
 from app.primitives.dates import get_company_period
 
 
@@ -74,7 +74,7 @@ def _journals_completed(company_id: int, user_id: int) -> bool:
     return AccountingData.query.filter_by(company_id=company_id).first() is not None
 
 
-REGISTRY: Dict[str, Callable[[int, int], bool]] = {
+REGISTRY: dict[str, Callable[[int, int], bool]] = {
     'company_info': _company_info_completed,
     'shareholders': _shareholders_completed,
     'declaration': _declaration_completed,
@@ -84,8 +84,8 @@ REGISTRY: Dict[str, Callable[[int, int], bool]] = {
 }
 
 
-def compute_completed(company_id: int, user_id: int) -> Set[str]:
-    completed: Set[str] = set()
+def compute_completed(company_id: int, user_id: int) -> set[str]:
+    completed: set[str] = set()
     for key, fn in REGISTRY.items():
         try:
             if fn(company_id, user_id):

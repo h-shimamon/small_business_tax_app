@@ -2,26 +2,26 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING
-
 from flask import flash, url_for
 
-from app.constants import FLASH_SKIP
 from app.company.models import AccountingData
 from app.company.services.protocols import StatementOfAccountsServiceProtocol
+from app.constants import FLASH_SKIP
 
-if TYPE_CHECKING:
-    from app.company.services.statement_of_accounts_service import StatementOfAccountsService
+from app.company.services.soa_difference_service import SoADifferenceBatch
 from app.navigation import (
     compute_skipped_steps_for_company,
     get_navigation_state,
     mark_step_as_completed,
     unmark_step_as_completed,
 )
-from app.navigation_helpers import get_soa_child_key, get_next_soa_page
-from app.services.app_registry import get_default_pdf_year, get_post_create_cta, get_empty_state
-from app.services.soa_registry import SUMMARY_PAGE_MAP, STATEMENT_PAGES_CONFIG
-from app.company.services.soa_difference_service import SoADifferenceBatch
+from app.navigation_helpers import get_next_soa_page, get_soa_child_key
+from app.services.app_registry import (
+    get_default_pdf_year,
+    get_empty_state,
+    get_post_create_cta,
+)
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG, SUMMARY_PAGE_MAP
 
 
 @dataclass(frozen=True)
@@ -31,10 +31,12 @@ class StatementContext:
 
 
 class StatementOfAccountsFlow:
-    def __init__(self, company_id: int, accounting_data: Optional[AccountingData] = None) -> None:
+    def __init__(self, company_id: int, accounting_data: AccountingData | None = None) -> None:
         self.company_id = company_id
         self.accounting_data = accounting_data
-        from app.company.services.statement_of_accounts_service import StatementOfAccountsService
+        from app.company.services.statement_of_accounts_service import (
+            StatementOfAccountsService,
+        )
         self.service: StatementOfAccountsServiceProtocol = StatementOfAccountsService(company_id)
         self._difference_batch = SoADifferenceBatch(company_id, accounting_data=accounting_data)
         self._difference_batch.bind_to_request()
@@ -56,13 +58,13 @@ class StatementOfAccountsFlow:
         total = self.service.calculate_total(page, items)
         return items, total
 
-    def compute_pdf_year(self) -> Optional[int]:
+    def compute_pdf_year(self) -> int | None:
         try:
             return self.accounting_data.period_end.year if self.accounting_data and self.accounting_data.period_end else None
         except Exception:
             return None
 
-    def compute_post_create(self, page: str, created_flag: Optional[str], created_id: Optional[str]) -> Optional[dict]:
+    def compute_post_create(self, page: str, created_flag: str | None, created_id: str | None) -> dict | None:
         if not created_flag:
             return None
         cta_cfg = get_post_create_cta(page)
@@ -85,7 +87,7 @@ class StatementOfAccountsFlow:
             'created_id': created_id,
         }
 
-    def compute_summaries_and_mark(self, page: str, config: dict) -> tuple[dict, Optional[str]]:
+    def compute_summaries_and_mark(self, page: str, config: dict) -> tuple[dict, str | None]:
         summaries: dict = {'generic_summary': {'bs_total': 0, 'breakdown_total': 0, 'difference': 0}}
         if page in SUMMARY_PAGE_MAP:
             evaluation = self._difference_batch.get(page)
@@ -127,8 +129,8 @@ class StatementOfAccountsFlow:
     def prepare_context(
         self,
         page: str,
-        created_flag: Optional[str],
-        created_id: Optional[str],
+        created_flag: str | None,
+        created_id: str | None,
     ) -> StatementContext:
         config = STATEMENT_PAGES_CONFIG.get(page)
         items, total = self.load_items(page)

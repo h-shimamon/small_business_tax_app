@@ -1,16 +1,14 @@
-from __future__ import annotations
-
 """Populate PDF registry with existing statement generators."""
-
 from app.pdf.borrowings_two_tier import generate_borrowings_two_tier
 from app.pdf.uchiwakesyo_kaikakekin import generate_uchiwakesyo_kaikakekin
-from app.pdf.uchiwakesyo_uketoritegata import generate_uchiwakesyo_uketoritegata
-from app.pdf.uchiwakesyo_karibaraikin_kashitukekin import generate_uchiwakesyo_karibaraikin_kashitukekin
-from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
+from app.pdf.uchiwakesyo_karibaraikin_kashitukekin import (
+    generate_uchiwakesyo_karibaraikin_kashitukekin,
+)
 from app.pdf.uchiwakesyo_shiharaitegata import generate_uchiwakesyo_shiharaitegata
+from app.pdf.uchiwakesyo_uketoritegata import generate_uchiwakesyo_uketoritegata
+from app.pdf.uchiwakesyo_urikakekin import generate_uchiwakesyo_urikakekin
 from app.pdf.uchiwakesyo_yocyokin import generate_uchiwakesyo_yocyokin
 from .pdf_registry import register_statement_pdf
-
 register_statement_pdf(
     'deposits',
     generator=generate_uchiwakesyo_yocyokin,

@@ -1,6 +1,8 @@
 # app/company/utils.py
 from functools import wraps
+
 from flask import redirect, url_for
+
 
 def set_page_title_and_verify_company_type(f):
     """

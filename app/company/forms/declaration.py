@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 from datetime import datetime
+
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileRequired
 from wtforms import (
-    StringField, PasswordField, SubmitField, SelectField, FileField,
-    RadioField, BooleanField, IntegerField
+    BooleanField,
+    FileField,
+    IntegerField,
+    PasswordField,
+    RadioField,
+    SelectField,
+    StringField,
+    SubmitField,
 )
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, Optional

@@ -2,7 +2,8 @@
 from werkzeug.exceptions import NotFound
 
 from app.company.models import Company, Shareholder
-from app import db
+from app.extensions import db
+
 
 def classify_company(company_id):
     """

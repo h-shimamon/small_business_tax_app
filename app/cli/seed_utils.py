@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from datetime import date, timedelta
-import random
-from typing import Optional, Tuple
 
 from app.company.models import Company
 
 
-def get_target_company(company_id: Optional[int]) -> Company:
+def get_target_company(company_id: int | None) -> Company:
     if company_id is not None:
         company = Company.query.filter_by(id=company_id).first()
         if not company:
@@ -31,7 +30,7 @@ class SeedContext:
     prefix: str = ""
 
 
-def make_context(company_id: Optional[int], seed: int = 42, prefix: str = "") -> SeedContext:
+def make_context(company_id: int | None, seed: int = 42, prefix: str = "") -> SeedContext:
     company = get_target_company(company_id)
     return SeedContext(company=company, rng=random.Random(seed), today=date.today(), prefix=prefix)
 
@@ -44,11 +43,11 @@ BANKS = ['みずほ銀行', '三菱UFJ銀行', '三井住友銀行', 'りそな�
 BRANCHES = ['本店', '新宿支店', '渋谷支店', '大阪支店', '名古屋支店']
 
 
-def random_bank(rng: random.Random) -> Tuple[str, str]:
+def random_bank(rng: random.Random) -> tuple[str, str]:
     return rng.choice(BANKS), rng.choice(BRANCHES)
 
 
-def around_today(ctx: SeedContext, before_days: int, after_days: int) -> Tuple[date, date]:
+def around_today(ctx: SeedContext, before_days: int, after_days: int) -> tuple[date, date]:
     issue = ctx.today - timedelta(days=before_days)
     due = ctx.today + timedelta(days=after_days)
     return issue, due

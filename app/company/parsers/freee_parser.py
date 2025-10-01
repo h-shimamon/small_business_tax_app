@@ -1,6 +1,7 @@
 # app/company/parsers/freee_parser.py
 from .base_parser import BaseParser
 
+
 class FreeeParser(BaseParser):
     SUPPORTED = False
     """

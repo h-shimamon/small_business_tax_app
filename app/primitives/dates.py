@@ -13,24 +13,22 @@ This module keeps existing behavior by delegating to models_utils.date_readers.
 
 from dataclasses import dataclass  # noqa: E402
 from datetime import date  # noqa: E402
-from typing import Optional  # noqa: E402
-
 from app.models_utils.date_readers import (  # noqa: E402
+    company_accounting_period_end,
+    company_accounting_period_start,
+    company_closing_date,  # re-export
     ensure_date,
     to_iso,  # re-export
-    company_accounting_period_start,
-    company_accounting_period_end,
-    company_closing_date,  # re-export
 )
 
 
 @dataclass(frozen=True)
 class Period:
-    start: Optional[date]
-    end: Optional[date]
+    start: date | None
+    end: date | None
 
 
-def parse_lenient(value) -> Optional[date]:
+def parse_lenient(value) -> date | None:
     """Lenient parser for UI inputs. Returns None for empty/invalid."""
     return ensure_date(value)
 

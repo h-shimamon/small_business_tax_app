@@ -3,7 +3,13 @@ import json
 import logging
 import os
 import sys
-from typing import Callable, Optional, Sequence, Set, Tuple, TypedDict
+from collections.abc import Sequence
+from typing import Callable, TypedDict
+
+from flask import Flask
+
+from .company.models import User
+from .extensions import db, login_manager, migrate
 
 logger = logging.getLogger("app.init")
 
@@ -22,17 +28,11 @@ def _load_env() -> None:
         _log_init_failure('load_dotenv', exc)
 
 
-_load_env()
-from flask import Flask
-from .extensions import db, login_manager, migrate
-from .company.models import User
-
-
-
 def _register_template_globals(app: Flask) -> None:
     try:
+        from app.services.app_registry import get_default_pdf_year, get_pdf_export_map
+
         from .constants.ui_options import get_ui_options  # type: ignore
-        from app.services.app_registry import get_pdf_export_map, get_default_pdf_year
         app.add_template_global(get_ui_options, name='get_ui_options')
         profile = os.getenv('APP_UI_PROFILE', 'default')
         app.add_template_global(get_ui_options(profile), name='ui_options')
@@ -159,9 +159,9 @@ def _register_compat_blueprint(app: Flask) -> None:
 
 def _register_corporate_number_api(app: Flask) -> None:
     try:
+        from app.api.corporate_number import create_blueprint as create_corp_api
         from app.integrations.houjinbangou.stub_client import StubHojinClient
         from app.services.corporate_number_service import CorporateNumberService
-        from app.api.corporate_number import create_blueprint as create_corp_api
         hojin_client = StubHojinClient()
         corp_service = CorporateNumberService(hojin_client)
         app.register_blueprint(create_corp_api(corp_service))
@@ -186,12 +186,12 @@ class InitFailure(TypedDict):
     step: str
     error: str
     severity: str
-    dependencies: Tuple[str, ...]
+    dependencies: tuple[str, ...]
 
 class InitStep(TypedDict, total=False):
     key: str
     runner: Callable[[Flask], None]
-    depends_on: Tuple[str, ...]
+    depends_on: tuple[str, ...]
     optional: bool
     description: str
     severity: str
@@ -222,7 +222,7 @@ def _build_init_steps(test_config) -> Sequence[InitStep]:
 
 
 def _run_initialization_sequence(app: Flask, steps: Sequence[InitStep]) -> None:
-    completed: Set[str] = set()
+    completed: set[str] = set()
     failures: list[InitFailure] = []
     for step in steps:
         key = step['key']
@@ -268,6 +268,7 @@ def create_app(test_config=None):
     """
     アプリケーションファクトリ: Flaskアプリケーションのインスタンスを作成・設定します。
     """
+    _load_env()
     app = Flask(__name__, instance_relative_config=True)
 
     steps = _build_init_steps(test_config)

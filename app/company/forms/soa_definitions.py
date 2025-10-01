@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
-
 from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
@@ -15,10 +13,10 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired, Length, Optional
 
-from .base_fields import CorporateNumberField, MoneyField, MemoField
+from .base_fields import CorporateNumberField, MemoField, MoneyField
 
-FieldFactory = Tuple[str, callable]
-FormFieldDefinitions = Dict[str, List[FieldFactory]]
+FieldFactory = tuple[str, callable]
+FormFieldDefinitions = dict[str, list[FieldFactory]]
 
 
 def _data_required(message: str | None = None):
@@ -152,8 +150,8 @@ SOA_FORM_FIELDS: FormFieldDefinitions = {
 }
 
 
-def get_soa_form_classes() -> Dict[str, type[FlaskForm]]:
-    classes: Dict[str, type[FlaskForm]] = {}
+def get_soa_form_classes() -> dict[str, type[FlaskForm]]:
+    classes: dict[str, type[FlaskForm]] = {}
 
     for form_name, field_factories in SOA_FORM_FIELDS.items():
         attrs = {name: factory() for name, factory in field_factories}

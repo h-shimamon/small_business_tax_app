@@ -1,7 +1,9 @@
 # app/company/parsers/moneyforward_parser.py
 import pandas as pd
+
 from .base_parser import BaseParser
 from .normalizers import normalize_journal_dataframe
+
 
 class MoneyForwardParser(BaseParser):
     SUPPORTED = True
@@ -66,7 +68,7 @@ class MoneyForwardParser(BaseParser):
                 jdf = self._read_data(header_row=None, usecols=self.JOURNALS_COL_INDICES.values())
                 jdf.columns = self.JOURNALS_COL_INDICES.keys()
         except Exception as e:
-            raise Exception(f"勘定科目の抽出に失敗しました（仕訳CSVの解釈）: {e}")
+            raise Exception(f"勘定科目の抽出に失敗しました（仕訳CSVの解釈）: {e}") from e
 
         names = []
         for col in ['debit_account', 'credit_account']:

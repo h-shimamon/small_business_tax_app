@@ -3,7 +3,32 @@
 {% macro render_field(field, placeholder=None, type=None, rows=None, id=None, class_="", readonly=False, container_class="", autofocus=False, tabindex=None, value=None) %}
   {% set final_placeholder = placeholder if placeholder is not none else field.render_kw.get('placeholder') if field.render_kw else None %}
   {% set needs_date_ui = 'js-date' in class_ %}
-  {% set value_kwargs = {'value': value} if value is not none else {} %}
+  {% set base_class = ("form-control js-date " ~ class_)|trim if needs_date_ui else ("form-control " ~ class_)|trim %}
+  {% set kw = namespace(data={'class': base_class}) %}
+  {% if value is not none %}
+    {% set _ = kw.data.update({'value': value}) %}
+  {% endif %}
+  {% if final_placeholder is not none %}
+    {% set _ = kw.data.update({'placeholder': final_placeholder}) %}
+  {% endif %}
+  {% if rows is not none %}
+    {% set _ = kw.data.update({'rows': rows}) %}
+  {% endif %}
+  {% if id is not none %}
+    {% set _ = kw.data.update({'id': id}) %}
+  {% endif %}
+  {% if tabindex is not none %}
+    {% set _ = kw.data.update({'tabindex': tabindex}) %}
+  {% endif %}
+  {% if type is not none %}
+    {% set _ = kw.data.update({'type': type}) %}
+  {% endif %}
+  {% if autofocus %}
+    {% set _ = kw.data.update({'autofocus': True}) %}
+  {% endif %}
+  {% if readonly %}
+    {% set _ = kw.data.update({'readonly': True}) %}
+  {% endif %}
   <div class="form-group {{ container_class }}" id="{{ field.name }}_group">
     {{ field.label(class="form-label") }}
     {% if needs_date_ui %}
@@ -13,10 +38,12 @@
             <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 1 1 2 0v1zm12 6H5v10h14V8z"/>
           </svg>
         </button>
-        {{ field(class=("form-control js-date " ~ class_)|trim, placeholder=final_placeholder, rows=rows, id=id, readonly=readonly, autofocus=autofocus, tabindex=tabindex, **({'data-input': ''} if value is none else {'data-input': '', 'value': value})) }}
+        {% set date_ns = namespace(data=kw.data.copy()) %}
+        {% set _ = date_ns.data.update({'data-input': ''}) %}
+        {{ field(**date_ns.data) }}
       </div>
     {% else %}
-      {{ field(class=("form-control " ~ class_)|trim, placeholder=final_placeholder, type=type, rows=rows, id=id, readonly=readonly, autofocus=autofocus, tabindex=tabindex, **value_kwargs) }}
+      {{ field(**kw.data) }}
     {% endif %}
     {% if field.errors %}
       <div class="form-errors">

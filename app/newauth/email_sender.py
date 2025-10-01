@@ -6,10 +6,10 @@ Email sending abstraction for newauth.
 - Default sender is a no-op logger (safe for dev/CI).
 """
 import logging  # noqa: E402
+import smtplib  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
 from email.message import EmailMessage  # noqa: E402
-import smtplib  # noqa: E402
-from typing import Optional, Protocol  # noqa: E402
+from typing import Protocol  # noqa: E402
 
 from flask import current_app, has_app_context  # noqa: E402
 
@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 class EmailSender(Protocol):
-    def send(self, to: str, subject: str, html: Optional[str] = None, text: Optional[str] = None) -> None: ...
+    def send(self, to: str, subject: str, html: str | None = None, text: str | None = None) -> None: ...
 
 
 @dataclass
 class DummyEmailSender:
-    def send(self, to: str, subject: str, html: Optional[str] = None, text: Optional[str] = None) -> None:
+    def send(self, to: str, subject: str, html: str | None = None, text: str | None = None) -> None:
         # Safe log (PII最小): 宛先のマスクと件名のみ
         masked = self._mask(to)
         logger.info("[EmailDummy] to=%s, subject=%s", masked, subject)
@@ -42,13 +42,13 @@ class DummyEmailSender:
 class SMTPEmailSender:
     host: str
     port: int
-    username: Optional[str] = None
-    password: Optional[str] = None
+    username: str | None = None
+    password: str | None = None
     use_tls: bool = True
     default_from: str = "no-reply@example.com"
     timeout: int = 10
 
-    def send(self, to: str, subject: str, html: Optional[str] = None, text: Optional[str] = None) -> None:
+    def send(self, to: str, subject: str, html: str | None = None, text: str | None = None) -> None:
         msg = EmailMessage()
         msg["To"] = to
         msg["Subject"] = subject

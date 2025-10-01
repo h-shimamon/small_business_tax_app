@@ -8,10 +8,10 @@ Additive-only; existing CLI continues to work independently.
 """
 
 from datetime import date  # noqa: E402
-from typing import Any, Dict, List, Optional  # noqa: E402
+from typing import Any  # noqa: E402
 
 
-def _safe_parse_iso(text: Optional[str]) -> Optional[date]:
+def _safe_parse_iso(text: str | None) -> date | None:
     if not text:
         return None
     try:
@@ -23,7 +23,7 @@ def _safe_parse_iso(text: Optional[str]) -> Optional[date]:
         return None
 
 
-def pair_metrics(rows: List[Dict[str, Any]], str_key: str, date_key: str) -> Dict[str, int]:
+def pair_metrics(rows: list[dict[str, Any]], str_key: str, date_key: str) -> dict[str, int]:
     total = len(rows)
     str_vals = [r.get(str_key) for r in rows]
     date_vals = [r.get(date_key) for r in rows]

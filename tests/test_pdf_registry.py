@@ -1,4 +1,8 @@
-from app.services.pdf_registry import register_statement_pdf, get_statement_pdf_config, STATEMENT_PDF_GENERATORS
+from app.services.pdf_registry import (
+    STATEMENT_PDF_GENERATORS,
+    get_statement_pdf_config,
+    register_statement_pdf,
+)
 
 
 def test_register_and_get_pdf_config():

@@ -1,8 +1,8 @@
 from datetime import date
 from typing import Optional
 
-from app import db
-from app.company.models import User, Company
+from app.company.models import Company, User
+from app.extensions import db
 
 
 def ensure_user(username: str = "testuser1", email: str = "test1@example.com") -> User:

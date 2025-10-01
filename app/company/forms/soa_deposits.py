@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField
+from wtforms import SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, Length
 
-from .base_fields import MoneyField, MemoField
+from .base_fields import MemoField, MoneyField
 
 
 class DepositForm(FlaskForm):

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from app import db
+from app.extensions import db
 from app.models_utils.date_sync import attach_date_string_sync
-
-from .company_core import Company
 
 
 class Deposit(db.Model):

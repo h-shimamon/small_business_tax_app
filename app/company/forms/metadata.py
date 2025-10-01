@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 from wtforms import Form, SubmitField
 from wtforms.fields.core import UnboundField
 
-FieldMetadata = Dict[str, Any]
+FieldMetadata = dict[str, Any]
 
 
-def extract_form_field_metadata(form_cls: type[Form]) -> List[FieldMetadata]:
+def extract_form_field_metadata(form_cls: type[Form]) -> list[FieldMetadata]:
     """Return lightweight metadata for fields defined on a WTForms class."""
     form = _instantiate_form_safely(form_cls)
     if form is not None:
-        fields_iter: Iterable[Tuple[str, Any]] = form._fields.items()
+        fields_iter: Iterable[tuple[str, Any]] = form._fields.items()
     else:
         fields_iter = _iter_unbound_fields(form_cls)
 
-    metadata: List[FieldMetadata] = []
+    metadata: list[FieldMetadata] = []
     for name, field in fields_iter:
         if name == 'csrf_token' or isinstance(field, SubmitField):
             continue
@@ -36,7 +37,7 @@ def extract_form_field_metadata(form_cls: type[Form]) -> List[FieldMetadata]:
     return metadata
 
 
-def merge_field_metadata(base: List[FieldMetadata], overrides: List[FieldMetadata]) -> List[FieldMetadata]:
+def merge_field_metadata(base: list[FieldMetadata], overrides: list[FieldMetadata]) -> list[FieldMetadata]:
     """Apply overrides onto auto-extracted metadata keyed by field name."""
     index = {item['name']: dict(item) for item in base}
     for override in overrides:
@@ -55,8 +56,8 @@ def _instantiate_form_safely(form_cls: type[Form]) -> Form | None:
             return None
 
 
-def _iter_unbound_fields(form_cls: type[Form]) -> Iterable[Tuple[str, Any]]:
-    seen: Dict[str, Any] = {}
+def _iter_unbound_fields(form_cls: type[Form]) -> Iterable[tuple[str, Any]]:
+    seen: dict[str, Any] = {}
     for cls in reversed(form_cls.mro()):
         if not issubclass(cls, Form):
             continue

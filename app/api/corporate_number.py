@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 from flask import Blueprint, jsonify, request
 
 from app.services.corporate_number_service import CorporateNumberService

@@ -1,7 +1,8 @@
 # tests/test_tenancy.py
 from flask import url_for
 from flask_login import login_user, logout_user
-from app.company.models import User, Shareholder
+
+from app.company.models import Shareholder, User
 
 # --- 正常系テスト (Happy Path Tests) ---
 

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional, Tuple, TYPE_CHECKING
-
+from collections.abc import Iterable
 from flask import current_app
 from flask_wtf import FlaskForm
 from sqlalchemy.exc import SQLAlchemyError
 
-from app import db
 from app.company.models import Beppyo15Breakdown
+from app.extensions import db
+
 from .constants import BEPPYO15_FIELD_DEFINITIONS
 from .view_models import (
     Beppyo15ItemViewModel,
@@ -31,7 +31,7 @@ class Beppyo15Service:
             .all()
         )
 
-    def get_item(self, item_id: int) -> Optional[Beppyo15Breakdown]:
+    def get_item(self, item_id: int) -> Beppyo15Breakdown | None:
         if not item_id:
             return None
         return (
@@ -41,7 +41,7 @@ class Beppyo15Service:
         )
 
     # --- CRUD operations ----------------------------------------------
-    def create_item(self, form: FlaskForm) -> Tuple[bool, Optional[Beppyo15Breakdown], Optional[str]]:
+    def create_item(self, form: FlaskForm) -> tuple[bool, Beppyo15Breakdown | None, str | None]:
         item = Beppyo15Breakdown(company_id=self.company_id)
         self._apply_form(item, form)
         try:
@@ -53,7 +53,7 @@ class Beppyo15Service:
             current_app.logger.exception('Failed to create Beppyo15 breakdown: %s', exc)
             return False, None, '登録に失敗しました。'
 
-    def update_item(self, item: Beppyo15Breakdown, form: FlaskForm) -> Tuple[bool, Optional[Beppyo15Breakdown], Optional[str]]:
+    def update_item(self, item: Beppyo15Breakdown, form: FlaskForm) -> tuple[bool, Beppyo15Breakdown | None, str | None]:
         if item is None or item.company_id != self.company_id:
             return False, None, '対象データが見つかりません。'
         self._apply_form(item, form)
@@ -65,7 +65,7 @@ class Beppyo15Service:
             current_app.logger.exception('Failed to update Beppyo15 breakdown: %s', exc)
             return False, None, '更新に失敗しました。'
 
-    def delete_item(self, item: Beppyo15Breakdown) -> Tuple[bool, Optional[str]]:
+    def delete_item(self, item: Beppyo15Breakdown) -> tuple[bool, str | None]:
         if item is None or item.company_id != self.company_id:
             return False, '対象データが見つかりません。'
         try:
@@ -111,6 +111,7 @@ class Beppyo15Service:
     @staticmethod
     def _calculate_accounting_months(accounting_data) -> int:
         from datetime import date
+
         from dateutil.relativedelta import relativedelta
 
         if not accounting_data:

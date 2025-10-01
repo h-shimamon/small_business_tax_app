@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 from flask import g, has_request_context
 
 from app.company.models import AccountingData
 from app.company.services.soa_summary_service import SoASummaryService
 from app.domain.soa.evaluation import SoAPageEvaluation
 
+
 class SoADifferenceBatch:
     """Batch computes difference metrics for SoA pages once per request."""
 
-    def __init__(self, company_id: int, accounting_data: Optional[AccountingData] = None) -> None:
+    def __init__(self, company_id: int, accounting_data: AccountingData | None = None) -> None:
         self.company_id = company_id
         self.accounting_data = accounting_data
-        self._cache: Dict[str, SoAPageEvaluation] = {}
+        self._cache: dict[str, SoAPageEvaluation] = {}
 
     def bind_to_request(self) -> None:
         if has_request_context():
@@ -34,7 +33,7 @@ class SoADifferenceBatch:
         return evaluation
 
     @staticmethod
-    def current(company_id: int) -> Optional['SoADifferenceBatch']:
+    def current(company_id: int) -> SoADifferenceBatch | None:
         if not has_request_context():
             return None
         batch = getattr(g, '_soa_difference_batch', None)

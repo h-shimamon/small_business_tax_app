@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, TypedDict
 
 from app.company.services.master_data_service import MasterDataService
 from app.domain.soa.evaluation import SoAPageEvaluation
-from app.services.soa_registry import PL_PAGE_ACCOUNTS, SUMMARY_PAGE_MAP
-from app import db
-from app.services.soa_registry import STATEMENT_PAGES_CONFIG  # ページ→モデル解決用
+from app.extensions import db
+from app.services.soa_registry import (
+    PL_PAGE_ACCOUNTS,
+    STATEMENT_PAGES_CONFIG,  # ページ→モデル解決用
+    SUMMARY_PAGE_MAP,
+)
 
 
 class SoASummaryService:
@@ -22,7 +25,7 @@ class SoASummaryService:
     # mappings are imported from app.services.soa_registry
 
     @staticmethod
-    def _find_and_sum_by_names(data_dict: Dict[str, Any], names: List[str]) -> int:
+    def _find_and_sum_by_names(data_dict: dict[str, Any], names: list[str]) -> int:
         total_local = 0
         for _, value in data_dict.items():
             if isinstance(value, dict):
@@ -36,7 +39,7 @@ class SoASummaryService:
         return total_local
 
     @classmethod
-    def resolve_target_accounts(cls, page: str, master_service: MasterDataService) -> Dict[str, Any]:
+    def resolve_target_accounts(cls, page: str, master_service: MasterDataService) -> dict[str, Any]:
         if page not in SUMMARY_PAGE_MAP:
             return {'type': 'UNKNOWN', 'target_ids': [], 'targets': []}
 
@@ -73,26 +76,24 @@ class SoASummaryService:
             target_ids, target_names = cls._extract_targets(df, breakdown=breakdown_name)
         return {'type': 'PL', 'target_ids': target_ids, 'targets': target_names or configured_names}
 
+
     @classmethod
-    def compute_source_total(cls, company_id: int, page: str, accounting_data=None, master_service: Optional[MasterDataService] = None) -> SourceTotalResult:
+    def _load_accounting_data(cls, company_id: int, accounting_data):
+        if accounting_data is not None:
+            return accounting_data
         from app.company.models import AccountingData  # local import to avoid cycles
 
-        if accounting_data is None:
-            accounting_data = (
-                AccountingData.query
-                .filter_by(company_id=company_id)
-                .order_by(AccountingData.created_at.desc())
-                .first()
-            )
-        if accounting_data is None:
-            if page == 'borrowings':
-                return {'bs_total': 0, 'pl_interest_total': 0, 'source_total': 0}
-            return {'source_total': 0}
+        return (
+            AccountingData.query
+            .filter_by(company_id=company_id)
+            .order_by(AccountingData.created_at.desc())
+            .first()
+        )
 
-        master_service = master_service or MasterDataService()
-
-        soa_breakdowns = {}
-        account_balances = {}
+    @classmethod
+    def _extract_payloads(cls, accounting_data) -> tuple[dict[str, Any], dict[int, int]]:
+        soa_breakdowns: dict[str, Any] = {}
+        account_balances: dict[int, int] = {}
         try:
             data_payload = accounting_data.data or {}
             if isinstance(data_payload, dict):
@@ -102,61 +103,118 @@ class SoASummaryService:
             account_balances = cls._extract_account_balances(accounting_data)
         except Exception:
             soa_breakdowns = {}
+            account_balances = {}
+        return soa_breakdowns, account_balances
 
-        targets_info = cls.resolve_target_accounts(page, master_service)
+    @staticmethod
+    def _get_data_section(accounting_data, section: str) -> dict[str, Any]:
+        try:
+            payload = accounting_data.data or {}
+            if isinstance(payload, dict):
+                candidate = payload.get(section)
+                if isinstance(candidate, dict):
+                    return candidate
+        except Exception:
+            pass
+        return {}
 
-        if targets_info.get('type') == 'BORROWINGS':
-            bs_ids = targets_info.get('bs_target_ids', [])
-            pl_ids = targets_info.get('pl_target_ids', [])
-            if account_balances and (bs_ids or pl_ids):
-                bs_total = cls._sum_account_balances(account_balances, bs_ids)
-                pl_interest_total = cls._sum_account_balances(account_balances, pl_ids)
-                return {
-                    'bs_total': bs_total,
-                    'pl_interest_total': pl_interest_total,
-                    'source_total': bs_total + pl_interest_total,
-                }
-
-            bs_source = accounting_data.data.get('balance_sheet', {})
-            pl_source = accounting_data.data.get('profit_loss_statement', {})
-            bs_total = cls._find_and_sum_by_names(bs_source, targets_info.get('bs_targets', []))
-            if soa_breakdowns:
-                breakdown_name = SUMMARY_PAGE_MAP.get(page, (None, None))[1]
-                if breakdown_name:
-                    bs_total = soa_breakdowns.get(breakdown_name, bs_total)
-            pl_interest_total = cls._find_and_sum_by_names(pl_source, targets_info.get('pl_targets', []))
+    @classmethod
+    def _compute_borrowings_source(
+        cls,
+        page: str,
+        accounting_data,
+        account_balances: dict[int, int],
+        soa_breakdowns: dict[str, Any],
+        targets_info: dict[str, Any],
+    ) -> SourceTotalResult:
+        bs_ids = targets_info.get('bs_target_ids', [])
+        pl_ids = targets_info.get('pl_target_ids', [])
+        if account_balances and (bs_ids or pl_ids):
+            bs_total = cls._sum_account_balances(account_balances, bs_ids)
+            pl_interest_total = cls._sum_account_balances(account_balances, pl_ids)
             return {
                 'bs_total': bs_total,
                 'pl_interest_total': pl_interest_total,
                 'source_total': bs_total + pl_interest_total,
             }
 
-        if targets_info.get('type') == 'BS':
-            target_ids = targets_info.get('target_ids', [])
-            if account_balances and target_ids:
-                total = cls._sum_account_balances(account_balances, target_ids)
-                return {'source_total': total}
+        bs_source = cls._get_data_section(accounting_data, 'balance_sheet')
+        pl_source = cls._get_data_section(accounting_data, 'profit_loss_statement')
+        bs_total = cls._find_and_sum_by_names(bs_source, targets_info.get('bs_targets', []))
+        breakdown_name = SUMMARY_PAGE_MAP.get(page, (None, None))[1]
+        if breakdown_name and soa_breakdowns:
+            bs_total = soa_breakdowns.get(breakdown_name, bs_total)
+        pl_interest_total = cls._find_and_sum_by_names(pl_source, targets_info.get('pl_targets', []))
+        return {
+            'bs_total': bs_total,
+            'pl_interest_total': pl_interest_total,
+            'source_total': bs_total + pl_interest_total,
+        }
 
-            breakdown_name = SUMMARY_PAGE_MAP.get(page, (None, None))[1]
-            if breakdown_name and soa_breakdowns and breakdown_name in soa_breakdowns:
-                return {'source_total': soa_breakdowns[breakdown_name]}
-            source = accounting_data.data.get('balance_sheet', {})
-            total = cls._find_and_sum_by_names(source, targets_info.get('targets', []))
+    @classmethod
+    def _compute_balance_sheet_source(
+        cls,
+        page: str,
+        accounting_data,
+        account_balances: dict[int, int],
+        soa_breakdowns: dict[str, Any],
+        targets_info: dict[str, Any],
+    ) -> SourceTotalResult:
+        target_ids = targets_info.get('target_ids', [])
+        if account_balances and target_ids:
+            total = cls._sum_account_balances(account_balances, target_ids)
             return {'source_total': total}
-        elif targets_info.get('type') == 'PL':
-            target_ids = targets_info.get('target_ids', [])
-            if account_balances and target_ids:
-                total = cls._sum_account_balances(account_balances, target_ids)
-                return {'source_total': total}
+        breakdown_name = SUMMARY_PAGE_MAP.get(page, (None, None))[1]
+        if breakdown_name and breakdown_name in soa_breakdowns:
+            return {'source_total': soa_breakdowns[breakdown_name]}
+        source = cls._get_data_section(accounting_data, 'balance_sheet')
+        total = cls._find_and_sum_by_names(source, targets_info.get('targets', []))
+        return {'source_total': total}
 
-            source = accounting_data.data.get('profit_loss_statement', {})
-            total = cls._find_and_sum_by_names(source, targets_info.get('targets', []))
+    @classmethod
+    def _compute_profit_loss_source(
+        cls,
+        accounting_data,
+        account_balances: dict[int, int],
+        targets_info: dict[str, Any],
+    ) -> SourceTotalResult:
+        target_ids = targets_info.get('target_ids', [])
+        if account_balances and target_ids:
+            total = cls._sum_account_balances(account_balances, target_ids)
             return {'source_total': total}
-        else:
+        source = cls._get_data_section(accounting_data, 'profit_loss_statement')
+        total = cls._find_and_sum_by_names(source, targets_info.get('targets', []))
+        return {'source_total': total}
+
+    @classmethod
+    def compute_source_total(
+        cls,
+        company_id: int,
+        page: str,
+        accounting_data=None,
+        master_service: MasterDataService | None = None,
+    ) -> SourceTotalResult:
+        accounting = cls._load_accounting_data(company_id, accounting_data)
+        if accounting is None:
+            if page == 'borrowings':
+                return {'bs_total': 0, 'pl_interest_total': 0, 'source_total': 0}
             return {'source_total': 0}
 
+        master_service = master_service or MasterDataService()
+        soa_breakdowns, account_balances = cls._extract_payloads(accounting)
+        targets_info = cls.resolve_target_accounts(page, master_service)
+        target_type = targets_info.get('type')
+
+        if target_type == 'BORROWINGS':
+            return cls._compute_borrowings_source(page, accounting, account_balances, soa_breakdowns, targets_info)
+        if target_type == 'BS':
+            return cls._compute_balance_sheet_source(page, accounting, account_balances, soa_breakdowns, targets_info)
+        if target_type == 'PL':
+            return cls._compute_profit_loss_source(accounting, account_balances, targets_info)
+        return {'source_total': 0}
+
     @staticmethod
-    def compute_breakdown_total(company_id: int, page: str, model, total_field_name: Optional[str]) -> int:
+    def compute_breakdown_total(company_id: int, page: str, model, total_field_name: str | None) -> int:
         # ページ指定だけで呼ばれた場合のフォールバック: ページ→モデル解決
         if model is None:
             try:
@@ -186,7 +244,7 @@ class SoASummaryService:
             .filter_by(company_id=company_id).scalar() or 0
 
     @classmethod
-    def compute_difference(cls, company_id: int, page: str, model, total_field_name: Optional[str], accounting_data=None, master_service: Optional[MasterDataService] = None, source_totals: Optional["SourceTotalResult"] = None) -> DifferenceResult:
+    def compute_difference(cls, company_id: int, page: str, model, total_field_name: str | None, accounting_data=None, master_service: MasterDataService | None = None, source_totals: SourceTotalResult | None = None) -> DifferenceResult:
         master_service = master_service or MasterDataService()
         source = source_totals or cls.compute_source_total(company_id, page, accounting_data=accounting_data, master_service=master_service)
         effective_model = model
@@ -227,7 +285,7 @@ class SoASummaryService:
         return source.get('source_total', 0) == 0
 
     @classmethod
-    def compute_skip_total(cls, company_id: int, page: str, accounting_data=None, master_service: Optional[MasterDataService] = None, source_totals: Optional["SourceTotalResult"] = None) -> int:
+    def compute_skip_total(cls, company_id: int, page: str, accounting_data=None, master_service: MasterDataService | None = None, source_totals: SourceTotalResult | None = None) -> int:
         """Return the numeric source total used to determine skip."""
         source = source_totals or cls.compute_source_total(company_id, page, accounting_data=accounting_data, master_service=master_service)
         if page == 'borrowings':
@@ -270,7 +328,7 @@ class SoASummaryService:
         )
 
     @staticmethod
-    def _extract_targets(df, *, breakdown: Optional[str] = None, names: Optional[List[str]] = None) -> tuple[List[int], List[str]]:
+    def _extract_targets(df, *, breakdown: str | None = None, names: list[str] | None = None) -> tuple[list[int], list[str]]:
         if df is None or not hasattr(df, 'index'):
             return [], []
         subset = None
@@ -284,8 +342,8 @@ class SoASummaryService:
         except Exception:
             subset = df.iloc[0:0]
 
-        target_names: List[str] = []
-        ids: List[int] = []
+        target_names: list[str] = []
+        ids: list[int] = []
         try:
             target_names = [str(name) for name in subset.index.tolist()]
         except Exception:
@@ -299,7 +357,7 @@ class SoASummaryService:
         return ids, target_names
 
     @staticmethod
-    def _extract_account_balances(accounting_data) -> Dict[int, int]:
+    def _extract_account_balances(accounting_data) -> dict[int, int]:
         try:
             payload = getattr(accounting_data, 'data', {}) or {}
             raw_balances = payload.get('account_balances')
@@ -307,7 +365,7 @@ class SoASummaryService:
             raw_balances = None
         if not isinstance(raw_balances, dict):
             return {}
-        balances: Dict[int, int] = {}
+        balances: dict[int, int] = {}
         for key, value in raw_balances.items():
             try:
                 account_id = int(key)
@@ -317,7 +375,7 @@ class SoASummaryService:
         return balances
 
     @staticmethod
-    def _sum_account_balances(account_balances: Dict[int, int], account_ids: List[int]) -> int:
+    def _sum_account_balances(account_balances: dict[int, int], account_ids: list[int]) -> int:
         total = 0
         for account_id in account_ids:
             value = account_balances.get(account_id)

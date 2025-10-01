@@ -1,21 +1,20 @@
-from typing import Optional, List
 import os
+from flask import current_app, has_request_context, request
 
-from flask import has_request_context, current_app, request
-from app import db
-from app.company.models import Company, Borrowing
-
-from .pdf_fill import overlay_pdf, TextSpec
-from .layout_utils import load_geometry
-from .fonts import default_font_map, ensure_font_registered
+from app.company.models import Borrowing, Company
+from app.extensions import db
 from app.utils import format_number
 
+from .fonts import default_font_map, ensure_font_registered
+from .layout_utils import load_geometry
+from .pdf_fill import TextSpec, overlay_pdf
 
-def _fmt(n: Optional[int]) -> str:
+
+def _fmt(n: int | None) -> str:
     return format_number(n)
 
 
-def generate_borrowings_two_tier(company_id: Optional[int], year: str = "2025", *, output_path: str) -> str:
+def generate_borrowings_two_tier(company_id: int | None, year: str = "2025", *, output_path: str) -> str:
     """
     借入金及び支払利子（上下二段）PDFを生成します。
     - 上段: 借入金合計（B/S）
@@ -64,7 +63,7 @@ def generate_borrowings_two_tier(company_id: Optional[int], year: str = "2025", 
     bs_total = q(db.func.sum(Borrowing.balance_at_eoy)).filter_by(company_id=company_id).scalar() or 0
     pl_total = q(db.func.sum(Borrowing.paid_interest)).filter_by(company_id=company_id).scalar() or 0
 
-    texts: List[TextSpec] = []
+    texts: list[TextSpec] = []
     # 上段（借入金合計）
     if bs_total and bs_total != 0:
         texts.append(TextSpec(

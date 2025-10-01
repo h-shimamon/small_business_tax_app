@@ -1,6 +1,7 @@
 # app/company/parsers/yayoi_parser.py
 from .base_parser import BaseParser
 
+
 class YayoiParser(BaseParser):
     SUPPORTED = False
     """

@@ -1,12 +1,11 @@
 # tests/test_sidebar_skip_on_form_pages.py
-from datetime import date
 import re
+from datetime import date
+
+from app.company.models import AccountingData, AccountTitleMaster, Company
+
 # from flask_login import login_user
-
-from app import db
-from app.company.models import Company, AccountingData, AccountTitleMaster
-
-
+from app.extensions import db
 from tests.helpers.auth import login_as
 
 

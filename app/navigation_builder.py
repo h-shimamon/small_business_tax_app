@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import List, Optional
 
-from .navigation_models import NavigationNode
 from app.services.app_registry import get_navigation_structure
 
+from .navigation_models import NavigationNode
 
-def build_navigation_tree() -> List[NavigationNode]:
+
+def build_navigation_tree() -> list[NavigationNode]:
     """データ定義に基づき、NavigationNodeのツリーを構築して返す"""
     return [NavigationNode(**data) for data in get_navigation_structure()]
 
@@ -17,14 +17,14 @@ class _NavigationTreeProxy(Sequence[NavigationNode]):
     """Lazy proxy that builds the navigation tree only on first use."""
 
     def __init__(self) -> None:
-        self._cache: Optional[List[NavigationNode]] = None
+        self._cache: list[NavigationNode] | None = None
 
-    def _ensure(self) -> List[NavigationNode]:
+    def _ensure(self) -> list[NavigationNode]:
         if self._cache is None:
             self._cache = build_navigation_tree()
         return self._cache
 
-    def refresh(self) -> List[NavigationNode]:
+    def refresh(self) -> list[NavigationNode]:
         """Clear the cache and rebuild on next access."""
         self._cache = None
         return self._ensure()

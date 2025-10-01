@@ -5,18 +5,18 @@ import hashlib
 import logging
 import os
 from functools import lru_cache
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 from flask import current_app
 
+from app.company.models import AccountTitleMaster, MasterVersion
+from app.extensions import db
 from app.services.master_data_loader import (
     clear_master_dataframe_cache,
     load_master_dataframe,
 )
 
-from app import db
-from app.company.models import AccountTitleMaster, MasterVersion
 
 class MasterDataService:
     """マスターデータの同期と管理を行うサービスクラス。"""
@@ -30,13 +30,13 @@ class MasterDataService:
             if os.path.isabs(path_value):
                 return path_value
             return os.path.join(base_dir, path_value)
-        self.master_files: Dict[str, str] = {
+        self.master_files: dict[str, str] = {
             'BS': _resolve(cfg.get('MASTER_DATA_BS_FILE', 'resources/masters/balance_sheet.csv')),
             'PL': _resolve(cfg.get('MASTER_DATA_PL_FILE', 'resources/masters/profit_and_loss.csv')),
         }
         self.version_file_path = _resolve(cfg.get('MASTER_DATA_VERSION_FILE', 'resources/masters/_version.txt'))
         self.logger = logging.getLogger(__name__)
-        self._account_metadata_cache: Dict[int, Dict[str, Any]] = {}
+        self._account_metadata_cache: dict[int, dict[str, Any]] = {}
 
     def check_and_sync(self):
         """
@@ -59,7 +59,7 @@ class MasterDataService:
         """
         try:
             self._reload_master_tables()
-        except Exception as exc:
+        except Exception:
             self.logger.exception("マスターデータ同期中に問題が発生しました")
             raise
         finally:
@@ -100,11 +100,11 @@ class MasterDataService:
             new_version = MasterVersion(version_hash=new_hash)
             db.session.add(new_version)
 
-    def get_account_metadata_index(self) -> Dict[int, Dict[str, Any]]:
+    def get_account_metadata_index(self) -> dict[int, dict[str, Any]]:
         if self._account_metadata_cache:
             return self._account_metadata_cache
 
-        metadata: Dict[int, Dict[str, Any]] = {}
+        metadata: dict[int, dict[str, Any]] = {}
         for master in AccountTitleMaster.query.all():
             try:
                 metadata[int(master.id)] = {
@@ -125,7 +125,7 @@ class MasterDataService:
     def _get_current_files_hash(self):
         """現在のマスターCSVファイル群のハッシュ値を返す。_version.txtが無ければ再計算する。"""
         try:
-            with open(self.version_file_path, 'r') as f:
+            with open(self.version_file_path) as f:
                 return f.read().strip()
         except FileNotFoundError:
             self.logger.warning("_version.txt が見つかりません。動的に生成します。")

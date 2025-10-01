@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 from .fonts import default_font_map, ensure_font_registered
+from .pdf_fill import TextSpec, overlay_pdf
 
 
 class GeometryError(Exception):
@@ -14,8 +15,8 @@ class GeometryError(Exception):
 class PdfAssets(NamedTuple):
     repo_root: str
     base_pdf: str
-    font_map: Dict[str, str]
-    geometry: Dict[str, Any]
+    font_map: dict[str, str]
+    geometry: dict[str, Any]
 
 
 def prepare_pdf_assets(
@@ -23,8 +24,8 @@ def prepare_pdf_assets(
     geometry_key: str,
     year: str,
     *,
-    repo_root: Optional[str] = None,
-    ensure_font_name: Optional[str] = "NotoSansJP",
+    repo_root: str | None = None,
+    ensure_font_name: str | None = "NotoSansJP",
     required: bool = True,
     validate: bool = True,
 ) -> PdfAssets:
@@ -40,81 +41,51 @@ def prepare_pdf_assets(
     return PdfAssets(repo_root=resolved_root, base_pdf=base_pdf, font_map=font_map, geometry=geometry)
 
 
-def _require_keys(obj: Dict[str, Any], path: List[str]) -> None:
-    cur: Any = obj
-    for p in path:
-        if not isinstance(cur, dict) or p not in cur:
-            raise GeometryError(f"geometry missing required key: {'/'.join(path)}")
-        cur = cur[p]
+def _geometry_base_dir(repo_root: str, template_key: str) -> str:
+    return os.path.join(repo_root, f"resources/pdf_templates/{template_key}")
 
 
-def load_geometry(template_key: str, year: str, *, repo_root: str, required: bool = True, validate: bool = True) -> Dict[str, Any]:
-    """
-    Load geometry JSON for a given PDF template key and year.
+def _geometry_paths(base_dir: str, year: str) -> list[str]:
+    return [
+        os.path.join(base_dir, f"{year}_geometry.json"),
+        os.path.join(base_dir, "default_geometry.json"),
+    ]
 
-    Fallback strategy (dev convenience):
-    - If the exact year file is missing and we are NOT running under pytest,
-      try the latest available year or a default file.
-    - When running tests (pytest) and required=True, we strictly raise.
-    """
-    base_dir = os.path.join(repo_root, f"resources/pdf_templates/{template_key}")
-    geom_path = os.path.join(base_dir, f"{year}_geometry.json")
 
-    used_path = None
-    if os.path.exists(geom_path):
-        used_path = geom_path
-    else:
-        # Missing: decide whether to fallback or raise strictly
-        under_pytest = bool(os.environ.get('PYTEST_CURRENT_TEST'))
-        if required and under_pytest:
-            # Strict behavior for tests: raise
-            raise FileNotFoundError(f"Geometry file not found: {geom_path}")
-        # Dev fallback: search latest year or default
-        try:
-            candidates = []
-            if os.path.isdir(base_dir):
-                for fn in os.listdir(base_dir):
-                    if fn.endswith("_geometry.json") and fn[0:4].isdigit():
-                        try:
-                            y = int(fn[0:4])
-                            candidates.append((y, os.path.join(base_dir, fn)))
-                        except Exception:
-                            continue
-            if candidates:
-                candidates.sort(key=lambda t: t[0], reverse=True)
-                used_path = candidates[0][1]
-        except Exception:
-            used_path = None
-
-        if used_path is None:
-            default_path = os.path.join(base_dir, "default_geometry.json")
-            if os.path.exists(default_path):
-                used_path = default_path
-
-        if used_path is None and required:
-            raise FileNotFoundError(f"Geometry file not found: {geom_path}")
-        if used_path is None:
-            return {}
-
+def _find_fallback_geometry(base_dir: str) -> str | None:
+    candidates: list[tuple[int, str]] = []
     try:
-        with open(used_path, "r", encoding="utf-8") as f:
-            data: Dict[str, Any] = json.load(f) or {}
-    except Exception as e:
+        for fn in os.listdir(base_dir):
+            if fn.endswith("_geometry.json") and fn[:4].isdigit():
+                candidates.append((int(fn[:4]), os.path.join(base_dir, fn)))
+    except Exception:
+        return None
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+
+def _load_geometry_json(path: str, required: bool) -> dict[str, Any]:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return json.load(handle) or {}
+    except Exception as exc:
         if required:
-            raise GeometryError(f"Failed to parse geometry JSON: {used_path}") from e
+            raise GeometryError(f"Failed to parse geometry JSON: {path}") from exc
         return {}
 
-    if validate:
-        # Try strict schema validation + defaults (non-fatal; falls back to legacy checks on error)
-        try:
-            from . import geom_loader as _geom  # local import to avoid cycles
-            data = _geom.validate_and_apply_defaults(data)
-        except Exception:
-            # Keep legacy behavior if strict validation fails
-            pass
 
-        # Legacy minimal validation (preserved for backward compatibility)
-        _require_keys(data, ["cols"])  # this loader is for cols-based templates
+def _validate_geometry(data: dict[str, Any], validate: bool) -> dict[str, Any]:
+    if not validate:
+        return data
+    try:
+        from . import geom_loader as _geom
+
+        return _geom.validate_and_apply_defaults(data)
+    except Exception:
+        # Fallback to legacy validation
+        _require_keys(data, ["cols"])
         cols = data.get("cols", {})
         if not isinstance(cols, dict) or not cols:
             raise GeometryError("geometry cols must be a non-empty object")
@@ -123,8 +94,69 @@ def load_geometry(template_key: str, year: str, *, repo_root: str, required: boo
                 raise GeometryError(f"geometry column '{name}' missing x")
         if "margins" in data and not isinstance(data["margins"], dict):
             raise GeometryError("geometry 'margins' must be an object when present")
-
     return data
+
+class OverlaySpec(NamedTuple):
+    base_pdf: str
+    texts: list[TextSpec]
+    rectangles: list[tuple[int, float, float, float, float]]
+    font_registrations: dict[str, str]
+
+
+def build_overlay(
+    *,
+    base_pdf_path: str,
+    output_pdf_path: str,
+    texts: list[TextSpec],
+    rectangles: list[tuple[int, float, float, float, float]] | None = None,
+    font_registrations: dict[str, str] | None = None,
+) -> str:
+    overlay_pdf(
+        base_pdf_path=base_pdf_path,
+        output_pdf_path=output_pdf_path,
+        texts=texts,
+        grids=[],
+        rectangles=rectangles or [],
+        font_registrations=font_registrations or {},
+    )
+    return output_pdf_path
+
+
+def _require_keys(obj: dict[str, Any], path: list[str]) -> None:
+    cur: Any = obj
+    for p in path:
+        if not isinstance(cur, dict) or p not in cur:
+            raise GeometryError(f"geometry missing required key: {'/'.join(path)}")
+        cur = cur[p]
+
+
+def load_geometry(
+    template_key: str,
+    year: str,
+    *,
+    repo_root: str,
+    required: bool = True,
+    validate: bool = True,
+) -> dict[str, Any]:
+    base_dir = _geometry_base_dir(repo_root, template_key)
+    explicit_paths = _geometry_paths(base_dir, year)
+    candidates = [p for p in explicit_paths if os.path.exists(p)]
+
+    if not candidates:
+        test_mode = bool(os.environ.get('PYTEST_CURRENT_TEST'))
+        if required and test_mode:
+            raise FileNotFoundError(f"Geometry file not found: {explicit_paths[0]}")
+        fallback = _find_fallback_geometry(base_dir)
+        if fallback:
+            candidates.append(fallback)
+
+    if not candidates:
+        if required:
+            raise FileNotFoundError(f"Geometry file not found: {explicit_paths[0]}")
+        return {}
+
+    data = _load_geometry_json(candidates[0], required=required)
+    return _validate_geometry(data, validate=validate)
 
 
 def center_from_row1(row1_center: float, row_step: float, row_idx: int) -> float:

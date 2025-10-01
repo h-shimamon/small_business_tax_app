@@ -1,6 +1,6 @@
 # app/ui/context.py
 from __future__ import annotations
-from typing import Dict
+
 from flask import current_app, has_app_context
 
 from app.config.schema import AppSettings
@@ -21,7 +21,7 @@ def _log_ui_context_issue(event: str, exc: Exception | None = None, **details) -
         pass
 
 
-def build_ui_context(settings: AppSettings | None) -> Dict:
+def build_ui_context(settings: AppSettings | None) -> dict:
     """Builds Jinja context fragment for UI options and related settings.
     Returns a dict suitable for context_processor: { 'ui_options': {...} }
     """

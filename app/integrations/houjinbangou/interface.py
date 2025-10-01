@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypedDict, Protocol, Optional, List
+from typing import Protocol, TypedDict
 
 
 class HojinRecord(TypedDict, total=False):
@@ -17,8 +17,8 @@ class HojinRecord(TypedDict, total=False):
 
 
 class HojinClient(Protocol):
-    def get_by_number(self, number: str) -> Optional[HojinRecord]:
+    def get_by_number(self, number: str) -> HojinRecord | None:
         ...
 
-    def search_by_name(self, name: str, *, prefecture: Optional[str] = None) -> List[HojinRecord]:
+    def search_by_name(self, name: str, *, prefecture: str | None = None) -> list[HojinRecord]:
         ...

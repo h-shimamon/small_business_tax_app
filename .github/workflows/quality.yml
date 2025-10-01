@@ -127,7 +127,7 @@ jobs:
         run: |
           python - << 'PY'
           from sqlalchemy import func
-          from app import db
+          from app.extensions import db
           from app.company import models as M
 
           checks = [

@@ -1,23 +1,26 @@
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Optional, Tuple
-
 from dateutil.relativedelta import relativedelta
-from flask import render_template, request, abort, url_for, current_app, redirect, flash
+from flask import abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from app.company import company_bp
-from .auth import company_required
-from app.navigation import get_navigation_state
-from app.services.app_registry import get_default_pdf_year, get_post_create_cta, get_empty_state
-from app.company.services.filings_service import FilingsService
-from app.company.services.protocols import FilingsServiceProtocol
-from app.company.services.corporate_tax_service import CorporateTaxCalculationService
 from app.company.beppyo15 import Beppyo15Service
 from app.company.beppyo15.constants import BEPPYO15_FIELD_DEFINITIONS
 from app.company.forms import Beppyo15BreakdownForm
+from app.company.services.corporate_tax_service import CorporateTaxCalculationService
+from app.company.services.filings_service import FilingsService
+from app.company.services.protocols import FilingsServiceProtocol
+from app.navigation import get_navigation_state
+from app.services.app_registry import (
+    get_default_pdf_year,
+    get_empty_state,
+    get_post_create_cta,
+)
+
+from .auth import company_required
 
 filings_service: FilingsServiceProtocol = FilingsService()
 corporate_tax_service = CorporateTaxCalculationService()
@@ -40,7 +43,7 @@ def format_number(value):
     return formatted
 
 
-def _parse_compact_date(value: Optional[str]) -> Optional[date]:
+def _parse_compact_date(value: str | None) -> date | None:
     if not value:
         return None
     try:
@@ -49,7 +52,7 @@ def _parse_compact_date(value: Optional[str]) -> Optional[date]:
         return None
 
 
-def _compute_manual_period(start_text: Optional[str], end_text: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
+def _compute_manual_period(start_text: str | None, end_text: str | None) -> tuple[int | None, int | None]:
     start_date = _parse_compact_date(start_text)
     end_date = _parse_compact_date(end_text)
     if not start_date or not end_date or end_date < start_date:
@@ -127,6 +130,7 @@ def _build_filings_context(page: str):
     pl_data = None
     try:
         from flask_login import current_user
+
         from app.company.models import AccountingData
         if getattr(current_user, 'is_authenticated', False) and getattr(current_user, 'company', None):
             accounting_data = (
@@ -361,8 +365,9 @@ def beppyo15_delete(company, item_id):
 @company_bp.get('/filings/preview')
 @company_required
 def filings_preview(company):
-    from flask import send_file
     import os as _os
+
+    from flask import send_file
 
     page = request.args.get('page', '').strip()
     pdf_rel = filings_service.get_preview_pdf(page)

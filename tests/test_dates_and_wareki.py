@@ -1,4 +1,5 @@
 from datetime import date
+
 import pytest
 
 from app.primitives.dates import parse_lenient, parse_strict

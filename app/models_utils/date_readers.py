@@ -11,10 +11,9 @@ internal services and generators.
 """
 
 import datetime as _dt  # noqa: E402
-from typing import Optional  # noqa: E402
 
 
-def _to_date(value) -> Optional[_dt.date]:
+def _to_date(value) -> _dt.date | None:
     if value is None or value == "":
         return None
     if isinstance(value, _dt.date):
@@ -26,35 +25,35 @@ def _to_date(value) -> Optional[_dt.date]:
     except Exception:
         return None
 
-def ensure_date(value) -> Optional[_dt.date]:
+def ensure_date(value) -> _dt.date | None:
     """Public alias for internal date normalization (String(10) -> date)."""
     return _to_date(value)
 
-def to_iso(d: Optional[_dt.date]) -> Optional[str]:
+def to_iso(d: _dt.date | None) -> str | None:
     """Public helper to return ISO string from a date or None."""
     return d.isoformat() if isinstance(d, _dt.date) else None
 
 
 # --- Company ---
-def company_accounting_period_start(company) -> Optional[_dt.date]:
+def company_accounting_period_start(company) -> _dt.date | None:
     # Prefer Date column, fallback to String(10)
     return company.accounting_period_start_date or _to_date(company.accounting_period_start)
 
 
-def company_accounting_period_end(company) -> Optional[_dt.date]:
+def company_accounting_period_end(company) -> _dt.date | None:
     return company.accounting_period_end_date or _to_date(company.accounting_period_end)
 
 
-def company_closing_date(company) -> Optional[_dt.date]:
+def company_closing_date(company) -> _dt.date | None:
     return company.closing_date_date or _to_date(company.closing_date)
 
 
 # --- NotesReceivable ---
-def notes_receivable_issue_date(nr) -> Optional[_dt.date]:
+def notes_receivable_issue_date(nr) -> _dt.date | None:
     return getattr(nr, 'issue_date_date', None) or _to_date(getattr(nr, 'issue_date', None))
 
 
-def notes_receivable_due_date(nr) -> Optional[_dt.date]:
+def notes_receivable_due_date(nr) -> _dt.date | None:
     return getattr(nr, 'due_date_date', None) or _to_date(getattr(nr, 'due_date', None))
 
 

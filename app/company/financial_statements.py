@@ -1,9 +1,11 @@
 # app/company/financial_statements.py
-from flask import render_template, redirect, url_for, flash
-from flask_login import login_required, current_user
+from flask import flash, redirect, render_template, url_for
+from flask_login import current_user, login_required
+
 from app.company import company_bp
 from app.company.models import AccountingData, UserAccountMapping
 from app.navigation import get_navigation_state
+
 
 @company_bp.route('/confirm_trial_balance', methods=['GET'])
 @login_required

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import Dict, Tuple, Any
+from typing import Any
 
 
-def merge_rects(defaults: Dict[str, Tuple[float, float, float, float]], overrides: Dict[str, Any]) -> Dict[str, Tuple[float, float, float, float]]:
+def merge_rects(defaults: dict[str, tuple[float, float, float, float]], overrides: dict[str, Any]) -> dict[str, tuple[float, float, float, float]]:
     """Return a new dict of rects by overlaying overrides onto defaults.
 
     - Ensures each value is a 4-tuple[float, float, float, float].
     - Ignores invalid override entries (keeps default).
     """
-    result: Dict[str, Tuple[float, float, float, float]] = {}
+    result: dict[str, tuple[float, float, float, float]] = {}
     for key, default_val in defaults.items():
         ov = overrides.get(key, default_val)
         try:
@@ -22,7 +22,7 @@ def merge_rects(defaults: Dict[str, Tuple[float, float, float, float]], override
     return result
 
 
-def get_row_metrics(overrides: Dict[str, Any], *, default_row1_center: float, default_row_step: float, default_step_y: float, default_padding_x: float) -> Dict[str, float]:
+def get_row_metrics(overrides: dict[str, Any], *, default_row1_center: float, default_row_step: float, default_step_y: float, default_padding_x: float) -> dict[str, float]:
     """Extract numeric row/spacing metrics with fallbacks and typing guarantees."""
     row = overrides.get("row", {}) if isinstance(overrides, dict) else {}
     return {

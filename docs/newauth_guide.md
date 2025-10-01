@@ -38,7 +38,7 @@ Since email is a dummy sender, create a clear token manually for testing.
 1) Create an unverified user via signup (or manually):
 ```
 FLASK_APP=app:create_app flask shell
->>> from app import db
+>>> from app.extensions import db
 >>> from app.company.models import User
 >>> u = User(username='demo', email='demo@example.com'); u.set_password('password1234'); db.session.add(u); db.session.commit()
 ```

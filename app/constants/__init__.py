@@ -4,17 +4,18 @@ from __future__ import annotations
 
 # Re-export ui_options API
 from .ui_options import (
-    get_ui_options,
+    Option,  # type: ignore
+    Options,  # type: ignore
     UIOptions,  # type: ignore
-    Option,     # type: ignore
-    Options,    # type: ignore
+    get_ui_options,
 )
 
 # Backward compatibility for legacy app/constants.py module
 # Some modules import: from app.constants import FLASH_SKIP, NAV_GROUP_SOA
 # That module still exists as app/constants.py; load it explicitly and re-export.
 try:
-    import os, importlib.util as _ilu
+    import importlib.util as _ilu
+    import os
     _pkg_dir = os.path.dirname(__file__)
     _legacy_path = os.path.abspath(os.path.join(_pkg_dir, '..', 'constants.py'))
     if os.path.exists(_legacy_path):

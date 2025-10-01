@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict
-
 import pandas as pd
 
-JOURNAL_COLUMN_ALIASES: Dict[str, str] = {
+JOURNAL_COLUMN_ALIASES: dict[str, str] = {
     '取引No.': 'txn_id',
     '伝票No.': 'txn_id',
     '日付': 'date',

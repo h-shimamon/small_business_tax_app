@@ -1,6 +1,7 @@
 # app/company/services/company_service.py
-from app import db
 from app.company.models import Company
+from app.extensions import db
+
 
 class CompanyService:
     @staticmethod

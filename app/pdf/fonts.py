@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import os
-from typing import Dict
-
 from reportlab.pdfbase import pdfmetrics
 
 
-def default_font_map(repo_root: str) -> Dict[str, str]:
+def default_font_map(repo_root: str) -> dict[str, str]:
     return {
         "NotoSansJP": os.path.join(repo_root, "resources/fonts/NotoSansJP-Regular.ttf"),
     }

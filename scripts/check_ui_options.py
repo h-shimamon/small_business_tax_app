@@ -17,13 +17,13 @@ Patterns:
 This script uses only stdlib to run in CI without extra deps.
 """
 from __future__ import annotations
+
 import argparse
 import os
 import re
 import sys
-from typing import List, Tuple
 
-PATTERNS: List[Tuple[str, re.Pattern]] = [
+PATTERNS: list[tuple[str, re.Pattern]] = [
     ("hard_array", re.compile(r"options\s*=\s*\[", re.IGNORECASE)),
     ("tmpl_set_array", re.compile(r"\{\%\s*set\s+[^=]+=\s*\[", re.IGNORECASE)),
     ("legacy_token", re.compile(r"OPTIONS_", re.IGNORECASE)),
@@ -46,10 +46,10 @@ def iter_files(base: str):
                 yield os.path.join(dirpath, fn)
 
 
-def check_file(path: str) -> List[Tuple[str, int, str]]:
-    hits: List[Tuple[str, int, str]] = []
+def check_file(path: str) -> list[tuple[str, int, str]]:
+    hits: list[tuple[str, int, str]] = []
     try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             for lineno, line in enumerate(f, 1):
                 if "CI-ALLOW" in line:
                     continue

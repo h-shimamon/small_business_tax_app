@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
+from typing import Any, Callable, TypedDict
 
 from app.company.forms.metadata import extract_form_field_metadata, merge_field_metadata
 
@@ -19,9 +19,9 @@ class StatementPageConfig(TypedDict, total=False):
     total_field: str
     template: str
     query_filter: Callable[[Any], Any]
-    form_fields: List[Dict[str, Any]]
-    summary: Dict[str, str]
-    pl_targets: List[str]
+    form_fields: list[dict[str, Any]]
+    summary: dict[str, str]
+    pl_targets: list[str]
 
 
 @dataclass(frozen=True)
@@ -34,9 +34,9 @@ class StatementPageDefinition:
     template: str
     summary_type: str
     summary_label: str
-    form_fields: List[Dict[str, Any]] = field(default_factory=list)
-    query_filter: Optional[Dict[str, Any]] = None
-    pl_targets: List[str] = field(default_factory=list)
+    form_fields: list[dict[str, Any]] = field(default_factory=list)
+    query_filter: dict[str, Any] | None = None
+    pl_targets: list[str] = field(default_factory=list)
 
 
 _ALLOWED_SUMMARY_TYPES = {'BS', 'PL'}
@@ -45,11 +45,11 @@ _CONFIG_PATH = Path(__file__).resolve().parents[2] / 'resources' / 'config' / 's
 
 
 @lru_cache(maxsize=1)
-def _load_page_definitions() -> Tuple[StatementPageDefinition, ...]:
+def _load_page_definitions() -> tuple[StatementPageDefinition, ...]:
     with _CONFIG_PATH.open('r', encoding='utf-8') as fh:
         raw = json.load(fh)
 
-    definitions: List[StatementPageDefinition] = []
+    definitions: list[StatementPageDefinition] = []
     seen_keys: set[str] = set()
     for item in raw.get('pages', []):
         summary = item.get('summary') or {}
@@ -108,7 +108,7 @@ def _resolve_attribute(import_path: str) -> Any:
     return getattr(module, attr)
 
 
-def _build_query_filter(model: Any, spec: Dict[str, Any]) -> Callable[[Any], Any]:
+def _build_query_filter(model: Any, spec: dict[str, Any]) -> Callable[[Any], Any]:
     filter_type = spec.get('type')
     if filter_type == 'equals':
         field_name = spec['field']
@@ -123,8 +123,8 @@ def _build_query_filter(model: Any, spec: Dict[str, Any]) -> Callable[[Any], Any
 
 
 @lru_cache(maxsize=1)
-def _build_statement_pages_config() -> Dict[str, StatementPageConfig]:
-    configs: Dict[str, StatementPageConfig] = {}
+def _build_statement_pages_config() -> dict[str, StatementPageConfig]:
+    configs: dict[str, StatementPageConfig] = {}
     for definition in _load_page_definitions():
         model = _resolve_attribute(definition.model)
         form = _resolve_attribute(definition.form)
@@ -158,14 +158,14 @@ class _StatementPagesProxy(Mapping[str, StatementPageConfig]):
     """Lazily materialise the statement page configurations."""
 
     def __init__(self) -> None:
-        self._cache: Optional[Dict[str, StatementPageConfig]] = None
+        self._cache: dict[str, StatementPageConfig] | None = None
 
-    def _ensure(self) -> Dict[str, StatementPageConfig]:
+    def _ensure(self) -> dict[str, StatementPageConfig]:
         if self._cache is None:
             self._cache = _build_statement_pages_config()
         return self._cache
 
-    def refresh(self) -> Dict[str, StatementPageConfig]:
+    def refresh(self) -> dict[str, StatementPageConfig]:
         self._cache = None
         return self._ensure()
 
@@ -183,22 +183,22 @@ class _StatementPagesProxy(Mapping[str, StatementPageConfig]):
 
 
 STATEMENT_PAGES_CONFIG: Mapping[str, StatementPageConfig] = _StatementPagesProxy()
-SUMMARY_PAGE_MAP: Dict[str, Tuple[str, str]] = {
+SUMMARY_PAGE_MAP: dict[str, tuple[str, str]] = {
     definition.key: (definition.summary_type, definition.summary_label)
     for definition in _load_page_definitions()
 }
-PL_PAGE_ACCOUNTS: Dict[str, List[str]] = {
+PL_PAGE_ACCOUNTS: dict[str, list[str]] = {
     definition.key: definition.pl_targets
     for definition in _load_page_definitions()
     if definition.pl_targets
 }
 
-STATEMENT_TOTAL_FIELDS: Dict[str, str] = {
+STATEMENT_TOTAL_FIELDS: dict[str, str] = {
     definition.key: definition.total_field
     for definition in _load_page_definitions()
 }
 
-STATEMENT_MODEL_PATHS: Dict[str, str] = {
+STATEMENT_MODEL_PATHS: dict[str, str] = {
     definition.key: definition.model
     for definition in _load_page_definitions()
 }

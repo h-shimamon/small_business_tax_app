@@ -1,18 +1,15 @@
-from datetime import date, datetime
-from datetime import date, datetime
-from pathlib import Path
 import csv
+from datetime import date, datetime
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
-from app import db
 from app.company.models import AccountingData, Company, CorporateTaxMaster
 from app.company.services.corporate_tax_service import CorporateTaxCalculationService
 from app.domain.tax.engine import calculate_tax
 from app.domain.tax.models import EqualizationAmounts, TaxInput, TaxPeriod, TaxRates
-
-
+from app.extensions import db
 
 BASE_MANUAL_INPUTS = {
     'fiscal_start_date': '20240401',

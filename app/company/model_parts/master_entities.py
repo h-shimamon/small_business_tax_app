@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from app import db
-
-from .company_core import Company, User
+from app.extensions import db
 
 
 class Beppyo15Breakdown(db.Model):

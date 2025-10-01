@@ -2,7 +2,11 @@ import time
 from contextlib import contextmanager
 
 from app import create_app, db
-from app.company.services.master_data_service import MasterDataService, clear_master_df_cache
+from app.company.services.master_data_service import (
+    MasterDataService,
+    clear_master_df_cache,
+)
+
 
 @contextmanager
 def app_ctx():

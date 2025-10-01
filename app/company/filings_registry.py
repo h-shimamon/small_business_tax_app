@@ -6,7 +6,8 @@ Single source of truth for filings pages.
 - UI is not changed by this module itself.
 """
 from __future__ import annotations
-from typing import Dict, Optional, TypedDict
+
+from typing import TypedDict
 
 
 class FilingPage(TypedDict, total=False):
@@ -15,7 +16,7 @@ class FilingPage(TypedDict, total=False):
     preview_pdf: str    # Relative path from repo root to a static PDF for preview
 
 
-REGISTRY: Dict[str, FilingPage] = {
+REGISTRY: dict[str, FilingPage] = {
     # --- 別表・概況等（既存TITLE_MAPを移設） ---
     'beppyo_2': {'title': '別表2'},
     'beppyo_16_2': {'title': '別表16(2)'},
@@ -42,24 +43,24 @@ REGISTRY: Dict[str, FilingPage] = {
 }
 
 
-def get_page_entry(page_key: str) -> Optional[FilingPage]:
+def get_page_entry(page_key: str) -> FilingPage | None:
     """Return registry entry for the page key, or None if not found."""
     return REGISTRY.get(page_key)
 
 
-def get_title(page_key: str) -> Optional[str]:
+def get_title(page_key: str) -> str | None:
     """Return the title for the page key, or None if not registered."""
     entry = REGISTRY.get(page_key)
     return entry['title'] if entry else None
 
 
-def get_template(page_key: str) -> Optional[str]:
+def get_template(page_key: str) -> str | None:
     """Return the dedicated template path if registered."""
     entry = REGISTRY.get(page_key)
     return entry.get('template') if entry else None
 
 
-def get_preview_pdf(page_key: str) -> Optional[str]:
+def get_preview_pdf(page_key: str) -> str | None:
     """Return the relative PDF path for preview if available."""
     entry = REGISTRY.get(page_key)
     return entry.get('preview_pdf') if entry else None

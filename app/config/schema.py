@@ -2,12 +2,10 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Optional
-
 try:
     # pydantic v2 style (recommended)
-    from pydantic_settings import BaseSettings, SettingsConfigDict  # type: ignore
     from pydantic import AliasChoices, Field  # type: ignore
+    from pydantic_settings import BaseSettings, SettingsConfigDict  # type: ignore
 
     class AppSettings(BaseSettings):
         """Application settings (single source of truth).
@@ -28,7 +26,7 @@ try:
             validation_alias=AliasChoices("APP_UI_OPTIONS_VERSION", "UI_OPTIONS_VERSION"),
         )
         # Feature flags (generic), e.g., {"enable_ui_options_di": true}
-        FEATURE_FLAGS: Dict[str, bool] = Field(default_factory=dict)
+        FEATURE_FLAGS: dict[str, bool] = Field(default_factory=dict)
         # Dedicated flag for UI options DI path (can be toggled if needed)
         ENABLE_UI_OPTIONS_DI: bool = Field(
             default=True,
@@ -58,11 +56,11 @@ try:
             default=587,
             validation_alias=AliasChoices("APP_NEW_AUTH_EMAIL_PORT", "NEW_AUTH_EMAIL_PORT"),
         )
-        NEW_AUTH_EMAIL_USERNAME: Optional[str] = Field(
+        NEW_AUTH_EMAIL_USERNAME: str | None = Field(
             default=None,
             validation_alias=AliasChoices("APP_NEW_AUTH_EMAIL_USERNAME", "NEW_AUTH_EMAIL_USERNAME"),
         )
-        NEW_AUTH_EMAIL_PASSWORD: Optional[str] = Field(
+        NEW_AUTH_EMAIL_PASSWORD: str | None = Field(
             default=None,
             validation_alias=AliasChoices("APP_NEW_AUTH_EMAIL_PASSWORD", "NEW_AUTH_EMAIL_PASSWORD"),
         )
@@ -98,7 +96,7 @@ except Exception:
         LOCALE: str = field(default_factory=lambda: _env_str("ja_JP", "APP_LOCALE", "LOCALE"))
         UI_PROFILE: str = field(default_factory=lambda: _env_str("default", "APP_UI_PROFILE", "UI_PROFILE"))
         UI_OPTIONS_VERSION: str = field(default_factory=lambda: _env_str("v1", "APP_UI_OPTIONS_VERSION", "UI_OPTIONS_VERSION"))
-        FEATURE_FLAGS: Dict[str, bool] = field(default_factory=dict)
+        FEATURE_FLAGS: dict[str, bool] = field(default_factory=dict)
         ENABLE_UI_OPTIONS_DI: bool = field(default_factory=lambda: _env_bool(True, "APP_ENABLE_UI_OPTIONS_DI", "ENABLE_UI_OPTIONS_DI"))
         ENABLE_NEW_AUTH: bool = field(default_factory=lambda: _env_bool(False, "APP_ENABLE_NEW_AUTH", "ENABLE_NEW_AUTH"))
         ENABLE_SIGNUP_EMAIL_FIRST: bool = field(default_factory=lambda: _env_bool(False, "APP_ENABLE_SIGNUP_EMAIL_FIRST", "ENABLE_SIGNUP_EMAIL_FIRST"))
@@ -106,7 +104,7 @@ except Exception:
         NEW_AUTH_EMAIL_BACKEND: str = field(default_factory=lambda: _env_str("dummy", "APP_NEW_AUTH_EMAIL_BACKEND", "NEW_AUTH_EMAIL_BACKEND"))
         NEW_AUTH_EMAIL_HOST: str = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_HOST", "NEW_AUTH_EMAIL_HOST"))
         NEW_AUTH_EMAIL_PORT: int = field(default_factory=lambda: int(_env_str("587", "APP_NEW_AUTH_EMAIL_PORT", "NEW_AUTH_EMAIL_PORT")))
-        NEW_AUTH_EMAIL_USERNAME: Optional[str] = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_USERNAME", "NEW_AUTH_EMAIL_USERNAME") or None)
-        NEW_AUTH_EMAIL_PASSWORD: Optional[str] = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_PASSWORD", "NEW_AUTH_EMAIL_PASSWORD") or None)
+        NEW_AUTH_EMAIL_USERNAME: str | None = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_USERNAME", "NEW_AUTH_EMAIL_USERNAME") or None)
+        NEW_AUTH_EMAIL_PASSWORD: str | None = field(default_factory=lambda: _env_str("", "APP_NEW_AUTH_EMAIL_PASSWORD", "NEW_AUTH_EMAIL_PASSWORD") or None)
         NEW_AUTH_EMAIL_USE_TLS: bool = field(default_factory=lambda: _env_bool(True, "APP_NEW_AUTH_EMAIL_USE_TLS", "NEW_AUTH_EMAIL_USE_TLS"))
         NEW_AUTH_EMAIL_FROM: str = field(default_factory=lambda: _env_str("no-reply@example.com", "APP_NEW_AUTH_EMAIL_FROM", "NEW_AUTH_EMAIL_FROM"))

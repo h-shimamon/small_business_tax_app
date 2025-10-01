@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import and_
 
-from app import db
 from app.company.models import AccountingData, Company, CorporateTaxMaster
+from app.extensions import db
 from app.tax_engine import (
     DEFAULT_EQUALIZATION_DEFAULTS,
     DEFAULT_RATE_DEFAULTS,
@@ -21,24 +21,23 @@ from app.tax_engine import (
     calculate_tax,
 )
 
-
 _DECIMAL_ZERO = Decimal("0")
 
 class CorporateTaxCalculationService:
     """Builds the context dictionaries for the corporate tax calculation page."""
 
-    def build(self, company_id: Optional[int] = None) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    def build(self, company_id: int | None = None) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         company = db.session.get(Company, company_id) if company_id else None
         master = self._resolve_master(company)
         accounting_data = self._latest_accounting_data(company_id) if company_id else None
         return self._compile(company, master, accounting_data)
 
     @staticmethod
-    def _empty_response() -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    def _empty_response() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         return ({}, {}, {})
 
     @staticmethod
-    def _latest_accounting_data(company_id: int) -> Optional[AccountingData]:
+    def _latest_accounting_data(company_id: int) -> AccountingData | None:
         return (
             AccountingData.query
             .filter_by(company_id=company_id)
@@ -47,7 +46,7 @@ class CorporateTaxCalculationService:
         )
 
     @staticmethod
-    def _resolve_master(company: Optional[Company]) -> Optional[CorporateTaxMaster]:
+    def _resolve_master(company: Company | None) -> CorporateTaxMaster | None:
         if company is None:
             return CorporateTaxMaster.query.order_by(CorporateTaxMaster.fiscal_start_date.desc()).first()
         start = CorporateTaxCalculationService._coerce_date(
@@ -68,7 +67,7 @@ class CorporateTaxCalculationService:
         return CorporateTaxMaster.query.order_by(CorporateTaxMaster.fiscal_start_date.desc()).first()
 
     @staticmethod
-    def _coerce_date(value: Optional[date], fallback: Optional[str]) -> Optional[date]:
+    def _coerce_date(value: date | None, fallback: str | None) -> date | None:
         if isinstance(value, date):
             return value
         if isinstance(fallback, str) and fallback:
@@ -80,10 +79,10 @@ class CorporateTaxCalculationService:
 
     def _compile(
         self,
-        company: Optional[Company],
-        master: Optional[CorporateTaxMaster],
-        accounting_data: Optional[AccountingData],
-    ) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+        company: Company | None,
+        master: CorporateTaxMaster | None,
+        accounting_data: AccountingData | None,
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         fiscal_start = self._coerce_date(
             company.accounting_period_start_date,
             company.accounting_period_start,
@@ -127,7 +126,7 @@ class CorporateTaxCalculationService:
         payload = calculation.to_payload()
         return payload.inputs, payload.results, payload.breakdown
 
-    def build_from_manual(self, raw_inputs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    def build_from_manual(self, raw_inputs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         cleaned = {key: (value.strip() if isinstance(value, str) else value) for key, value in raw_inputs.items()}
 
         fiscal_start = self._parse_compact_date_text(cleaned.get('fiscal_start_date'))
@@ -172,8 +171,8 @@ class CorporateTaxCalculationService:
 
     def _build_tax_input(
         self,
-        fiscal_start: Optional[date],
-        fiscal_end: Optional[date],
+        fiscal_start: date | None,
+        fiscal_end: date | None,
         months_in_period: int,
         months_truncated: int,
         taxable_income: Decimal,
@@ -193,7 +192,7 @@ class CorporateTaxCalculationService:
             equalization=equalization,
         )
 
-    def _construct_rates_from_values(self, values: Dict[str, Any]) -> TaxRates:
+    def _construct_rates_from_values(self, values: dict[str, Any]) -> TaxRates:
         defaults = DEFAULT_RATE_DEFAULTS
         return TaxRates(
             corporate_low=self._decimal_with_default(values.get('corporate_tax_rate_low'), defaults.corporate_low),
@@ -207,7 +206,7 @@ class CorporateTaxCalculationService:
             municipal_corporate=self._decimal_with_default(values.get('municipal_corporate_tax_rate'), defaults.municipal_corporate),
         )
 
-    def _construct_equalization_from_values(self, values: Dict[str, Any]) -> EqualizationAmounts:
+    def _construct_equalization_from_values(self, values: dict[str, Any]) -> EqualizationAmounts:
         defaults = DEFAULT_EQUALIZATION_DEFAULTS
         return EqualizationAmounts(
             prefectural=self._int_with_default(values.get('prefectural_equalization_amount'), defaults.prefectural),
@@ -237,7 +236,7 @@ class CorporateTaxCalculationService:
             return default
 
     @staticmethod
-    def _resolve_truncated_months(master: Optional[CorporateTaxMaster]):
+    def _resolve_truncated_months(master: CorporateTaxMaster | None):
         if master is None:
             return ''
         try:
@@ -246,7 +245,7 @@ class CorporateTaxCalculationService:
             return ''
 
     @staticmethod
-    def _calculate_manual_months(start: Optional[date], end: Optional[date]) -> Tuple[Optional[int], Optional[int]]:
+    def _calculate_manual_months(start: date | None, end: date | None) -> tuple[int | None, int | None]:
         if not start or not end or end < start:
             return None, None
         delta = relativedelta(end, start)
@@ -264,11 +263,11 @@ class CorporateTaxCalculationService:
 
     def _resolve_period_months(
         self,
-        company: Optional[Company],
-        master: Optional[CorporateTaxMaster],
-        start: Optional[date] = None,
-        end: Optional[date] = None,
-    ) -> Optional[int]:
+        company: Company | None,
+        master: CorporateTaxMaster | None,
+        start: date | None = None,
+        end: date | None = None,
+    ) -> int | None:
         if start is None and company is not None:
             start = CorporateTaxCalculationService._coerce_date(
                 company.accounting_period_start_date,
@@ -293,7 +292,7 @@ class CorporateTaxCalculationService:
         return None
 
     @staticmethod
-    def _parse_compact_date_text(value: Optional[str]) -> Optional[date]:
+    def _parse_compact_date_text(value: str | None) -> date | None:
         if not value:
             return None
         try:
@@ -302,7 +301,7 @@ class CorporateTaxCalculationService:
             return None
 
     @staticmethod
-    def _clean_numeric(value: Optional[str]) -> Optional[str]:
+    def _clean_numeric(value: str | None) -> str | None:
         if value is None:
             return None
         if not isinstance(value, str):
@@ -311,7 +310,7 @@ class CorporateTaxCalculationService:
         return cleaned or None
 
     @staticmethod
-    def _clean_rate(value: Optional[str]) -> Optional[str]:
+    def _clean_rate(value: str | None) -> str | None:
         if value is None:
             return None
         if not isinstance(value, str):
@@ -320,7 +319,7 @@ class CorporateTaxCalculationService:
         return cleaned or None
 
     @staticmethod
-    def _coerce_int(value: Any) -> Optional[int]:
+    def _coerce_int(value: Any) -> int | None:
         if isinstance(value, int):
             return value
         if isinstance(value, Decimal):
@@ -346,12 +345,12 @@ class CorporateTaxCalculationService:
         except (InvalidOperation, TypeError):
             return _DECIMAL_ZERO
 
-    def _calculate_period_months(self, start: Optional[date], end: Optional[date]) -> Optional[int]:
+    def _calculate_period_months(self, start: date | None, end: date | None) -> int | None:
         months = self._calculate_manual_months(start, end)
         return months[0]
 
     @staticmethod
-    def _extract_pre_tax_income(accounting_data: Optional[AccountingData]) -> Decimal:
+    def _extract_pre_tax_income(accounting_data: AccountingData | None) -> Decimal:
         if not accounting_data:
             return _DECIMAL_ZERO
         payload = accounting_data.data or {}

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import lru_cache
-from typing import Optional, Tuple
 
 from app.company.models import CorporateTaxMaster
 
@@ -37,21 +36,21 @@ DEFAULT_RATE_DEFAULTS = TaxRateDefaults()
 DEFAULT_EQUALIZATION_DEFAULTS = EqualizationDefaults()
 
 
-def build_tax_rates(master: Optional[CorporateTaxMaster]) -> TaxRates:
+def build_tax_rates(master: CorporateTaxMaster | None) -> TaxRates:
     """DBのマスタ行から税率を構築。マスタが無ければデフォルトを返す。"""
 
     key = _rates_cache_key(master)
     return _build_tax_rates_cached(key)
 
 
-def build_equalization_amounts(master: Optional[CorporateTaxMaster]) -> EqualizationAmounts:
+def build_equalization_amounts(master: CorporateTaxMaster | None) -> EqualizationAmounts:
     """DBのマスタ行から均等割額を構築。"""
 
     key = _equalization_cache_key(master)
     return _build_equalization_cached(key)
 
 
-def _rates_cache_key(master: Optional[CorporateTaxMaster]) -> Tuple:
+def _rates_cache_key(master: CorporateTaxMaster | None) -> tuple:
     if master is None:
         return ('default',)
     return (
@@ -70,7 +69,7 @@ def _rates_cache_key(master: Optional[CorporateTaxMaster]) -> Tuple:
 
 
 @lru_cache(maxsize=64)
-def _build_tax_rates_cached(key: Tuple) -> TaxRates:
+def _build_tax_rates_cached(key: tuple) -> TaxRates:
     defaults = DEFAULT_RATE_DEFAULTS
     if key == ('default',):
         return TaxRates(
@@ -112,7 +111,7 @@ def _build_tax_rates_cached(key: Tuple) -> TaxRates:
     )
 
 
-def _equalization_cache_key(master: Optional[CorporateTaxMaster]) -> Tuple:
+def _equalization_cache_key(master: CorporateTaxMaster | None) -> tuple:
     if master is None:
         return ('default',)
     return (
@@ -124,7 +123,7 @@ def _equalization_cache_key(master: Optional[CorporateTaxMaster]) -> Tuple:
 
 
 @lru_cache(maxsize=64)
-def _build_equalization_cached(key: Tuple) -> EqualizationAmounts:
+def _build_equalization_cached(key: tuple) -> EqualizationAmounts:
     defaults = DEFAULT_EQUALIZATION_DEFAULTS
     if key == ('default',):
         return EqualizationAmounts(

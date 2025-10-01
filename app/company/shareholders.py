@@ -1,20 +1,34 @@
 # app/company/shareholders.py
-from flask import render_template, request, redirect, url_for, flash, send_file, current_app
 import os
 from datetime import datetime
+
+from flask import (
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
+
+import app.company.services.company_classification_service as company_classification_service
 from app.company import company_bp
 from app.company.forms import MainShareholderForm, RelatedShareholderForm
 from app.company.models import Shareholder
-from app.company.utils import get_officer_choices, set_page_title_and_verify_company_type
-from app.company.services.shareholder_service import (
-    shareholder_service,
-    get_shareholder_service_for,
-)
-import app.company.services.company_classification_service as company_classification_service
 from app.company.services.protocols import ShareholderServiceProtocol
+from app.company.services.shareholder_service import (
+    get_shareholder_service_for,
+    shareholder_service,
+)
+from app.company.utils import (
+    get_officer_choices,
+    set_page_title_and_verify_company_type,
+)
 from app.navigation import get_navigation_state
-from .auth import company_required
 from app.pdf.beppyou_02 import generate_beppyou_02
+
+from .auth import company_required
 
 _shareholders: ShareholderServiceProtocol = shareholder_service
 

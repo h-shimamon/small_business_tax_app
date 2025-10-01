@@ -1,15 +1,23 @@
-from flask import Blueprint, render_template, Response, request, redirect, url_for, flash
-import secrets
 
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import login_user, logout_user
 
 from app.company.models import User
+
 from .forms import (
     LoginForm,
-    SignupForm,
-    ResetRequestForm,
     ResetConfirmForm,
+    ResetRequestForm,
     SignupEmailForm,
+    SignupForm,
 )
 from .rate_limit import (
     too_many_attempts,
@@ -25,183 +33,216 @@ def healthz() -> Response:
     return Response("OK", mimetype="text/plain")
 
 
-@newauth_bp.route("/signup", methods=["GET", "POST"])  # type: ignore[misc]
-def signup_page():
-    """Signup entry.
-    - Email-first mode (flag ENABLE_SIGNUP_EMAIL_FIRST): email only -> send token -> signup_sent
-    - Legacy mode: email+password -> send token -> signup_sent
-    """
-    # Flag: email-first mode
-    form_email_first = False
+
+
+def _email_first_mode() -> bool:
     try:
         from flask import current_app as _app
         flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST")).lower()
-        form_email_first = flag in ("1", "true", "yes", "on")
+        return flag in ("1", "true", "yes", "on")
     except Exception:
-        pass
+        return False
 
-    if form_email_first:
-        form = SignupEmailForm()
-        if request.method == "POST" and form.validate_on_submit():
-            email = (form.email.data or "").strip().lower()
-            # rate limit
-            if too_many_signup_requests(request, email):
-                return render_template("newauth/signup_sent.html"), 200
 
-            from app import db
-            from .tokens import new_signup_token
-            from .email_sender import get_sender
+def _prepare_email_first_user(db, email: str) -> tuple[User, bool]:
+    from secrets import token_urlsafe
 
-            user = User.query.filter_by(email=email).first()
-            send_mail = True
-            if user is None:
-                # create unverified user with temporary password
-                user = User(username=email.split("@")[0], email=email)
-                user.set_password(secrets.token_urlsafe(12))
-                db.session.add(user)
-                db.session.commit()
-            else:
-                # existing user: avoid enumeration; if already verified, suppress email
-                try:
-                    if bool(getattr(user, "is_email_verified", False)):
-                        send_mail = False
-                except Exception:
-                    pass
-
-            if send_mail:
-                token, token_hash, expires_at = new_signup_token()
-                db.session.execute(
-                    db.text(
-                        "INSERT INTO signup_tokens (user_id, token_hash, expires_at) VALUES (:uid, :th, :exp)"
-                    ),
-                    {"uid": user.id, "th": token_hash, "exp": expires_at},
-                )
-                db.session.commit()
-                try:
-                    base = request.url_root.rstrip("/")
-                    verify_url = base + url_for("newauth.verify", token=token)
-                    sender = get_sender()
-                    subject = render_template("newauth/emails/verify_subject_signup.txt")
-                    text = render_template("newauth/emails/verify_body_signup.txt", verify_url=verify_url)
-                    html = render_template("newauth/emails/verify_body_signup.html", verify_url=verify_url)
-                    sender.send(to=email, subject=subject.strip(), html=html, text=text)
-                except Exception:
-                    pass
-            return render_template("newauth/signup_sent.html"), 200
-        return render_template("newauth/signup.html", form=form)
-
-    # Legacy (email + password)
-    form = SignupForm()
-    if request.method == "POST" and form.validate_on_submit():
-        email = (form.email.data or "").strip().lower()
-        if too_many_signup_requests(request, email):
-            flash("しばらく待ってからお試しください。", "danger")
-            return render_template("newauth/signup.html", form=form), 429
-        from app import db
-        from .tokens import new_signup_token
-        from .email_sender import get_sender
-        if User.query.filter_by(email=email).first():
-            flash("このメールアドレスは既に登録されています。", "danger")
-            return render_template("newauth/signup.html", form=form), 400
-        user = User(username=email.split("@")[0], email=email)
-        user.set_password(form.password.data)
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        username = email.split("@")[0]
+        user = User(username=username, email=email)
+        user.set_password(token_urlsafe(12))
         db.session.add(user)
         db.session.commit()
-        token, token_hash, expires_at = new_signup_token()
-        db.session.execute(
-            db.text("INSERT INTO signup_tokens (user_id, token_hash, expires_at) VALUES (:uid, :th, :exp)"),
-            {"uid": user.id, "th": token_hash, "exp": expires_at},
-        )
-        db.session.commit()
+        return user, True
+    already_verified = bool(getattr(user, "is_email_verified", False))
+    return user, not already_verified
+
+
+def _create_signup_token(db, user_id: int):
+    from .tokens import new_signup_token
+
+    token, token_hash, expires_at = new_signup_token()
+    db.session.execute(
+        db.text("INSERT INTO signup_tokens (user_id, token_hash, expires_at) VALUES (:uid, :th, :exp)"),
+        {"uid": user_id, "th": token_hash, "exp": expires_at},
+    )
+    db.session.commit()
+    return token
+
+
+def _send_signup_email(email: str, token: str, template_prefix: str) -> None:
+    from .email_sender import get_sender
+
+    base = request.url_root.rstrip("/")
+    verify_url = base + url_for("newauth.verify", token=token)
+    sender = get_sender()
+    subject = render_template(f"newauth/emails/{template_prefix}_subject.txt")
+    text = render_template(f"newauth/emails/{template_prefix}_body.txt", verify_url=verify_url)
+    html = render_template(f"newauth/emails/{template_prefix}_body.html", verify_url=verify_url)
+    sender.send(to=email, subject=subject.strip(), html=html, text=text)
+
+
+def _fetch_signup_token(db, token_hash: str):
+    return db.session.execute(
+        db.text("SELECT id, user_id, expires_at, used_at FROM signup_tokens WHERE token_hash = :th"),
+        {"th": token_hash},
+    ).mappings().first()
+
+
+def _parse_dt(value):
+    from datetime import datetime, timezone
+
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        dt_value = value
+    else:
         try:
-            base = request.url_root.rstrip("/")
-            verify_url = base + url_for("newauth.verify", token=token)
-            sender = get_sender()
-            subject = render_template("newauth/emails/verify_subject.txt")
-            text = render_template("newauth/emails/verify_body.txt", verify_url=verify_url)
-            html = render_template("newauth/emails/verify_body.html", verify_url=verify_url)
-            sender.send(to=email, subject=subject.strip(), html=html, text=text)
+            dt_value = datetime.fromisoformat(str(value))
+        except Exception:
+            return None
+    if dt_value.tzinfo is None:
+        dt_value = dt_value.replace(tzinfo=timezone.utc)
+    return dt_value
+
+
+def _token_expired(token_row, now):
+    expires = _parse_dt(token_row.get("expires_at"))
+    if expires and expires < now:
+        return True
+    used = _parse_dt(token_row.get("used_at"))
+    return used is not None
+
+
+def _complete_signup(db, token_row, now):
+    db.session.execute(
+        db.text("UPDATE signup_tokens SET used_at = :now WHERE id = :id"),
+        {"now": now, "id": token_row["id"]},
+    )
+    db.session.execute(
+        db.text("UPDATE user SET is_email_verified = 1 WHERE id = :uid"),
+        {"uid": token_row["user_id"]},
+    )
+    db.session.commit()
+
+
+def _render_invalid_signup_link():
+    flash("無効なリンクです。", "danger")
+    return redirect(url_for("newauth.login_page"))
+
+
+def _email_first_verify_flow(db, token_row, token, now):
+    form = ResetConfirmForm()
+    if request.method == "POST" and form.validate_on_submit():
+        user = db.session.get(User, token_row["user_id"])
+        if not user:
+            return _render_invalid_signup_link()
+        user.set_password(form.password.data)
+        _complete_signup(db, token_row, now)
+        flash("パスワードを設定しました。ログインできます。", "success")
+        return redirect(url_for("newauth.login_page"))
+    return render_template(
+        "newauth/reset_confirm.html",
+        form=form,
+        token=token,
+        title="パスワードを設定",
+        submit_label="パスワードを設定",
+    )
+
+
+
+def _handle_email_first_signup(form: SignupEmailForm):
+    if request.method != "POST" or not form.validate_on_submit():
+        return None
+    email = (form.email.data or "").strip().lower()
+    if too_many_signup_requests(request, email):
+        return render_template("newauth/signup_sent.html"), 200
+
+    from app.extensions import db
+
+    user, should_send = _prepare_email_first_user(db, email)
+    if should_send:
+        token = _create_signup_token(db, user.id)
+        try:
+            _send_signup_email(email, token, "verify_signup")
         except Exception:
             pass
-        return render_template("newauth/signup_sent.html"), 200
+    return render_template("newauth/signup_sent.html"), 200
+
+
+def _handle_legacy_signup(form: SignupForm):
+    if request.method != "POST" or not form.validate_on_submit():
+        return None
+    email = (form.email.data or "").strip().lower()
+    if too_many_signup_requests(request, email):
+        flash("しばらく待ってからお試しください。", "danger")
+        return render_template("newauth/signup.html", form=form), 429
+
+    from app.extensions import db
+
+    if User.query.filter_by(email=email).first():
+        flash("このメールアドレスは既に登録されています。", "danger")
+        return render_template("newauth/signup.html", form=form), 400
+
+    user = User(username=email.split("@")[0], email=email)
+    user.set_password(form.password.data)
+    db.session.add(user)
+    db.session.commit()
+
+    token = _create_signup_token(db, user.id)
+    try:
+        _send_signup_email(email, token, "verify")
+    except Exception:
+        pass
+    return render_template("newauth/signup_sent.html"), 200
+
+@newauth_bp.route("/signup", methods=["GET", "POST"])  # type: ignore[misc]
+
+def signup_page():
+    """Signup entry supporting both email-first and legacy flows."""
+    if _email_first_mode():
+        form = SignupEmailForm()
+        response = _handle_email_first_signup(form)
+        if response is not None:
+            return response
+        return render_template("newauth/signup.html", form=form)
+
+    form = SignupForm()
+    response = _handle_legacy_signup(form)
+    if response is not None:
+        return response
     return render_template("newauth/signup.html", form=form)
 
 
 @newauth_bp.route("/verify", methods=["GET", "POST"])  # type: ignore[misc]
+
 def verify():
-    from app import db
     import hashlib
     from datetime import datetime, timezone
 
-    def _to_dt(v):
-        if v is None:
-            return None
-        if isinstance(v, datetime):
-            d = v
-        else:
-            try:
-                d = datetime.fromisoformat(str(v))
-            except Exception:
-                return None
-        if d.tzinfo is None:
-            d = d.replace(tzinfo=timezone.utc)
-        return d
+    from app.extensions import db
 
     token = request.args.get("token", "").strip()
     if not token:
-        flash("無効なリンクです。", "danger")
-        return redirect(url_for("newauth.login_page"))
+        return _render_invalid_signup_link()
+
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    row = db.session.execute(
-        db.text("SELECT id, user_id, expires_at, used_at FROM signup_tokens WHERE token_hash = :th"),
-        {"th": token_hash},
-    ).mappings().first()
-    if not row:
-        flash("リンクが無効か期限切れです。", "danger")
-        return redirect(url_for("newauth.login_page"))
+    token_row = _fetch_signup_token(db, token_hash)
+    if not token_row:
+        return _render_invalid_signup_link()
 
-    exp_dt = _to_dt(row["expires_at"])  # type: ignore[index]
-    used_dt = _to_dt(row["used_at"])    # type: ignore[index]
     now = datetime.now(timezone.utc)
-    if used_dt is not None or (exp_dt and exp_dt < now):
+    if _token_expired(token_row, now):
         flash("リンクが無効か期限切れです。", "danger")
         return redirect(url_for("newauth.login_page"))
 
-    # Flag: email-first mode
-    email_first = False
-    try:
-        from flask import current_app as _app
-        flag = str(_app.config.get("ENABLE_SIGNUP_EMAIL_FIRST")).lower()
-        email_first = flag in ("1", "true", "yes", "on")
-    except Exception:
-        pass
+    if _email_first_mode():
+        response = _email_first_verify_flow(db, token_row, token, now)
+        if response is not None:
+            return response
 
-    if email_first:
-        form = ResetConfirmForm()
-        if request.method == "POST" and form.validate_on_submit():
-            from app.company.models import User
-            user = db.session.get(User, row["user_id"])  # type: ignore[index]
-            if not user:
-                flash("リンクが無効か期限切れです。", "danger")
-                return redirect(url_for("newauth.login_page"))
-            user.set_password(form.password.data)
-            db.session.execute(db.text("UPDATE signup_tokens SET used_at = :now WHERE id = :id"), {"now": now, "id": row["id"]})
-            db.session.execute(db.text("UPDATE user SET is_email_verified = 1 WHERE id = :uid"), {"uid": row["user_id"]})
-            db.session.commit()
-            flash("パスワードを設定しました。ログインできます。", "success")
-            return redirect(url_for("newauth.login_page"))
-        return render_template(
-            "newauth/reset_confirm.html",
-            form=form,
-            token=token,
-            title="パスワードを設定",
-            submit_label="パスワードを設定",
-        )
-
-    # Legacy: verify and go to login
-    db.session.execute(db.text("UPDATE signup_tokens SET used_at = :now WHERE id = :id"), {"now": now, "id": row["id"]})
-    db.session.execute(db.text("UPDATE user SET is_email_verified = 1 WHERE id = :uid"), {"uid": row["user_id"]})
-    db.session.commit()
+    _complete_signup(db, token_row, now)
     flash("メール認証が完了しました。ログインできます。", "success")
     return redirect(url_for("newauth.login_page", verified=1))
 
@@ -240,6 +281,27 @@ def logout_action():
     return redirect(url_for("newauth.login_page"))
 
 
+
+
+def _fetch_reset_token(db, token_hash: str):
+    return db.session.execute(
+        db.text("SELECT id, user_id, expires_at, used_at FROM reset_tokens WHERE token_hash = :th"),
+        {"th": token_hash},
+    ).mappings().first()
+
+
+def _render_invalid_reset_link():
+    flash("無効なリンクです。", "danger")
+    return redirect(url_for("newauth.reset_request"))
+
+
+def _complete_reset(db, token_row, now):
+    db.session.execute(
+        db.text("UPDATE reset_tokens SET used_at = :now WHERE id = :id"),
+        {"now": now, "id": token_row["id"]},
+    )
+    db.session.commit()
+
 @newauth_bp.route("/reset", methods=["GET", "POST"])  # type: ignore[misc]
 def reset_request():
     form = ResetRequestForm()
@@ -247,10 +309,11 @@ def reset_request():
         email = (form.email.data or "").strip().lower()
         if too_many_reset_requests(request, email):
             return render_template("newauth/reset_sent.html"), 200
-        from app import db
         from app.company.models import User
-        from .tokens import new_reset_token
+        from app.extensions import db
+
         from .email_sender import get_sender
+        from .tokens import new_reset_token
         user = User.query.filter_by(email=email).first()
         if user is not None:
             token, token_hash, expires_at = new_reset_token()
@@ -274,54 +337,34 @@ def reset_request():
 
 
 @newauth_bp.route("/reset/confirm", methods=["GET", "POST"])  # type: ignore[misc]
+
 def reset_confirm():
-    from app import db
     import hashlib
     from datetime import datetime, timezone
 
-    def _to_dt(v):
-        if v is None:
-            return None
-        if isinstance(v, datetime):
-            d = v
-        else:
-            try:
-                d = datetime.fromisoformat(str(v))
-            except Exception:
-                return None
-        if d.tzinfo is None:
-            d = d.replace(tzinfo=timezone.utc)
-        return d
+    from app.extensions import db
 
     token = (request.args.get("token") or request.form.get("token") or "").strip()
     if not token:
-        flash("無効なリンクです。", "danger")
-        return redirect(url_for("newauth.reset_request"))
-    th = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    row = db.session.execute(
-        db.text("SELECT id, user_id, expires_at, used_at FROM reset_tokens WHERE token_hash = :th"),
-        {"th": th},
-    ).mappings().first()
-    if not row:
-        flash("リンクが無効か期限切れです。", "danger")
-        return redirect(url_for("newauth.reset_request"))
-    exp_dt = _to_dt(row["expires_at"])  # type: ignore[index]
-    used_dt = _to_dt(row["used_at"])    # type: ignore[index]
+        return _render_invalid_reset_link()
+
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    token_row = _fetch_reset_token(db, token_hash)
+    if not token_row:
+        return _render_invalid_reset_link()
+
     now = datetime.now(timezone.utc)
-    if used_dt is not None or (exp_dt and exp_dt < now):
+    if _token_expired(token_row, now):
         flash("リンクが無効か期限切れです。", "danger")
         return redirect(url_for("newauth.reset_request"))
 
     form = ResetConfirmForm()
     if request.method == "POST" and form.validate_on_submit():
-        from app.company.models import User
-        user = db.session.get(User, row["user_id"])  # type: ignore[index]
+        user = db.session.get(User, token_row["user_id"])
         if not user:
-            flash("リンクが無効か期限切れです。", "danger")
-            return redirect(url_for("newauth.reset_request"))
+            return _render_invalid_reset_link()
         user.set_password(form.password.data)
-        db.session.execute(db.text("UPDATE reset_tokens SET used_at = :now WHERE id = :id"), {"now": now, "id": row["id"]})
-        db.session.commit()
+        _complete_reset(db, token_row, now)
         flash("パスワードを更新しました。ログインできます。", "success")
         return redirect(url_for("newauth.login_page"))
 

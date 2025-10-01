@@ -1,10 +1,11 @@
 # app/company/services/data_mapping_service.py
 from collections import defaultdict
+
 from thefuzz import process
 
-from app import db
 from app.company.models import AccountTitleMaster, UserAccountMapping
 from app.domain.master.catalog import load_catalog
+from app.extensions import db
 
 
 class DataMappingService:
@@ -156,7 +157,7 @@ class DataMappingService:
             self._existing_mapping_cache = None
         except Exception as e:
             db.session.rollback()
-            raise Exception(f'データベースへの保存中にエラーが発生しました: {e}')
+            raise Exception(f'データベースへの保存中にエラーが発生しました: {e}') from e
 
     def apply_mappings_to_balances(self, balances):
         """

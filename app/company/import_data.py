@@ -1,28 +1,28 @@
 # app/company/import_data.py
-from flask import render_template, redirect, url_for, flash, session, request, abort
-from flask_login import login_required, current_user
+from flask import abort, flash, redirect, render_template, request, session, url_for
+from flask_login import current_user, login_required
 
-from app import db
 from app.company import company_bp as import_bp
 from app.company.forms import DataMappingForm, FileUploadForm, SoftwareSelectionForm
-from app.company.models import AccountingData, UserAccountMapping
-from app.navigation import get_navigation_state, mark_step_as_completed, unmark_step_as_completed
+from app.company.models import UserAccountMapping
 from app.company.services.data_mapping_service import DataMappingService
-from app.company.services.financial_statement_service import FinancialStatementService
 from app.company.services.import_consistency_service import (
-    on_mapping_saved,
     on_mapping_deleted,
+    on_mapping_saved,
     on_mappings_reset,
 )
+from app.company.services.import_wizard_service import UploadWizardService
 from app.company.services.upload_flow_service import (
-    UploadFlowService,
     UploadFlowError,
+    UploadFlowService,
     UploadValidationError,
 )
-from app.company.services.import_wizard_service import UploadWizardService
+from app.extensions import db
+from app.navigation import (
+    get_navigation_state,
+    mark_step_as_completed,
+)
 from .parser_factory import ParserFactory
-from app.primitives.dates import get_company_period
-
 
 # --- ウィザードと設定の定義 ---
 
@@ -91,6 +91,28 @@ def data_upload_wizard():
     wizard.reset()
     return redirect(url_for('company.statement_of_accounts'))
 
+
+
+def _process_upload_submission(form, datatype, config):
+    file_storage = form.upload_file.data
+    service = UploadFlowService(datatype, current_user, config, session)
+    try:
+        result = service.handle(file_storage)
+    except UploadValidationError as exc:
+        flash(str(exc), 'danger')
+        return redirect(request.url)
+    except UploadFlowError as exc:
+        flash(f"エラーが発生しました: {exc}", 'danger')
+        return redirect(request.url)
+    except Exception as exc:
+        flash(f"エラーが発生しました: {exc}", 'danger')
+        return redirect(request.url)
+
+    if result.flash_message:
+        message, category = result.flash_message
+        flash(message, category)
+    return redirect(url_for(result.redirect_endpoint, **result.redirect_kwargs))
+
 @import_bp.route('/upload/<datatype>', methods=['GET', 'POST'])
 @login_required
 def upload_data(datatype):
@@ -110,47 +132,28 @@ def upload_data(datatype):
     if not wizard.has_selected_software():
         return redirect(url_for('company.select_software'))
 
-    missing_prerequisite = wizard.ensure_previous_steps_completed(datatype)
-    if missing_prerequisite:
+    missing_step = wizard.ensure_previous_steps_completed(datatype)
+    if missing_step:
         flash('前のステップを先に完了してください。', 'warning')
         return redirect(url_for('company.data_upload_wizard'))
 
     form = FileUploadForm()
     if request.method == 'POST':
-        file_storage = form.upload_file.data
-        service = UploadFlowService(datatype, current_user, config, session)
-        try:
-            result = service.handle(file_storage)
-        except UploadValidationError as exc:
-            flash(str(exc), 'danger')
-            return redirect(request.url)
-        except UploadFlowError as exc:
-            flash(f"エラーが発生しました: {exc}", 'danger')
-            return redirect(request.url)
-        except Exception as exc:
-            flash(f"エラーが発生しました: {exc}", 'danger')
-            return redirect(request.url)
-
-        if result.flash_message:
-            message, category = result.flash_message
-            flash(message, category)
-        return redirect(url_for(result.redirect_endpoint, **result.redirect_kwargs))
+        return _process_upload_submission(form, datatype, config)
 
     navigation_state = get_navigation_state(datatype)
-    show_reset_link = (datatype == 'journals')
-
+    show_reset_link = datatype == 'journals'
     template_config = {
         'title': config['title'],
         'description': config['description'],
-        'step_name': config['step_name']
+        'step_name': config['step_name'],
     }
-
     return render_template(
         'company/upload_data.html',
         form=form,
         navigation_state=navigation_state,
         show_reset_link=show_reset_link,
-        **template_config
+        **template_config,
     )
 
 @import_bp.route('/financial_statements', methods=['GET'])
@@ -172,102 +175,133 @@ def show_financial_statements():
         navigation_state=navigation_state
     )
 
+
+
+def _recompute_statements(mapping_service, software_name):
+    j_path = session.get('uploaded_journals_path')
+    if not j_path:
+        return
+    try:
+        import io
+        import os
+
+        from werkzeug.datastructures import FileStorage
+
+        with open(j_path, 'rb') as jf:
+            content = jf.read()
+        fs = FileStorage(
+            stream=io.BytesIO(content),
+            filename=session.get('uploaded_journals_name') or 'journals.csv',
+        )
+        parser = ParserFactory.create_parser(software_name, fs)
+        parsed = parser.get_journals()
+
+        from app.primitives.dates import get_company_period
+
+        company = current_user.company
+        period = get_company_period(company)
+        start_date, end_date = period.start, period.end
+        df_journals = mapping_service.apply_mappings_to_journals(parsed)
+
+        from .services import FinancialStatementService
+
+        fs_service = FinancialStatementService(df_journals, start_date, end_date)
+        bs_data = fs_service.create_balance_sheet()
+        pl_data = fs_service.create_profit_loss_statement()
+        soa_breakdowns = fs_service.get_soa_breakdowns()
+
+        from app.company.models import AccountingData
+        from app.extensions import db as _db
+
+        AccountingData.query.filter_by(company_id=company.id).delete()
+        ad = AccountingData(
+            company_id=company.id,
+            period_start=start_date,
+            period_end=end_date,
+            data={
+                'balance_sheet': bs_data,
+                'profit_loss_statement': pl_data,
+                'soa_breakdowns': soa_breakdowns,
+            },
+        )
+        _db.session.add(ad)
+        _db.session.commit()
+        mark_step_as_completed('journals')
+        try:
+            if j_path and os.path.isfile(j_path):
+                os.remove(j_path)
+            session.pop('uploaded_journals_path', None)
+            session.pop('uploaded_journals_name', None)
+        except Exception:
+            pass
+    except Exception as exc:
+        flash(f'再計算に失敗しました: {exc}', 'warning')
+
+
+def _post_mapping_redirect():
+    try:
+        from app.company.models import AccountingData as __AD
+
+        latest = (
+            __AD.query.filter_by(company_id=current_user.company.id)
+            .order_by(__AD.created_at.desc())
+            .first()
+        )
+        if latest is not None:
+            return redirect(url_for('company.confirm_trial_balance'))
+    except Exception:
+        pass
+    return redirect(url_for('company.data_upload_wizard'))
+
+
+def _handle_data_mapping_post(mapping_service):
+    software_name = session.get('selected_software')
+    try:
+        mapping_service.save_mappings(request.form, software_name)
+        flash('マッピング情報を保存しました。', 'success')
+        on_mapping_saved(current_user.id)
+        _recompute_statements(mapping_service, software_name)
+    except Exception as exc:
+        flash(str(exc), 'danger')
+    finally:
+        session.pop('unmatched_accounts', None)
+    return _post_mapping_redirect()
+
+
+
+def _group_master_accounts(master_accounts):
+    grouped: dict[str, list] = {}
+    for master in master_accounts:
+        major = master.major_category or 'その他'
+        grouped.setdefault(major, []).append(master)
+    return grouped
+
 @import_bp.route('/data_mapping', methods=['GET', 'POST'])
 @login_required
 def data_mapping():
     """項目マッピング画面"""
     mapping_service = DataMappingService(current_user.id)
-    
+
     if request.method == 'POST':
-        software_name = session.get('selected_software')
-        try:
-            mapping_service.save_mappings(request.form, software_name)
-            flash('マッピング情報を保存しました。', 'success')
-            # C案: 既存の会計データは無効化し、その場で再計算して確認ページへ
-            on_mapping_saved(current_user.id)
-            try:
-                # 再計算: 一時保存済みの仕訳ファイルがあれば再パース→FS生成
-                j_path = session.get('uploaded_journals_path')
-                if j_path:
-                    from werkzeug.datastructures import FileStorage
-                    import io, os
-                    # FileStorage互換のラッパでパーサを再利用
-                    with open(j_path, 'rb') as jf:
-                        content = jf.read()
-                    fs = FileStorage(stream=io.BytesIO(content), filename=session.get('uploaded_journals_name') or 'journals.csv')
-                    parser = ParserFactory.create_parser(software_name, fs)
-                    parsed = parser.get_journals()
-                    # 期間取得
-                    from app.primitives.dates import get_company_period
-                    company = current_user.company
-                    period = get_company_period(company)
-                    start_date, end_date = period.start, period.end
-                    # マッピング適用→FS生成
-                    df_journals = mapping_service.apply_mappings_to_journals(parsed)
-                    from .services import FinancialStatementService
-                    fs_service = FinancialStatementService(df_journals, start_date, end_date)
-                    bs_data = fs_service.create_balance_sheet()
-                    pl_data = fs_service.create_profit_loss_statement()
-                    soa_breakdowns = fs_service.get_soa_breakdowns()
-                    # 永続化
-                    from app.company.models import AccountingData
-                    from app import db as _db
-                    AccountingData.query.filter_by(company_id=company.id).delete()
-                    ad = AccountingData(company_id=company.id, period_start=start_date, period_end=end_date, data={'balance_sheet': bs_data, 'profit_loss_statement': pl_data, 'soa_breakdowns': soa_breakdowns})
-                    _db.session.add(ad)
-                    _db.session.commit()
-                    # journalsステップは完了扱いにしてよい
-                    mark_step_as_completed('journals')
-                    # 一時ファイルは再計算成功時に削除してセッションもクリア
-                    try:
-                        if j_path and os.path.isfile(j_path):
-                            os.remove(j_path)
-                        session.pop('uploaded_journals_path', None)
-                        session.pop('uploaded_journals_name', None)
-                    except Exception:
-                        pass
-            except Exception as _e:
-                # 再計算に失敗してもフローは維持。次画面でメッセージを出すためflashのみ。
-                flash(f'再計算に失敗しました: {_e}', 'warning')
-        except Exception as e:
-            flash(str(e), 'danger')
-        finally:
-            session.pop('unmatched_accounts', None)
-        # 再計算が成功し、最新の会計データが存在する場合は確認ページへ
-        try:
-            from app.company.models import AccountingData as __AD
-            __ad = (__AD.query.filter_by(company_id=current_user.company.id)
-                              .order_by(__AD.created_at.desc()).first())
-            if __ad is not None:
-                return redirect(url_for('company.confirm_trial_balance'))
-        except Exception:
-            pass
-        return redirect(url_for('company.data_upload_wizard'))
+        return _handle_data_mapping_post(mapping_service)
 
     unmatched_accounts = session.get('unmatched_accounts', [])
     if not unmatched_accounts:
-        # 未マッピング項目がない場合は、管理画面を表示（戻り導線用）
         return redirect(url_for('company.manage_mappings'))
 
     mapping_items, master_accounts = mapping_service.get_mapping_suggestions(unmatched_accounts)
-    
-    grouped_masters = {}
-    for master in master_accounts:
-        major = master.major_category or 'その他'
-        if major not in grouped_masters:
-            grouped_masters[major] = []
-        grouped_masters[major].append(master)
+    grouped_masters = _group_master_accounts(master_accounts)
 
     form = DataMappingForm()
     navigation_state = get_navigation_state('data_mapping')
     return render_template(
-        'company/data_mapping.html', 
-        mapping_items=mapping_items, 
-        grouped_masters=grouped_masters, 
+        'company/data_mapping.html',
+        mapping_items=mapping_items,
+        grouped_masters=grouped_masters,
         master_accounts=master_accounts,
-        form=form, 
-        title="項目マッピング", 
-        navigation_state=navigation_state
+        form=form,
+        title="項目マッピング",
+        navigation_state=navigation_state,
     )
 
 @import_bp.route('/reset_mappings/confirm', methods=['GET'])

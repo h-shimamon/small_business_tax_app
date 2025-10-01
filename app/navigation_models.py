@@ -1,6 +1,7 @@
 # app/navigation_models.py
 from flask import url_for
 
+
 class NavigationNode:
     """ナビゲーションの各項目を表すクラス"""
     def __init__(self, key, name, endpoint=None, params=None, children=None, node_type='menu'):

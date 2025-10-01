@@ -8,10 +8,9 @@ pass whichever they currently have without changing UI/outputs.
 """
 
 from datetime import date, datetime  # noqa: E402
-from typing import Optional, Tuple, Any  # noqa: E402
+from typing import Any  # noqa: E402
 
 from app.models_utils.date_readers import ensure_date  # noqa: E402
-
 
 _ERAS = [
     ("令和", (2019, 5, 1)),
@@ -20,7 +19,7 @@ _ERAS = [
 ]
 
 
-def _to_date(value: Any) -> Optional[date]:
+def _to_date(value: Any) -> date | None:
     if value is None:
         return None
     if isinstance(value, datetime):
@@ -68,7 +67,7 @@ def era_name(value: Any) -> str:
     return ""
 
 
-def numeric_parts(value: Any) -> Optional[Tuple[str, str, str]]:
+def numeric_parts(value: Any) -> tuple[str, str, str] | None:
     d = _to_date(value)
     if d is None:
         return None
