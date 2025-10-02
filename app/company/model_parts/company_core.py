@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
 
 
 
-def _coerce_iso_date(value) -> _dt.date | None:
+def _coerce_iso_date(value) -> _dt._dt.date | None:
     if value is None or value == "":
         return None
     if isinstance(value, _dt.date):
@@ -38,7 +38,7 @@ def _coerce_iso_date(value) -> _dt.date | None:
         return None
 
 
-def _iso_or_none(value: _dt.date | None) -> str | None:
+def _iso_or_none(value: _dt._dt.date | None) -> str | None:
     return value.isoformat() if isinstance(value, _dt.date) else None
 
 class Company(db.Model):
@@ -83,24 +83,40 @@ class Company(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
     user = db.relationship('User', backref=db.backref('company', uselist=False))
 
-    accounting_period_start_date = db.Column(db.Date)
-    accounting_period_end_date = db.Column(db.Date)
+    _accounting_period_start = db.Column('accounting_period_start', db.Date)
+    _accounting_period_end = db.Column('accounting_period_end', db.Date)
+
+    @property
+    def accounting_period_start_date(self) -> _dt.date | None:
+        return self._accounting_period_start
+
+    @accounting_period_start_date.setter
+    def accounting_period_start_date(self, value: _dt.date | None) -> None:
+        self._accounting_period_start = value
+
+    @property
+    def accounting_period_end_date(self) -> _dt.date | None:
+        return self._accounting_period_end
+
+    @accounting_period_end_date.setter
+    def accounting_period_end_date(self, value: _dt.date | None) -> None:
+        self._accounting_period_end = value
 
     @property
     def accounting_period_start(self) -> str | None:
-        return _iso_or_none(self.accounting_period_start_date)
+        return _iso_or_none(self._accounting_period_start)
 
     @accounting_period_start.setter
     def accounting_period_start(self, value) -> None:
-        self.accounting_period_start_date = _coerce_iso_date(value)
+        self._accounting_period_start = _coerce_iso_date(value)
 
     @property
     def accounting_period_end(self) -> str | None:
-        return _iso_or_none(self.accounting_period_end_date)
+        return _iso_or_none(self._accounting_period_end)
 
     @accounting_period_end.setter
     def accounting_period_end(self, value) -> None:
-        self.accounting_period_end_date = _coerce_iso_date(value)
+        self._accounting_period_end = _coerce_iso_date(value)
 
     term_number = db.Column(db.Integer)
     office_count = db.Column(db.String(10))
@@ -163,15 +179,23 @@ class Company(db.Model):
     accounting_manager_name = db.Column(db.String(100))
     accounting_manager_kana = db.Column(db.String(100))
 
-    closing_date_date = db.Column(db.Date)
+    _closing_date = db.Column('closing_date', db.Date)
+
+    @property
+    def closing_date_date(self) -> _dt.date | None:
+        return self._closing_date
+
+    @closing_date_date.setter
+    def closing_date_date(self, value: _dt.date | None) -> None:
+        self._closing_date = value
 
     @property
     def closing_date(self) -> str | None:
-        return _iso_or_none(self.closing_date_date)
+        return _iso_or_none(self._closing_date)
 
     @closing_date.setter
     def closing_date(self, value) -> None:
-        self.closing_date_date = _coerce_iso_date(value)
+        self._closing_date = _coerce_iso_date(value)
 
     is_corp_tax_extended = db.Column(db.Boolean, default=False)
     is_biz_tax_extended = db.Column(db.Boolean, default=False)
@@ -231,7 +255,7 @@ class Office(db.Model):
     name = db.Column(db.String(100), nullable=False)
     zip_code = db.Column(db.String(7))
     prefecture = db.Column(db.String(50))
-    municipality = db.Column(db.String(100))
+    city = db.Column(db.String(100))
     address = db.Column(db.String(200))
     phone_number = db.Column(db.String(20))
     opening_date = db.Column(db.Date)
@@ -251,12 +275,13 @@ class Office(db.Model):
         self.name = value
 
     @property
-    def city(self):
-        return self.municipality
+    def municipality(self):
+        """Backward-compatible alias for the renamed city column."""
+        return self.city
 
-    @city.setter
-    def city(self, value):
-        self.municipality = value
+    @municipality.setter
+    def municipality(self, value):
+        self.city = value
 
     def __repr__(self):
         return f'<Office {self.name}>'

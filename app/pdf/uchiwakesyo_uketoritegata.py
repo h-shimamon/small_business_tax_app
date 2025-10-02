@@ -198,8 +198,8 @@ def _append_receivable_row(
     left('reg_no', getattr(item, 'registration_number', '') or '', 'reg_no')
     left('partner', item.drawer or '', 'partner')
 
-    issue_src = getattr(item, 'issue_date_date', None) or getattr(item, 'issue_date', None)
-    due_src = getattr(item, 'due_date_date', None) or getattr(item, 'due_date', None)
+    issue_src = getattr(item, 'issue_date', None)
+    due_src = getattr(item, 'due_date', None)
     left('issue_date', _wareki_ymd_no_era(issue_src), 'issue_date')
     left('due_date', _wareki_ymd_no_era(due_src), 'due_date')
 

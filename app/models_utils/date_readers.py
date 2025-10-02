@@ -50,11 +50,13 @@ def company_closing_date(company) -> _dt.date | None:
 
 # --- NotesReceivable ---
 def notes_receivable_issue_date(nr) -> _dt.date | None:
-    return getattr(nr, 'issue_date_date', None) or _to_date(getattr(nr, 'issue_date', None))
+    value = getattr(nr, 'issue_date', None)
+    return _to_date(value)
 
 
 def notes_receivable_due_date(nr) -> _dt.date | None:
-    return getattr(nr, 'due_date_date', None) or _to_date(getattr(nr, 'due_date', None))
+    value = getattr(nr, 'due_date', None)
+    return _to_date(value)
 
 
 __all__ = [

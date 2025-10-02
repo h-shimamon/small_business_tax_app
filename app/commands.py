@@ -160,6 +160,33 @@ def _pair_metrics(rows, str_key, date_key):
     }
 
 
+def _single_date_metrics(rows, key):
+    """Assess a single Date column for nulls and invalid values."""
+    from datetime import date as _date
+
+    total = len(rows)
+    date_null = 0
+    valid = 0
+    mismatch = 0
+    for row in rows:
+        value = row.get(key)
+        if value is None:
+            date_null += 1
+        elif isinstance(value, _date):
+            valid += 1
+        else:
+            mismatch += 1
+    return {
+        'total': total,
+        'str_null': date_null,
+        'date_null': date_null,
+        'both_set': valid,
+        'str_only': 0,
+        'date_only': valid,
+        'mismatch': mismatch,
+    }
+
+
 def _emit_pair_report(title, metrics):
     click.echo(f"\n[{title}]")
     click.echo(f"  total:         {metrics['total']}")
@@ -199,15 +226,13 @@ def _collect_notes_receivable_metrics(NotesReceivable):
         nr_rows = [
             {
                 'issue_date': n.issue_date,
-                'issue_date_date': n.issue_date_date,
                 'due_date': n.due_date,
-                'due_date_date': n.due_date_date,
             }
             for n in NotesReceivable.query.all()
         ]
         return (
-            _pair_metrics(nr_rows, 'issue_date', 'issue_date_date'),
-            _pair_metrics(nr_rows, 'due_date', 'due_date_date'),
+            _single_date_metrics(nr_rows, 'issue_date'),
+            _single_date_metrics(nr_rows, 'due_date'),
             None,
         )
     except Exception as exc:
@@ -390,7 +415,7 @@ def _ensure_office(company, Office, date) -> str:
         name='本店',
         zip_code='1066126',
         prefecture='東京都',
-        municipality='港区',
+        city='港区',
         address='六本木6-10-1',
         phone_number='03-6384-9000',
         opening_date=date(2023, 1, 1),
@@ -529,10 +554,8 @@ def seed_notes_receivable_command(company_id: int | None, count: int):
             company_id=target_company.id,
             registration_number=reg_no,
             drawer=drawer,
-            issue_date=issue_dt.strftime('%Y-%m-%d'),
-            issue_date_date=issue_dt,
-            due_date=due_dt.strftime('%Y-%m-%d'),
-            due_date_date=due_dt,
+            issue_date=issue_dt,
+            due_date=due_dt,
             payer_bank=payer_bank,
             payer_branch=payer_branch,
             amount=amount,

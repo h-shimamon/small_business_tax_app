@@ -45,8 +45,8 @@ def main(count: int = 23, prefix: str = "DEMO_") -> None:
                 """
                 INSERT INTO notes_receivable (
                     drawer, registration_number, issue_date, due_date, payer_bank, payer_branch,
-                    amount, discount_bank, discount_branch, remarks, company_id, issue_date_date, due_date_date
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    amount, discount_bank, discount_branch, remarks, company_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     drawer,
@@ -60,8 +60,6 @@ def main(count: int = 23, prefix: str = "DEMO_") -> None:
                     discount_branch,
                     remarks,
                     company_id,
-                    issue_dt.strftime('%Y-%m-%d'),
-                    due_dt.strftime('%Y-%m-%d'),
                 ),
             )
             created += 1

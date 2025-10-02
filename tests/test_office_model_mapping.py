@@ -6,7 +6,7 @@ from app.extensions import db
 def test_office_form_aliases(app, init_database):
     with app.app_context():
         company = db.session.query(Company).first()
-        office = Office(company_id=company.id, name='本店', municipality='千代田区')
+        office = Office(company_id=company.id, name='本店', city='千代田区')
         db.session.add(office)
         db.session.commit()
 
@@ -22,6 +22,7 @@ def test_office_form_aliases(app, init_database):
         })
         edit_form.populate_obj(office)
         assert office.name == '新宿支店'
+        assert office.city == '新宿区'
         assert office.municipality == '新宿区'
 
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from app.extensions import db
-from app.models_utils.date_sync import attach_date_string_sync
+import datetime as _dt
 
+from app.extensions import db
 
 class Deposit(db.Model):
     """預貯金等の内訳モデル"""
@@ -26,10 +26,8 @@ class NotesReceivable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     drawer = db.Column(db.String(100), nullable=False)
     registration_number = db.Column(db.String(20))
-    issue_date = db.Column(db.String(10), nullable=False)
-    issue_date_date = db.Column(db.Date)
-    due_date = db.Column(db.String(10), nullable=False)
-    due_date_date = db.Column(db.Date)
+    issue_date = db.Column(db.Date, nullable=False)
+    due_date = db.Column(db.Date, nullable=False)
     payer_bank = db.Column(db.String(100), nullable=False)
     payer_branch = db.Column(db.String(100))
     amount = db.Column(db.Integer, nullable=False)
@@ -39,6 +37,22 @@ class NotesReceivable(db.Model):
 
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship('Company', backref=db.backref('notes_receivable', lazy=True))
+
+    @property
+    def issue_date_date(self) -> _dt.date | None:
+        return self.issue_date
+
+    @issue_date_date.setter
+    def issue_date_date(self, value: _dt.date | None) -> None:
+        self.issue_date = value
+
+    @property
+    def due_date_date(self) -> _dt.date | None:
+        return self.due_date
+
+    @due_date_date.setter
+    def due_date_date(self, value: _dt.date | None) -> None:
+        self.due_date = value
 
     def __repr__(self):
         return f'<NotesReceivable {self.drawer}>'
@@ -235,5 +249,3 @@ class Miscellaneous(db.Model):
     company = db.relationship('Company', backref=db.backref('miscellaneous_items', lazy=True))
 
 
-attach_date_string_sync(NotesReceivable, 'issue_date', 'issue_date_date')
-attach_date_string_sync(NotesReceivable, 'due_date', 'due_date_date')
