@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% from 'company/_form_helpers.html' import render_field %}
 {% from 'company/_soa_macros.html' import render_soa_sidebar %}
+{% from 'company/_soa_form_macros.html' import render_soa_form %}
 
 {# ページのタイトルを設定 #}
 {% block title %}{{ form_title }} - 勘定科目内訳書{% endblock %}
@@ -20,14 +20,15 @@
 {# メインコンテンツ部分を定義 #}
 {% from 'company/_form_macros.html' import soa_form_card %}
 {% block content %}
+{% set deposit_fields = [
+    {'name': 'financial_institution', 'placeholder': '例：〇〇銀行', 'autofocus': True},
+    {'name': 'branch_name', 'placeholder': '例：本店'},
+    {'name': 'account_type'},
+    {'name': 'account_number', 'placeholder': '例：1234567'},
+    {'name': 'balance', 'type': 'number', 'placeholder': '例：1000000'},
+    {'name': 'remarks', 'placeholder': '摘要を入力（任意）'},
+] %}
 {% call soa_form_card(form, title=form_title, cancel_url=url_for('company.statement_of_accounts', page='deposits'), cancel_label='戻る', form_attrs='class="ui-ctrl-44"') %}
-  <div class="form-grid-2col">
-      {{ render_field(form.financial_institution, autofocus=True, placeholder="例：〇〇銀行") }}
-      {{ render_field(form.branch_name, placeholder="例：本店") }}
-      {{ render_field(form.account_type) }}
-      {{ render_field(form.account_number, placeholder="例：1234567") }}
-      {{ render_field(form.balance, type="number", placeholder="例：1000000") }}
-      {{ render_field(form.remarks, placeholder="摘要を入力（任意）") }}
-  </div>
+  {{ render_soa_form(form, deposit_fields) }}
 {% endcall %}
 {% endblock %}

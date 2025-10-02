@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, TypedDict
 
 from app.company.forms.metadata import extract_form_field_metadata, merge_field_metadata
+from app.company.forms.soa.metadata import SOA_FORM_FIELD_METADATA
 
 
 class StatementPageConfig(TypedDict, total=False):
@@ -142,7 +143,10 @@ def _build_statement_pages_config() -> dict[str, StatementPageConfig]:
                 'label': definition.summary_label,
             },
         }
-        if definition.form_fields:
+        metadata_override = SOA_FORM_FIELD_METADATA.get(definition.key)
+        if metadata_override is not None:
+            entry['form_fields'] = merge_field_metadata(auto_fields, metadata_override)
+        elif definition.form_fields:
             entry['form_fields'] = merge_field_metadata(auto_fields, definition.form_fields)
         elif auto_fields:
             entry['form_fields'] = auto_fields
@@ -203,6 +207,10 @@ STATEMENT_MODEL_PATHS: dict[str, str] = {
     for definition in _load_page_definitions()
 }
 
+def get_total_field(page_key: str) -> str:
+    """Return the configured total field for the given SoA page (defaults to 'balance')."""
+    return STATEMENT_TOTAL_FIELDS.get(page_key, 'balance')
+
 
 __all__ = [
     'STATEMENT_PAGES_CONFIG',
@@ -210,5 +218,6 @@ __all__ = [
     'PL_PAGE_ACCOUNTS',
     'STATEMENT_TOTAL_FIELDS',
     'STATEMENT_MODEL_PATHS',
+    'get_total_field',
     'StatementPageConfig',
 ]

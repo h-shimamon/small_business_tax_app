@@ -9,6 +9,7 @@ from app.services.soa_registry import (
     PL_PAGE_ACCOUNTS,
     STATEMENT_PAGES_CONFIG,  # ページ→モデル解決用
     SUMMARY_PAGE_MAP,
+    get_total_field,
 )
 
 
@@ -227,15 +228,15 @@ class SoASummaryService:
             return 0
 
         # Special handling for borrowings: sum of balance_at_eoy + paid_interest
+        if not total_field_name:
+            total_field_name = get_total_field(page)
+
         if page == 'borrowings':
             sum_balance = db.session.query(db.func.sum(model.balance_at_eoy))\
                 .filter_by(company_id=company_id).scalar() or 0
             sum_interest = db.session.query(db.func.sum(model.paid_interest))\
                 .filter_by(company_id=company_id).scalar() or 0
             return (sum_balance or 0) + (sum_interest or 0)
-
-        if not total_field_name:
-            total_field_name = 'amount'
         try:
             total_field = getattr(model, total_field_name)
         except AttributeError:

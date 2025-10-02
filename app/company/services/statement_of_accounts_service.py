@@ -4,9 +4,14 @@ from typing import Any, Optional
 from flask import current_app
 
 from app.extensions import db
-from app.services.soa_registry import STATEMENT_PAGES_CONFIG
+from app.services.soa_registry import STATEMENT_PAGES_CONFIG, get_total_field
 
 from .protocols import StatementOfAccountsServiceProtocol
+
+
+DEFAULT_ACCOUNT_NAME_BY_PAGE = {
+    'accounts_payable': '買掛金',
+}
 
 
 class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
@@ -31,6 +36,14 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
     def _get_model(self, data_type):
         config = STATEMENT_PAGES_CONFIG.get(data_type, {})
         return config.get('model'), config
+
+    def _apply_model_defaults(self, data_type, item) -> None:
+        default_name = DEFAULT_ACCOUNT_NAME_BY_PAGE.get(data_type)
+        if not default_name or not hasattr(item, 'account_name'):
+            return
+        current = getattr(item, 'account_name', None)
+        if current is None or (isinstance(current, str) and current.strip() == ''):
+            setattr(item, 'account_name', default_name)
 
     def get_all_data(self):
         """
@@ -67,6 +80,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
 
         item = model(company_id=self.company_id)
         form.populate_obj(item)
+        self._apply_model_defaults(data_type, item)
         try:
             db.session.add(item)
             db.session.commit()
@@ -85,6 +99,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
             return False, None, "指定されたアイテムが見つかりません。"
 
         form.populate_obj(item)
+        self._apply_model_defaults(data_type, item)
         try:
             db.session.commit()
             return True, item, None
@@ -97,8 +112,7 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
         return items or []
 
     def calculate_total(self, data_type, items=None) -> int:
-        config = STATEMENT_PAGES_CONFIG.get(data_type, {})
-        total_field = config.get('total_field', 'balance')
+        total_field = get_total_field(data_type)
         target_items = items if items is not None else self.list_items(data_type)
         total = 0
         for item in target_items:
