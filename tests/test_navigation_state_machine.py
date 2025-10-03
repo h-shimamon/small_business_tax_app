@@ -42,9 +42,9 @@ def test_state_machine_marks_completed_from_session(app_context, override_naviga
     machine = NavigationStateMachine('company_info')
     state = machine.compute()
     assert 'company_info' in state.completed_keys
-    assert state.items[0]['is_active'] is True
+    assert state.items[0].is_active is True
     # filing group should have corporate tax pruned for non-admin
-    assert state.items[1]['children'] == []
+    assert state.items[1].children == []
 
 
 def test_mark_and_unmark_completed_step(app_context, override_navigation_tree, monkeypatch):

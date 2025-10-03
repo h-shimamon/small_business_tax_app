@@ -1,10 +1,10 @@
-"""Rename is_officer to is_controlled_company in Shareholder
+"""Database schema migration.
 
 Revision ID: d70af01038af
 Revises: 91859660db66
 Create Date: 2025-08-12 00:06:07.647579
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

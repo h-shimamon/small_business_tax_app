@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Iterable, Optional, Set
 
 from flask import session
@@ -26,8 +26,27 @@ def _first_soa_child_key() -> Optional[str]:
 
 
 @dataclass
+class NavigationChildState:
+    key: str
+    name: str
+    url: str
+    is_active: bool
+    is_completed: bool
+    is_skipped: bool
+
+
+@dataclass
+class NavigationParentState:
+    key: str
+    name: str
+    type: str
+    is_active: bool
+    children: list[NavigationChildState] = field(default_factory=list)
+
+
+@dataclass
 class NavigationState:
-    items: list[dict]
+    items: list[NavigationParentState]
     skipped_keys: Set[str]
     completed_keys: Set[str]
 
@@ -49,10 +68,7 @@ class NavigationStateMachine:
             skipped |= self._compute_skipped(company.id)
             completed |= self._augment_completed(company.id, user_id)
 
-        items = [
-            node.to_dict(self.current_page_key, list(completed), skipped)
-            for node in navigation_tree
-        ]
+        items = [self._build_parent_state(node, completed, skipped) for node in navigation_tree]
         self._prune_filing_group(items)
         return NavigationState(items=items, skipped_keys=skipped, completed_keys=completed)
 
@@ -66,6 +82,38 @@ class NavigationStateMachine:
         completed = session.get(self.session_step_key, [])
         if step_key in completed:
             session[self.session_step_key] = [s for s in completed if s != step_key]
+
+    def _build_parent_state(
+        self,
+        node: NavigationNode,
+        completed: Set[str],
+        skipped: Set[str],
+    ) -> NavigationParentState:
+        parent_state = NavigationParentState(
+            key=node.key,
+            name=node.name,
+            type=node.node_type,
+            is_active=node.is_active(self.current_page_key),
+        )
+
+        for child in node.children:
+            child_page_key = (child.params or {}).get('page') if getattr(child, 'params', None) else None
+            child_is_active = child.key == self.current_page_key or child_page_key == self.current_page_key
+            is_child_skipped = node.key == 'statement_of_accounts_group' and child.key in skipped
+            is_child_completed = (child.key in completed) and not is_child_skipped
+
+            parent_state.children.append(
+                NavigationChildState(
+                    key=child.key,
+                    name=child.name,
+                    url=child.get_url(),
+                    is_active=child_is_active,
+                    is_completed=is_child_completed,
+                    is_skipped=is_child_skipped,
+                )
+            )
+
+        return parent_state
 
     def _compute_skipped(self, company_id: int) -> Set[str]:
         skipped: Set[str] = set()
@@ -113,14 +161,11 @@ class NavigationStateMachine:
         return results
 
     @staticmethod
-    def _prune_filing_group(items: list[dict]) -> None:
+    def _prune_filing_group(items: list[NavigationParentState]) -> None:
         is_admin = bool(getattr(current_user, 'is_admin', False))
         if is_admin:
             return
         for parent in items:
-            if parent.get('key') == 'filings_group':
-                parent['children'] = [
-                    child for child in parent.get('children', [])
-                    if child.get('key') != 'corporate_tax_calc'
-                ]
+            if parent.key == 'filings_group':
+                parent.children = [child for child in parent.children if child.key != 'corporate_tax_calc']
                 break

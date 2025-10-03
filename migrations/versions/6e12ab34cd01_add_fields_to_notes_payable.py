@@ -1,10 +1,10 @@
-"""Add registration_number, payer_bank, payer_branch to NotesPayable
+"""Database schema migration: add registration and payment fields to notes_payable.
 
 Revision ID: 6e12ab34cd01
 Revises: f4f5494df524
 Create Date: 2025-08-27 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

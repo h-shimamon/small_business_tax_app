@@ -1,10 +1,10 @@
-"""Add registration_number to AccountsPayable
+"""Database schema migration: add registration_number to accounts_payable.
 
 Revision ID: 9c01e5a7aa10
 Revises: 7faaf5f3a9e9
 Create Date: 2025-08-27 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

@@ -1,10 +1,10 @@
-"""add_is_admin_flag_to_user
+"""Database schema migration.
 
 Revision ID: d930b864adb7
 Revises: f3a4b5c6d7e8
 Create Date: 2025-09-20 23:12:20.712937
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

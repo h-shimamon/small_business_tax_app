@@ -1,3 +1,5 @@
+"""Database schema migration for phase 1 schema cleanup."""
+
 """Phase1 schema cleanup: unify exclusion flag and accounting dates."""
 
 from __future__ import annotations

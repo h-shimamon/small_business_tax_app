@@ -1,10 +1,10 @@
-"""Change accounting period columns to Date type in Company model
+"""Database schema migration.
 
 Revision ID: db7780bdc863
 Revises: 8d675e777cd4
 Create Date: 2025-08-16 21:28:24.953196
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

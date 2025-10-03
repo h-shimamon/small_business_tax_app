@@ -1,10 +1,11 @@
-"""Change zip_code length in Shareholder and Office models
+"""Database schema migration: adjust shareholder zip_code length.
 
 Revision ID: 8d675e777cd4
 Revises: 31722a09f46e
 Create Date: 2025-08-13 14:26:08.503778
-
 """
+
+
 from alembic import op
 import sqlalchemy as sa
 

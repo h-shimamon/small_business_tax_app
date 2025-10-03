@@ -1,10 +1,10 @@
-"""Create signup_tokens table
+"""Database schema migration.
 
 Revision ID: d1e2f3a4b5c6
 Revises: c1d2e3f4a5b6
 Create Date: 2025-08-30 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

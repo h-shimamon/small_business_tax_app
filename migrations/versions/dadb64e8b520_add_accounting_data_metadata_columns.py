@@ -1,9 +1,10 @@
-"""Add accounting data metadata columns.
+"""Database schema migration: add accounting data metadata columns.
 
 Revision ID: dadb64e8b520
 Revises: b76a8ecd1ca1
 Create Date: 2025-09-30 14:34:47.179714
 """
+
 from alembic import op
 import sqlalchemy as sa
 

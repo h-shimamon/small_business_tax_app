@@ -1,10 +1,10 @@
-"""Revert accounting period columns to String type
+"""Database schema migration.
 
 Revision ID: ae7691c8e63f
 Revises: db7780bdc863
 Create Date: 2025-08-16 22:00:09.709701
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

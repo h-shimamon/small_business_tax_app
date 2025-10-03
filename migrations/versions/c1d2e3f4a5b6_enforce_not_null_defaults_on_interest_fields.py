@@ -1,10 +1,10 @@
-"""Enforce NOT NULL + DEFAULT 0 on interest-related fields
+"""Database schema migration.
 
 Revision ID: c1d2e3f4a5b6
 Revises: a1c2b3d4e5f6
 Create Date: 2025-08-30 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

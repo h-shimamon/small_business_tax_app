@@ -1,10 +1,10 @@
-"""Add is_email_verified to user
+"""Database schema migration: add is_email_verified flag to user.
 
 Revision ID: e2f3a4b5c7d8
 Revises: d1e2f3a4b5c6
 Create Date: 2025-08-30 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

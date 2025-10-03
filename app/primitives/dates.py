@@ -14,10 +14,11 @@ This module keeps existing behavior by delegating to models_utils.date_readers.
 from dataclasses import dataclass  # noqa: E402
 from datetime import date  # noqa: E402
 from app.models_utils.date_readers import (  # noqa: E402
+    DateValue,
     company_accounting_period_end,
     company_accounting_period_start,
     company_closing_date,  # re-export
-    ensure_date,
+    normalize_date,
     to_iso,  # re-export
 )
 
@@ -28,9 +29,14 @@ class Period:
     end: date | None
 
 
+def as_date_value(value) -> DateValue:
+    """Value Object として日付情報を取得する簡易ヘルパ。"""
+    return DateValue.from_value(value)
+
+
 def parse_lenient(value) -> date | None:
     """Lenient parser for UI inputs. Returns None for empty/invalid."""
-    return ensure_date(value)
+    return normalize_date(value)
 
 
 def parse_strict(value) -> date:
@@ -56,10 +62,12 @@ def get_company_period(company) -> Period:
 
 
 __all__ = [
+    "DateValue",
+    "Period",
+    "as_date_value",
     "parse_lenient",
     "parse_strict",
     "get_company_period",
     "to_iso",
     "company_closing_date",
-    "Period",
 ]

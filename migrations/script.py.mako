@@ -1,4 +1,4 @@
-"""${message}
+"""${message or 'Database schema migration.'}
 
 Revision ID: ${up_revision}
 Revises: ${down_revision | comma,n}

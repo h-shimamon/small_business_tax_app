@@ -1,10 +1,10 @@
-"""Add indexes on company_id across detail tables
+"""Database schema migration: add indexes on company_id across detail tables.
 
 Revision ID: a1c2b3d4e5f6
 Revises: 9c01e5a7aa10
 Create Date: 2025-08-30 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

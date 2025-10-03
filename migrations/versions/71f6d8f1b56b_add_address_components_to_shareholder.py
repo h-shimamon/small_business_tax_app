@@ -1,4 +1,4 @@
-"""Add address components to Shareholder
+"""Database schema migration: add address components to shareholder.
 
 Revision ID: 71f6d8f1b56b
 Revises: f4f5494df524

@@ -1,10 +1,10 @@
-"""Change User-Company relationship to one-to-one
+"""Database schema migration.
 
 Revision ID: c48f2abe8868
 Revises: ae7691c8e63f
 Create Date: 2025-08-16 22:12:27.323676
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

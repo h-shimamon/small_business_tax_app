@@ -1,10 +1,10 @@
-"""Merge heads e7c2af9012ab and a6d2b1c34e12
+"""Database schema migration.
 
 Revision ID: b76a8ecd1ca1
 Revises: e7c2af9012ab, a6d2b1c34e12
 Create Date: 2025-09-29 13:57:25.469990
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

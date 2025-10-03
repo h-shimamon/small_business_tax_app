@@ -1,10 +1,10 @@
-"""Create reset_tokens table
+"""Database schema migration.
 
 Revision ID: f3a4b5c6d7e8
 Revises: e2f3a4b5c7d8
 Create Date: 2025-08-30 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

@@ -1,10 +1,10 @@
-"""create_corporate_tax_master
+"""Database schema migration.
 
 Revision ID: c153aab08c82
 Revises: d930b864adb7
 Create Date: 2025-09-21 00:30:58.135098
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

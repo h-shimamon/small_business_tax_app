@@ -1,10 +1,10 @@
-"""Initial migration from current models
+"""Database schema migration: initial migration from current models.
 
 Revision ID: 91859660db66
 Revises: 
 Create Date: 2025-08-11 23:20:57.172287
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

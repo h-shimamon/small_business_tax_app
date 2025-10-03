@@ -1,10 +1,10 @@
-"""add refund account metadata
+"""Database schema migration.
 
 Revision ID: e7c2af9012ab
 Revises: 6e12ab34cd01
 Create Date: 2025-08-23 00:00:00.000000
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

@@ -97,6 +97,6 @@ def test_navigation_state_marks_skipped(client, init_database):
 
         nav = get_navigation_state('notes_receivable', skipped_steps=skipped_steps)
         # SoAグループを見つけ、depositsの is_skipped=True を確認
-        soa_group = next(g for g in nav if g['key'] == 'statement_of_accounts_group')
-        child_map = {c['key']: c for c in soa_group['children']}
-        assert child_map['deposits']['is_skipped'] is True
+        soa_group = next(g for g in nav if g.key == 'statement_of_accounts_group')
+        child_map = {c.key: c for c in soa_group.children}
+        assert child_map['deposits'].is_skipped is True

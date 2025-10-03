@@ -1,10 +1,10 @@
-"""Add columns to LoansReceivable: registration_number, relationship, collateral_details
+"""Database schema migration: add columns to loans_receivable for registration info.
 
 Revision ID: 5b1a9f3c2d47
 Revises: c48f2abe8868
 Create Date: 2025-08-27 00:00:00
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 

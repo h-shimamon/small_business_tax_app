@@ -1,3 +1,5 @@
+"""Database schema migration removing notes receivable legacy date columns."""
+
 from __future__ import annotations
 
 from alembic import op

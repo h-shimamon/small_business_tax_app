@@ -1,4 +1,4 @@
-"""Add parent_id and investment_amount to Shareholder
+"""Database schema migration: add parent_id and investment_amount to shareholder.
 
 Revision ID: f4f5494df524
 Revises: d70af01038af

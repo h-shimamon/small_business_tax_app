@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 from datetime import date
 from types import SimpleNamespace
 from unittest import mock
@@ -112,9 +113,10 @@ def db_session_mock(monkeypatch):
     context_manager = mock.MagicMock()
     context_manager.__enter__.return_value = session_mock
     context_manager.__exit__.return_value = False
-    monkeypatch.setattr('app.company.services.upload_flow_service.session_scope', mock.Mock(return_value=context_manager))
+    scope_mock = mock.Mock(return_value=context_manager)
+    monkeypatch.setattr('app.company.services.upload_flow_service.session_scope', scope_mock)
     add_mock = session_mock.add
-    return SimpleNamespace(session=session_mock, add=add_mock)
+    return SimpleNamespace(session=session_mock, add=add_mock, scope=scope_mock)
 
 
 def test_handle_valid_chart_of_accounts(user_stub, session_stub, parser_factory_mock, mapping_service_mock):
@@ -159,6 +161,9 @@ def test_handle_journals_success(user_stub, session_stub, parser_factory_mock, m
     assert accounting_kwargs['source_hash']
 
     db_session_mock.session.add.assert_called()
+    assert session_stub['uploaded_journals_name'] == 'journals.csv'
+    assert os.path.exists(session_stub['uploaded_journals_path'])
+    db_session_mock.scope.assert_called_once()
 
 
 def test_handle_journals_with_unmatched_accounts(user_stub, session_stub, parser_factory_mock, mapping_service_mock, financial_service_mock, accounting_data_mock, db_session_mock, monkeypatch):
@@ -179,3 +184,39 @@ def test_handle_journals_db_failure(user_stub, session_stub, parser_factory_mock
     with pytest.raises(UploadFlowError) as excinfo:
         service.handle(DummyFile('journals.csv'))
     assert 'db failure' in str(excinfo.value)
+    db_session_mock.scope.assert_called_once()
+
+
+def test_handle_missing_file_raises_validation_error(user_stub, session_stub):
+    service = UploadFlowService('chart_of_accounts', user_stub, {}, session_stub)
+
+    with pytest.raises(UploadValidationError) as excinfo:
+        service.handle(None)
+    assert excinfo.value.code == 'no_file'
+
+
+def test_handle_unknown_datatype_raises_upload_error(user_stub, session_stub, parser_factory_mock):
+    service = UploadFlowService('unsupported', user_stub, {'parser_method': 'get_chart_of_accounts'}, session_stub)
+
+    with pytest.raises(UploadFlowError) as excinfo:
+        service.handle(DummyFile('unknown.csv'))
+    assert excinfo.value.code == 'unknown_datatype'
+
+
+def test_handle_journals_without_company_redirects(session_stub, parser_factory_mock, mapping_service_mock, financial_service_mock, accounting_data_mock, db_session_mock):
+    user_without_company = SimpleNamespace(id=1, company=None)
+    service = UploadFlowService('journals', user_without_company, {'parser_method': 'get_journals'}, session_stub)
+
+    result = service.handle(DummyFile('journals.csv'))
+
+    assert result.redirect_endpoint == 'company.declaration'
+    assert result.flash_message[1] == 'warning'
+
+
+def test_handle_fixed_assets_returns_redirect(user_stub, session_stub, parser_factory_mock):
+    service = UploadFlowService('fixed_assets', user_stub, {}, session_stub)
+
+    result = service.handle(DummyFile('fixed_assets.csv'))
+
+    assert isinstance(result, UploadResult)
+    assert result.redirect_endpoint == 'company.fixed_assets_import'

@@ -6,6 +6,7 @@ from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
+from app.models_utils.date_readers import normalize_date, to_iso
 
 
 class User(UserMixin, db.Model):
@@ -23,23 +24,6 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-
-
-def _coerce_iso_date(value) -> _dt._dt.date | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, _dt.date):
-        return value
-    if isinstance(value, _dt.datetime):
-        return value.date()
-    try:
-        return _dt.date.fromisoformat(str(value))
-    except Exception:
-        return None
-
-
-def _iso_or_none(value: _dt._dt.date | None) -> str | None:
-    return value.isoformat() if isinstance(value, _dt.date) else None
 
 class Company(db.Model):
     __table_args__ = (
@@ -111,19 +95,19 @@ class Company(db.Model):
 
     @property
     def accounting_period_start(self) -> str | None:
-        return _iso_or_none(self._accounting_period_start)
+        return to_iso(self._accounting_period_start)
 
     @accounting_period_start.setter
     def accounting_period_start(self, value) -> None:
-        self._accounting_period_start = _coerce_iso_date(value)
+        self._accounting_period_start = normalize_date(value)
 
     @property
     def accounting_period_end(self) -> str | None:
-        return _iso_or_none(self._accounting_period_end)
+        return to_iso(self._accounting_period_end)
 
     @accounting_period_end.setter
     def accounting_period_end(self, value) -> None:
-        self._accounting_period_end = _coerce_iso_date(value)
+        self._accounting_period_end = normalize_date(value)
 
     term_number = db.Column(db.Integer)
     office_count = db.Column(db.String(10))
@@ -198,11 +182,11 @@ class Company(db.Model):
 
     @property
     def closing_date(self) -> str | None:
-        return _iso_or_none(self._closing_date)
+        return to_iso(self._closing_date)
 
     @closing_date.setter
     def closing_date(self, value) -> None:
-        self._closing_date = _coerce_iso_date(value)
+        self._closing_date = normalize_date(value)
 
     is_corp_tax_extended = db.Column(db.Boolean, default=False)
     is_biz_tax_extended = db.Column(db.Boolean, default=False)

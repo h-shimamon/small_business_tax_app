@@ -29,6 +29,9 @@ jobs:
           python scripts/generate_soa_assets.py
           git diff --quiet || (echo "SoA assets are not up to date. Run python scripts/generate_soa_assets.py." && git status --short && exit 1)
 
+      - name: Check migrations
+        run: python scripts/check_migrations.py
+
       - name: Run tests
         run: pytest -q
 
