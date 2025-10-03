@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import lru_cache
 from typing import Any
 
+from app.models_utils.date_readers import normalize_date
 from app.services.master_data_loader import load_master_dataframe
 
 DEFAULT_CURRENCY_SYMBOL = '円'
@@ -47,23 +47,6 @@ def _normalize_amount(value: Any) -> int | None:
     return int(quantized)
 
 
-def _normalize_date(value: Any) -> date | None:
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date):
-        return value
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            return date.fromisoformat(text)
-        except ValueError:
-            return None
-    return None
-
 
 def money(
     value: Any,
@@ -96,21 +79,21 @@ def number(value: Any) -> str:
 
 
 def date_iso(value: Any) -> str:
-    normalized = _normalize_date(value)
+    normalized = normalize_date(value)
     if normalized is None:
         return ''
     return normalized.strftime('%Y-%m-%d')
 
 
 def date_compact(value: Any) -> str:
-    normalized = _normalize_date(value)
+    normalized = normalize_date(value)
     if normalized is None:
         return ''
     return normalized.strftime('%Y%m%d')
 
 
 def date_kanji(value: Any) -> str:
-    normalized = _normalize_date(value)
+    normalized = normalize_date(value)
     if normalized is None:
         return ''
     return normalized.strftime('%Y年%m月%d日')

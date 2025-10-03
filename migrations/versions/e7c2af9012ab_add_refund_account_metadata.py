@@ -1,4 +1,4 @@
-"""Database schema migration.
+"""Database schema migration: add refund account metadata columns.
 
 Revision ID: e7c2af9012ab
 Revises: 6e12ab34cd01

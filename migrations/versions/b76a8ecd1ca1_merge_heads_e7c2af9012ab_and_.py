@@ -1,4 +1,4 @@
-"""Database schema migration.
+"""Database schema migration: merge Alembic heads e7c2af9012ab and a6d2b1c34e12.
 
 Revision ID: b76a8ecd1ca1
 Revises: e7c2af9012ab, a6d2b1c34e12
@@ -17,8 +17,10 @@ depends_on = None
 
 
 def upgrade():
+    # No-op merge migration to unify heads
     pass
 
 
 def downgrade():
+    # No-op; splitting heads is not supported automatically
     pass

@@ -1,4 +1,4 @@
-"""Database schema migration.
+"""Database schema migration: rename shareholder is_officer column to is_controlled_company.
 
 Revision ID: d70af01038af
 Revises: 91859660db66

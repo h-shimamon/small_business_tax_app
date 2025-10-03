@@ -1,4 +1,4 @@
-"""Database schema migration.
+"""Database schema migration: create corporate tax master table.
 
 Revision ID: c153aab08c82
 Revises: d930b864adb7

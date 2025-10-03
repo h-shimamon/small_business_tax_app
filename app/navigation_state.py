@@ -1,28 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, Optional, Set
+from typing import Any, Callable, Iterable, Optional, Sequence, Set, TYPE_CHECKING
 
 from flask import session
 from flask_login import current_user
 
-from app.navigation_builder import navigation_tree
+from app.navigation_builder import get_navigation_tree
 from app.navigation_models import NavigationNode
 from app.navigation_logging import log_navigation_issue as _log_issue
 from app.navigation_completion import compute_completed
 from app.progress.evaluator import SoAProgressEvaluator
 
-
-def _soa_children() -> list[NavigationNode]:
-    for node in navigation_tree:
-        if node.key == 'statement_of_accounts_group':
-            return node.children or []
-    return []
-
-
-def _first_soa_child_key() -> Optional[str]:
-    children = _soa_children()
-    return children[0].key if children else None
+if TYPE_CHECKING:
+    from app.company.models import AccountingData
 
 
 @dataclass
@@ -33,6 +24,7 @@ class NavigationChildState:
     is_active: bool
     is_completed: bool
     is_skipped: bool
+    params: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -52,12 +44,23 @@ class NavigationState:
 
 
 class NavigationStateMachine:
-    def __init__(self, current_page_key: str, *, preset_skipped: Optional[Iterable[str]] = None) -> None:
+    def __init__(
+        self,
+        current_page_key: str,
+        *,
+        preset_skipped: Optional[Iterable[str]] = None,
+        tree_provider: Optional[Callable[[], Sequence[NavigationNode]]] = None,
+    ) -> None:
         self.current_page_key = current_page_key
         self.preset_skipped = set(preset_skipped or [])
         self.session_step_key = 'wizard_completed_steps'
+        self._tree_provider = tree_provider or get_navigation_tree
 
     def compute(self) -> NavigationState:
+        tree = list(self._tree_provider())
+        soa_children = self._extract_soa_children(tree)
+        first_soa_child = soa_children[0].key if soa_children else None
+
         company = getattr(current_user, 'company', None)
         user_id = getattr(current_user, 'id', None)
 
@@ -65,10 +68,10 @@ class NavigationStateMachine:
         skipped = set(self.preset_skipped)
 
         if company is not None:
-            skipped |= self._compute_skipped(company.id)
-            completed |= self._augment_completed(company.id, user_id)
+            skipped |= self._compute_skipped(company.id, soa_children, first_soa_child)
+            completed |= self._augment_completed(company.id, user_id, soa_children)
 
-        items = [self._build_parent_state(node, completed, skipped) for node in navigation_tree]
+        items = [self._build_parent_state(node, completed, skipped) for node in tree]
         self._prune_filing_group(items)
         return NavigationState(items=items, skipped_keys=skipped, completed_keys=completed)
 
@@ -82,6 +85,13 @@ class NavigationStateMachine:
         completed = session.get(self.session_step_key, [])
         if step_key in completed:
             session[self.session_step_key] = [s for s in completed if s != step_key]
+
+    @staticmethod
+    def _extract_soa_children(tree: Sequence[NavigationNode]) -> list[NavigationNode]:
+        for node in tree:
+            if node.key == 'statement_of_accounts_group':
+                return list(node.children or [])
+        return []
 
     def _build_parent_state(
         self,
@@ -110,30 +120,38 @@ class NavigationStateMachine:
                     is_active=child_is_active,
                     is_completed=is_child_completed,
                     is_skipped=is_child_skipped,
+                    params=dict(child.params or {}),
                 )
             )
 
         return parent_state
 
-    def _compute_skipped(self, company_id: int) -> Set[str]:
+    def _compute_skipped(
+        self,
+        company_id: int,
+        soa_children: Optional[Sequence[NavigationNode]],
+        first_soa_child: Optional[str],
+        accounting_data: Optional['AccountingData'] = None,
+    ) -> Set[str]:
         skipped: Set[str] = set()
         try:
             from app.company.services.soa_summary_service import SoASummaryService
             from app.company.models import AccountingData
 
-            latest = (
-                AccountingData.query
-                .filter_by(company_id=company_id)
-                .order_by(AccountingData.created_at.desc())
-                .first()
-            )
+            latest = accounting_data
+            if latest is None:
+                latest = (
+                    AccountingData.query
+                    .filter_by(company_id=company_id)
+                    .order_by(AccountingData.created_at.desc())
+                    .first()
+                )
             if not latest:
-                first_key = _first_soa_child_key()
-                if first_key:
-                    skipped.add(first_key)
+                if first_soa_child:
+                    skipped.add(first_soa_child)
                 return skipped
 
-            for child in _soa_children():
+            for child in soa_children or []:
                 page = (child.params or {}).get('page') if getattr(child, 'params', None) else None
                 if not page:
                     continue
@@ -144,13 +162,18 @@ class NavigationStateMachine:
             _log_issue('state_machine.compute_skipped', error=exc, company_id=company_id)
         return skipped
 
-    def _augment_completed(self, company_id: int, user_id: Optional[int]) -> Set[str]:
+    def _augment_completed(
+        self,
+        company_id: int,
+        user_id: Optional[int],
+        soa_children: Optional[Sequence[NavigationNode]],
+    ) -> Set[str]:
         results: Set[str] = set()
         if user_id is None:
             return results
         try:
             results |= compute_completed(company_id, user_id)
-            for child in _soa_children():
+            for child in soa_children or []:
                 page = (child.params or {}).get('page') if getattr(child, 'params', None) else None
                 if not page:
                     continue

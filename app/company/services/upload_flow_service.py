@@ -6,7 +6,7 @@ import shutil
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from flask import current_app
 
@@ -80,6 +80,46 @@ class UploadValidationError(UploadFlowError):
         super().__init__(message, code=code)
 
 
+@dataclass
+class StoredJournalUpload:
+    path: str
+    original_name: str
+
+
+class JournalUploadStore:
+    PATH_KEY = 'uploaded_journals_path'
+    NAME_KEY = 'uploaded_journals_name'
+
+    def __init__(self, session):
+        self._session = session
+
+    def store(self, path: str, original_name: str) -> StoredJournalUpload:
+        self._session[self.PATH_KEY] = path
+        self._session[self.NAME_KEY] = original_name
+        return StoredJournalUpload(path=path, original_name=original_name)
+
+    def retrieve(self) -> Optional[StoredJournalUpload]:
+        path = self._session.get(self.PATH_KEY)
+        if not path:
+            return None
+        name = self._session.get(self.NAME_KEY) or ''
+        return StoredJournalUpload(path=path, original_name=name)
+
+    def clear(self, *, remove_file: bool = False) -> None:
+        record = self.retrieve()
+        if remove_file and record and os.path.isfile(record.path):
+            try:
+                os.remove(record.path)
+            except Exception:
+                pass
+        self._session.pop(self.PATH_KEY, None)
+        self._session.pop(self.NAME_KEY, None)
+
+    @classmethod
+    def retrieve_from_session(cls, session) -> Optional[StoredJournalUpload]:
+        return cls(session).retrieve()
+
+
 class UploadFlowService:
     """Encapsulates CSV/TXT upload handling for import_data views."""
 
@@ -93,6 +133,7 @@ class UploadFlowService:
         self.user = user
         self.config = config or {}
         self.session = flask_session
+        self._journal_store = JournalUploadStore(self.session)
 
     def handle(self, file_storage) -> UploadResult:
         if not file_storage or not getattr(file_storage, 'filename', None):
@@ -147,7 +188,7 @@ class UploadFlowService:
         software = self.session.get('selected_software')
         return ParserFactory.create_parser(software, file_storage)
 
-    def _persist_raw_upload(self, parser, file_storage) -> None:
+    def _persist_raw_upload(self, parser, file_storage) -> Optional[StoredJournalUpload]:
         try:
             base_dir = current_app.instance_path
         except Exception:
@@ -180,10 +221,9 @@ class UploadFlowService:
                             pass
         except Exception as exc:
             current_app.logger.warning('Failed to persist uploaded file: %s', exc)
-            return
+            return None
 
-        self.session['uploaded_journals_path'] = path
-        self.session['uploaded_journals_name'] = original_name
+        return self._journal_store.store(path, original_name)
 
     @staticmethod
     def _calculate_dataframe_hash(df) -> str:
@@ -292,6 +332,7 @@ class UploadFlowService:
         except Exception as exc:
             raise UploadFlowError(str(exc)) from exc
 
+        self._journal_store.clear(remove_file=True)
         mark_step_as_completed(self.datatype)
         return UploadResult(
             redirect_endpoint='company.confirm_trial_balance',

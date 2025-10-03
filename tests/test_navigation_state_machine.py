@@ -25,7 +25,7 @@ def override_navigation_tree(monkeypatch):
             children=[{'key': 'corporate_tax_calc', 'name': '法人税計算', 'endpoint': 'company.info'}],
         ),
     ]
-    monkeypatch.setattr('app.navigation_state.navigation_tree', tree)
+    monkeypatch.setattr('app.navigation_state.get_navigation_tree', lambda: tree)
     monkeypatch.setattr('app.navigation_models.NavigationNode.get_url', lambda self: f"/{self.key}")
     return tree
 
@@ -36,8 +36,14 @@ def test_state_machine_marks_completed_from_session(app_context, override_naviga
 
     session['wizard_completed_steps'] = ['company_info']
 
-    monkeypatch.setattr('app.navigation_state.NavigationStateMachine._compute_skipped', lambda self, company_id: set())
-    monkeypatch.setattr('app.navigation_state.NavigationStateMachine._augment_completed', lambda self, company_id, user_id: set())
+    monkeypatch.setattr(
+        'app.navigation_state.NavigationStateMachine._compute_skipped',
+        lambda self, company_id, soa_children, first_child: set(),
+    )
+    monkeypatch.setattr(
+        'app.navigation_state.NavigationStateMachine._augment_completed',
+        lambda self, company_id, user_id, soa_children: set(),
+    )
 
     machine = NavigationStateMachine('company_info')
     state = machine.compute()

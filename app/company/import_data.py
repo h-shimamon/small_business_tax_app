@@ -17,6 +17,7 @@ from app.company.services.upload_flow_service import (
     UploadFlowService,
     UploadValidationError,
     build_upload_error_context,
+    JournalUploadStore,
 )
 from app.extensions import db
 from app.navigation import (
@@ -185,20 +186,19 @@ def show_financial_statements():
 
 
 def _recompute_statements(mapping_service, software_name):
-    j_path = session.get('uploaded_journals_path')
-    if not j_path:
+    record = JournalUploadStore.retrieve_from_session(session)
+    if not record:
         return
     try:
         import io
-        import os
 
         from werkzeug.datastructures import FileStorage
 
-        with open(j_path, 'rb') as jf:
+        with open(record.path, 'rb') as jf:
             content = jf.read()
         fs = FileStorage(
             stream=io.BytesIO(content),
-            filename=session.get('uploaded_journals_name') or 'journals.csv',
+            filename=record.original_name or 'journals.csv',
         )
         parser = ParserFactory.create_parser(software_name, fs)
         parsed = parser.get_journals()
@@ -234,13 +234,7 @@ def _recompute_statements(mapping_service, software_name):
         _db.session.add(ad)
         _db.session.commit()
         mark_step_as_completed('journals')
-        try:
-            if j_path and os.path.isfile(j_path):
-                os.remove(j_path)
-            session.pop('uploaded_journals_path', None)
-            session.pop('uploaded_journals_name', None)
-        except Exception:
-            pass
+        JournalUploadStore(session).clear(remove_file=True)
     except Exception as exc:
         flash(f'再計算に失敗しました: {exc}', 'warning')
 

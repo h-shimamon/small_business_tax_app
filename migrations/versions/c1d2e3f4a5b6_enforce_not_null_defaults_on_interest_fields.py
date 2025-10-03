@@ -1,4 +1,4 @@
-"""Database schema migration.
+"""Database schema migration: enforce non-null defaults on interest fields for loans and borrowings.
 
 Revision ID: c1d2e3f4a5b6
 Revises: a1c2b3d4e5f6
@@ -20,36 +20,14 @@ def upgrade():
     op.execute(sa.text("UPDATE loans_receivable SET received_interest = 0 WHERE received_interest IS NULL"))
     op.execute(sa.text("UPDATE borrowing SET paid_interest = 0 WHERE paid_interest IS NULL"))
 
-    # Apply NOT NULL + DEFAULT 0 (SQLite-safe via batch)
-    with op.batch_alter_table('loans_receivable') as batch:
-        batch.alter_column(
-            'received_interest',
-            existing_type=sa.Integer(),
-            server_default=sa.text('0'),
-            nullable=False,
-        )
-    with op.batch_alter_table('borrowing') as batch:
-        batch.alter_column(
-            'paid_interest',
-            existing_type=sa.Integer(),
-            server_default=sa.text('0'),
-            nullable=False,
-        )
+    with op.batch_alter_table('loans_receivable', schema=None) as batch_op:
+        batch_op.alter_column('received_interest', existing_type=sa.Integer(), nullable=False, server_default='0')
+    with op.batch_alter_table('borrowing', schema=None) as batch_op:
+        batch_op.alter_column('paid_interest', existing_type=sa.Integer(), nullable=False, server_default='0')
 
 
 def downgrade():
-    # Revert to nullable and drop server defaults
-    with op.batch_alter_table('loans_receivable') as batch:
-        batch.alter_column(
-            'received_interest',
-            existing_type=sa.Integer(),
-            server_default=None,
-            nullable=True,
-        )
-    with op.batch_alter_table('borrowing') as batch:
-        batch.alter_column(
-            'paid_interest',
-            existing_type=sa.Integer(),
-            server_default=None,
-            nullable=True,
-        )
+    with op.batch_alter_table('loans_receivable', schema=None) as batch_op:
+        batch_op.alter_column('received_interest', existing_type=sa.Integer(), nullable=True, server_default=None)
+    with op.batch_alter_table('borrowing', schema=None) as batch_op:
+        batch_op.alter_column('paid_interest', existing_type=sa.Integer(), nullable=True, server_default=None)

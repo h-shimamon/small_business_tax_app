@@ -14,6 +14,7 @@ from app.company.services.upload_flow_service import (
     UploadResult,
     UploadValidationError,
     UploadFlowError,
+    JournalUploadStore,
 )
 
 
@@ -161,8 +162,8 @@ def test_handle_journals_success(user_stub, session_stub, parser_factory_mock, m
     assert accounting_kwargs['source_hash']
 
     db_session_mock.session.add.assert_called()
-    assert session_stub['uploaded_journals_name'] == 'journals.csv'
-    assert os.path.exists(session_stub['uploaded_journals_path'])
+    assert JournalUploadStore.retrieve_from_session(session_stub) is None
+    assert 'uploaded_journals_path' not in session_stub
     db_session_mock.scope.assert_called_once()
 
 
@@ -175,6 +176,9 @@ def test_handle_journals_with_unmatched_accounts(user_stub, session_stub, parser
     assert result.redirect_endpoint == 'company.data_mapping'
     assert result.flash_message[1] == 'warning'
     assert session_stub['unmatched_accounts'] == ['未マッピング科目']
+    record = JournalUploadStore.retrieve_from_session(session_stub)
+    assert record is not None
+    assert os.path.exists(record.path)
 
 
 def test_handle_journals_db_failure(user_stub, session_stub, parser_factory_mock, mapping_service_mock, financial_service_mock, accounting_data_mock, db_session_mock, monkeypatch):
@@ -184,6 +188,7 @@ def test_handle_journals_db_failure(user_stub, session_stub, parser_factory_mock
     with pytest.raises(UploadFlowError) as excinfo:
         service.handle(DummyFile('journals.csv'))
     assert 'db failure' in str(excinfo.value)
+    assert JournalUploadStore.retrieve_from_session(session_stub) is not None
     db_session_mock.scope.assert_called_once()
 
 

@@ -1,4 +1,4 @@
-"""Database schema migration.
+"""Database schema migration: merge Alembic heads 2b7d9e3f4a10 and 5b1a9f3c2d47.
 
 Revision ID: b2a8c6f5e3d1
 Revises: 2b7d9e3f4a10, 5b1a9f3c2d47

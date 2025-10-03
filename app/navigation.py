@@ -23,7 +23,10 @@ def unmark_step_as_completed(step_key):
 def compute_skipped_steps_for_company(company_id, accounting_data=None):
     try:
         machine = NavigationStateMachine(current_page_key='')
-        return machine._compute_skipped(company_id)
+        tree = list(machine._tree_provider())
+        soa_children = machine._extract_soa_children(tree)
+        first_child = soa_children[0].key if soa_children else None
+        return machine._compute_skipped(company_id, soa_children, first_child, accounting_data=accounting_data)
     except Exception as exc:  # pragma: no cover - logging only
         log_navigation_issue('compute_skipped_steps', error=exc, company_id=company_id)
         return set()
