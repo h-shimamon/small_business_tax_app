@@ -14,8 +14,10 @@ from app.company.models import AccountingData
 from app.company.parser_factory import ParserFactory
 from app.company.services.data_mapping_service import DataMappingService
 from app.company.services.financial_statement_service import FinancialStatementService
-from app.extensions import db
+
+
 from app.navigation import mark_step_as_completed
+from app.services.db_utils import session_scope
 from app.primitives.dates import get_company_period
 
 
@@ -270,25 +272,24 @@ class UploadFlowService:
         metadata = self._build_accounting_metadata(df_journals)
 
         try:
-            AccountingData.query.filter_by(company_id=company.id).delete()
-            accounting_data = AccountingData(
-                company_id=company.id,
-                period_start=start_date,
-                period_end=end_date,
-                schema_version=metadata['schema_version'],
-                algo_version=metadata['algo_version'],
-                source_hash=metadata['source_hash'],
-                data={
-                    'balance_sheet': bs_data,
-                    'profit_loss_statement': pl_data,
-                    'soa_breakdowns': soa_breakdowns,
-                    'account_balances': fs_service.get_account_balances(),
-                },
-            )
-            db.session.add(accounting_data)
-            db.session.commit()
+            with session_scope() as session:
+                session.query(AccountingData).filter_by(company_id=company.id).delete()
+                accounting_data = AccountingData(
+                    company_id=company.id,
+                    period_start=start_date,
+                    period_end=end_date,
+                    schema_version=metadata['schema_version'],
+                    algo_version=metadata['algo_version'],
+                    source_hash=metadata['source_hash'],
+                    data={
+                        'balance_sheet': bs_data,
+                        'profit_loss_statement': pl_data,
+                        'soa_breakdowns': soa_breakdowns,
+                        'account_balances': fs_service.get_account_balances(),
+                    },
+                )
+                session.add(accounting_data)
         except Exception as exc:
-            db.session.rollback()
             raise UploadFlowError(str(exc)) from exc
 
         mark_step_as_completed(self.datatype)

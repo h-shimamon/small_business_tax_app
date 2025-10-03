@@ -11,7 +11,7 @@
       {% if item.due_date is string %}
         {{ item.due_date }}
       {% elif item.due_date %}
-        {{ item.due_date.strftime('%Y-%m-%d') }}
+        {{ item.due_date | date_iso }}
       {% else %}
         -
       {% endif %}
@@ -19,7 +19,7 @@
       {% if item.issue_date is string %}
         {{ item.issue_date }}
       {% elif item.issue_date %}
-        {{ item.issue_date.strftime('%Y-%m-%d') }}
+        {{ item.issue_date | date_iso }}
       {% else %}
         -
       {% endif %}

@@ -1,0 +1,18 @@
+{
+  "deposits": "deposits",
+  "notes_receivable": "notes_receivable",
+  "accounts_receivable": "accounts_receivable",
+  "temporary_payments": "temporary_payments",
+  "loans_receivable": "loans_receivable",
+  "inventories": "inventories",
+  "securities": "securities",
+  "fixed_assets": "fixed_assets",
+  "notes_payable": "notes_payable",
+  "accounts_payable": "accounts_payable",
+  "temporary_receipts": "temporary_receipts",
+  "borrowings": "borrowings",
+  "executive_compensations": "executive_compensations",
+  "land_rents": "land_rents",
+  "misc_income": "misc_income",
+  "misc_losses": "misc_losses"
+}

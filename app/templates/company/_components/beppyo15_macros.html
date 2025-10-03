@@ -2,23 +2,23 @@
 <div class="card summary-card beppyo15-summary">
   <div class="summary-item">
     <span class="summary-label">支出交際額</span>
-    <span class="summary-value">{{ summary.spending_cross | format_currency }}</span>
+    <span class="summary-value">{{ summary.spending_cross | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">交際費等の額から控除される費用の額</span>
-    <span class="summary-value">{{ summary.hospitality_deduction | format_currency }}</span>
+    <span class="summary-value">{{ summary.hospitality_deduction | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">中小法人等の定額控除限度額</span>
-    <span class="summary-value">{{ summary.small_corp_limit | format_currency }}</span>
+    <span class="summary-value">{{ summary.small_corp_limit | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">損金算入限度額</span>
-    <span class="summary-value">{{ summary.deductible_limit | format_currency }}</span>
+    <span class="summary-value">{{ summary.deductible_limit | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">損金不算入額</span>
-    <span class="summary-value">{{ summary.non_deductible_amount | format_currency }}</span>
+    <span class="summary-value">{{ summary.non_deductible_amount | money }}</span>
   </div>
 </div>
 {%- endmacro %}
@@ -41,10 +41,10 @@
       {% for item in items %}
         <tr>
           <td data-label="科目">{{ item.subject }}</td>
-          <td data-label="支出額" class="numeric">{{ item.expense_amount | format_currency }}</td>
-          <td data-label="交際費等の額から控除される費用の額" class="numeric">{{ item.deductible_amount | format_currency }}</td>
-          <td data-label="差引交際費等の額(A)" class="numeric">{{ item.net_amount | format_currency }}</td>
-          <td data-label="(A)のうち接待飲食費の額" class="numeric">{{ item.hospitality_amount | format_currency }}</td>
+          <td data-label="支出額" class="numeric">{{ item.expense_amount | money }}</td>
+          <td data-label="交際費等の額から控除される費用の額" class="numeric">{{ item.deductible_amount | money }}</td>
+          <td data-label="差引交際費等の額(A)" class="numeric">{{ item.net_amount | money }}</td>
+          <td data-label="(A)のうち接待飲食費の額" class="numeric">{{ item.hospitality_amount | money }}</td>
           <td class="table-actions">
                         <div class="action-buttons">
               <a href="{{ url_for('company.beppyo15_edit', item_id=item.id) }}" class="action-btn">編集</a>

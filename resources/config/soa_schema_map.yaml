@@ -1,0 +1,716 @@
+# Statement of Accounts schema single-source definition
+# このファイルを起点にフォーム・テンプレート・PDF 等の設定を生成する
+meta:
+  version: 1
+  generated_at: null  # 生成スクリプトで上書き予定
+
+pages:
+  deposits:
+    model: app.company.models.Deposit
+    form: app.company.forms.DepositForm
+    template: deposit_form.html
+    title: 預貯金等
+    pdf_key: deposits
+    order: 10
+    total_field: balance
+    summary:
+      type: BS
+      label: 預貯金
+    fields:
+      - name: financial_institution
+        label: 金融機関名
+        placeholder: 例：〇〇銀行
+        type: string
+        required: true
+        autofocus: true
+      - name: branch_name
+        label: 支店名
+        placeholder: 例：本店
+        type: string
+        required: true
+      - name: account_type
+        label: 科目
+        type: select
+        required: true
+        choices:
+          - 普通預金
+          - 当座預金
+          - 通知預金
+          - 定期預金
+          - 定期積金
+          - 別段預金
+          - 納税準備預金
+          - その他
+      - name: account_number
+        label: 口座番号
+        placeholder: 例：1234567
+        type: string
+        required: true
+      - name: balance
+        label: 期末残高
+        placeholder: 例：1000000
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 摘要を入力（任意）
+        type: text
+        required: false
+
+  notes_receivable:
+    model: app.company.models.NotesReceivable
+    form: app.company.forms.NotesReceivableForm
+    template: notes_receivable_form.html
+    title: 受取手形
+    pdf_key: notes_receivable
+    order: 20
+    total_field: amount
+    summary:
+      type: BS
+      label: 受取手形
+    fields:
+      - name: drawer
+        label: 振出人
+        placeholder: 例：株式会社〇〇商事
+        type: string
+        required: true
+        autofocus: true
+      - name: registration_number
+        label: 登録番号
+        placeholder: 例：1234567890123
+        type: corporate_number
+        required: false
+      - name: issue_date
+        label: 振出日
+        type: date
+        required: true
+      - name: due_date
+        label: 満期日
+        type: date
+        required: true
+      - name: payer_bank
+        label: 支払銀行
+        placeholder: 例：〇〇銀行
+        type: string
+        required: true
+      - name: payer_branch
+        label: 支店名
+        placeholder: 例：本店
+        type: string
+        required: false
+      - name: amount
+        label: 額面金額
+        placeholder: 例：500000
+        type: money
+        required: true
+      - name: discount_bank
+        label: 割引銀行
+        placeholder: 例：△△銀行（任意）
+        type: string
+        required: false
+      - name: discount_branch
+        label: 割引支店
+        placeholder: 例：新宿支店（任意）
+        type: string
+        required: false
+      - name: remarks
+        label: 摘要
+        placeholder: 摘要（任意）
+        type: text
+        required: false
+
+  accounts_receivable:
+    model: app.company.models.AccountsReceivable
+    form: app.company.forms.AccountsReceivableForm
+    template: accounts_receivable_form.html
+    title: 売掛金（未収入金）
+    pdf_key: accounts_receivable
+    order: 30
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 売掛金
+    fields:
+      - name: account_name
+        label: 科目
+        type: select
+        required: true
+        choices:
+          - 売掛金
+          - 未収入金
+      - name: registration_number
+        label: 登録番号
+        placeholder: 例：1234567890123
+        type: corporate_number
+        required: false
+      - name: partner_name
+        label: 取引先名
+        placeholder: 例：株式会社 △△商会
+        type: string
+        required: true
+      - name: partner_address
+        label: 取引先住所
+        placeholder: 例：東京都千代田区〇〇町1-2-3
+        type: text
+        required: true
+      - name: balance_at_eoy
+        label: 期末現在高
+        placeholder: 例：500000
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 例：商品Aの売上代金
+        type: text
+        required: false
+
+  temporary_payments:
+    model: app.company.models.TemporaryPayment
+    form: app.company.forms.TemporaryPaymentForm
+    template: temporary_payment_form.html
+    title: 仮払金（前渡金）
+    pdf_key: temporary_payments
+    order: 40
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 仮払金
+    fields:
+      - name: account_name
+        label: 科目
+        type: select
+        required: true
+        choices:
+          - 仮払金
+          - 前渡金
+      - name: registration_number
+        label: 登録番号
+        placeholder: 例：1234567890123
+        type: corporate_number
+        required: false
+      - name: partner_name
+        label: 取引先名
+        placeholder: 例：株式会社 □□
+        type: string
+        required: true
+      - name: partner_address
+        label: 取引先住所
+        placeholder: 例：東京都中央区〇〇1-2-3
+        type: text
+        required: false
+      - name: relationship
+        label: 関係
+        placeholder: 例：代表者の子会社
+        type: string
+        required: false
+      - name: balance_at_eoy
+        label: 期末現在高
+        placeholder: 例：300000
+        type: money
+        required: true
+      - name: transaction_details
+        label: 摘要
+        placeholder: 例：出張旅費の仮払い
+        type: text
+        required: false
+
+  loans_receivable:
+    model: app.company.models.LoansReceivable
+    form: app.company.forms.LoansReceivableForm
+    template: loans_receivable_form.html
+    title: 貸付金・受取利息
+    pdf_key: loans_receivable
+    order: 50
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 貸付金
+    fields:
+      - name: registration_number
+        label: 登録番号
+        placeholder: 例：1234567890123
+        type: corporate_number
+        required: false
+        autofocus: true
+      - name: borrower_name
+        label: 貸付先（氏名）
+        placeholder: 例：株式会社 〇〇商事
+        type: string
+        required: true
+      - name: borrower_address
+        label: 貸付先住所
+        placeholder: 例：東京都千代田区〇〇1-2-3
+        type: text
+        required: false
+      - name: relationship
+        label: 法人・代表者との関係
+        placeholder: 例：代表者の親族会社
+        type: string
+        required: false
+      - name: balance_at_eoy
+        label: 期末現在高
+        placeholder: 例：300000
+        type: money
+        required: true
+      - name: received_interest
+        label: 期中の受取利息額
+        placeholder: 例：15000
+        type: money
+        required: false
+      - name: interest_rate
+        label: 利率
+        placeholder: 例：2.0
+        type: percent
+        required: true
+      - name: collateral_details
+        label: 担保の内容
+        placeholder: 例：不動産（東京都港区…）
+        type: text
+        required: false
+
+  inventories:
+    model: app.company.models.Inventory
+    form: app.company.forms.InventoryForm
+    template: inventories_form.html
+    title: 棚卸資産
+    pdf_key: inventories
+    order: 60
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 棚卸資産
+    fields:
+      - name: item_name
+        label: 名称
+        type: string
+        required: true
+        autofocus: true
+      - name: location
+        label: 保管場所
+        type: string
+        required: false
+      - name: quantity
+        label: 数量
+        type: float
+        required: true
+      - name: unit
+        label: 単位
+        type: string
+        required: false
+      - name: unit_price
+        label: 単価
+        type: money
+        required: true
+      - name: balance_at_eoy
+        label: 期末現在高
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        type: text
+        required: false
+
+  securities:
+    model: app.company.models.Security
+    form: app.company.forms.SecurityForm
+    template: securities_form.html
+    title: 有価証券
+    pdf_key: securities
+    order: 70
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 有価証券
+    fields:
+      - name: security_type
+        label: 種類
+        type: string
+        required: true
+        autofocus: true
+      - name: issuer
+        label: 銘柄・発行者
+        type: string
+        required: true
+      - name: quantity
+        label: 数量
+        type: integer
+        required: false
+      - name: balance_at_eoy
+        label: 期末現在高
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        type: text
+        required: false
+
+  fixed_assets:
+    model: app.company.models.FixedAsset
+    form: app.company.forms.FixedAssetForm
+    template: fixed_assets_form.html
+    title: 固定資産（土地等）
+    pdf_key: fixed_assets
+    order: 80
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 固定資産（土地等）
+    fields:
+      - name: asset_type
+        label: 種類
+        type: string
+        required: true
+        autofocus: true
+      - name: location
+        label: 所在地
+        type: string
+        required: true
+      - name: area
+        label: 面積（㎡）
+        type: float
+        required: false
+      - name: balance_at_eoy
+        label: 期末現在高
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        type: text
+        required: false
+
+  notes_payable:
+    model: app.company.models.NotesPayable
+    form: app.company.forms.NotesPayableForm
+    template: notes_payable_form.html
+    title: 支払手形
+    pdf_key: notes_payable
+    order: 90
+    total_field: amount
+    summary:
+      type: BS
+      label: 支払手形
+    fields:
+      - name: registration_number
+        label: 登録番号
+        placeholder: 例：1234567890123
+        type: corporate_number
+        required: false
+      - name: payee
+        label: 受取人
+        placeholder: 例：株式会社△△
+        type: string
+        required: true
+        autofocus: true
+      - name: issue_date
+        label: 振出日
+        type: date
+        required: true
+      - name: due_date
+        label: 支払期限
+        type: date
+        required: true
+      - name: payer_bank
+        label: 支払銀行
+        placeholder: 例：〇〇銀行
+        type: string
+        required: false
+      - name: payer_branch
+        label: 支店名
+        placeholder: 例：本店
+        type: string
+        required: false
+      - name: amount
+        label: 金額
+        placeholder: 例：300000
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 摘要（任意）
+        type: text
+        required: false
+
+  accounts_payable:
+    model: app.company.models.AccountsPayable
+    form: app.company.forms.AccountsPayableForm
+    template: accounts_payable_form.html
+    title: 買掛金（未払金・未払費用）
+    pdf_key: accounts_payable
+    order: 100
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 買掛金
+    fields:
+      - name: registration_number
+        label: 登録番号
+        placeholder: 例：1234567890123
+        type: corporate_number
+        required: false
+        autofocus: true
+      - name: partner_name
+        label: 名称（氏名）
+        placeholder: 例：株式会社〇〇商事（または氏名）
+        type: string
+        required: true
+      - name: partner_address
+        label: 所在地（住所）
+        placeholder: 例：東京都千代田区丸の内…
+        type: text
+        required: false
+      - name: balance_at_eoy
+        label: 期末現在高
+        placeholder: 例：1000000
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 例：仕入代金
+        type: text
+        required: false
+
+  temporary_receipts:
+    model: app.company.models.TemporaryReceipt
+    form: app.company.forms.TemporaryReceiptForm
+    template: temporary_receipts_form.html
+    title: 仮受金（前受金・預り金）
+    pdf_key: temporary_receipts
+    order: 110
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 仮受金
+    fields:
+      - name: account_name
+        label: 科目
+        placeholder: 例：預り金
+        type: string
+        required: true
+        autofocus: true
+      - name: partner_name
+        label: 相手先名
+        placeholder: 例：株式会社 △△
+        type: string
+        required: true
+      - name: balance_at_eoy
+        label: 期末現在高
+        placeholder: 例：100000
+        type: money
+        required: true
+      - name: transaction_details
+        label: 取引の内容
+        placeholder: 例：保証金の預り
+        type: text
+        required: false
+
+  borrowings:
+    model: app.company.models.Borrowing
+    form: app.company.forms.BorrowingForm
+    template: borrowings_form.html
+    title: 借入金及び支払利子
+    pdf_key: borrowings
+    order: 120
+    total_field: balance_at_eoy
+    summary:
+      type: BS
+      label: 借入金
+    pl_targets:
+      - 支払利息
+    fields:
+      - name: lender_name
+        label: 借入先
+        placeholder: 例：〇〇銀行
+        type: string
+        required: true
+        autofocus: true
+      - name: is_subsidiary
+        label: 関係会社
+        type: boolean
+        required: false
+      - name: balance_at_eoy
+        label: 期末現在高
+        placeholder: 例：5000000
+        type: money
+        required: true
+      - name: interest_rate
+        label: 利率（%）
+        placeholder: 例：1.8
+        type: percent
+        required: true
+      - name: paid_interest
+        label: 期間中の支払利子
+        placeholder: 例：120000
+        type: money
+        required: false
+      - name: remarks
+        label: 摘要
+        placeholder: 例：設備投資のため
+        type: text
+        required: false
+
+  executive_compensations:
+    model: app.company.models.ExecutiveCompensation
+    form: app.company.forms.ExecutiveCompensationForm
+    template: executive_compensations_form.html
+    title: 役員給与等
+    pdf_key: executive_compensations
+    order: 130
+    total_field: total_compensation
+    summary:
+      type: PL
+      label: 役員給与等
+    pl_targets:
+      - 役員報酬
+      - 役員賞与
+    fields:
+      - name: shareholder_name
+        label: 氏名
+        placeholder: 例：山田 太郎
+        type: string
+        required: true
+        autofocus: true
+      - name: relationship
+        label: 関係
+        placeholder: 例：代表取締役
+        type: string
+        required: false
+      - name: position
+        label: 役職
+        placeholder: 例：代表取締役社長
+        type: string
+        required: false
+      - name: base_salary
+        label: 基本給
+        placeholder: 例：500000
+        type: money
+        required: false
+      - name: other_allowances
+        label: その他手当
+        placeholder: 例：役員賞与は無し
+        type: money
+        required: false
+      - name: total_compensation
+        label: 総額
+        placeholder: 例：600000
+        type: money
+        required: true
+
+  land_rents:
+    model: app.company.models.LandRent
+    form: app.company.forms.LandRentForm
+    template: land_rents_form.html
+    title: 地代家賃等
+    pdf_key: land_rents
+    order: 140
+    total_field: rent_paid
+    summary:
+      type: PL
+      label: 地代家賃等
+    pl_targets:
+      - 地代家賃
+      - 賃借料
+    fields:
+      - name: account_name
+        label: 科目
+        type: select
+        required: true
+        choices:
+          - 地代
+          - 家賃
+        autofocus: true
+      - name: lessor_name
+        label: 支払先
+        placeholder: 例：〇〇不動産
+        type: string
+        required: true
+      - name: property_details
+        label: 物件の詳細
+        placeholder: 例：東京都港区六本木6-10-1
+        type: text
+        required: false
+      - name: rent_paid
+        label: 支払賃借料
+        placeholder: 例：200000
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 例：本店オフィス賃料
+        type: text
+        required: false
+
+  misc_income:
+    model: app.company.models.Miscellaneous
+    form: app.company.forms.MiscellaneousIncomeForm
+    template: miscellaneous_form.html
+    title: 雑収入
+    pdf_key: misc_income
+    order: 150
+    total_field: amount
+    summary:
+      type: PL
+      label: 雑収入
+    pl_targets:
+      - 雑収入
+    query_filter:
+      type: equals
+      field: account_name
+      value: 雑収入
+    fields:
+      - name: account_name
+        label: 科目
+        type: hidden
+        default: 雑収入
+      - name: details
+        label: 内容
+        placeholder: 例：内容
+        type: text
+        required: true
+      - name: amount
+        label: 金額
+        placeholder: 例：金額
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 摘要（任意）
+        type: text
+        required: false
+
+  misc_losses:
+    model: app.company.models.Miscellaneous
+    form: app.company.forms.MiscellaneousLossForm
+    template: miscellaneous_form.html
+    title: 雑損失
+    pdf_key: misc_losses
+    order: 160
+    total_field: amount
+    summary:
+      type: PL
+      label: 雑損失
+    pl_targets:
+      - 雑損失
+    query_filter:
+      type: equals
+      field: account_name
+      value: 雑損失
+    fields:
+      - name: account_name
+        label: 科目
+        type: hidden
+        default: 雑損失
+      - name: details
+        label: 内容
+        placeholder: 例：内容
+        type: text
+        required: true
+      - name: amount
+        label: 金額
+        placeholder: 例：金額
+        type: money
+        required: true
+      - name: remarks
+        label: 摘要
+        placeholder: 摘要（任意）
+        type: text
+        required: false

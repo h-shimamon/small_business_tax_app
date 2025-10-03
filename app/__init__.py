@@ -129,7 +129,22 @@ def _init_extensions(app: Flask) -> None:
 
 
 def _register_filters(app: Flask) -> None:
-    from .utils import format_currency, format_number
+    from .utils import (
+        date_compact,
+        date_iso,
+        date_kanji,
+        format_currency,
+        format_number,
+        money,
+        number,
+    )
+
+    app.jinja_env.filters['money'] = money
+    app.jinja_env.filters['yen'] = money
+    app.jinja_env.filters['number'] = number
+    app.jinja_env.filters['date_iso'] = date_iso
+    app.jinja_env.filters['date_kanji'] = date_kanji
+    app.jinja_env.filters['date_compact'] = date_compact
     app.jinja_env.filters['format_currency'] = format_currency
     app.jinja_env.filters['format_number'] = format_number
 

@@ -62,7 +62,7 @@
                 <div class="accordion-summary">
                     {% if page_title == '社員情報' %}
                         <div class="summary-row">
-                            <span>出資金: {{ (main_shareholder.investment_amount or 0) | format_currency }}</span>
+                            <span>出資金: {{ (main_shareholder.investment_amount or 0) | money }}</span>
                         </div>
                     {% else %}
                         {# 1行目: グループ合計（主＋特殊関係人） #}
@@ -100,7 +100,7 @@
                         </div>
                         <div class="related-summary">
                             {% if page_title == '社員情報' %}
-                                <span>出資金: {{ (related.investment_amount or 0) | format_currency }}</span>
+                                <span>出資金: {{ (related.investment_amount or 0) | money }}</span>
                             {% else %}
                                 <span>株式数: {{ related.shares_held or 0 }}株</span>
                                 <span>議決権: {{ related.voting_rights or 0 }}</span>

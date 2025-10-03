@@ -34,10 +34,10 @@ class CompanyForm(FlaskForm):
     company_name = StringField('法人名', validators=[DataRequired(), Length(max=100)])
     company_name_kana = StringField('フリガナ', validators=[DataRequired(), Length(max=100)])
     # 住所（テンプレート互換のためフィールド名を維持）
-    zip_code = StringField('郵便番号', validators=[Optional(), Length(min=7, max=7, message="郵便番号は7桁で入力してください。")])
-    prefecture = StringField('都道府県', validators=[Optional(), Length(max=10)])  # TODO: 既存上限に合わせて10を維持
-    city = StringField('市区町村', validators=[Optional(), Length(max=50)])
-    address = StringField('番地以降の住所', validators=[Optional(), Length(max=200)])
+    zip_code = StringField('郵便番号', validators=[DataRequired(message="郵便番号を入力してください。"), Length(min=7, max=7, message="郵便番号は7桁で入力してください。")])
+    prefecture = StringField('都道府県', validators=[DataRequired(message="都道府県を入力してください。"), Length(max=10)])  # TODO: 既存上限に合わせて10を維持
+    city = StringField('市区町村', validators=[DataRequired(message="市区町村を入力してください。"), Length(max=50)])
+    address = StringField('番地以降の住所', validators=[DataRequired(message="番地以降の住所を入力してください。"), Length(max=200)])
     phone_number = StringField('電話番号', validators=[DataRequired(), Length(max=20)])
     homepage = StringField('ホームページアドレス', validators=[Optional(), Length(max=200)])
     establishment_date = DateField('設立年月日', format='%Y-%m-%d', validators=[DataRequired()], render_kw={'class': 'js-date'})

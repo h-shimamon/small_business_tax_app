@@ -24,6 +24,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Ensure SoA assets are up to date
+        run: |
+          python scripts/generate_soa_assets.py
+          git diff --quiet || (echo "SoA assets are not up to date. Run python scripts/generate_soa_assets.py." && git status --short && exit 1)
+
       - name: Run tests
         run: pytest -q
 

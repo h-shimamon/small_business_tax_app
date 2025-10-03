@@ -49,8 +49,8 @@
             <div class="og-line">従業者数: {{ office.employee_count or '未設定' }} 名</div>
         </div>
         <div class="og-col">
-            <div class="og-line">開設日: {{ office.opening_date.strftime('%Y年%m月%d日') if office.opening_date else '未設定' }}</div>
-            <div class="og-line">廃止日: {{ office.closing_date.strftime('%Y年%m月%d日') if office.closing_date else '未設定' }}</div>
+            <div class="og-line">開設日: {{ office.opening_date | date_kanji if office.opening_date else '未設定' }}</div>
+            <div class="og-line">廃止日: {{ office.closing_date | date_kanji if office.closing_date else '未設定' }}</div>
         </div>
     </div>
 </div>

@@ -4,6 +4,6 @@
 {% for item in items %}
   {% call render_card(item, page) %}
     <p class="info-primary">{{ item.lender_name }}</p>
-    <p class="info-secondary">利率: {{ item.interest_rate }}% / 支払利子: {{ item.paid_interest | format_currency }}</p>
+    <p class="info-secondary">利率: {{ item.interest_rate }}% / 支払利子: {{ item.paid_interest | money }}</p>
   {% endcall %}
 {% endfor %}

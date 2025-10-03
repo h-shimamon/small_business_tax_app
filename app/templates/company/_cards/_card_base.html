@@ -19,7 +19,7 @@
       {% endif %}
     {% endif %}
     {% if _amount is not none %}
-      <span class="summary-value">{{ _amount | format_currency }}</span>
+      <span class="summary-value">{{ _amount | money }}</span>
     {% endif %}
   </div>
   <div class="item-actions">

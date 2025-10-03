@@ -4,6 +4,7 @@ from typing import Any, Optional
 from flask import current_app
 
 from app.extensions import db
+from app.services.db_utils import session_scope
 from app.services.soa_registry import STATEMENT_PAGES_CONFIG, get_total_field
 
 from .protocols import StatementOfAccountsServiceProtocol
@@ -82,11 +83,10 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
         form.populate_obj(item)
         self._apply_model_defaults(data_type, item)
         try:
-            db.session.add(item)
-            db.session.commit()
+            with session_scope() as session:
+                session.add(item)
             return True, item, None
         except Exception as exc:
-            db.session.rollback()
             return False, None, f"保存中にエラーが発生しました: {exc}"
 
 
@@ -101,10 +101,10 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
         form.populate_obj(item)
         self._apply_model_defaults(data_type, item)
         try:
-            db.session.commit()
+            with session_scope() as session:
+                session.add(item)
             return True, item, None
         except Exception as exc:
-            db.session.rollback()
             return False, None, f"更新中にエラーが発生しました: {exc}"
 
     def list_items(self, data_type) -> list[Any]:
@@ -132,12 +132,11 @@ class StatementOfAccountsService(StatementOfAccountsServiceProtocol):
         if not item:
             return False, "指定されたアイテムが見つかりません。"
         try:
-            db.session.delete(item)
-            db.session.commit()
+            with session_scope() as session:
+                session.delete(item)
             return True, None
-        except Exception as e:
-            db.session.rollback()
-            return False, f"削除中にエラーが発生しました: {e}"
+        except Exception as exc:
+            return False, f"削除中にエラーが発生しました: {exc}"
 
     def get_summary(self):
         """

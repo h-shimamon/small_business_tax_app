@@ -5,6 +5,6 @@
   {% call render_card(item=item, page=page, amount=item.total_compensation) %}
     <p class="info-primary">{{ item.shareholder_name }}</p>
     <p class="info-secondary">{{ item.position or '役職未設定' }}</p>
-    <p class="info-tertiary">基本給: {{ item.base_salary | format_currency }} / その他手当: {{ item.other_allowances | format_currency }}</p>
+    <p class="info-tertiary">基本給: {{ item.base_salary | money }} / その他手当: {{ item.other_allowances | money }}</p>
   {% endcall %}
 {% endfor %}

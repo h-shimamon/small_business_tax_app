@@ -1,6 +1,6 @@
 # Statement of Accounts Form Field Configuration
 
-`STATEMENT_PAGES_CONFIG` (located in `app/company/soa_config.py`) is the single source of truth for Statement of Accounts (SoA) form rendering.
+`STATEMENT_PAGES_CONFIG` (provided by `app/services/soa_registry.py`) is the single source of truth for Statement of Accounts (SoA) form rendering.
 
 ## Config Keys
 

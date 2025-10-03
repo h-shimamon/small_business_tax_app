@@ -5,6 +5,6 @@
   {% call render_card(item, page) %}
     <p class="info-primary">{{ item.borrower_name }}</p>
     <p class="info-secondary">{{ item.borrower_address or '住所未設定' }}</p>
-    <p class="info-tertiary">利率: {{ item.interest_rate }}% / 受取利息: {{ item.received_interest | format_currency }}</p>
+    <p class="info-tertiary">利率: {{ item.interest_rate }}% / 受取利息: {{ item.received_interest | money }}</p>
   {% endcall %}
 {% endfor %}

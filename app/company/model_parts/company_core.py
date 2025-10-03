@@ -65,6 +65,7 @@ class Company(db.Model):
 
     @property
     def is_not_excluded_business(self) -> bool | None:
+        """後方互換用の読み取り専用プロパティ。"""
         value = getattr(self, 'is_excluded_business', None)
         if value is None:
             return None
@@ -72,10 +73,16 @@ class Company(db.Model):
 
     @is_not_excluded_business.setter
     def is_not_excluded_business(self, value: bool | None) -> None:
+        """互換のために残存。UI からは is_excluded_business を直接設定する。"""
         if value is None:
             return
         self.is_excluded_business = not bool(value)
 
+    def apply_excluded_business_input(self, excluded_flag: bool | None) -> None:
+        """UI での単一質問（適用除外に該当するか）を Company モデルへ反映する。"""
+        if excluded_flag is None:
+            return
+        self.is_excluded_business = bool(excluded_flag)
     industry_type = db.Column(db.String(50))
     industry_code = db.Column(db.String(10))
     reference_number = db.Column(db.String(20))

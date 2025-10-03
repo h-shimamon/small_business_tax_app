@@ -73,6 +73,6 @@
             <span class="check-circle mini" aria-hidden="true"></span>合致しました
         </span>
     {% else %}
-        {{ (value | default(0)) | format_currency }}
+        {{ (value | default(0)) | money }}
     {% endif %}
 {% endmacro %}

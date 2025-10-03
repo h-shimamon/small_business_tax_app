@@ -66,11 +66,11 @@
 <div class="card summary-card">
   <div class="summary-item">
     <span class="summary-label">{{ label }}</span>
-    <span class="summary-value">{{ (bs_total | default(0)) | format_currency }}</span>
+    <span class="summary-value">{{ (bs_total | default(0)) | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">内訳明細の合計額</span>
-    <span class="summary-value">{{ (breakdown_total | default(0)) | format_currency }}</span>
+    <span class="summary-value">{{ (breakdown_total | default(0)) | money }}</span>
   </div>
   <div class="summary-item result {% if (difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
     <span class="summary-label">差額</span>
@@ -84,15 +84,15 @@
 <div class="card summary-card">
   <div class="summary-item">
     <span class="summary-label">B/S上の借入金残高</span>
-    <span class="summary-value">{{ (bs_total | default(0)) | format_currency }}</span>
+    <span class="summary-value">{{ (bs_total | default(0)) | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">P/L上の支払利子</span>
-    <span class="summary-value">{{ (pl_interest_total | default(0)) | format_currency }}</span>
+    <span class="summary-value">{{ (pl_interest_total | default(0)) | money }}</span>
   </div>
   <div class="summary-item">
     <span class="summary-label">内訳明細の合計額（期末現在高＋期間中の支払利子）</span>
-    <span class="summary-value">{{ (breakdown_total | default(0)) | format_currency }}</span>
+    <span class="summary-value">{{ (breakdown_total | default(0)) | money }}</span>
   </div>
   <div class="summary-item result {% if (difference | default(0)) == 0 %}zero{% else %}non-zero{% endif %}">
     <span class="summary-label">差額</span>

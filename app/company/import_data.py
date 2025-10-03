@@ -94,9 +94,10 @@ def data_upload_wizard():
 
 
 
-def _process_upload_submission(form, datatype, config):
+def _process_upload_submission(form, datatype):
     file_storage = form.upload_file.data
-    service = UploadFlowService(datatype, current_user, config, session)
+    config = DATA_TYPE_CONFIG.get(datatype)
+    service = UploadFlowService(datatype, current_user, config or {}, session)
     try:
         result = service.handle(file_storage)
     except UploadValidationError as exc:
@@ -143,7 +144,7 @@ def upload_data(datatype):
 
     form = FileUploadForm()
     if request.method == 'POST':
-        return _process_upload_submission(form, datatype, config)
+        return _process_upload_submission(form, datatype)
 
     navigation_state = get_navigation_state(datatype)
     show_reset_link = datatype == 'journals'

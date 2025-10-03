@@ -7,7 +7,10 @@
       "title": "預貯金等",
       "total_field": "balance",
       "template": "deposit_form.html",
-      "summary": {"type": "BS", "label": "預貯金"}
+      "summary": {
+        "type": "BS",
+        "label": "預貯金"
+      }
     },
     {
       "key": "notes_receivable",
@@ -16,7 +19,10 @@
       "title": "受取手形",
       "total_field": "amount",
       "template": "notes_receivable_form.html",
-      "summary": {"type": "BS", "label": "受取手形"}
+      "summary": {
+        "type": "BS",
+        "label": "受取手形"
+      }
     },
     {
       "key": "accounts_receivable",
@@ -25,7 +31,11 @@
       "title": "売掛金（未収入金）",
       "total_field": "balance_at_eoy",
       "template": "accounts_receivable_form.html",
-      "summary": {"type": "BS", "label": "売掛金"}},
+      "summary": {
+        "type": "BS",
+        "label": "売掛金"
+      }
+    },
     {
       "key": "temporary_payments",
       "model": "app.company.models.TemporaryPayment",
@@ -33,7 +43,11 @@
       "title": "仮払金（前渡金）",
       "total_field": "balance_at_eoy",
       "template": "temporary_payment_form.html",
-      "summary": {"type": "BS", "label": "仮払金"}},
+      "summary": {
+        "type": "BS",
+        "label": "仮払金"
+      }
+    },
     {
       "key": "loans_receivable",
       "model": "app.company.models.LoansReceivable",
@@ -41,7 +55,11 @@
       "title": "貸付金・受取利息",
       "total_field": "balance_at_eoy",
       "template": "loans_receivable_form.html",
-      "summary": {"type": "BS", "label": "貸付金"}},
+      "summary": {
+        "type": "BS",
+        "label": "貸付金"
+      }
+    },
     {
       "key": "inventories",
       "model": "app.company.models.Inventory",
@@ -49,7 +67,11 @@
       "title": "棚卸資産",
       "total_field": "balance_at_eoy",
       "template": "inventories_form.html",
-      "summary": {"type": "BS", "label": "棚卸資産"}},
+      "summary": {
+        "type": "BS",
+        "label": "棚卸資産"
+      }
+    },
     {
       "key": "securities",
       "model": "app.company.models.Security",
@@ -57,7 +79,11 @@
       "title": "有価証券",
       "total_field": "balance_at_eoy",
       "template": "securities_form.html",
-      "summary": {"type": "BS", "label": "有価証券"}},
+      "summary": {
+        "type": "BS",
+        "label": "有価証券"
+      }
+    },
     {
       "key": "fixed_assets",
       "model": "app.company.models.FixedAsset",
@@ -65,7 +91,11 @@
       "title": "固定資産（土地等）",
       "total_field": "balance_at_eoy",
       "template": "fixed_assets_form.html",
-      "summary": {"type": "BS", "label": "固定資産（土地等）"}},
+      "summary": {
+        "type": "BS",
+        "label": "固定資産（土地等）"
+      }
+    },
     {
       "key": "notes_payable",
       "model": "app.company.models.NotesPayable",
@@ -73,7 +103,10 @@
       "title": "支払手形",
       "total_field": "amount",
       "template": "notes_payable_form.html",
-      "summary": {"type": "BS", "label": "支払手形"}
+      "summary": {
+        "type": "BS",
+        "label": "支払手形"
+      }
     },
     {
       "key": "accounts_payable",
@@ -82,7 +115,11 @@
       "title": "買掛金（未払金・未払費用）",
       "total_field": "balance_at_eoy",
       "template": "accounts_payable_form.html",
-      "summary": {"type": "BS", "label": "買掛金"}},
+      "summary": {
+        "type": "BS",
+        "label": "買掛金"
+      }
+    },
     {
       "key": "temporary_receipts",
       "model": "app.company.models.TemporaryReceipt",
@@ -90,7 +127,11 @@
       "title": "仮受金（前受金・預り金）",
       "total_field": "balance_at_eoy",
       "template": "temporary_receipts_form.html",
-      "summary": {"type": "BS", "label": "仮受金"}},
+      "summary": {
+        "type": "BS",
+        "label": "仮受金"
+      }
+    },
     {
       "key": "borrowings",
       "model": "app.company.models.Borrowing",
@@ -98,8 +139,14 @@
       "title": "借入金及び支払利子",
       "total_field": "balance_at_eoy",
       "template": "borrowings_form.html",
-      "summary": {"type": "BS", "label": "借入金"},
-      "pl_targets": ["支払利息"]},
+      "summary": {
+        "type": "BS",
+        "label": "借入金"
+      },
+      "pl_targets": [
+        "支払利息"
+      ]
+    },
     {
       "key": "executive_compensations",
       "model": "app.company.models.ExecutiveCompensation",
@@ -107,8 +154,15 @@
       "title": "役員給与等",
       "total_field": "total_compensation",
       "template": "executive_compensations_form.html",
-      "summary": {"type": "PL", "label": "役員給与等"},
-      "pl_targets": ["役員報酬", "役員賞与"]},
+      "summary": {
+        "type": "PL",
+        "label": "役員給与等"
+      },
+      "pl_targets": [
+        "役員報酬",
+        "役員賞与"
+      ]
+    },
     {
       "key": "land_rents",
       "model": "app.company.models.LandRent",
@@ -116,8 +170,15 @@
       "title": "地代家賃等",
       "total_field": "rent_paid",
       "template": "land_rents_form.html",
-      "summary": {"type": "PL", "label": "地代家賃等"},
-      "pl_targets": ["地代家賃", "賃借料"]},
+      "summary": {
+        "type": "PL",
+        "label": "地代家賃等"
+      },
+      "pl_targets": [
+        "地代家賃",
+        "賃借料"
+      ]
+    },
     {
       "key": "misc_income",
       "model": "app.company.models.Miscellaneous",
@@ -125,13 +186,19 @@
       "title": "雑収入",
       "total_field": "amount",
       "template": "miscellaneous_form.html",
-      "summary": {"type": "PL", "label": "雑収入"},
-      "pl_targets": ["雑収入"],
+      "summary": {
+        "type": "PL",
+        "label": "雑収入"
+      },
+      "pl_targets": [
+        "雑収入"
+      ],
       "query_filter": {
         "type": "equals",
         "field": "account_name",
         "value": "雑収入"
-      }},
+      }
+    },
     {
       "key": "misc_losses",
       "model": "app.company.models.Miscellaneous",
@@ -139,12 +206,18 @@
       "title": "雑損失",
       "total_field": "amount",
       "template": "miscellaneous_form.html",
-      "summary": {"type": "PL", "label": "雑損失"},
-      "pl_targets": ["雑損失"],
+      "summary": {
+        "type": "PL",
+        "label": "雑損失"
+      },
+      "pl_targets": [
+        "雑損失"
+      ],
       "query_filter": {
         "type": "equals",
         "field": "account_name",
         "value": "雑損失"
-      }}
+      }
+    }
   ]
 }

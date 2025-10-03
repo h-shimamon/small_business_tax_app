@@ -1,13 +1,14 @@
 """Centralized registry for Statement of Accounts configuration and mappings."""
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Callable, TypedDict
+
+import yaml
 
 from app.company.forms.metadata import extract_form_field_metadata, merge_field_metadata
 from app.company.forms.soa.metadata import SOA_FORM_FIELD_METADATA
@@ -42,23 +43,24 @@ class StatementPageDefinition:
 
 _ALLOWED_SUMMARY_TYPES = {'BS', 'PL'}
 _ALLOWED_QUERY_TYPES = {'equals'}
-_CONFIG_PATH = Path(__file__).resolve().parents[2] / 'resources' / 'config' / 'soa_pages.json'
+_CONFIG_PATH = Path(__file__).resolve().parents[2] / 'resources' / 'config' / 'soa_schema_map.yaml'
 
 
 @lru_cache(maxsize=1)
 def _load_page_definitions() -> tuple[StatementPageDefinition, ...]:
     with _CONFIG_PATH.open('r', encoding='utf-8') as fh:
-        raw = json.load(fh)
+        raw = yaml.safe_load(fh) or {}
 
+    pages = raw.get('pages', {})
     definitions: list[StatementPageDefinition] = []
     seen_keys: set[str] = set()
-    for item in raw.get('pages', []):
+    for key, item in pages.items():
         summary = item.get('summary') or {}
         if 'type' not in summary or 'label' not in summary:
-            raise ValueError(f"SoA page '{item.get('key')}' requires a summary definition")
+            raise ValueError(f"SoA page '{key}' requires a summary definition")
 
         definition = StatementPageDefinition(
-            key=item['key'],
+            key=key,
             model=item['model'],
             form=item['form'],
             title=item['title'],

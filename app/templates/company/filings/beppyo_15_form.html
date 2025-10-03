@@ -16,7 +16,7 @@
       {{ render_field(form.expense_amount, id='beppyo15-expense-amount', type='number', placeholder=field_definitions[1].placeholder if field_definitions else None) }}
       {{ render_field(form.deductible_amount, id='beppyo15-deductible-amount', type='number', placeholder=field_definitions[2].placeholder if field_definitions else None) }}
       <div class="form-field-spanning">
-        {{ render_field(form.net_amount_display_field, id='beppyo15-net-amount', readonly=True, value=form.net_amount_display | format_currency) }}
+        {{ render_field(form.net_amount_display_field, id='beppyo15-net-amount', readonly=True, value=form.net_amount_display | money) }}
       </div>
       <div class="form-field-spanning">
         {{ render_field(form.hospitality_amount, id='beppyo15-hospitality-amount', type='number', placeholder=field_definitions[4].placeholder if field_definitions else None) }}

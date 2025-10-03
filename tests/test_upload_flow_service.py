@@ -12,6 +12,7 @@ from app.company.services.upload_flow_service import (
     UploadFlowService,
     UploadResult,
     UploadValidationError,
+    UploadFlowError,
 )
 
 
@@ -107,11 +108,13 @@ def accounting_data_mock(monkeypatch):
 
 @pytest.fixture
 def db_session_mock(monkeypatch):
-    add_mock = mock.Mock()
-    commit_mock = mock.Mock()
-    rollback_mock = mock.Mock()
-    monkeypatch.setattr('app.company.services.upload_flow_service.db', mock.Mock(session=mock.Mock(add=add_mock, commit=commit_mock, rollback=rollback_mock)))
-    return SimpleNamespace(add=add_mock, commit=commit_mock, rollback=rollback_mock)
+    session_mock = mock.Mock()
+    context_manager = mock.MagicMock()
+    context_manager.__enter__.return_value = session_mock
+    context_manager.__exit__.return_value = False
+    monkeypatch.setattr('app.company.services.upload_flow_service.session_scope', mock.Mock(return_value=context_manager))
+    add_mock = session_mock.add
+    return SimpleNamespace(session=session_mock, add=add_mock)
 
 
 def test_handle_valid_chart_of_accounts(user_stub, session_stub, parser_factory_mock, mapping_service_mock):
@@ -155,4 +158,24 @@ def test_handle_journals_success(user_stub, session_stub, parser_factory_mock, m
     assert accounting_kwargs['algo_version'] == UploadFlowService.DEFAULT_ALGO_VERSION
     assert accounting_kwargs['source_hash']
 
-    db_session_mock.commit.assert_called_once()
+    db_session_mock.session.add.assert_called()
+
+
+def test_handle_journals_with_unmatched_accounts(user_stub, session_stub, parser_factory_mock, mapping_service_mock, financial_service_mock, accounting_data_mock, db_session_mock, monkeypatch):
+    mapping_service_mock.get_unmatched_accounts.return_value = ['未マッピング科目']
+    service = UploadFlowService('journals', user_stub, {'parser_method': 'get_journals'}, session_stub)
+
+    result = service.handle(DummyFile('journals.csv'))
+
+    assert result.redirect_endpoint == 'company.data_mapping'
+    assert result.flash_message[1] == 'warning'
+    assert session_stub['unmatched_accounts'] == ['未マッピング科目']
+
+
+def test_handle_journals_db_failure(user_stub, session_stub, parser_factory_mock, mapping_service_mock, financial_service_mock, accounting_data_mock, db_session_mock, monkeypatch):
+    db_session_mock.session.add.side_effect = RuntimeError('db failure')
+    service = UploadFlowService('journals', user_stub, {'parser_method': 'get_journals'}, session_stub)
+
+    with pytest.raises(UploadFlowError) as excinfo:
+        service.handle(DummyFile('journals.csv'))
+    assert 'db failure' in str(excinfo.value)
