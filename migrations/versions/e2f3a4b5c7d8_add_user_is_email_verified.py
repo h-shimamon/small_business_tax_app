@@ -16,10 +16,25 @@ depends_on = None
 
 
 def upgrade():
-    with op.batch_alter_table('user') as batch:
-        batch.add_column(sa.Column('is_email_verified', sa.Boolean(), nullable=False, server_default=sa.text('0')))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {col['name'] for col in inspector.get_columns('user')}
+    if 'is_email_verified' in columns:
+        return
+    op.add_column(
+        'user',
+        sa.Column('is_email_verified', sa.Boolean(), nullable=False, server_default=sa.text('0')),
+    )
 
 
 def downgrade():
-    with op.batch_alter_table('user') as batch:
-        batch.drop_column('is_email_verified')
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {col['name'] for col in inspector.get_columns('user')}
+    if 'is_email_verified' not in columns:
+        return
+    if bind.dialect.name == 'sqlite':
+        with op.batch_alter_table('user') as batch:
+            batch.drop_column('is_email_verified')
+    else:
+        op.drop_column('user', 'is_email_verified')

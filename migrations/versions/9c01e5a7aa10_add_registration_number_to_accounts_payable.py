@@ -16,10 +16,20 @@ depends_on = None
 
 
 def upgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {col['name'] for col in inspector.get_columns('accounts_payable')}
+    if 'registration_number' in columns:
+        return
     with op.batch_alter_table('accounts_payable') as batch:
         batch.add_column(sa.Column('registration_number', sa.String(length=20), nullable=True))
 
 
 def downgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {col['name'] for col in inspector.get_columns('accounts_payable')}
+    if 'registration_number' not in columns:
+        return
     with op.batch_alter_table('accounts_payable') as batch:
         batch.drop_column('registration_number')

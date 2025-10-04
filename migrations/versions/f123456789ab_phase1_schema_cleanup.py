@@ -1,7 +1,6 @@
-"""Database schema migration for phase 1 schema cleanup."""
+"""Database schema migration for phase 1 schema cleanup.
 
-"""Phase1 schema cleanup: unify exclusion flag and accounting dates."""
-
+Phase1 schema cleanup: unify exclusion flag and accounting dates."""
 from __future__ import annotations
 
 from datetime import date, datetime
